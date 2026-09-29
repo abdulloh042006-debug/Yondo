@@ -38,6 +38,8 @@ asyncio_mode = 'auto'
 line-length = 100
 target-version = 'py312'
 
+[tool.ruff.format]
+quote-style = 'single'
+
 [tool.ruff.lint]
 select = ['E', 'F', 'I', 'B', 'UP']
-

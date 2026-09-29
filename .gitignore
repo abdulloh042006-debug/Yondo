@@ -1,4 +1,10 @@
+# Local secrets and environment overrides
 .env
+.env.*
+!.env.example
+!.env.*.example
+
+# Python
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,10 +13,31 @@ __pycache__/
 .mypy_cache/
 .coverage
 htmlcov/
+*.egg-info/
+
+# JavaScript and mobile tooling
+node_modules/
+.npm/
+.pnpm-store/
+.next/
+.expo/
+coverage/
+
+# Build output
 dist/
 build/
-*.egg-info/
+
+# Editors and operating systems
 .idea/
 .vscode/
 .DS_Store
+Thumbs.db
 
+# Logs and local-only files
+*.log
+*.local
+
+# Terraform state
+.terraform/
+*.tfstate
+*.tfstate.*
