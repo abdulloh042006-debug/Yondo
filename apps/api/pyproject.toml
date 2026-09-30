@@ -9,6 +9,8 @@ description = 'Yondo marketplace API'
 requires-python = '>=3.12'
 dependencies = [
   'alembic>=1.14,<2',
+  'pillow>=11,<13',
+  'tzdata>=2025.1',
   'fastapi>=0.115,<1',
   'psycopg[binary,pool]>=3.2,<4',
   'pydantic-settings>=2.7,<3',

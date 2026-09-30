@@ -18,8 +18,14 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.companions.admin import router as companion_admin_router
+from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
+from yondo_api.companions.photos import router as companion_photos_router
+from yondo_api.companions.resources import router as companion_resources_router
+from yondo_api.companions.router import router as companion_router
 from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
+from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 
 
@@ -27,6 +33,8 @@ def create_application(
     settings: Settings | None = None,
     *,
     otp_provider: OtpDeliveryProvider | None = None,
+    object_storage: ObjectStorage | None = None,
+    identity_eligibility: IdentityEligibility | None = None,
 ) -> FastAPI:
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level)
@@ -73,11 +81,20 @@ def create_application(
         redoc_url=None,
     )
     app.state.settings = app_settings
+    app.state.object_storage = object_storage
+    app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
     app.include_router(auth_router, prefix=app_settings.api_v1_prefix)
+    for companion_routes in (
+        companion_router,
+        companion_resources_router,
+        companion_photos_router,
+        companion_admin_router,
+    ):
+        app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app
 
 
