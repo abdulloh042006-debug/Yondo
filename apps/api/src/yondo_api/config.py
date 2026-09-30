@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +29,21 @@ class Settings(BaseSettings):
     storage_secret_key: str = Field(default='', repr=False)
     storage_region: str = 'us-east-1'
     fcm_project_id: str = ''
+    auth_otp_pepper: SecretStr = SecretStr('development-only-change-me')
+    auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
+    auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
+    auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+
+    @model_validator(mode='after')
+    def validate_production_auth_settings(self) -> Settings:
+        if self.environment in {'staging', 'production'} and (
+            self.auth_otp_pepper.get_secret_value() == 'development-only-change-me'
+            or len(self.auth_otp_pepper.get_secret_value()) < 32
+        ):
+            raise ValueError(
+                'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
+            )
+        return self
 
     @property
     def database_url_sync(self) -> str:
@@ -44,4 +59,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

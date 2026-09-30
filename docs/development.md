@@ -31,6 +31,23 @@ uvicorn yondo_api.main:app --reload
 The API documentation is available at `http://localhost:8000/docs` outside production.
 Liveness is `GET /health`; dependency readiness is `GET /api/v1/health/ready`.
 
+## Authentication foundation
+
+Apply the latest migration before using the authentication endpoints:
+
+```bash
+alembic upgrade head
+```
+
+Request and verify a phone OTP at `/api/v1/auth/otp/request` and
+`/api/v1/auth/otp/verify`. Development and test responses include the OTP for local use; it is
+never logged and is not exposed in production responses. Production OTP delivery returns an
+explicit unavailable error until an SMS provider is configured. Authentication tokens are opaque,
+stored as hashes, and their lifetimes are configurable with
+`YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` and
+`YONDO_AUTH_REFRESH_TOKEN_LIFETIME_SECONDS`. Set a random
+`YONDO_AUTH_OTP_PEPPER` of at least 32 characters outside local environments.
+
 ## Quality checks
 
 Run from `apps/api` after installing development dependencies:
