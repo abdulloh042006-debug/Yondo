@@ -147,7 +147,7 @@ async def test_self_approval_denied_and_pending_edits_invalidate(prepared):
     response = await e['client'].post(
         f'/api/v1/companions/admin/applications/{e["application"]["id"]}/decision',
         headers=e['owner'],
-        json={'decision': 'approve', 'note': 'Self approval'},
+        json={'expected_revision': 2, 'decision': 'approve', 'note': 'Self approval'},
     )
     assert response.status_code == 403
 
@@ -157,7 +157,11 @@ async def test_profile_stale_approval_and_invalid_admin_payload(prepared):
     await e['client'].post('/api/v1/companions/me/profile/submit', headers=e['owner'])
     url = f'/api/v1/companions/admin/profiles/{e["profile"]["id"]}/decision'
     assert (
-        await e['client'].post(url, headers=e['admin'], json={'decision': 'activate', 'note': 'x'})
+        await e['client'].post(
+            url,
+            headers=e['admin'],
+            json={'expected_revision': 2, 'decision': 'activate', 'note': 'x'},
+        )
     ).status_code == 422
     await e['client'].put(
         '/api/v1/companions/me/profile',
@@ -165,7 +169,11 @@ async def test_profile_stale_approval_and_invalid_admin_payload(prepared):
         json={'display_name': 'Changed after submission'},
     )
     assert (
-        await e['client'].post(url, headers=e['admin'], json={'decision': 'approve', 'note': 'x'})
+        await e['client'].post(
+            url,
+            headers=e['admin'],
+            json={'expected_revision': 2, 'decision': 'approve', 'note': 'x'},
+        )
     ).status_code == 409
 
 
@@ -178,7 +186,7 @@ async def test_repeated_approval_is_invalid(prepared):
         response = await prepared['client'].post(
             f'/api/v1/companions/admin/{resource}/{ident}/decision',
             headers=prepared['admin'],
-            json={'decision': 'approve', 'note': 'Again'},
+            json={'expected_revision': 2, 'decision': 'approve', 'note': 'Again'},
         )
         assert response.status_code == 409
 

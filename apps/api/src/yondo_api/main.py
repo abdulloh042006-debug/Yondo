@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
+from anyio import CapacityLimiter
 from fastapi import FastAPI
 
 from yondo_api.api.errors import install_exception_handlers
@@ -46,6 +47,7 @@ def create_application(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.companion_image_limiter = CapacityLimiter(2)
         engine = create_database_engine(
             app_settings.database_url_async,
             echo=app_settings.debug and app_settings.environment == 'development',

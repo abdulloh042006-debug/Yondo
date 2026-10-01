@@ -1,3 +1,109 @@
+# Phase 6 audit remediation - 2026-10-01
+
+**Status: PASS for the scoped H1-H4 development-baseline remediation.**
+Baseline: `c78108e2e0f005d51648faa579fec99b8b9e5166`.
+Target branch: `abdulloh042006-debug-development-infrastructure`.
+Checkout: `D:\Yondo-Phase6-validation` on `DESKTOP-3BE6EEH`.
+Phase 7 was not started. Product/UX documents and Phase 5 source remain unchanged.
+This is not a declaration of production readiness.
+
+## Audit findings and completed fixes
+
+Finding IDs below refer to Claude's read-only audit of `c78108e`. The earlier
+uncommitted remediation used different IDs and did not cover all Claude findings.
+Its scoped changes were inspected and retained, then H3 and the timezone half
+of H4 were completed here.
+
+- **H1:** application and aggregate content revisions bind decisions to what an
+  admin reviewed. Required typed `expected_revision` is checked under the owner
+  lock. Profile/service/photo edits and resubmissions invalidate old decisions.
+  A single authorized content-review snapshot includes profile/services/photos.
+- **H2:** Pillow validation/decode/EXIF/orientation/conversion/JPEG work runs in
+  AnyIO worker threads with a dedicated two-worker limiter per application process.
+  Existing MIME, byte, pixel and animation restrictions remain enforced.
+- **H3:** the existing per-profile photo cap counts retained tombstones as well
+  as live photos, under the owner lock and before processing/uploading bytes.
+  Repeated upload/delete cycles and concurrent uploads cannot reset or exceed
+  this quota. Deletion hides photos but does not restore capacity until a future
+  approved retention/GC process reclaims retained objects and metadata. No
+  destructive retention policy or arbitrary new business limit was introduced.
+- **H4:** unrepresentable UTC normalization and invalid IANA zone keys, including
+  filesystem directory errors for America/Etc, return structured 422 responses.
+- Existing upload compensation improvements were preserved: upload exceptions
+  and DB-save failures attempt cleanup; failed cleanup logs the private object
+  key while preserving the original structured response.
+- Migration `20261001_0004` backfills non-null revision counters to 1. Decision
+  clients must fetch and submit the reviewed revision; omission returns 422 and
+  stale revisions return 409.
+
+## Checks executed on the final runtime/test sources
+
+Windows Python 3.13.15; native PostgreSQL 17.11 in the new disposable container
+`yondo-phase6-final-pg-20261001`, localhost port 55438, DB `yondo_phase6_final`.
+No existing application DB was used. Pytest cache was disabled.
+
+| Check | Result |
+| --- | --- |
+| Full SQLite suite | 138 passed, 6 native-only skips |
+| Full native PostgreSQL suite | 144 passed, zero skips |
+| Ruff `check --no-cache .` | PASS |
+| PostgreSQL upgrade head / Alembic check | PASS; no model drift |
+| Populated PostgreSQL 0004 -> 0003 -> head | PASS; application, profile and availability data preserved; revisions backfilled to 1 |
+| PostgreSQL downgrade to Phase 5 (0002) / upgrade / check | PASS; existing users retained; GiST exclusion and btree_gist verified |
+| Fresh SQLite upgrade/check and 0004/0003 plus 0002/head round trips | PASS; no model drift |
+| `python -m build` | PASS; isolated sdist and wheel build |
+| Build content | PASS; runtime sources match wheel; new migration and regression tests match sdist |
+| `git diff --check` | PASS |
+
+Regression coverage includes stale application/content decisions after edits and
+resubmission, every service mutation, profile/photo/caption/order changes, required
+revisions, real EXIF/GPS stripping and orientation, animated-image rejection,
+ambiguous upload failure, real DB constraint rollback, cleanup success/failure,
+UTC overflow boundaries, timezone directory failures, event-loop responsiveness,
+native review/edit races, bounded image-worker concurrency, retained-photo quota,
+owner isolation and concurrent uploads against that quota.
+
+One existing Starlette/httpx deprecation warning remains. Initial lint line length
+was corrected. A no-isolation build lacked setuptools; the standard isolated build
+installed its declared backend dependency and completed successfully.
+
+## Files changed
+
+- `apps/api/migrations/versions/20261001_0004_review_revisions.py`
+- `apps/api/src/yondo_api/companions/{admin,models,photos,router,schemas,service}.py`
+- `apps/api/src/yondo_api/main.py`
+- `apps/api/tests/companions/{conftest,test_audit_regressions,test_constraints,test_lifecycle,test_photos}.py`
+- `docs/companion-system.md`
+- `docs/phase6-validation.md`
+
+Only these 15 files belong in the remediation commit. Transfer archives, patches,
+local validation scripts/logs, environments, DB files and build output are excluded.
+
+## Remaining issues and next step
+
+H1-H4 are addressed for this scoped baseline. Other audit observations are not
+claimed resolved: exclusive read locks, set-wise identity eligibility for future
+Discovery, admin queue/revocation operations, production pricing configuration,
+availability bounds and activation/edit policy need their respective follow-ups.
+Low-priority findings, including cancellation-related orphan risk, remain recorded
+in the source audit and were not silently treated as completed.
+
+Concrete storage and identity adapters plus business configuration are still
+needed before production. Retention/GC remains undecided; retained photos consume
+quota until reclamation. Storage/DB compensation is not an atomic transaction:
+failed cleanup and cancellation can require orphan reconciliation. No general
+request-rate limiter was added; image execution itself is bounded.
+
+The repository CI workflow runs on main pushes or pull requests, not direct pushes
+to this development branch; absence of a new workflow run is not a CI pass.
+Recommended next roadmap phase is Phase 7 Discovery only after separate approval
+and resolution of its identity/visibility design prerequisites. It was not started.
+
+---
+
+The following is the historical foundation validation report; its no-push statements
+and test totals describe the earlier Phase 6 implementation, not this remediation.
+
 # Phase 6 validation report
 
 **Status: PASS for the requested Phase 6 backend foundation.** Native PostgreSQL

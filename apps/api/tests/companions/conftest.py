@@ -152,7 +152,13 @@ async def approve(env):
         await client.post(
             f'{root}/admin/applications/{env["application"]["id"]}/decision',
             headers=admin,
-            json={'decision': 'approve', 'note': 'Application checked'},
+            json={
+                'expected_revision': (
+                    await client.get(f'{root}/me/application', headers=owner)
+                ).json()['revision'],
+                'decision': 'approve',
+                'note': 'Application checked',
+            },
         )
     ).status_code == 200
     assert (await client.post(f'{root}/me/profile/submit', headers=owner)).status_code == 200
@@ -160,6 +166,14 @@ async def approve(env):
         await client.post(
             f'{root}/admin/profiles/{env["profile"]["id"]}/decision',
             headers=admin,
-            json={'decision': 'approve', 'note': 'Content checked'},
+            json={
+                'expected_revision': (
+                    await client.get(
+                        f'{root}/admin/users/{env["owner_id"]}/content-review', headers=admin
+                    )
+                ).json()['profile']['revision'],
+                'decision': 'approve',
+                'note': 'Content checked',
+            },
         )
     ).status_code == 200

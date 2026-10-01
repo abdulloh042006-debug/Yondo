@@ -113,7 +113,20 @@ All paths below use the existing configurable `/api/v1` prefix.
 
 PUT replaces the editable representation; clients send all desired fields.
 Unknown/privileged fields are rejected. Decisions require `decision` (`approve`
-or `reject`) and a nonempty `note`. API validation returns the existing error
+or `reject`), a nonempty `note`, and the exact `expected_revision` inspected by the reviewer.
+Application/profile responses expose a server-owned monotonic `revision`. Edits,
+withdrawals and submissions advance the application revision; every profile,
+service, photo, caption or order mutation and content submission advances the
+aggregate profile revision. Decisions compare under the owner lock and reject
+stale revisions with 409, including after resubmission.
+
+Reviewers should use `GET /companions/admin/users/{user_id}/content-review` to
+inspect profile, services and live photo metadata in one locked snapshot, then
+send its `profile.revision` as `expected_revision`. Photo bytes have immutable
+server-generated keys; existing authorized downloads allow visual inspection.
+Separate inspection endpoints remain available, but the aggregate endpoint avoids
+assembling a review from inconsistent reads. Availability does not change content
+approval. Application, content and identity gates remain independent. API validation returns the existing error
 shape with request ID. The shared error handler now omits input/exception objects
 from validation details so custom validators remain JSON-safe and private.
 
@@ -122,7 +135,9 @@ from validation details so custom validators remain JSON-safe and private.
 POST photos accepts raw `image/jpeg`, `image/png`, or `image/webp` bytes.
 The server validates the decoded image and configured resource limits, rejects
 animation, respects EXIF orientation, and re-encodes a clean JPEG without EXIF or
-embedded location data. Metadata is derived from the stored image. Upload callers
+embedded location data. Decode, validation, EXIF transpose and JPEG encoding run
+in AnyIO worker threads with a dedicated two-worker limiter per application process,
+separate from the general thread pool limiter. Metadata is derived from the stored image. Upload callers
 cannot supply arbitrary keys, URLs, dimensions, MIME claims, owner IDs or statuses.
 The first ordered photo is the primary photo; deleted entries are not returned.
 Reordering requires the entire live set and runs transactionally with a temporary
@@ -135,10 +150,16 @@ The preexisting repository had only the protocol, not a concrete adapter; missin
 storage returns a structured 503. Tests inject an in-memory implementation.
 
 Deletion immediately hides metadata and denies new download URLs, while retaining
-a private tombstone/object until retention policy is decided. Previously issued
+a private tombstone/object until retention policy is decided. The existing photo
+cap counts both live and soft-deleted rows under the owner lock. Soft deletion
+does not restore upload capacity: repeated upload/delete cycles stop at the cap
+until an approved retention/GC policy reclaims retained objects and metadata.
+This bounds retained successful uploads without inventing a deletion deadline.
+Previously issued
 signed URLs expire per the adapter (protocol default: 300 seconds). Upload/DB
-failure attempts object cleanup; failed compensation is logged and needs eventual
-orphan reconciliation. There is no distributed DB/object-store transaction.
+failure attempts object cleanup, including when upload persists bytes and then
+raises. Cleanup failure preserves the original error and logs the private generated
+object key for eventual reconciliation against committed photo metadata. There is no distributed DB/object-store transaction.
 
 ## Money and configuration
 
@@ -157,7 +178,7 @@ Configuration uses the existing `YONDO_` environment prefix:
 | `COMPANION_PRICE_MIN_MINOR` | `0` | Technical nonnegative lower bound; configurable business minimum |
 | `COMPANION_PRICE_MAX_MINOR` | unset | Optional business upper bound |
 | `COMPANION_ALLOWED_UNIT_MINUTES` | `[]` | Positive integer durations until policy is configured |
-| `COMPANION_MAX_PHOTOS` | `20` | Configurable technical resource cap |
+| `COMPANION_MAX_PHOTOS` | `20` | Per-profile retained-photo cap, including soft-deleted photos |
 | `COMPANION_PHOTO_MAX_BYTES` | `10485760` | Upload and processed-image byte cap |
 | `COMPANION_PHOTO_MAX_PIXELS` | `25000000` | Decoded pixel cap |
 
@@ -174,6 +195,8 @@ Overlap checks use `existing.start < new.end AND existing.end > new.start`.
 PostgreSQL additionally enforces nonoverlap with a GiST exclusion constraint on
 `profile_id` and `tstzrange(starts_at, ends_at, '[)')`, backed by `btree_gist`.
 Adjacent windows and identical windows for different companions are valid.
+UTC normalization rejects boundary overflow with structured validation 422. Invalid
+IANA keys, including directory names such as America or Etc, also return 422.
 Offsets make DST instants unambiguous; the IANA zone is retained for presentation.
 No recurring schedule, lead time, availability horizon or booking is inferred.
 
@@ -189,7 +212,9 @@ that transaction. SQLite tests cover API logic, not PostgreSQL concurrency.
 companion tables and constraints. It does not rewrite Phase 5 tables. PostgreSQL
 requires permission to create `btree_gist`, or the extension preinstalled by a DBA.
 Downgrade drops Phase 6 tables and deliberately retains the shared extension.
-Migrations and tests are included in the source distribution.
+`20261001_0004_review_revisions` adds non-null revision counters, backfilled to 1
+for existing records; clients must fetch a revision before any decision. Downgrade
+removes only those counters. Migrations and tests are included in the source distribution.
 
 ## Validation and remaining work
 

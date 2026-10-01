@@ -34,6 +34,7 @@ class ApplicationWrite(Input):
 
 
 class ApplicationResponse(Output):
+    revision: int
     id: UUID
     user_id: UUID
     statement: str
@@ -42,6 +43,7 @@ class ApplicationResponse(Output):
 
 
 class ApprovalDecision(Input):
+    expected_revision: int = Field(strict=True, ge=1, le=9_223_372_036_854_775_807)
     decision: Literal['approve', 'reject']
     note: str = Field(min_length=1, max_length=2000)
 
@@ -61,6 +63,7 @@ class ProfileWrite(Input):
 
 
 class ProfileResponse(Output):
+    revision: int
     id: UUID
     application_id: UUID
     display_name: str
@@ -95,14 +98,17 @@ class AvailabilityWrite(Input):
     def known_timezone(cls, value: str) -> str:
         try:
             ZoneInfo(value)
-        except (ZoneInfoNotFoundError, ValueError) as exc:
+        except (ZoneInfoNotFoundError, ValueError, OSError) as exc:
             raise ValueError('An IANA timezone is required') from exc
         return value
 
     @model_validator(mode='after')
     def ordered_interval(self) -> Self:
-        self.starts_at = self.starts_at.astimezone(UTC)
-        self.ends_at = self.ends_at.astimezone(UTC)
+        try:
+            self.starts_at = self.starts_at.astimezone(UTC)
+            self.ends_at = self.ends_at.astimezone(UTC)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError('Datetime must represent a supported UTC instant') from exc
         if self.ends_at <= self.starts_at:
             raise ValueError('ends_at must be after starts_at')
         return self
@@ -159,3 +165,9 @@ class CompanionStatus(Output):
     activation_requested: bool
     publicly_active: bool
     blockers: list[str]
+
+
+class ContentReview(Output):
+    profile: ProfileResponse
+    services: list[ServiceResponse]
+    photos: list[PhotoResponse]

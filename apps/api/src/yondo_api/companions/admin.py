@@ -11,6 +11,7 @@ from yondo_api.companions.photos import download_url, visible_photos
 from yondo_api.companions.schemas import (
     ApplicationResponse,
     ApprovalDecision,
+    ContentReview,
     PhotoDownload,
     PhotoResponse,
     ProfileResponse,
@@ -41,6 +42,7 @@ async def decide_application(
         admin,
         payload.decision,
         payload.note,
+        payload.expected_revision,
     )
 
 
@@ -84,4 +86,23 @@ async def read_photo(
 async def decide_profile(
     profile_id: UUID, payload: ApprovalDecision, admin: Admin, session: Session
 ):
-    return await service.review_content(session, profile_id, admin, payload.decision, payload.note)
+    return await service.review_content(
+        session, profile_id, admin, payload.decision, payload.note, payload.expected_revision
+    )
+
+
+@router.get('/users/{user_id}/content-review', response_model=ContentReview)
+async def read_content_review(user_id: UUID, admin: Admin, session: Session):
+    # Serialize the entire review snapshot with all owner aggregate mutations.
+    await service.locked_user(session, user_id)
+    profile = await service.profile_for(session, user_id)
+    return ContentReview(
+        profile=ProfileResponse.model_validate(profile),
+        services=[
+            ServiceResponse.model_validate(item)
+            for item in await read_services(user_id, admin, session)
+        ],
+        photos=[
+            PhotoResponse.model_validate(item) for item in await visible_photos(session, profile.id)
+        ],
+    )

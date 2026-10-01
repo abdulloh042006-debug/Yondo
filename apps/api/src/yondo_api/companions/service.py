@@ -88,6 +88,7 @@ async def owned_resource(session: AsyncSession, model, resource_id: UUID, profil
 
 
 def invalidate_content(profile: CompanionProfile) -> None:
+    profile.revision += 1
     profile.content_status = ContentStatus.DRAFT
     profile.activation_requested = False
     profile.reviewed_at = None
@@ -181,6 +182,7 @@ async def review_application(
     reviewer: User,
     decision: str,
     note: str,
+    expected_revision: int,
 ) -> CompanionApplication:
     existing = await session.get(CompanionApplication, application_id)
     if existing is None:
@@ -191,6 +193,8 @@ async def review_application(
     await session.refresh(existing)
     if existing.status != ApplicationStatus.SUBMITTED:
         raise conflict('Only a submitted application can be reviewed')
+    if existing.revision != expected_revision:
+        raise ApplicationError('stale_companion_revision', 'Application changed; review again', 409)
     existing.status = (
         ApplicationStatus.APPROVED if decision == 'approve' else ApplicationStatus.REJECTED
     )
@@ -207,6 +211,7 @@ async def review_content(
     reviewer: User,
     decision: str,
     note: str,
+    expected_revision: int,
 ) -> CompanionProfile:
     existing = await session.get(CompanionProfile, profile_id)
     if existing is None:
@@ -218,6 +223,8 @@ async def review_content(
     profile = await profile_for(session, application.user_id)
     if profile.content_status != ContentStatus.PENDING:
         raise conflict('Only submitted content can be reviewed')
+    if profile.revision != expected_revision:
+        raise ApplicationError('stale_companion_revision', 'Content changed; review again', 409)
     profile.content_status = (
         ContentStatus.APPROVED if decision == 'approve' else ContentStatus.REJECTED
     )

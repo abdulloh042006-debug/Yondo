@@ -83,7 +83,7 @@ async def test_customer_cannot_write(prepared, path, payload):
 
 
 async def test_invalid_status_transitions_and_admin_authorization(prepared):
-    e, payload = prepared, {'decision': 'approve', 'note': 'Checked'}
+    e, payload = prepared, {'expected_revision': 2, 'decision': 'approve', 'note': 'Checked'}
     client = e['client']
     application_url = f'{ROOT}/admin/applications/{e["application"]["id"]}/decision'
     profile_url = f'{ROOT}/admin/profiles/{e["profile"]["id"]}/decision'
@@ -203,7 +203,7 @@ async def test_rejection_and_resubmission(prepared):
     rejected = await c.post(
         f'{ROOT}/admin/applications/{e["application"]["id"]}/decision',
         headers=e['admin'],
-        json={'decision': 'reject', 'note': 'Needs changes'},
+        json={'expected_revision': 2, 'decision': 'reject', 'note': 'Needs changes'},
     )
     assert rejected.json()['status'] == 'rejected'
     assert (await c.put(f'{ME}/application', headers=e['owner'], json={})).json()[
@@ -213,7 +213,7 @@ async def test_rejection_and_resubmission(prepared):
     rejected = await c.post(
         f'{ROOT}/admin/profiles/{e["profile"]["id"]}/decision',
         headers=e['admin'],
-        json={'decision': 'reject', 'note': 'Needs changes'},
+        json={'expected_revision': 2, 'decision': 'reject', 'note': 'Needs changes'},
     )
     assert rejected.json()['content_status'] == 'rejected'
     assert (await c.post(f'{ME}/profile/submit', headers=e['owner'])).status_code == 200

@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 from io import BytesIO
 from uuid import UUID, uuid4
 
+from anyio import to_thread
 from fastapi import APIRouter, Request, Response
 from PIL import Image, ImageOps, UnidentifiedImageError
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions import service
@@ -15,6 +16,33 @@ from yondo_api.companions.schemas import PhotoCaption, PhotoDownload, PhotoOrder
 
 router = APIRouter(prefix='/companions/me/photos', tags=['companion photos'])
 IMAGE_TYPES = {'JPEG': 'image/jpeg', 'PNG': 'image/png', 'WEBP': 'image/webp'}
+
+
+def process_image(data, content_type, settings):
+    try:
+        with Image.open(BytesIO(data)) as picture:
+            if IMAGE_TYPES.get(picture.format) != content_type:
+                raise ValueError('Content type does not match image')
+            width, height = picture.size
+            if width * height > settings.companion_photo_max_pixels:
+                raise ValueError('Image exceeds the configured pixel limit')
+            if getattr(picture, 'n_frames', 1) != 1:
+                raise ValueError('Only still images are supported')
+            picture.verify()
+        # Decode and re-encode to remove EXIF/location metadata and trailing payloads.
+        with Image.open(BytesIO(data)) as picture:
+            clean = ImageOps.exif_transpose(picture).convert('RGB')
+            width, height = clean.size
+            output = BytesIO()
+            clean.save(output, format='JPEG', quality=90)
+            content = output.getvalue()
+        if len(content) > settings.companion_photo_max_bytes:
+            raise ValueError('Processed image exceeds the configured byte limit')
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
+        raise ApplicationError(
+            'invalid_photo', 'Image is invalid or exceeds configured limits', 422
+        ) from exc
+    return content, width, height
 
 
 async def visible_photos(session: Session, profile_id: UUID) -> list[CompanionPhoto]:
@@ -56,7 +84,14 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
     storage = object_storage(request)
     settings = request.app.state.settings
     photos = await visible_photos(session, profile.id)
-    if len(photos) >= settings.companion_max_photos:
+    # Deleted objects remain retained until a retention/GC policy exists. Count
+    # their tombstones too, under the owner lock, so delete cannot reset quota.
+    retained_count = await session.scalar(
+        select(func.count())
+        .select_from(CompanionPhoto)
+        .where(CompanionPhoto.profile_id == profile.id)
+    )
+    if retained_count >= settings.companion_max_photos:
         raise ApplicationError('photo_limit', 'Configured photo limit reached', 422)
     content_type = request.headers.get('content-type', '').split(';')[0].strip()
     if content_type not in IMAGE_TYPES.values():
@@ -68,29 +103,13 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
                 'photo_too_large', 'Photo exceeds the configured byte limit', 413
             )
         data.extend(chunk)
-    try:
-        with Image.open(BytesIO(data)) as picture:
-            if IMAGE_TYPES.get(picture.format) != content_type:
-                raise ValueError('Content type does not match image')
-            width, height = picture.size
-            if width * height > settings.companion_photo_max_pixels:
-                raise ValueError('Image exceeds the configured pixel limit')
-            if getattr(picture, 'n_frames', 1) != 1:
-                raise ValueError('Only still images are supported')
-            picture.verify()
-        # Decode and re-encode to remove EXIF/location metadata and trailing payloads.
-        with Image.open(BytesIO(data)) as picture:
-            clean = ImageOps.exif_transpose(picture).convert('RGB')
-            width, height = clean.size
-            output = BytesIO()
-            clean.save(output, format='JPEG', quality=90)
-            content = output.getvalue()
-        if len(content) > settings.companion_photo_max_bytes:
-            raise ValueError('Processed image exceeds the configured byte limit')
-    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
-        raise ApplicationError(
-            'invalid_photo', 'Image is invalid or exceeds configured limits', 422
-        ) from exc
+    content, width, height = await to_thread.run_sync(
+        process_image,
+        data,
+        content_type,
+        settings,
+        limiter=request.app.state.companion_image_limiter,
+    )
     photo_id = uuid4()
     key = f'companions/{profile.id}/{photo_id}.jpg'
 
@@ -100,6 +119,7 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
     try:
         await storage.upload(key, chunks(), 'image/jpeg')
     except Exception as exc:
+        await compensate_upload(storage, key)
         raise ApplicationError('storage_unavailable', 'Photo upload failed', 503) from exc
     item = CompanionPhoto(
         id=photo_id,
@@ -117,10 +137,7 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
         await service.save(session)
     except Exception:
         # Best-effort compensation. The key is never exposed by this API.
-        try:
-            await storage.delete(key)
-        except Exception:
-            logging.getLogger(__name__).exception('Companion upload compensation failed')
+        await compensate_upload(storage, key)
         raise
     return item
 
@@ -181,3 +198,15 @@ async def delete_photo(photo_id: UUID, owner: Owner, session: Session):
     service.invalidate_content(profile)
     await service.save(session)
     return Response(status_code=204)
+
+
+async def compensate_upload(storage, key):
+    try:
+        await storage.delete(key)
+    except Exception:
+        # Private structured key lets operators reconcile without exposing it to clients.
+        logging.getLogger(__name__).exception(
+            'Companion upload compensation failed: storage_key=%s',
+            key,
+            extra={'storage_key': key},
+        )

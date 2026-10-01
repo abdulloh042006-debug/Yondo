@@ -112,7 +112,7 @@ async def test_photo_edits_revoke_pending_review(prepared):
     result = await e['client'].post(
         f'/api/v1/companions/admin/profiles/{e["profile"]["id"]}/decision',
         headers=e['admin'],
-        json={'decision': 'approve', 'note': 'Checked old content'},
+        json={'expected_revision': 2, 'decision': 'approve', 'note': 'Checked old content'},
     )
     assert result.status_code == 409
 

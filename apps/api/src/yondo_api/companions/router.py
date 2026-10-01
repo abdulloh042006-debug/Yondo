@@ -44,6 +44,7 @@ async def edit_application(payload: ApplicationWrite, owner: Owner, session: Ses
         ApplicationStatus.WITHDRAWN,
     }:
         raise service.conflict('Only a draft, rejected or withdrawn application can be edited')
+    application.revision += 1
     application.statement = payload.statement
     application.status = ApplicationStatus.DRAFT
     application.review_note = application.reviewed_at = application.reviewed_by = None
@@ -56,6 +57,7 @@ async def submit_application(owner: Owner, session: Session):
     application = await service.application_for(session, owner.id)
     if application.status != ApplicationStatus.DRAFT:
         raise service.conflict('Only a draft application can be submitted')
+    application.revision += 1
     application.status = ApplicationStatus.SUBMITTED
     application.submitted_at = datetime.now(UTC)
     await service.save(session)
@@ -67,6 +69,7 @@ async def withdraw_application(owner: Owner, session: Session):
     application = await service.application_for(session, owner.id)
     if application.status == ApplicationStatus.WITHDRAWN:
         raise service.conflict('Application is already withdrawn')
+    application.revision += 1
     application.status = ApplicationStatus.WITHDRAWN
     profile = await session.scalar(
         select(CompanionProfile).where(CompanionProfile.application_id == application.id)
@@ -106,6 +109,7 @@ async def submit_profile(owner: Owner, session: Session):
     profile = await service.profile_for(session, owner.id)
     if profile.content_status not in {ContentStatus.DRAFT, ContentStatus.REJECTED}:
         raise service.conflict('Only draft or rejected content can be submitted')
+    profile.revision += 1
     profile.content_status = ContentStatus.PENDING
     profile.activation_requested = False
     await service.save(session)

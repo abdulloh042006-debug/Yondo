@@ -54,6 +54,7 @@ class CompanionApplication(TimestampMixin, Base):
         unique=True,
     )
     status: Mapped[str] = mapped_column(String(16), default=ApplicationStatus.DRAFT)
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default='1')
     statement: Mapped[str] = mapped_column(Text, default='')
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -78,6 +79,7 @@ class CompanionProfile(TimestampMixin, Base):
         ForeignKey('companion_applications.id', ondelete='CASCADE'),
         unique=True,
     )
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default='1')
     display_name: Mapped[str] = mapped_column(String(128))
     bio: Mapped[str] = mapped_column(Text, default='')
     languages: Mapped[list[str]] = mapped_column(JSON, default=list)
