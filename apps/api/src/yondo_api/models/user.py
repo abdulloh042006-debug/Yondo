@@ -38,6 +38,9 @@ class User(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     phone_number: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    age: Mapped[int | None] = mapped_column()
+    gender: Mapped[str | None] = mapped_column(String(64))
+    city: Mapped[str | None] = mapped_column(String(128))
     account_status: Mapped[AccountStatus] = mapped_column(
         Enum(
             AccountStatus,

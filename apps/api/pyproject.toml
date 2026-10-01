@@ -9,6 +9,8 @@ description = 'Yondo marketplace API'
 requires-python = '>=3.12'
 dependencies = [
   'alembic>=1.14,<2',
+  'pillow>=11,<13',
+  'tzdata>=2025.1',
   'fastapi>=0.115,<1',
   'psycopg[binary,pool]>=3.2,<4',
   'pydantic-settings>=2.7,<3',
@@ -21,6 +23,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   'httpx>=0.28,<1',
+  'aiosqlite>=0.20,<1',
   'pytest>=8.3,<9',
   'pytest-asyncio>=0.25,<1',
   'ruff>=0.9,<1',
@@ -38,6 +41,8 @@ asyncio_mode = 'auto'
 line-length = 100
 target-version = 'py312'
 
+[tool.ruff.format]
+quote-style = 'single'
+
 [tool.ruff.lint]
 select = ['E', 'F', 'I', 'B', 'UP']
-
