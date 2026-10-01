@@ -1,3 +1,19 @@
+# Phase 6 final freeze hardening - 2026-10-01
+
+Post-audit hardening covers three additional photo edge cases without changing
+Phase 6 product scope: malformed PNG checksum errors now return structured 422,
+request cancellation after storage persistence runs shielded cleanup, and ambiguous
+DB commit acknowledgement is reconciled from a fresh session before any object
+deletion so durable metadata is not left pointing at a deleted object.
+
+Validation on the final sources: targeted audit regressions PASS, full SQLite suite
+PASS with the expected PostgreSQL-only skips, Ruff PASS, isolated sdist/wheel build
+PASS, and git diff --check PASS. Native PostgreSQL 17 completed all 147 tests with
+zero skips after Alembic upgrade/check reported no model drift. The three new photo
+regressions also passed directly against PostgreSQL. Docker was run with a temporary
+2 GB WSL cap for this validation and the developer's prior 3 GB cap was restored
+afterward.
+
 # Phase 6 audit remediation - 2026-10-01
 
 **Status: PASS for the scoped H1-H4 development-baseline remediation.**

@@ -1,9 +1,10 @@
+import asyncio
 import logging
 from datetime import UTC, datetime
 from io import BytesIO
 from uuid import UUID, uuid4
 
-from anyio import to_thread
+from anyio import CancelScope, to_thread
 from fastapi import APIRouter, Request, Response
 from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import func, select
@@ -38,7 +39,9 @@ def process_image(data, content_type, settings):
             content = output.getvalue()
         if len(content) > settings.companion_photo_max_bytes:
             raise ValueError('Processed image exceeds the configured byte limit')
-    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
+    except (
+        UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombError
+    ) as exc:
         raise ApplicationError(
             'invalid_photo', 'Image is invalid or exceeds configured limits', 422
         ) from exc
@@ -118,6 +121,9 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
 
     try:
         await storage.upload(key, chunks(), 'image/jpeg')
+    except asyncio.CancelledError:
+        await compensate_upload(storage, key)
+        raise
     except Exception as exc:
         await compensate_upload(storage, key)
         raise ApplicationError('storage_unavailable', 'Photo upload failed', 503) from exc
@@ -135,9 +141,15 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
     service.invalidate_content(profile)
     try:
         await service.save(session)
+    except asyncio.CancelledError:
+        await reconcile_failed_save(request, storage, item)
+        raise
     except Exception:
-        # Best-effort compensation. The key is never exposed by this API.
-        await compensate_upload(storage, key)
+        # A commit acknowledgement can be lost after the row is durable. Reconcile
+        # from a fresh session before deleting the object so metadata never points
+        # at an object we removed during ambiguous commit handling.
+        if await reconcile_failed_save(request, storage, item):
+            return item
         raise
     return item
 
@@ -200,13 +212,35 @@ async def delete_photo(photo_id: UUID, owner: Owner, session: Session):
     return Response(status_code=204)
 
 
-async def compensate_upload(storage, key):
+async def reconcile_failed_save(request: Request, storage, photo: CompanionPhoto) -> bool:
+    # A fresh transaction distinguishes a durable commit from a failed transaction.
     try:
-        await storage.delete(key)
+        with CancelScope(shield=True):
+            async with request.app.state.db_session_factory() as reconciliation:
+                persisted = await reconciliation.get(CompanionPhoto, photo.id)
     except Exception:
-        # Private structured key lets operators reconcile without exposing it to clients.
+        # Database outcome is unknown. Preserve the object and log its private key;
+        # reconciliation can compare it with committed photo metadata later.
         logging.getLogger(__name__).exception(
-            'Companion upload compensation failed: storage_key=%s',
-            key,
-            extra={'storage_key': key},
+            'Companion photo commit outcome is unknown: storage_key=%s',
+            photo.storage_key,
+            extra={'storage_key': photo.storage_key},
         )
+        return False
+    if persisted is not None:
+        return True
+    await compensate_upload(storage, photo.storage_key)
+    return False
+
+
+async def compensate_upload(storage, key):
+    with CancelScope(shield=True):
+        try:
+            await storage.delete(key)
+        except Exception:
+            # Private structured key lets operators reconcile without exposing it to clients.
+            logging.getLogger(__name__).exception(
+                'Companion upload compensation failed: storage_key=%s',
+                key,
+                extra={'storage_key': key},
+            )

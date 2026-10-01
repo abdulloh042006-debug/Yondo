@@ -395,3 +395,61 @@ async def test_timezone_directory_oserror_is_structured_422(prepared, monkeypatc
     assert response.status_code == 422
     assert response.json()['code'] == 'validation_error'
     assert 'private zoneinfo path' not in response.text
+
+
+async def test_broken_png_checksum_is_structured_422(prepared):
+    from .conftest import png
+
+    data = bytearray(png())
+    marker = data.index(b'IDAT')
+    length = int.from_bytes(data[marker - 4 : marker], 'big')
+    crc_index = marker + 4 + length
+    data[crc_index] ^= 0x01
+    response = await upload(prepared, bytes(data))
+    assert response.status_code == 422
+    assert response.json()['code'] == 'invalid_photo'
+    assert not prepared['storage'].objects
+
+
+async def test_cancelled_upload_cleans_persisted_object(prepared):
+    class SlowStorage(MemoryStorage):
+        def __init__(self):
+            super().__init__()
+            self.persisted = asyncio.Event()
+            self.release = asyncio.Event()
+
+        async def upload(self, *args):
+            await super().upload(*args)
+            self.persisted.set()
+            await self.release.wait()
+
+    storage = SlowStorage()
+    prepared['app'].state.object_storage = storage
+    task = asyncio.create_task(upload(prepared))
+    await asyncio.wait_for(storage.persisted.wait(), 5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert storage.objects == {}
+    assert (await prepared['client'].get(f'{ME}/photos', headers=prepared['owner'])).json() == []
+
+
+async def test_lost_commit_ack_preserves_committed_photo_and_object(prepared, monkeypatch):
+    original_save = service.save
+
+    async def lost_ack_after_photo_commit(session):
+        if any(isinstance(item, CompanionPhoto) for item in session.new):
+            await session.commit()
+            raise OSError('lost commit acknowledgement')
+        await original_save(session)
+
+    monkeypatch.setattr(service, 'save', lost_ack_after_photo_commit)
+    response = await upload(prepared)
+    assert response.status_code == 201
+    photos_list = (await prepared['client'].get(f'{ME}/photos', headers=prepared['owner'])).json()
+    assert len(photos_list) == 1
+    assert len(prepared['storage'].objects) == 1
+    download = await prepared['client'].get(
+        f'{ME}/photos/{photos_list[0]["id"]}/download', headers=prepared['owner']
+    )
+    assert download.status_code == 200

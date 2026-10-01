@@ -156,10 +156,13 @@ does not restore upload capacity: repeated upload/delete cycles stop at the cap
 until an approved retention/GC policy reclaims retained objects and metadata.
 This bounds retained successful uploads without inventing a deletion deadline.
 Previously issued
-signed URLs expire per the adapter (protocol default: 300 seconds). Upload/DB
-failure attempts object cleanup, including when upload persists bytes and then
-raises. Cleanup failure preserves the original error and logs the private generated
-object key for eventual reconciliation against committed photo metadata. There is no distributed DB/object-store transaction.
+signed URLs expire per the adapter (protocol default: 300 seconds). Upload failure,
+including request cancellation after bytes were persisted, runs shielded best-effort
+cleanup. DB-save failures are reconciled through a fresh database session before
+object deletion: a durable photo row preserves the object, a confirmed missing row
+triggers cleanup, and an unknown DB outcome preserves the object while logging the
+private generated key for later reconciliation. Cleanup failure also logs that key.
+There is no distributed DB/object-store transaction.
 
 ## Money and configuration
 
