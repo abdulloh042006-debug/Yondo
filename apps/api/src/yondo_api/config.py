@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
     auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Unset until the fee policy has been approved. Values are basis points.
+    platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -56,8 +58,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:
-        if (self.companion_price_max_minor is not None
-                and self.companion_price_max_minor < self.companion_price_min_minor):
+        if (
+            self.companion_price_max_minor is not None
+            and self.companion_price_max_minor < self.companion_price_min_minor
+        ):
             raise ValueError('Companion maximum price must not be below minimum price')
         if any(value <= 0 for value in self.companion_allowed_unit_minutes):
             raise ValueError('Companion pricing units must be positive minutes')
@@ -80,9 +84,7 @@ class Settings(BaseSettings):
 
     @property
     def database_url_async(self) -> str:
-        return self.database_url.replace(
-            'postgresql+psycopg://', 'postgresql+psycopg_async://'
-        )
+        return self.database_url.replace('postgresql+psycopg://', 'postgresql+psycopg_async://')
 
 
 @lru_cache

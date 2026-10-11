@@ -19,6 +19,8 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.bookings.router import router as bookings_router
+from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
 from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
 from yondo_api.companions.photos import router as companion_photos_router
@@ -26,8 +28,11 @@ from yondo_api.companions.resources import router as companion_resources_router
 from yondo_api.companions.router import router as companion_router
 from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
+from yondo_api.discovery.router import router as discovery_router
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
+from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
+from yondo_api.payments.router import router as payments_router
 
 
 def create_application(
@@ -36,6 +41,7 @@ def create_application(
     otp_provider: OtpDeliveryProvider | None = None,
     object_storage: ObjectStorage | None = None,
     identity_eligibility: IdentityEligibility | None = None,
+    payment_provider: PaymentProvider | None = None,
 ) -> FastAPI:
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level)
@@ -85,6 +91,7 @@ def create_application(
     app.state.settings = app_settings
     app.state.object_storage = object_storage
     app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
+    app.state.payment_provider = payment_provider or UnconfiguredPaymentProvider()
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
@@ -95,6 +102,10 @@ def create_application(
         companion_resources_router,
         companion_photos_router,
         companion_admin_router,
+        discovery_router,
+        bookings_router,
+        payments_router,
+        chat_router,
     ):
         app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app
