@@ -48,3 +48,28 @@ class SafetyAlert(TimestampMixin, Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     booking_id: Mapped[UUID] = mapped_column(ForeignKey('bookings.id', ondelete='RESTRICT'))
     creator_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'))
+
+
+
+class SafetyAcknowledgement(TimestampMixin, Base):
+    """One auditable manual acknowledgement for an incident, not a resolution."""
+
+    __tablename__ = 'safety_acknowledgements'
+    __table_args__ = (
+        CheckConstraint(
+            '(report_id IS NULL AND alert_id IS NOT NULL) OR '
+            '(report_id IS NOT NULL AND alert_id IS NULL)',
+            name='ck_safety_ack_single_subject',
+        ),
+        UniqueConstraint('report_id', name='uq_safety_ack_report'),
+        UniqueConstraint('alert_id', name='uq_safety_ack_alert'),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    report_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('safety_reports.id', ondelete='RESTRICT'), nullable=True
+    )
+    alert_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('safety_alerts.id', ondelete='RESTRICT'), nullable=True
+    )
+    admin_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'))
+    note: Mapped[str] = mapped_column(Text)

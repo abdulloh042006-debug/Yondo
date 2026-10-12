@@ -41,6 +41,7 @@ from yondo_api.notifications.router import router as notifications_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
 from yondo_api.reviews.router import router as reviews_router
+from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
 
 
@@ -122,6 +123,7 @@ def create_application(
         beta_router,
         admin_router,
         safety_router,
+        safety_admin_router,
         reviews_router,
         meetings_router,
     ):
