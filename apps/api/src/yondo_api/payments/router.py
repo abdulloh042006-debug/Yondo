@@ -10,6 +10,7 @@ from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.bookings.router import _participant
 from yondo_api.chat.service import append_system_message, publish
 from yondo_api.companions.dependencies import Principal, Session
+from yondo_api.notifications.service import enqueue_booking_notice
 from yondo_api.payments.models import Payment, PaymentEventReceipt, PaymentStatus
 from yondo_api.payments.provider import PaymentEvent
 from yondo_api.payments.schemas import PaymentResponse
@@ -171,6 +172,9 @@ async def payment_webhook(request: Request, session: Session):
             system_message = append_system_message(
                 session, booking.id, 'payment_confirmed', {'status': booking.status}
             )
+            await session.flush()
+            await enqueue_booking_notice(session, booking, 'payment_confirmed',
+                                         system_message.id, recipients='both')
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()

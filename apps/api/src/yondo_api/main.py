@@ -20,6 +20,7 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
 from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
@@ -31,9 +32,12 @@ from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
 from yondo_api.discovery.router import router as discovery_router
 from yondo_api.gifts.router import router as gifts_router
+from yondo_api.gifts.vendor import router as vendor_router
+from yondo_api.integration.router import router as integration_router
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 from yondo_api.meetings.router import router as meetings_router
+from yondo_api.notifications.router import router as notifications_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
 from yondo_api.reviews.router import router as reviews_router
@@ -112,6 +116,10 @@ def create_application(
         payments_router,
         chat_router,
         gifts_router,
+        vendor_router,
+        integration_router,
+        notifications_router,
+        beta_router,
         admin_router,
         safety_router,
         reviews_router,

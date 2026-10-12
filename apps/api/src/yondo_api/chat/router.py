@@ -22,6 +22,7 @@ from yondo_api.chat.schemas import (
 from yondo_api.chat.service import booking_chat_enabled, now_utc, publish, ticket_digest
 from yondo_api.companions.dependencies import Principal, Session
 from yondo_api.companions.models import CompanionApplication, CompanionProfile
+from yondo_api.notifications.service import enqueue_booking_notice
 
 router = APIRouter(prefix='/chat', tags=['booking chat'])
 
@@ -86,6 +87,9 @@ async def send_message(
         body=payload.body,
     )
     session.add(message)
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'chat_message', message.id,
+                                 actor_id=principal.user.id)
     await session.commit()
     await session.refresh(message)
     await publish(request, message)

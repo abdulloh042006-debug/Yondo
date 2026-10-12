@@ -18,6 +18,7 @@ from yondo_api.companions.models import (
     CompanionService,
 )
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.notifications.service import enqueue_booking_notice
 
 router = APIRouter(prefix='/bookings', tags=['bookings'])
 RESERVING_STATUSES = (
@@ -183,6 +184,9 @@ async def create_booking(
     system_message = append_system_message(
         session, booking.id, 'booking_requested', {'status': booking.status}
     )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_requested', system_message.id,
+                                 actor_id=principal.user.id)
     try:
         await session.commit()
     except IntegrityError as exc:
@@ -255,6 +259,9 @@ async def accept_booking(
     system_message = append_system_message(
         session, booking.id, 'booking_accepted', {'status': booking.status}
     )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_accepted', system_message.id,
+                                 actor_id=principal.user.id)
     await session.commit()
     await session.refresh(booking)
     await session.refresh(system_message)
@@ -282,6 +289,9 @@ async def decline_booking(
     system_message = append_system_message(
         session, booking.id, 'booking_declined', {'status': booking.status}
     )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_declined', system_message.id,
+                                 actor_id=principal.user.id)
     await session.commit()
     await session.refresh(booking)
     await session.refresh(system_message)
@@ -311,6 +321,9 @@ async def cancel_booking(
     system_message = append_system_message(
         session, booking.id, 'booking_cancelled', {'status': booking.status}
     )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_cancelled', system_message.id,
+                                 actor_id=principal.user.id)
     await session.commit()
     await session.refresh(booking)
     await session.refresh(system_message)
