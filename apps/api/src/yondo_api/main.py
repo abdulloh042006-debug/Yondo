@@ -7,6 +7,7 @@ import redis.asyncio as redis
 from anyio import CapacityLimiter
 from fastapi import FastAPI
 
+from yondo_api.admin.router import router as admin_router
 from yondo_api.api.errors import install_exception_handlers
 from yondo_api.api.health import DatabaseHealthCheck, RedisHealthCheck, public_router
 from yondo_api.api.middleware import RequestContextMiddleware
@@ -29,10 +30,14 @@ from yondo_api.companions.router import router as companion_router
 from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
 from yondo_api.discovery.router import router as discovery_router
+from yondo_api.gifts.router import router as gifts_router
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
+from yondo_api.meetings.router import router as meetings_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
+from yondo_api.reviews.router import router as reviews_router
+from yondo_api.safety.router import router as safety_router
 
 
 def create_application(
@@ -106,6 +111,11 @@ def create_application(
         bookings_router,
         payments_router,
         chat_router,
+        gifts_router,
+        admin_router,
+        safety_router,
+        reviews_router,
+        meetings_router,
     ):
         app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app

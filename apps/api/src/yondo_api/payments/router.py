@@ -26,15 +26,23 @@ async def create_checkout(
     session: Session,
     idempotency_key: str = Header(alias='Idempotency-Key', min_length=8, max_length=128),
 ):
-    booking = await session.get(Booking, booking_id)
+    booking = await session.scalar(
+        select(Booking)
+        .where(Booking.id == booking_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if booking is None:
         raise ApplicationError('booking_not_found', 'Booking not found', 404)
     is_customer, _ = await _participant(session, booking, principal.user.id)
+    customer_id = principal.user.id
     if not is_customer:
         raise ApplicationError('customer_role_required', 'Only the customer can pay', 403)
+    if booking.status != BookingStatus.ACCEPTED:
+        raise ApplicationError('booking_not_payable', 'Only an accepted booking can be paid', 409)
     existing = await session.scalar(
         select(Payment).where(
-            Payment.customer_id == principal.user.id,
+            Payment.customer_id == customer_id,
             Payment.idempotency_key == idempotency_key,
         )
     )
@@ -58,9 +66,11 @@ async def create_checkout(
                 'payment_configuration_unavailable', 'Platform fee is not configured', 503
             )
         fee = platform_fee(booking.price_minor, fee_bps)
+        if booking.price_minor + fee > 9_223_372_036_854_775_807:
+            raise ApplicationError('payment_amount_overflow', 'Payment amount is too large', 422)
         payment = Payment(
             booking_id=booking.id,
-            customer_id=principal.user.id,
+            customer_id=customer_id,
             idempotency_key=idempotency_key,
             status=PaymentStatus.CREATING,
             subtotal_minor=booking.price_minor,
@@ -75,7 +85,7 @@ async def create_checkout(
             await session.rollback()
             payment = await session.scalar(
                 select(Payment).where(
-                    Payment.customer_id == principal.user.id,
+                    Payment.customer_id == customer_id,
                     Payment.idempotency_key == idempotency_key,
                 )
             )
@@ -86,6 +96,8 @@ async def create_checkout(
             if payment.status != PaymentStatus.CREATING:
                 return payment
 
+    if booking.status != BookingStatus.ACCEPTED:
+        raise ApplicationError('booking_not_payable', 'Booking is not payable', 409)
     provider = request.app.state.payment_provider
     try:
         checkout = await provider.create_checkout(
@@ -145,9 +157,17 @@ async def payment_webhook(request: Request, session: Session):
     if booking is None:
         raise ApplicationError('booking_not_found', 'Booking not found', 404)
     try:
+        was_confirmed = booking.status == BookingStatus.CONFIRMED
+        already_paid = payment.status == PaymentStatus.SUCCEEDED
         applied = await apply_payment_event(session, payment, booking, event.event_id, event.status)
         system_message = None
-        if applied and event.status == 'succeeded' and booking.status == BookingStatus.CONFIRMED:
+        if (
+            applied
+            and not already_paid
+            and not was_confirmed
+            and event.status == 'succeeded'
+            and booking.status == BookingStatus.CONFIRMED
+        ):
             system_message = append_system_message(
                 session, booking.id, 'payment_confirmed', {'status': booking.status}
             )

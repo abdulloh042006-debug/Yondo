@@ -38,6 +38,7 @@ class Payment(TimestampMixin, Base):
             name='ck_payment_amounts',
         ),
         UniqueConstraint('customer_id', 'idempotency_key', name='uq_payment_idempotency'),
+        Index('uq_payment_single_booking', 'booking_id', unique=True),
         Index(
             'uq_successful_payment_per_booking',
             'booking_id',

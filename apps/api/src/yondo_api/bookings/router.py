@@ -37,8 +37,16 @@ async def _active_customer(principal: Principal, session: Session) -> User:
     return user
 
 
-async def _booking(session: Session, booking_id: UUID) -> Booking:
-    booking = await session.get(Booking, booking_id)
+async def _booking(session: Session, booking_id: UUID, *, lock: bool = False) -> Booking:
+    if lock:
+        booking = await session.scalar(
+            select(Booking)
+            .where(Booking.id == booking_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    else:
+        booking = await session.get(Booking, booking_id)
     if booking is None:
         raise ApplicationError('booking_not_found', 'Booking not found', 404)
     return booking
@@ -103,6 +111,14 @@ async def create_booking(
             )
         ),
     )
+    # Profile owner edits use the same profile lock; refresh after acquiring it.
+    await session.refresh(service_item)
+    await session.refresh(profile)
+    await _public_profile(session, profile.id, request)
+    if service_item.profile_id != profile.id:
+        raise ApplicationError('companion_service_not_found', 'Service not found', 404)
+    if service_item.unit_minutes <= 0:
+        raise ApplicationError('invalid_booking_duration', 'Invalid pricing unit', 422)
     if payload.duration_minutes % service_item.unit_minutes:
         raise ApplicationError(
             'invalid_booking_duration',
@@ -133,6 +149,19 @@ async def create_booking(
     if await session.scalar(overlap) is not None:
         raise ApplicationError('booking_time_unavailable', 'That time is already reserved', 409)
     units = payload.duration_minutes // service_item.unit_minutes
+    if service_item.price_minor * units > 9_223_372_036_854_775_807:
+        raise ApplicationError('booking_price_overflow', 'Booking price is too large', 422)
+    from yondo_api.safety.service import blocked_between
+
+    companion_id = await session.scalar(
+        select(CompanionApplication.user_id).where(
+            CompanionApplication.id == profile.application_id
+        )
+    )
+    if companion_id == customer.id:
+        raise ApplicationError('self_booking_forbidden', 'Cannot book own service', 403)
+    if await blocked_between(session, customer.id, companion_id):
+        raise ApplicationError('booking_blocked', 'Booking is unavailable', 403)
     booking = Booking(
         customer_id=customer.id,
         profile_id=profile.id,
@@ -180,11 +209,21 @@ async def list_bookings(
         .where(CompanionProfile.id == Booking.profile_id)
         .scalar_subquery()
     )
+    user = await session.get(User, principal.user.id)
+    if user is None or user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
+    customer_allowed = await session.get(UserRole, (user.id, UserRoleType.CUSTOMER))
+    companion_allowed = await session.get(UserRole, (user.id, UserRoleType.COMPANION))
+    if customer_allowed is None and companion_allowed is None:
+        raise ApplicationError('account_role_required', 'Booking role required', 403)
+    predicates = []
+    if customer_allowed is not None:
+        predicates.append(Booking.customer_id == user.id)
+    if companion_allowed is not None:
+        predicates.append(companion_user_id == user.id)
     query = (
         select(Booking)
-        .where(
-            or_(Booking.customer_id == principal.user.id, companion_user_id == principal.user.id)
-        )
+        .where(or_(*predicates))
         .order_by(Booking.starts_at.desc(), Booking.id)
         .offset(offset)
         .limit(limit)
@@ -203,7 +242,7 @@ async def get_booking(booking_id: UUID, principal: Principal, session: Session):
 async def accept_booking(
     booking_id: UUID, request: Request, principal: Principal, session: Session
 ):
-    booking = await _booking(session, booking_id)
+    booking = await _booking(session, booking_id, lock=True)
     _, is_companion = await _participant(session, booking, principal.user.id)
     if not is_companion:
         raise ApplicationError('companion_role_required', 'Only the companion can accept', 403)
@@ -231,7 +270,7 @@ async def decline_booking(
     principal: Principal,
     session: Session,
 ):
-    booking = await _booking(session, booking_id)
+    booking = await _booking(session, booking_id, lock=True)
     _, is_companion = await _participant(session, booking, principal.user.id)
     if not is_companion:
         raise ApplicationError('companion_role_required', 'Only the companion can decline', 403)
@@ -258,7 +297,7 @@ async def cancel_booking(
     principal: Principal,
     session: Session,
 ):
-    booking = await _booking(session, booking_id)
+    booking = await _booking(session, booking_id, lock=True)
     await _participant(session, booking, principal.user.id)
     if booking.status not in {
         BookingStatus.PENDING,

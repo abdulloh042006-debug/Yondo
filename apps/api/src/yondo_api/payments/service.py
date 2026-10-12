@@ -64,7 +64,7 @@ async def apply_payment_event(
     session.add(
         PaymentEventReceipt(payment_id=payment.id, provider_event_id=event_id, status=event_status)
     )
-    if event_status == 'succeeded':
+    if event_status == 'succeeded' and payment.status != PaymentStatus.SUCCEEDED:
         payment.status = PaymentStatus.SUCCEEDED
         if booking.status == BookingStatus.ACCEPTED:
             booking.status = BookingStatus.CONFIRMED

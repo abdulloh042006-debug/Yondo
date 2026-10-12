@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query, Request, Response
 from sqlalchemy import exists, func, or_, select
 
 from yondo_api.api.errors import ApplicationError
+from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.companions import service as companion_service
 from yondo_api.companions.dependencies import Principal, Session
 from yondo_api.companions.integrations import IdentityEligibility
@@ -28,6 +29,7 @@ from yondo_api.discovery.schemas import (
     FavoriteResponse,
 )
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.reviews.models import BookingReview
 
 router = APIRouter(prefix='/discovery', tags=['discovery'])
 
@@ -63,7 +65,16 @@ async def _card(session, profile: CompanionProfile, user: User) -> CompanionCard
             .order_by(CompanionPhoto.position)
         )
     )
+    rating, review_count = (
+        await session.execute(
+            select(func.avg(BookingReview.stars), func.count(BookingReview.id)).where(
+                BookingReview.reviewee_id == user.id
+            )
+        )
+    ).one()
     return CompanionCard(
+        rating=round(float(rating), 2) if rating is not None else None,
+        review_count=review_count,
         id=profile.id,
         display_name=profile.display_name,
         bio=profile.bio,
@@ -97,6 +108,7 @@ async def search_companions(
     gender: str | None = Query(default=None, max_length=64),
     age_min: int | None = Query(default=None, ge=18, le=120),
     age_max: int | None = Query(default=None, ge=18, le=120),
+    rating_min: int | None = Query(default=None, ge=1, le=5),
     service_code: str | None = Query(default=None, pattern=r'^[a-z][a-z0-9_]{0,63}$'),
     language: str | None = Query(default=None, max_length=64),
     interest: str | None = Query(default=None, max_length=64),
@@ -140,6 +152,13 @@ async def search_companions(
         )
     if city:
         statement = statement.where(func.lower(User.city) == city.strip().casefold())
+    if rating_min is not None:
+        real_rating = (
+            select(func.avg(BookingReview.stars))
+            .where(BookingReview.reviewee_id == User.id)
+            .scalar_subquery()
+        )
+        statement = statement.where(real_rating >= rating_min)
     if gender:
         statement = statement.where(User.gender.ilike(gender.strip()))
     if age_min is not None:
@@ -168,7 +187,20 @@ async def search_companions(
             CompanionAvailability.starts_at <= available_from,
             CompanionAvailability.ends_at >= available_until,
         )
-        statement = statement.where(exists(availability))
+        reservations = select(Booking.id).where(
+            Booking.profile_id == CompanionProfile.id,
+            Booking.status.in_(
+                (
+                    BookingStatus.PENDING,
+                    BookingStatus.ACCEPTED,
+                    BookingStatus.CONFIRMED,
+                    BookingStatus.ACTIVE,
+                )
+            ),
+            Booking.starts_at < available_until,
+            Booking.ends_at > available_from,
+        )
+        statement = statement.where(exists(availability), ~exists(reservations))
     statement = statement.order_by(CompanionProfile.id)
     rows = await _visible_rows(request, session, statement)
     if language:

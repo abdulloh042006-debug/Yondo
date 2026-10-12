@@ -70,6 +70,15 @@ async def send_message(
     booking = await _booking(session, booking_id, principal.user.id)
     if not booking_chat_enabled(booking):
         raise ApplicationError('chat_closed', 'This booking chat is read-only', 409)
+    from yondo_api.safety.service import blocked_between
+
+    companion_id = await session.scalar(
+        select(CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.application_id == CompanionApplication.id)
+        .where(CompanionProfile.id == booking.profile_id)
+    )
+    if await blocked_between(session, booking.customer_id, companion_id):
+        raise ApplicationError('chat_blocked', 'Chat is unavailable', 403)
     message = ChatMessage(
         booking_id=booking.id,
         sender_id=principal.user.id,
@@ -200,6 +209,15 @@ async def chat_socket(websocket: WebSocket, booking_id: UUID, ticket: str = Quer
         )
         if row is None:
             await websocket.close(code=4401)
+            return
+        booking = await session.get(Booking, booking_id)
+        if booking is None:
+            await websocket.close(code=4403)
+            return
+        try:
+            await _participant(session, booking, row.user_id)
+        except ApplicationError:
+            await websocket.close(code=4403)
             return
         row.consumed_at = now_utc()
         await session.commit()

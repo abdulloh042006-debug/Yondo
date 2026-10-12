@@ -37,6 +37,8 @@ class CompanionCard(BaseModel):
     languages: list[str]
     interests: list[str]
     verified: bool = True
+    rating: float | None = None
+    review_count: int = 0
     services: list[DiscoveryService]
     photos: list[DiscoveryPhoto]
 
