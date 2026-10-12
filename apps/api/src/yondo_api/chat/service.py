@@ -23,6 +23,7 @@ def append_system_message(
         body=code.replace('_', ' '),
         payload=payload or {},
         system_code=code,
+        created_at=now_utc(),
     )
     session.add(message)
     return message

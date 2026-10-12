@@ -85,6 +85,7 @@ async def send_message(
         sender_id=principal.user.id,
         kind=payload.kind,
         body=payload.body,
+        created_at=now_utc(),
     )
     session.add(message)
     await session.flush()

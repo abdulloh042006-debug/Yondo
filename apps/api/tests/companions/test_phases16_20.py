@@ -157,8 +157,18 @@ async def test_notification_delivery_and_owner_read_isolation(prepared):
         json={'kind': 'text', 'body': 'Hello companion'},
     )
     assert sent.status_code == 201, sent.text
+    chronological = await client.get(
+        f'/api/v1/chat/bookings/{bid}/messages', headers=e['owner']
+    )
+    assert chronological.status_code == 200
+    assert [row['kind'] for row in chronological.json()] == ['system', 'system', 'text']
+    assert [row['created_at'] for row in chronological.json()] == sorted(
+        row['created_at'] for row in chronological.json()
+    )
     owner_notices = await client.get('/api/v1/notifications', headers=e['owner'])
-    assert {n['kind'] for n in owner_notices.json()} == {'booking_requested', 'chat_message'}
+    assert [n['kind'] for n in owner_notices.json()] == [
+        'chat_message', 'booking_requested'
+    ]
     assert (
         await client.get('/api/v1/notifications', headers=e['customer'],
                          params={'unread_only': True})

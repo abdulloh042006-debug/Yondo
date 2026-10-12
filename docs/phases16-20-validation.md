@@ -73,3 +73,10 @@ Do not equate endpoint implementations with completed user-facing product phases
 - Local Docker Linux service is stopped; native PostgreSQL tests await CI.
 - CI YAML adds branch builds and PostgreSQL migration/exclusion/concurrency job; unverified until GitHub Actions executes.
 - Final full-suite rerun with all eight new tests: **173 passed, 6 skipped**, exit code 0; only a Starlette/httpx deprecation warning remained.
+
+## GitHub Actions follow-up
+
+- Initial run for commit c21031c: PostgreSQL migrations/schema/concurrency PASS; Linux API 172 passed, 6 skipped, and one failing chat chronological-order assertion.
+- Root cause: SQLite second-resolution database defaults created timestamp ties; random UUID tie-breaking could reorder chat messages.
+- Fix: explicit UTC microsecond timestamps for system/user messages and in-app notifications; stronger chronological regression assertion.
+- After fix, targeted chat + Phase 16–20 suite: 10 passed, Ruff PASS. Follow-up Linux CI required.

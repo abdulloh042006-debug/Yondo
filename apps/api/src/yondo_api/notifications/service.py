@@ -1,4 +1,5 @@
 """Durable in-app notifications committed with the triggering transaction."""
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -33,4 +34,5 @@ async def enqueue_booking_notice(
             kind=kind,
             source_key=f'{kind}:{source_id}',
             details={'booking_id': str(booking.id)},
+            created_at=datetime.now(UTC),
         ))
