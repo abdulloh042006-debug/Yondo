@@ -171,3 +171,75 @@ async def test_payment_requires_https_checkout_url(prepared):
             select(Payment).where(Payment.booking_id == UUID(booking_id))
         )
         assert payment.status == PaymentStatus.CREATING
+
+
+
+@pytest.mark.asyncio
+async def test_confirmed_cancellation_flags_paid_booking_for_manual_refund(prepared):
+    e, client = prepared, prepared['client']
+    service = await setup_bookable_companion(e)
+    booking_id = await accepted_booking(e, service)
+    provider = FakePaymentProvider()
+    e['app'].state.payment_provider = provider
+    e['app'].state.settings = e['app'].state.settings.model_copy(
+        update={'platform_fee_bps': 0}
+    )
+    checkout = await client.post(
+        f'/api/v1/payments/bookings/{booking_id}',
+        headers={**e['customer'], 'Idempotency-Key': 'refund-review-after-success'},
+    )
+    assert checkout.status_code == 201, checkout.text
+    assert (await client.post('/api/v1/payments/webhook', content=b'verified')).status_code == 204
+    cancelled = await client.post(
+        f'/api/v1/bookings/{booking_id}/cancel', headers=e['customer'], json={}
+    )
+    assert cancelled.status_code == 200, cancelled.text
+    assert cancelled.json()['status'] == 'cancelled'
+    async with e['app'].state.db_session_factory() as session:
+        payment = await session.get(Payment, UUID(checkout.json()['id']))
+        assert payment.status == PaymentStatus.SUCCEEDED
+        assert payment.refund_required is True
+    assert (await client.post('/api/v1/payments/webhook', content=b'verified')).status_code == 204
+    async with e['app'].state.db_session_factory() as session:
+        payment = await session.get(Payment, UUID(checkout.json()['id']))
+        assert payment.refund_required is True
+
+
+@pytest.mark.asyncio
+async def test_provider_response_after_cancel_never_returns_chargeable_link(prepared):
+    e, client = prepared, prepared['client']
+    service = await setup_bookable_companion(e)
+    booking_id = await accepted_booking(e, service)
+
+    class CancellingProvider(FakePaymentProvider):
+        async def create_checkout(self, **kwargs):
+            async with e['app'].state.db_session_factory() as session:
+                booking = await session.get(Booking, UUID(booking_id))
+                booking.status = BookingStatus.CANCELLED
+                await session.commit()
+            return await super().create_checkout(**kwargs)
+
+    provider = CancellingProvider()
+    e['app'].state.payment_provider = provider
+    e['app'].state.settings = e['app'].state.settings.model_copy(
+        update={'platform_fee_bps': 0}
+    )
+    checkout = await client.post(
+        f'/api/v1/payments/bookings/{booking_id}',
+        headers={**e['customer'], 'Idempotency-Key': 'canceled-during-provider-call'},
+    )
+    assert checkout.status_code == 409, checkout.text
+    assert 'https://pay.example' not in checkout.text
+    async with e['app'].state.db_session_factory() as session:
+        payment = await session.scalar(
+            select(Payment).where(Payment.booking_id == UUID(booking_id))
+        )
+        assert payment.provider_reference == 'provider-1'
+        assert payment.status == PaymentStatus.PENDING
+    assert (await client.post('/api/v1/payments/webhook', content=b'verified')).status_code == 204
+    async with e['app'].state.db_session_factory() as session:
+        payment = await session.scalar(
+            select(Payment).where(Payment.booking_id == UUID(booking_id))
+        )
+        assert payment.status == PaymentStatus.SUCCEEDED
+        assert payment.refund_required is True

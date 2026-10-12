@@ -114,10 +114,17 @@ async def create_checkout(
     parsed_checkout_url = urlsplit(checkout.checkout_url)
     if parsed_checkout_url.scheme != 'https' or not parsed_checkout_url.netloc:
         raise ApplicationError('payment_provider_unavailable', 'Checkout could not be created', 503)
+    booking = await session.scalar(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+        .execution_options(populate_existing=True)
+    )
     payment.provider_reference = checkout.provider_reference
     payment.checkout_url = checkout.checkout_url
     payment.status = PaymentStatus.PENDING
     await session.commit()
+    if booking is None or booking.status != BookingStatus.ACCEPTED:
+        # Keep provider reference for late webhooks, but never return a checkout URL.
+        raise ApplicationError('booking_not_payable', 'Booking was cancelled', 409)
     await session.refresh(payment)
     return payment
 
@@ -149,14 +156,23 @@ async def payment_webhook(request: Request, session: Session):
         ) from exc
     if event.status not in {'succeeded', 'failed'}:
         raise ApplicationError('invalid_payment_event', 'Payment event status is invalid', 422)
-    payment = await session.scalar(
-        select(Payment).where(Payment.provider_reference == event.provider_reference)
+    booking_id = await session.scalar(
+        select(Payment.booking_id).where(Payment.provider_reference == event.provider_reference)
     )
-    if payment is None:
+    if booking_id is None:
         raise ApplicationError('payment_not_found', 'Payment not found', 404)
-    booking = await session.get(Booking, payment.booking_id)
+    booking = await session.scalar(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if booking is None:
         raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    payment = await session.scalar(
+        select(Payment).where(Payment.provider_reference == event.provider_reference)
+        .with_for_update().execution_options(populate_existing=True)
+    )
+    if payment is None or payment.booking_id != booking.id:
+        raise ApplicationError('payment_not_found', 'Payment not found', 404)
     try:
         was_confirmed = booking.status == BookingStatus.CONFIRMED
         already_paid = payment.status == PaymentStatus.SUCCEEDED

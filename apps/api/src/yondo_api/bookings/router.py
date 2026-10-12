@@ -19,6 +19,7 @@ from yondo_api.companions.models import (
 )
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 from yondo_api.notifications.service import enqueue_booking_notice
+from yondo_api.payments.models import Payment, PaymentStatus
 
 router = APIRouter(prefix='/bookings', tags=['bookings'])
 RESERVING_STATUSES = (
@@ -317,6 +318,11 @@ async def cancel_booking(
         raise ApplicationError(
             'invalid_booking_transition', 'This booking can no longer be cancelled', 409
         )
+    payment = await session.scalar(
+        select(Payment).where(Payment.booking_id == booking.id).with_for_update()
+    )
+    if payment is not None and payment.status == PaymentStatus.SUCCEEDED:
+        payment.refund_required = True  # Manual reconciliation, not an automatic refund.
     booking.status = BookingStatus.CANCELLED
     system_message = append_system_message(
         session, booking.id, 'booking_cancelled', {'status': booking.status}
