@@ -1,11 +1,12 @@
+import asyncio
 from uuid import UUID
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.models.user import User
-from yondo_api.payments.models import CompanionPayout, Payment, PaymentStatus
+from yondo_api.payments.models import CompanionPayout, Payment, PaymentEventReceipt, PaymentStatus
 from yondo_api.payments.provider import CheckoutSession, PaymentEvent
 from yondo_api.payments.service import release_payout_for_completed_booking
 
@@ -243,3 +244,41 @@ async def test_provider_response_after_cancel_never_returns_chargeable_link(prep
         )
         assert payment.status == PaymentStatus.SUCCEEDED
         assert payment.refund_required is True
+
+@pytest.mark.asyncio
+async def test_postgres_concurrent_duplicate_payment_webhooks_are_idempotent(prepared):
+    e, client = prepared, prepared['client']
+    if e['app'].state.db_engine.dialect.name != 'postgresql':
+        pytest.skip('Requires native PostgreSQL row locks and transactions')
+
+    service = await setup_bookable_companion(e)
+    booking_id = await accepted_booking(e, service)
+    provider = FakePaymentProvider()
+    provider.event = PaymentEvent('concurrent-event-001', 'provider-1', 'succeeded')
+    e['app'].state.payment_provider = provider
+    e['app'].state.settings = e['app'].state.settings.model_copy(
+        update={'platform_fee_bps': 0}
+    )
+    checkout = await client.post(
+        f'/api/v1/payments/bookings/{booking_id}',
+        headers={**e['customer'], 'Idempotency-Key': 'concurrent-webhook-001'},
+    )
+    assert checkout.status_code == 201, checkout.text
+
+    responses = await asyncio.gather(
+        client.post('/api/v1/payments/webhook', content=b'concurrent-event'),
+        client.post('/api/v1/payments/webhook', content=b'concurrent-event'),
+    )
+    assert [response.status_code for response in responses] == [204, 204]
+
+    async with e['app'].state.db_session_factory() as session:
+        payment = await session.get(Payment, UUID(checkout.json()['id']))
+        booking = await session.get(Booking, UUID(booking_id))
+        receipt_count = await session.scalar(
+            select(func.count(PaymentEventReceipt.id)).where(
+                PaymentEventReceipt.payment_id == payment.id
+            )
+        )
+        assert payment.status == PaymentStatus.SUCCEEDED
+        assert booking.status == BookingStatus.CONFIRMED
+        assert receipt_count == 1
