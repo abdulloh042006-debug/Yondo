@@ -70,4 +70,8 @@ jobs:
         run: python -m alembic check
       - name: Exercise concurrency constraints
         run: |
-          python -m pytest -q             tests/companions/test_constraints.py::test_postgres_exclusion_constraint_enforces_direct_inserts             tests/companions/test_constraints.py::test_postgres_concurrent_inserts_cannot_overlap
+          python -m pytest -q \
+            tests/companions/test_constraints.py::test_postgres_exclusion_constraint_enforces_direct_inserts \
+            tests/companions/test_constraints.py::test_postgres_concurrent_inserts_cannot_overlap \
+            tests/companions/test_manual_gifts_click_test.py::test_postgres_two_buyers_cannot_reserve_the_same_last_stock \
+            tests/companions/test_manual_gifts_click_test.py::test_postgres_repeated_same_customer_checkout_creates_only_one_order

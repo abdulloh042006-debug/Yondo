@@ -5,6 +5,7 @@ from yondo_api.chat import models as chat_models
 from yondo_api.companions import models as companion_models
 from yondo_api.discovery import models as discovery_models
 from yondo_api.gifts import models as gifts_models
+from yondo_api.gifts import orders_models as gift_order_models
 from yondo_api.meetings import models as meetings_models
 from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
@@ -15,6 +16,7 @@ from yondo_api.safety import models as safety_models
 
 __all__ = [
     'gifts_models',
+    'gift_order_models',
     'beta_models',
     'notifications_models',
     'admin_models',

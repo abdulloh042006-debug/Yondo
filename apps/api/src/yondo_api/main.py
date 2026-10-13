@@ -31,7 +31,9 @@ from yondo_api.companions.router import router as companion_router
 from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
 from yondo_api.discovery.router import router as discovery_router
+from yondo_api.gifts.click_test import router as click_test_router
 from yondo_api.gifts.router import router as gifts_router
+from yondo_api.gifts.test_orders import router as gift_test_orders_router
 from yondo_api.gifts.vendor import router as vendor_router
 from yondo_api.integration.router import router as integration_router
 from yondo_api.integrations.storage import ObjectStorage
@@ -117,6 +119,8 @@ def create_application(
         payments_router,
         chat_router,
         gifts_router,
+        gift_test_orders_router,
+        click_test_router,
         vendor_router,
         integration_router,
         notifications_router,

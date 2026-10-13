@@ -108,6 +108,10 @@ async def vendor_products(principal: Principal, session: Session):
 @router.put('/cart/{product_id}', response_model=CartRead)
 async def add_to_cart(product_id: UUID, payload: CartWrite, principal: Principal, session: Session):
     await require_role(principal, session, UserRoleType.CUSTOMER)
+    # Shared lock order with offline gift checkout: customer first, then product.
+    await session.scalar(
+        select(User.id).where(User.id == principal.user.id).with_for_update()
+    )
     item = await session.get(GiftProduct, product_id)
     if item is None or not item.published or item.stock < payload.quantity:
         raise ApplicationError('gift_unavailable', 'Gift is unavailable', 409)
@@ -149,6 +153,9 @@ async def cart(principal: Principal, session: Session):
 @router.delete('/cart/{product_id}', status_code=204)
 async def remove_from_cart(product_id: UUID, principal: Principal, session: Session):
     await require_role(principal, session, UserRoleType.CUSTOMER)
+    await session.scalar(
+        select(User.id).where(User.id == principal.user.id).with_for_update()
+    )
     existing = await session.scalar(
         select(GiftCartItem).where(
             GiftCartItem.customer_id == principal.user.id, GiftCartItem.product_id == product_id

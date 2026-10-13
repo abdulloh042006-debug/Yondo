@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
+    # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
+    click_test_enabled: bool = False
+    click_test_service_id: int | None = Field(default=None, gt=0)
+    click_test_secret: SecretStr = SecretStr('')
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -75,6 +79,18 @@ class Settings(BaseSettings):
         ):
             raise ValueError(
                 'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
+            )
+        return self
+
+    @model_validator(mode='after')
+    def validate_click_test_mode(self) -> Settings:
+        if self.click_test_enabled and (
+            self.environment not in {'test', 'development'}
+            or self.click_test_service_id is None
+            or len(self.click_test_secret.get_secret_value()) < 32
+        ):
+            raise ValueError(
+                'CLICK test mode requires a local environment, service ID and 32+ character key'
             )
         return self
 
