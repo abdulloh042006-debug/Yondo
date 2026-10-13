@@ -44,6 +44,7 @@ For a gift notice, use the test order detail ONLY in local testing.
 Emitted kinds:
 booking_requested, booking_accepted, booking_declined, booking_cancelled,
 payment_confirmed, chat_message, review_reminder,
+meeting_reminder_24h, meeting_reminder_1h,
 gift_order_created, gift_test_paid, gift_preparing,
 gift_out_for_delivery, gift_delivered, gift_cancelled.
 

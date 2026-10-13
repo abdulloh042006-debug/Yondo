@@ -14,7 +14,8 @@ class UserNotification(TimestampMixin, Base):
             "kind IN ('booking_requested','booking_accepted','booking_declined',"
             "'booking_cancelled','payment_confirmed','chat_message',"
             "'review_reminder','gift_order_created','gift_test_paid','gift_preparing',"
-            "'gift_out_for_delivery','gift_delivered','gift_cancelled')",
+            "'gift_out_for_delivery','gift_delivered','gift_cancelled',"
+            "'meeting_reminder_24h','meeting_reminder_1h')",
             name='ck_user_notification_kind',
         ),
         UniqueConstraint('recipient_id', 'source_key', name='uq_notice_recipient_source'),
