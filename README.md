@@ -194,3 +194,8 @@ Toshkent → Samarqand → Andijon → Farg‘ona → Buxoro → boshqa shaharla
 Phase 4 backend foundation is located in [`apps/api`](./apps/api). Local PostgreSQL, Redis,
 and S3-compatible storage are defined in [`compose.yaml`](./compose.yaml). See
 [`docs/development.md`](./docs/development.md) for setup and verification commands.
+
+
+## Current implementation status
+
+See [`docs/project-status-2026-10-13.md`](docs/project-status-2026-10-13.md) for the completed Phase 6 work, validation evidence, remaining production requirements, known risks, and explicitly out-of-scope phases.

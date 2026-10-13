@@ -1,0 +1,3 @@
+include README.md alembic.ini
+recursive-include migrations *.py *.mako
+recursive-include tests *.py
