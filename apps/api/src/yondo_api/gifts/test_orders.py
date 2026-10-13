@@ -18,6 +18,7 @@ from yondo_api.gifts.models import GiftCartItem, GiftProduct
 from yondo_api.gifts.orders_models import GiftTestOrder, GiftTestOrderItem, GiftTestStatus
 from yondo_api.gifts.router import require_role
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.notifications.gifts import enqueue_gift_notice
 
 router = APIRouter(tags=['manual gift test orders'])
 MAX_MINOR = 9_223_372_036_854_775_807
@@ -210,6 +211,9 @@ async def create_test_order(
             )
         )
         await session.delete(cart_item)
+    await enqueue_gift_notice(
+        session, order, 'gift_order_created', actor_id=principal.user.id
+    )
     try:
         await session.commit()
     except IntegrityError as exc:
@@ -287,6 +291,9 @@ async def operator_update_test_status(
         await restore_test_stock(session, order)
     order.status = payload.status
     order.status_changed_by = admin.id
+    await enqueue_gift_notice(
+        session, order, f'gift_{payload.status}', actor_id=admin.id
+    )
     await session.commit()
     await session.refresh(order)
     return await order_payload(session, order)

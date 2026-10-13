@@ -31,6 +31,7 @@ from yondo_api.gifts.test_orders import (
     restore_test_stock,
 )
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.notifications.gifts import enqueue_gift_notice
 
 router = APIRouter(prefix='/gifts/click-test', tags=['CLICK offline test'])
 _MAX_BODY = 4096
@@ -195,11 +196,13 @@ async def _complete(fields: dict[str, str], session: Session, trans_id: int) -> 
     if int(fields['error']) != 0:
         await restore_test_stock(session, order)
         order.status = GiftTestStatus.CANCELLED
+        await enqueue_gift_notice(session, order, 'gift_cancelled')
         await session.commit()
         raise TestCallbackError(-9, 'Test payment cancelled')
     await _check_customer(session, order.customer_id)
     order.status = GiftTestStatus.TEST_PAID
     order.test_paid_at = datetime.now(UTC)
+    await enqueue_gift_notice(session, order, 'gift_test_paid')
     await session.commit()
     return trans_id
 
@@ -259,6 +262,12 @@ async def admin_simulate_click(
         order.status = GiftTestStatus.TEST_PAID
         order.test_paid_at = datetime.now(UTC)
     order.status_changed_by = admin.id
+    await enqueue_gift_notice(
+        session,
+        order,
+        'gift_cancelled' if payload.result == 'cancel' else 'gift_test_paid',
+        actor_id=admin.id,
+    )
     await session.commit()
     await session.refresh(order)
     return await order_payload(session, order)

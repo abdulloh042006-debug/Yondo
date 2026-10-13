@@ -74,4 +74,6 @@ jobs:
             tests/companions/test_constraints.py::test_postgres_exclusion_constraint_enforces_direct_inserts \
             tests/companions/test_constraints.py::test_postgres_concurrent_inserts_cannot_overlap \
             tests/companions/test_manual_gifts_click_test.py::test_postgres_two_buyers_cannot_reserve_the_same_last_stock \
-            tests/companions/test_manual_gifts_click_test.py::test_postgres_repeated_same_customer_checkout_creates_only_one_order
+            tests/companions/test_manual_gifts_click_test.py::test_postgres_repeated_same_customer_checkout_creates_only_one_order \
+            tests/companions/test_notification_integration.py::test_gift_order_notifies_admin_without_leaking_customer_details \
+            tests/companions/test_notification_integration.py::test_simulated_gift_fulfillment_inbox_read_all_and_pagination

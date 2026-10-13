@@ -13,6 +13,7 @@ from yondo_api.chat.service import append_system_message, publish
 from yondo_api.companions.dependencies import Principal, Session
 from yondo_api.companions.models import CompanionApplication, CompanionProfile
 from yondo_api.meetings.models import MeetingAttendance
+from yondo_api.notifications.service import enqueue_booking_notice
 
 router = APIRouter(prefix='/meetings', tags=['meetings'])
 
@@ -158,6 +159,11 @@ async def end_meeting(booking_id: UUID, request: Request, principal: Principal, 
         'meeting_completed' if complete else 'meeting_end_acknowledged',
         {'status': booking.status},
     )
+    if complete:
+        await session.flush()
+        await enqueue_booking_notice(
+            session, booking, 'review_reminder', msg.id, recipients='both'
+        )
     await session.commit()
     await session.refresh(msg)
     await publish(request, msg)
