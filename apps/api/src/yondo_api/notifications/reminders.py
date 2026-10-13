@@ -95,7 +95,9 @@ def _notice_insert(
         stmt = sqlite_insert(UserNotification).values(**values)
     else:
         raise RuntimeError('Reminders require PostgreSQL or SQLite')
-    return stmt.on_conflict_do_nothing(index_elements=['recipient_id', 'source_key'])
+    return stmt.on_conflict_do_nothing(
+        index_elements=['recipient_id', 'source_key']
+    ).returning(UserNotification.id)
 
 
 async def sweep_meeting_reminders(
@@ -146,10 +148,10 @@ async def sweep_meeting_reminders(
             if not recipients:
                 continue
             for recipient in recipients:
-                result = await session.execute(
+                inserted_id = await session.scalar(
                     _notice_insert(session, booking, recipient, kind, lead, instant)
                 )
-                created += result.rowcount or 0
+                created += int(inserted_id is not None)
             await session.commit()
             processed += 1
     return ReminderSweepResult(len(candidates), created, processed)
