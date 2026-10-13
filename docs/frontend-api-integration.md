@@ -7,6 +7,8 @@ Base: codex/manual-gifts-click-test
 
 - API prefix: /api/v1; machine-readable schema: docs/openapi-v1.json
 - Development OpenAPI runtime: /openapi.json.
+- Regenerate after API changes: cd apps/api and run python export_openapi.py.
+- CI checks freshness with python export_openapi.py --check.
 - Auth: Authorization: Bearer <access_token>, opaque token (not assumed JWT).
 - OTP endpoint: POST /api/v1/auth/otp/request; demo OTP only in development/test.
 - Auth endpoints: /auth/otp/verify, /auth/refresh, /auth/logout, /auth/me.
