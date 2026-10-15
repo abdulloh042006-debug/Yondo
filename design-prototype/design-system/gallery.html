@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>YONDO — komponentlar galereyasi</title>
+<script>try{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}catch(e){}</script>
+<style>
+:root{
+  --c-bg:#F5F2EC;
+  --c-surface:#FFFFFF;
+  --c-surface-alt:#EDE9E1;
+  --c-border:#D6D1C7;
+  --c-border-strong:#8A857B;
+  --c-text:#111111;
+  --c-text-muted:#5A5750;
+  --c-accent:#E8501A;
+  --c-accent-text:#B53A0C;
+  --c-on-ink:#F5F2EC;
+  --c-ink:#111111;
+  --c-success:#1F7A4D;
+  --c-error:#B3261E;
+  --c-warning:#8A5A00;
+  --c-focus:#111111;
+  --font-display:'Space Grotesk','Inter',system-ui,sans-serif;--font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fs-display:32px;--lh-display:38px;
+  --fs-h1:26px;--lh-h1:32px;
+  --fs-h2:20px;--lh-h2:26px;
+  --fs-h3:17px;--lh-h3:24px;
+  --fs-body:16px;--lh-body:24px;
+  --fs-bodySm:14px;--lh-bodySm:20px;
+  --fs-caption:12px;--lh-caption:16px;
+  --sp-1:4px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:20px;
+  --sp-6:24px;
+  --sp-8:32px;
+  --sp-10:40px;
+  --sp-12:48px;
+  --sp-16:64px;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-xl:24px;
+  --r-pill:999px;
+  --sh-sm:0 1px 2px rgba(17,17,17,.08);
+  --sh-md:0 4px 12px rgba(17,17,17,.10);
+  --sh-sheet:0 -8px 24px rgba(17,17,17,.14);
+  --touch-min:44px;
+  --dur-fast:150ms;--dur-base:200ms;--dur-slow:300ms;--dur-page:400ms;--ease:cubic-bezier(0.22,1,0.36,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}
+@media (prefers-reduced-motion:reduce){:root{--dur-fast:0ms;--dur-base:0ms;--dur-slow:0ms;--dur-page:0ms}}
+/* breakpoints (use in @media): 360 390 430 768 1024 1440 */
+
+/* YONDO components.css — semantic layer over tokens.css. Class API is documented in design-system/components.md */
+:root{--bg:var(--c-bg);--sf:var(--c-surface);--sf2:var(--c-surface-alt);--bd:var(--c-border);--bs:var(--c-border-strong);--tx:var(--c-text);--mu:var(--c-text-muted);--ac:var(--c-accent);--at:var(--c-accent-text);--ink:var(--c-ink);--oi:var(--c-on-ink);--ok:var(--c-success);--er:var(--c-error);--wn:var(--c-warning);--ease:cubic-bezier(.22,1,.36,1);--maxw:480px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:calc(72px + env(safe-area-inset-top,0px));scroll-padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%} /* keeps focused/scrolled-to controls clear of the sticky top bar, fixed CTA bar and bottom nav (WCAG 2.4.11) */
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:var(--fs-body)/var(--lh-body) var(--font-ui);transition:background-color .2s;overflow-wrap:anywhere}
+#app{max-width:var(--maxw);margin:0 auto;min-height:100vh;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+@media(min-width:768px){:root{--maxw:640px}}@media(min-width:1024px){:root{--maxw:880px}}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--c-focus);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--font-display);letter-spacing:-.02em}h1{font-size:var(--fs-h1);line-height:var(--lh-h1)}h2{font-size:var(--fs-h2);line-height:var(--lh-h2)}h3{font-size:var(--fs-h3);line-height:var(--lh-h3)}
+p{margin:0}.mu{color:var(--mu)}.sm{font-size:var(--fs-bodySm);line-height:var(--lh-bodySm)}.cap{font-size:var(--fs-caption);line-height:var(--lh-caption)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pad{padding:var(--sp-4) var(--sp-5)}.row{display:flex;gap:var(--sp-3);align-items:center}.sp{justify-content:space-between}.col{display:flex;flex-direction:column;gap:var(--sp-3)}.wrap{flex-wrap:wrap}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--oi);padding:12px 16px;z-index:100}.skip:focus{left:8px}
+/* top bar + nav */
+.top{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--bd)}
+.top .ttl{flex:1;min-width:0}.top select{max-width:130px}
+.ib{width:44px;height:44px;border-radius:var(--r-md);border:1px solid var(--bd);background:var(--sf);display:grid;place-items:center;flex:none}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav>.navi{flex:1;max-width:120px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:12px;line-height:14px;color:var(--mu);text-align:center;padding:4px 2px}
+.navi[aria-current=page]{color:var(--tx);font-weight:600}.ni{font-size:20px;line-height:22px}
+/* buttons */
+.btn{min-height:48px;padding:0 var(--sp-5);border-radius:var(--r-md);border:1px solid var(--ink);background:var(--ink);color:var(--oi);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s var(--ease),opacity .15s;text-decoration:none}
+.btn:active{transform:scale(.98)}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.sec{background:transparent;color:var(--tx);border-color:var(--bs)}.btn.danger{background:transparent;color:var(--er);border-color:var(--er)}.btn.full{width:100%}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block;animation:rot .8s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}
+/* chips, tags, badges */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px var(--sp-5) 8px;scrollbar-width:none}.chips.w{flex-wrap:wrap;overflow:visible;padding:4px 0}
+.chip{flex:none;min-height:44px;padding:0 var(--sp-4);border-radius:999px;border:1px solid var(--bs);background:transparent;transition:background-color .15s,color .15s}.chip.on{background:var(--ink);color:var(--oi);border-color:var(--ink)}.chip:disabled{opacity:.45;text-decoration:line-through;cursor:not-allowed}
+.tg{display:inline-block;padding:2px 12px;border-radius:999px;background:var(--sf2);font-size:13px;line-height:20px}
+.bdg{display:inline-flex;gap:4px;align-items:center;font-size:12px;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:0 8px;min-height:22px;width:max-content}.bdg.off{color:var(--mu);border-color:var(--bs)}
+.demo{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--mu);border:1px dashed var(--bs);border-radius:6px;padding:0 6px;width:max-content}
+/* form */
+.fld{display:flex;flex-direction:column;gap:6px}.fld label{font-weight:600}
+input,select,textarea{width:100%;min-height:48px;border-radius:var(--r-md);border:1px solid var(--bs);background:var(--sf);padding:10px 14px}textarea{min-height:96px}
+input[type=checkbox],input[type=radio]{width:24px;min-height:24px;height:24px;flex:none}
+.fld.bad input,.fld.bad select,.fld.bad textarea{border-color:var(--er);border-width:2px}.err{color:var(--er);font-size:var(--fs-bodySm);line-height:var(--lh-bodySm)}
+.chk{display:flex;gap:12px;align-items:flex-start;min-height:44px;padding:8px 0}
+/* cards, avatar, alert, empty */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;display:flex;gap:14px;text-align:left;width:100%;transition:transform .15s var(--ease);min-width:0}.card.col{flex-direction:column;gap:6px}.card:active{transform:scale(.99)}button.card{font:inherit;color:inherit}
+.grow{flex:1;min-width:0}
+.av{width:72px;height:72px;border-radius:16px;display:grid;place-items:center;font:700 26px var(--font-display);color:#111;flex:none}.av.big{width:112px;height:112px;border-radius:24px;font-size:40px}
+.alert{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--bs);background:var(--sf);border-left-width:6px;border-radius:var(--r-md);padding:12px 14px}.alert.error{border-color:var(--er)}.alert.unavailable{border-color:var(--wn)}.alert.success{border-color:var(--ok)}.alert.info{border-color:var(--bs)}.alert-b{flex:1;min-width:200px}
+.empty{text-align:center;padding:32px 20px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.ban{margin:4px var(--sp-5) 8px;padding:8px 12px;border-radius:var(--r-md);background:var(--sf2);font-size:13px;line-height:18px}
+.list{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:768px){.list.g2{grid-template-columns:1fr 1fr}}
+.pl{display:flex;justify-content:space-between;gap:12px;padding:4px 0}.tot{font:700 22px var(--font-display);border-top:1px solid var(--bd);margin-top:8px;padding-top:10px}
+.lb{font-weight:600;margin:16px 0 4px}
+/* timeline + status */
+.stc{display:inline-block;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--sf2)}.stc.fl{animation:fl .25s var(--ease)}@keyframes fl{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tl{list-style:none;margin:0;padding:0;display:flex;gap:4px}.tl li{flex:1;min-width:0;overflow-wrap:normal;font-size:12px;line-height:16px;text-align:center;color:var(--mu);border-top:4px solid var(--bd);padding-top:6px;transition:border-color .3s var(--ease)}.tl li.done{border-top-color:var(--ink);color:var(--tx)}.tl li.cur{border-top-color:var(--ac);color:var(--tx);font-weight:600}
+/* messages */
+.m{max-width:85%;padding:10px 14px;border-radius:16px;animation:in .2s var(--ease)}.m.me{align-self:flex-end;background:var(--ink);color:var(--oi)}.m.her{align-self:flex-start;background:var(--sf2)}.m.sys{align-self:center;font-size:13px;color:var(--mu);text-align:center;background:none}.m.old{animation:none}
+/* dialog / sheet */
+dialog.sheet{border:0;padding:12px var(--sp-5) calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--tx);width:100%;max-width:var(--maxw);max-height:92vh;margin:auto auto 0;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .3s var(--ease)}
+dialog.sheet.in{transform:none}dialog.sheet::backdrop{background:rgba(0,0,0,.45)}@media(min-width:768px){dialog.sheet{margin:auto;border-radius:24px}}
+.gh{width:40px;height:4px;border-radius:2px;background:var(--bs);margin:0 auto 12px}
+.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--oi);padding:12px 16px;border-radius:var(--r-md);max-width:min(440px,92vw);font-size:14px;line-height:20px;transition:transform .2s var(--ease),opacity .2s;z-index:50;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+.offline{background:var(--wn);color:#fff;text-align:center;padding:6px 12px;font-size:14px}
+/* motion */
+.scr{animation:in .2s var(--ease)}.scr.na{animation:none}@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.up{animation:in .3s var(--ease) both;animation-delay:calc(var(--i,0)*40ms)}
+.sk{position:relative;overflow:hidden;background:var(--sf2);border-radius:16px;margin-bottom:12px}.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sh 1.2s linear infinite;transform:translateX(-100%)}@keyframes sh{to{transform:translateX(100%)}}
+.lg{color:var(--tx)}.lg .n{fill:var(--tx)}.lg .n.ac{fill:var(--ac)}
+.lg.an .d path{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .4s var(--ease) forwards}.lg.an .n{transform-box:fill-box;transform-origin:center;opacity:0;animation:pop .2s var(--ease) forwards}.lg.an .n1{animation-delay:.3s}.lg.an .n2{animation-delay:.35s}.lg.an .n3{animation-delay:.4s}
+@keyframes dr{to{stroke-dashoffset:0}}@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.ck{color:var(--ok)}.ck path,.ck circle{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .35s .1s var(--ease) forwards}
+.star{width:44px;height:44px;border:0;background:none;font-size:30px;color:var(--bs);transition:transform .15s var(--ease),color .15s}.star.on{color:var(--ac);transform:scale(1.1)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+::view-transition-group(*){animation-duration:.28s;animation-timing-function:var(--ease)}
+.bar-b{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--bg);border-top:1px solid var(--bd);padding:12px var(--sp-5)}.bar-b>div{max-width:var(--maxw);margin:0 auto}
+/* programmatic focus targets (headings, main, alerts) get no ring: they are not interactive */
+[tabindex="-1"]:focus{outline:none}
+.empty h2{font-size:var(--fs-h3);line-height:var(--lh-h3)}
+
+.gsec{padding:16px 20px;border-bottom:1px solid var(--bd)}.gbox{margin-top:12px}.navdemo .nav{position:static}.sws{display:flex;flex-wrap:wrap;gap:8px}.sw{display:flex;gap:8px;align-items:center;width:150px}.sw i{width:28px;height:28px;border-radius:6px;border:1px solid var(--bs);flex:none}
+</style></head><body>
+<div id="app"><main id="v"><div class="pad"><h1>Komponentlar galereyasi</h1><p class="mu sm">Manba: <code>design-system/components.css</code> va <code>prototype/src/components.js</code>.</p><button class="btn sec" id="gth" type="button">Mavzuni almashtirish</button></div><section class="gsec"><h2>Button</h2><p class="mu sm">Variants: primary, <code>sec</code>, <code>danger</code>. States: default, disabled, loading (aria-busy). Min height 48 px.</p><div class="gbox"><div class="col"><button type="button" class="btn" >Birlamchi</button> <button type="button" class="btn sec" >Ikkilamchi</button> <button type="button" class="btn danger" >Xavfli amal</button> <button type="button" class="btn" disabled>Nofaol</button> <button type="button" class="btn" disabled aria-busy="true"><span class="spin" role="status" aria-label="Yuklanmoqda"></span>Yuklanmoqda</button></div></div></section><section class="gsec"><h2>Chip</h2><p class="mu sm">Toggle filter. Uses <code>aria-pressed</code>. Min height 44 px.</p><div class="gbox"><div class="chips w"><button type="button" class="chip" aria-pressed="false">Tanlanmagan</button><button type="button" class="chip on" aria-pressed="true">Tanlangan</button><button type="button" class="chip" disabled aria-pressed="false">Band</button></div></div></section><section class="gsec"><h2>Verified / unverified</h2><p class="mu sm">Badge appears ONLY when the backend <code>verified</code> boolean is true. Lists show nothing for unverified; detail views may show the neutral explicit label.</p><div class="gbox"><div class="col"><div class="row"><span class="bdg"><span aria-hidden="true">✓</span> Tasdiqlangan</span> <span class="sm mu">verified: true</span></div><div class="row"><span class="bdg off">Tasdiqlanmagan</span> <span class="sm mu">verified: false (detail view)</span></div><div class="row"><span class="sm mu">verified: false (list) → nothing rendered</span></div></div></div></section><section class="gsec"><h2>Avatar, tag, DEMO marker</h2><p class="mu sm">Initial avatars (no fake photos). DEMO marks all sample data.</p><div class="gbox"><div class="row wrap"><span class="av" style="background:hsl(160 45% 78%)" aria-hidden="true">M</span> <span class="av big" style="background:hsl(30 45% 78%)" aria-hidden="true">J</span> <span class="tg">kitoblar</span> <span class="tg">kofe</span> <span class="demo">DEMO</span></div></div></section><section class="gsec"><h2>Field</h2><p class="mu sm">Label, hint, error. Error sets <code>aria-invalid</code> and <code>aria-describedby</code>.</p><div class="gbox"><div class="col"><div class="fld"><label for="g1">Ism <span aria-hidden="true">*</span></label><input type="text" id="g1" name="g1" required value="Madina"></div><div class="fld"><label for="g2">Telefon</label><input type="text" id="g2" name="g2" aria-describedby="g2-h" value=""><div class="cap mu" id="g2-h">Masalan, 90 123 45 67</div></div><div class="fld bad"><label for="g3">Ism <span aria-hidden="true">*</span></label><input type="text" id="g3" name="g3" aria-invalid="true" aria-describedby="g3-e" required value=""><div class="err" id="g3-e">Ismni kiriting.</div></div><div class="fld"><label for="g4">Tavsif</label><textarea id="g4" name="g4"  rows="3">Matn</textarea></div><div class="fld"><label for="g5">Til</label><select id="g5" name="g5" ><option value="uz">Oʻzbek</option><option value="ru">Rus</option></select></div></div></div></section><section class="gsec"><h2>Alert</h2><p class="mu sm">Errors and unavailability use <code>role="alert"</code>; info/success use <code>role="status"</code>. 503 uses the distinct <code>unavailable</code> kind, never styled as a declined payment.</p><div class="gbox"><div class="col"><div class="alert info" role="status"><div class="alert-b"><b>Eslatma</b><br>Maʼlumot xabari.</div></div><div class="alert success" role="status"><div class="alert-b"><b>Tayyor</b><br>Amal bajarildi.</div></div><div class="alert error" role="alert"><div class="alert-b"><b>Toʻlov amalga oshmadi</b><br>Toʻlov rad etildi. Bron saqlangan.</div></div><div class="alert unavailable" role="alert"><div class="alert-b"><b>Xizmat mavjud emas</b><br>Toʻlov tizimi vaqtincha mavjud emas.<div class="cap">Murojaat uchun kod: req-123</div></div><button type="button" class="btn sec" >Qayta urinish</button></div></div></div></section><section class="gsec"><h2>Card</h2><p class="mu sm">Static card or whole-card button (<code>a</code> option).</p><div class="gbox"><div class="col"><div class="card"><span class="grow col" style="gap:2px"><b>Statik karta</b><span class="sm mu">Matn</span></span></div><button type="button" class="card" data-a="x" ><span class="grow"><b>Bosiladigan karta</b></span><span aria-hidden="true">›</span></button></div></div></section><section class="gsec"><h2>Status and timeline</h2><p class="mu sm">Booking statuses from the backend enum; timeline shows the happy path.</p><div class="gbox"><div class="col"><div class="row wrap"><span class="stc" data-st="pending">Kutilmoqda</span><span class="stc" data-st="accepted">Qabul qilindi</span><span class="stc" data-st="confirmed">Tasdiqlandi</span><span class="stc" data-st="active">Uchrashuv faol</span><span class="stc" data-st="completed">Yakunlandi</span><span class="stc" data-st="cancelled">Bekor qilindi</span></div><ol class="tl" aria-label="Bron holati"><li class="done"><span>Soʻrov</span></li><li class="done"><span>Qabul</span></li><li class="cur" aria-current="step"><span>Tasdiq</span></li><li><span>Faol</span></li><li><span>Yakun</span></li></ol></div></div></section><section class="gsec"><h2>Empty, skeleton, spinner, check, logo</h2><p class="mu sm">Loading and result states. Motion respects <code>prefers-reduced-motion</code>.</p><div class="gbox"><div class="col"><div class="empty"><h2>Hali bronlar yoʻq</h2><p class="mu sm">Hamroh tanlab, birinchi bronni yarating.</p><button type="button" class="btn" >Hamroh topish</button></div><div class="sk" style="height:56px" aria-hidden="true"></div><div class="sk" style="height:56px" aria-hidden="true"></div><span class="sr">Yuklanmoqda</span><div class="row"><span class="spin" role="status" aria-label="Yuklanmoqda"></span> <svg class="ck" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle pathLength="1" cx="36" cy="36" r="30"/><path pathLength="1" d="M24 37l8 8 16-17"/></svg> <svg class="lg an" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Yondo"><g class="d" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path pathLength="1" d="M14 12 28 33Q31 37 32 40"/><path pathLength="1" d="M50 12 36 33Q33 37 32 40"/><path pathLength="1" d="M32 40v12"/></g><circle class="n n1" cx="14" cy="12" r="7"/><circle class="n n2 ac" cx="50" cy="12" r="7"/><circle class="n n3" cx="32" cy="55" r="5.5"/></svg></div></div></div></section><section class="gsec"><h2>Navigation bar</h2><p class="mu sm">Bottom nav, 4–5 items, ≥56 px tall, <code>aria-current="page"</code>.</p><div class="gbox"><div class="navdemo"><nav class="nav" aria-label="Asosiy navigatsiya"><a class="navi" href="#" aria-current="page"><span class="ni" aria-hidden="true">⌂</span><span>Bosh sahifa</span></a><a class="navi" href="#"><span class="ni" aria-hidden="true">⌕</span><span>Qidiruv</span></a><a class="navi" href="#"><span class="ni" aria-hidden="true">☰</span><span>Bronlar</span></a><a class="navi" href="#"><span class="ni" aria-hidden="true">✿</span><span>Sovgʻalar</span></a></nav></div></div></section><section class="gsec"><h2>Dialog / sheet</h2><p class="mu sm">Native <code>&lt;dialog&gt;</code> with <code>showModal()</code>: focus moves inside, Tab wraps, Escape closes, focus returns to the opener. Bottom sheet on mobile, centered on ≥768 px.</p><div class="gbox"><button class="btn sec" id="gdlg" type="button">Dialogni ochish</button></div></section><section class="gsec"><h2>Colour tokens</h2><p class="mu sm">Light and dark. Measured contrast pairs are in <code>tokens.json</code> → <code>contrast</code>.</p><div class="gbox"><div class="col"><b>Light</b><div class="sws"><span class="sw"><i style="background:#F5F2EC"></i><span class="cap">bg<br>#F5F2EC</span></span><span class="sw"><i style="background:#FFFFFF"></i><span class="cap">surface<br>#FFFFFF</span></span><span class="sw"><i style="background:#EDE9E1"></i><span class="cap">surfaceAlt<br>#EDE9E1</span></span><span class="sw"><i style="background:#D6D1C7"></i><span class="cap">border<br>#D6D1C7</span></span><span class="sw"><i style="background:#111111"></i><span class="cap">text<br>#111111</span></span><span class="sw"><i style="background:#5A5750"></i><span class="cap">textMuted<br>#5A5750</span></span><span class="sw"><i style="background:#E8501A"></i><span class="cap">accent<br>#E8501A</span></span><span class="sw"><i style="background:#B53A0C"></i><span class="cap">accentText<br>#B53A0C</span></span><span class="sw"><i style="background:#F5F2EC"></i><span class="cap">onInk<br>#F5F2EC</span></span><span class="sw"><i style="background:#111111"></i><span class="cap">ink<br>#111111</span></span><span class="sw"><i style="background:#1F7A4D"></i><span class="cap">success<br>#1F7A4D</span></span><span class="sw"><i style="background:#B3261E"></i><span class="cap">error<br>#B3261E</span></span><span class="sw"><i style="background:#8A5A00"></i><span class="cap">warning<br>#8A5A00</span></span><span class="sw"><i style="background:#111111"></i><span class="cap">focus<br>#111111</span></span><span class="sw"><i style="background:#8A857B"></i><span class="cap">borderStrong<br>#8A857B</span></span></div><b>Dark</b><div class="sws"><span class="sw"><i style="background:#111111"></i><span class="cap">bg<br>#111111</span></span><span class="sw"><i style="background:#1C1B1A"></i><span class="cap">surface<br>#1C1B1A</span></span><span class="sw"><i style="background:#262523"></i><span class="cap">surfaceAlt<br>#262523</span></span><span class="sw"><i style="background:#3A3835"></i><span class="cap">border<br>#3A3835</span></span><span class="sw"><i style="background:#F5F2EC"></i><span class="cap">text<br>#F5F2EC</span></span><span class="sw"><i style="background:#A9A69F"></i><span class="cap">textMuted<br>#A9A69F</span></span><span class="sw"><i style="background:#E8501A"></i><span class="cap">accent<br>#E8501A</span></span><span class="sw"><i style="background:#FF8A5C"></i><span class="cap">accentText<br>#FF8A5C</span></span><span class="sw"><i style="background:#111111"></i><span class="cap">onInk<br>#111111</span></span><span class="sw"><i style="background:#F5F2EC"></i><span class="cap">ink<br>#F5F2EC</span></span><span class="sw"><i style="background:#4CBF86"></i><span class="cap">success<br>#4CBF86</span></span><span class="sw"><i style="background:#FF8A80"></i><span class="cap">error<br>#FF8A80</span></span><span class="sw"><i style="background:#E0A93B"></i><span class="cap">warning<br>#E0A93B</span></span><span class="sw"><i style="background:#F5F2EC"></i><span class="cap">focus<br>#F5F2EC</span></span><span class="sw"><i style="background:#7D7A74"></i><span class="cap">borderStrong<br>#7D7A74</span></span></div></div></div></section></main></div>
+<dialog class="sheet" id="dlg" aria-labelledby="dt"><div class="gh"></div><h2 id="dt">Namuna dialog</h2><p class="mu" style="margin:8px 0 16px">Fokus dialog ichida, Esc yopadi.</p><div class="col"><button class="btn" type="button" id="gc1">Tasdiqlash</button><button class="btn sec" type="button" id="gc2">Bekor qilish</button></div></dialog>
+<script>
+const d=document.getElementById('dlg');document.getElementById('gdlg').onclick=()=>{d.showModal();requestAnimationFrame(()=>d.classList.add('in'))};
+const cl=()=>{d.classList.remove('in');setTimeout(()=>d.open&&d.close(),200)};document.getElementById('gc1').onclick=cl;document.getElementById('gc2').onclick=cl;d.addEventListener('click',e=>{if(e.target===d)cl()});d.addEventListener('close',()=>d.classList.remove('in'));
+document.getElementById('gth').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'};
+</script></body></html>

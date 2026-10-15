@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>YONDO — Gul va sovgʻalar (DEMO ekran)</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg stroke='%23111' stroke-width='9' fill='none' stroke-linecap='round'%3E%3Cpath d='M16 15 28 34Q31 38 32 40M48 15 36 34Q33 38 32 40M32 40v17'/%3E%3C/g%3E%3Ccircle cx='16' cy='15' r='9'/%3E%3Ccircle cx='48' cy='15' r='9' fill='%23E8501A'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<script>try{document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}catch(e){}location.hash='#/screen/gifts';</script>
+<style>
+:root{
+  --c-bg:#F5F2EC;
+  --c-surface:#FFFFFF;
+  --c-surface-alt:#EDE9E1;
+  --c-border:#D6D1C7;
+  --c-border-strong:#8A857B;
+  --c-text:#111111;
+  --c-text-muted:#5A5750;
+  --c-accent:#E8501A;
+  --c-accent-text:#B53A0C;
+  --c-on-ink:#F5F2EC;
+  --c-ink:#111111;
+  --c-success:#1F7A4D;
+  --c-error:#B3261E;
+  --c-warning:#8A5A00;
+  --c-focus:#111111;
+  --font-display:'Space Grotesk','Inter',system-ui,sans-serif;--font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fs-display:32px;--lh-display:38px;
+  --fs-h1:26px;--lh-h1:32px;
+  --fs-h2:20px;--lh-h2:26px;
+  --fs-h3:17px;--lh-h3:24px;
+  --fs-body:16px;--lh-body:24px;
+  --fs-bodySm:14px;--lh-bodySm:20px;
+  --fs-caption:12px;--lh-caption:16px;
+  --sp-1:4px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:20px;
+  --sp-6:24px;
+  --sp-8:32px;
+  --sp-10:40px;
+  --sp-12:48px;
+  --sp-16:64px;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-xl:24px;
+  --r-pill:999px;
+  --sh-sm:0 1px 2px rgba(17,17,17,.08);
+  --sh-md:0 4px 12px rgba(17,17,17,.10);
+  --sh-sheet:0 -8px 24px rgba(17,17,17,.14);
+  --touch-min:44px;
+  --dur-fast:150ms;--dur-base:200ms;--dur-slow:300ms;--dur-page:400ms;--ease:cubic-bezier(0.22,1,0.36,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}
+@media (prefers-reduced-motion:reduce){:root{--dur-fast:0ms;--dur-base:0ms;--dur-slow:0ms;--dur-page:0ms}}
+/* breakpoints (use in @media): 360 390 430 768 1024 1440 */
+
+/* YONDO components.css — semantic layer over tokens.css. Class API is documented in design-system/components.md */
+:root{--bg:var(--c-bg);--sf:var(--c-surface);--sf2:var(--c-surface-alt);--bd:var(--c-border);--bs:var(--c-border-strong);--tx:var(--c-text);--mu:var(--c-text-muted);--ac:var(--c-accent);--at:var(--c-accent-text);--ink:var(--c-ink);--oi:var(--c-on-ink);--ok:var(--c-success);--er:var(--c-error);--wn:var(--c-warning);--ease:cubic-bezier(.22,1,.36,1);--maxw:480px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:calc(72px + env(safe-area-inset-top,0px));scroll-padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%} /* keeps focused/scrolled-to controls clear of the sticky top bar, fixed CTA bar and bottom nav (WCAG 2.4.11) */
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:var(--fs-body)/var(--lh-body) var(--font-ui);transition:background-color .2s;overflow-wrap:anywhere}
+#app{max-width:var(--maxw);margin:0 auto;min-height:100vh;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+@media(min-width:768px){:root{--maxw:640px}}@media(min-width:1024px){:root{--maxw:880px}}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--c-focus);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--font-display);letter-spacing:-.02em}h1{font-size:var(--fs-h1);line-height:var(--lh-h1)}h2{font-size:var(--fs-h2);line-height:var(--lh-h2)}h3{font-size:var(--fs-h3);line-height:var(--lh-h3)}
+p{margin:0}.mu{color:var(--mu)}.sm{font-size:var(--fs-bodySm);line-height:var(--lh-bodySm)}.cap{font-size:var(--fs-caption);line-height:var(--lh-caption)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pad{padding:var(--sp-4) var(--sp-5)}.row{display:flex;gap:var(--sp-3);align-items:center}.sp{justify-content:space-between}.col{display:flex;flex-direction:column;gap:var(--sp-3)}.wrap{flex-wrap:wrap}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--oi);padding:12px 16px;z-index:100}.skip:focus{left:8px}
+/* top bar + nav */
+.top{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--bd)}
+.top .ttl{flex:1;min-width:0}.top select{max-width:130px}
+.ib{width:44px;height:44px;border-radius:var(--r-md);border:1px solid var(--bd);background:var(--sf);display:grid;place-items:center;flex:none}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav>.navi{flex:1;max-width:120px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:12px;line-height:14px;color:var(--mu);text-align:center;padding:4px 2px}
+.navi[aria-current=page]{color:var(--tx);font-weight:600}.ni{font-size:20px;line-height:22px}
+/* buttons */
+.btn{min-height:48px;padding:0 var(--sp-5);border-radius:var(--r-md);border:1px solid var(--ink);background:var(--ink);color:var(--oi);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s var(--ease),opacity .15s;text-decoration:none}
+.btn:active{transform:scale(.98)}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.sec{background:transparent;color:var(--tx);border-color:var(--bs)}.btn.danger{background:transparent;color:var(--er);border-color:var(--er)}.btn.full{width:100%}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block;animation:rot .8s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}
+/* chips, tags, badges */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px var(--sp-5) 8px;scrollbar-width:none}.chips.w{flex-wrap:wrap;overflow:visible;padding:4px 0}
+.chip{flex:none;min-height:44px;padding:0 var(--sp-4);border-radius:999px;border:1px solid var(--bs);background:transparent;transition:background-color .15s,color .15s}.chip.on{background:var(--ink);color:var(--oi);border-color:var(--ink)}.chip:disabled{opacity:.45;text-decoration:line-through;cursor:not-allowed}
+.tg{display:inline-block;padding:2px 12px;border-radius:999px;background:var(--sf2);font-size:13px;line-height:20px}
+.bdg{display:inline-flex;gap:4px;align-items:center;font-size:12px;font-weight:600;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:0 8px;min-height:22px;width:max-content}.bdg.off{color:var(--mu);border-color:var(--bs)}
+.demo{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--mu);border:1px dashed var(--bs);border-radius:6px;padding:0 6px;width:max-content}
+/* form */
+.fld{display:flex;flex-direction:column;gap:6px}.fld label{font-weight:600}
+input,select,textarea{width:100%;min-height:48px;border-radius:var(--r-md);border:1px solid var(--bs);background:var(--sf);padding:10px 14px}textarea{min-height:96px}
+input[type=checkbox],input[type=radio]{width:24px;min-height:24px;height:24px;flex:none}
+.fld.bad input,.fld.bad select,.fld.bad textarea{border-color:var(--er);border-width:2px}.err{color:var(--er);font-size:var(--fs-bodySm);line-height:var(--lh-bodySm)}
+.chk{display:flex;gap:12px;align-items:flex-start;min-height:44px;padding:8px 0}
+/* cards, avatar, alert, empty */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;display:flex;gap:14px;text-align:left;width:100%;transition:transform .15s var(--ease);min-width:0}.card.col{flex-direction:column;gap:6px}.card:active{transform:scale(.99)}button.card{font:inherit;color:inherit}
+.grow{flex:1;min-width:0}
+.av{width:72px;height:72px;border-radius:16px;display:grid;place-items:center;font:700 26px var(--font-display);color:#111;flex:none}.av.big{width:112px;height:112px;border-radius:24px;font-size:40px}
+.alert{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--bs);background:var(--sf);border-left-width:6px;border-radius:var(--r-md);padding:12px 14px}.alert.error{border-color:var(--er)}.alert.unavailable{border-color:var(--wn)}.alert.success{border-color:var(--ok)}.alert.info{border-color:var(--bs)}.alert-b{flex:1;min-width:200px}
+.empty{text-align:center;padding:32px 20px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.ban{margin:4px var(--sp-5) 8px;padding:8px 12px;border-radius:var(--r-md);background:var(--sf2);font-size:13px;line-height:18px}
+.list{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:768px){.list.g2{grid-template-columns:1fr 1fr}}
+.pl{display:flex;justify-content:space-between;gap:12px;padding:4px 0}.tot{font:700 22px var(--font-display);border-top:1px solid var(--bd);margin-top:8px;padding-top:10px}
+.lb{font-weight:600;margin:16px 0 4px}
+/* timeline + status */
+.stc{display:inline-block;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--sf2)}.stc.fl{animation:fl .25s var(--ease)}@keyframes fl{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tl{list-style:none;margin:0;padding:0;display:flex;gap:4px}.tl li{flex:1;min-width:0;overflow-wrap:normal;font-size:12px;line-height:16px;text-align:center;color:var(--mu);border-top:4px solid var(--bd);padding-top:6px;transition:border-color .3s var(--ease)}.tl li.done{border-top-color:var(--ink);color:var(--tx)}.tl li.cur{border-top-color:var(--ac);color:var(--tx);font-weight:600}
+/* messages */
+.m{max-width:85%;padding:10px 14px;border-radius:16px;animation:in .2s var(--ease)}.m.me{align-self:flex-end;background:var(--ink);color:var(--oi)}.m.her{align-self:flex-start;background:var(--sf2)}.m.sys{align-self:center;font-size:13px;color:var(--mu);text-align:center;background:none}.m.old{animation:none}
+/* dialog / sheet */
+dialog.sheet{border:0;padding:12px var(--sp-5) calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--tx);width:100%;max-width:var(--maxw);max-height:92vh;margin:auto auto 0;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .3s var(--ease)}
+dialog.sheet.in{transform:none}dialog.sheet::backdrop{background:rgba(0,0,0,.45)}@media(min-width:768px){dialog.sheet{margin:auto;border-radius:24px}}
+.gh{width:40px;height:4px;border-radius:2px;background:var(--bs);margin:0 auto 12px}
+.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--oi);padding:12px 16px;border-radius:var(--r-md);max-width:min(440px,92vw);font-size:14px;line-height:20px;transition:transform .2s var(--ease),opacity .2s;z-index:50;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+.offline{background:var(--wn);color:#fff;text-align:center;padding:6px 12px;font-size:14px}
+/* motion */
+.scr{animation:in .2s var(--ease)}.scr.na{animation:none}@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.up{animation:in .3s var(--ease) both;animation-delay:calc(var(--i,0)*40ms)}
+.sk{position:relative;overflow:hidden;background:var(--sf2);border-radius:16px;margin-bottom:12px}.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sh 1.2s linear infinite;transform:translateX(-100%)}@keyframes sh{to{transform:translateX(100%)}}
+.lg{color:var(--tx)}.lg .n{fill:var(--tx)}.lg .n.ac{fill:var(--ac)}
+.lg.an .d path{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .4s var(--ease) forwards}.lg.an .n{transform-box:fill-box;transform-origin:center;opacity:0;animation:pop .2s var(--ease) forwards}.lg.an .n1{animation-delay:.3s}.lg.an .n2{animation-delay:.35s}.lg.an .n3{animation-delay:.4s}
+@keyframes dr{to{stroke-dashoffset:0}}@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.ck{color:var(--ok)}.ck path,.ck circle{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .35s .1s var(--ease) forwards}
+.star{width:44px;height:44px;border:0;background:none;font-size:30px;color:var(--bs);transition:transform .15s var(--ease),color .15s}.star.on{color:var(--ac);transform:scale(1.1)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+::view-transition-group(*){animation-duration:.28s;animation-timing-function:var(--ease)}
+.bar-b{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--bg);border-top:1px solid var(--bd);padding:12px var(--sp-5)}.bar-b>div{max-width:var(--maxw);margin:0 auto}
+/* programmatic focus targets (headings, main, alerts) get no ring: they are not interactive */
+[tabindex="-1"]:focus{outline:none}
+.empty h2{font-size:var(--fs-h3);line-height:var(--lh-h3)}
+
+</style></head><body>
+<div id="app"></div><dialog class="sheet" id="dlg" aria-modal="true"></dialog><div class="toast" id="ts" role="status" aria-live="polite"></div>
+<script>
+/* logic.js */
+/* YONDO prototype logic. Pure functions, no DOM. Contract: docs/openapi-v1.json (branch codex/notification-integration). */
+(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.YL = factory(); })(typeof self !== 'undefined' ? self : this, function () {
+  // ---- money: price_minor + ISO-4217 currency (UZS exponent = 2, so 100 minor = 1 soʻm) ----
+  const EXP = { UZS: 2 };
+  function money(minor, cur) {
+    cur = cur || 'UZS';
+    if (minor === null || minor === undefined) return null;
+    const e = EXP[cur] === undefined ? 2 : EXP[cur], d = Math.pow(10, e);
+    const neg = minor < 0, a = Math.abs(minor), whole = Math.floor(a / d), frac = a % d;
+    let s = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    if (frac) s += ',' + String(frac).padStart(e, '0');
+    return (neg ? '−' : '') + s + (cur === 'UZS' ? ' soʻm' : ' ' + cur);
+  }
+  // ---- booking estimate: backend requires duration % unit_minutes === 0; price = price_minor * units ----
+  function estimate(svc, duration) {
+    if (!svc || !(svc.unit_minutes > 0)) return { ok: false, code: 'invalid_booking_duration' };
+    if (!Number.isInteger(duration) || duration <= 0 || duration % svc.unit_minutes) return { ok: false, code: 'invalid_booking_duration' };
+    const units = duration / svc.unit_minutes;
+    return { ok: true, units, price_minor: svc.price_minor * units };
+  }
+  const durations = (svc) => [1, 2, 3].map((n) => n * svc.unit_minutes);
+  // ---- booking status machine (documented actions only) ----
+  const STATUSES = ['pending', 'accepted', 'confirmed', 'active', 'completed', 'cancelled', 'no-show', 'disputed'];
+  const LABEL = { pending: 'Kutilmoqda', accepted: 'Qabul qilindi', confirmed: 'Tasdiqlandi', active: 'Uchrashuv faol', completed: 'Yakunlandi', cancelled: 'Bekor qilindi', 'no-show': 'Kelmadi', disputed: 'Nizo' };
+  // role: 'customer' | 'companion'. Returns UI actions allowed by documented endpoints; backend still decides.
+  function actions(role, b, meeting) {
+    const s = b.status, a = [];
+    if (role === 'companion') {
+      if (s === 'pending') a.push('accept', 'decline');
+      if (['accepted', 'confirmed'].includes(s)) a.push('cancel');
+      if (s === 'pending') { /* decline covers cancel */ }
+    } else {
+      if (s === 'accepted') a.push('pay');
+      if (['pending', 'accepted', 'confirmed'].includes(s)) a.push('cancel');
+    }
+    if (s === 'confirmed') { const mine = role === 'companion' ? meeting && meeting.companion_arrived : meeting && meeting.customer_arrived; if (!mine) a.push('checkin'); else if (meeting && meeting.companion_arrived && meeting.customer_arrived) a.push('start'); }
+    if (s === 'active') a.push('end', role === 'customer' ? 'sos' : 'sos');
+    if (s === 'completed' && role === 'customer') a.push('review');
+    if (['confirmed', 'active', 'completed', 'accepted', 'pending'].includes(s)) a.push('chat');
+    return a;
+  }
+  // ---- structured errors: logic keyed ONLY on `code` (never on message text) ----
+  const E = {
+    booking_time_unavailable: ['Bu vaqt band. Boshqa vaqtni tanlang.', 'form'],
+    availability_not_found: ['Hamroh tanlangan vaqtda ishlamaydi. Boshqa vaqtni tanlang.', 'form'],
+    booking_start_in_past: ['Tanlangan vaqt oʻtib ketgan.', 'form'],
+    invalid_booking_duration: ['Davomiylik xizmat birligiga karrali boʻlishi kerak.', 'form'],
+    invalid_booking_interval: ['Vaqt oraligʻi notoʻgʻri.', 'form'],
+    booking_price_overflow: ['Narx juda katta.', 'form'],
+    self_booking_forbidden: ['Oʻzingizga bron qila olmaysiz.', 'blocked'],
+    booking_blocked: ['Bu foydalanuvchi bilan bron qilib boʻlmaydi.', 'blocked'],
+    companion_not_found: ['Profil topilmadi yoki faol emas.', 'notfound'],
+    companion_service_not_found: ['Xizmat topilmadi. Sahifani yangilang.', 'stale'],
+    booking_not_found: ['Bron topilmadi.', 'notfound'],
+    invalid_booking_transition: ['Bron holati oʻzgargan. Yangilang.', 'stale'],
+    booking_not_payable: ['Toʻlov faqat hamroh bronni qabul qilgach mumkin.', 'stale'],
+    idempotency_key_conflict: ['Bu soʻrov allaqachon yuborilgan. Yangilang.', 'stale'],
+    payment_provider_unavailable: ['Toʻlov tizimi vaqtincha mavjud emas. Keyinroq urinib koʻring. Bron saqlangan.', 'unavailable'],
+    payment_configuration_unavailable: ['Toʻlov sozlamalari hali tayyor emas. Bron saqlangan.', 'unavailable'],
+    combined_checkout_unavailable: ['Bron va sovgʻa uchun yagona toʻlov hali mavjud emas.', 'unavailable'],
+    gift_checkout_unavailable: ['Sovgʻa toʻlovi hali mavjud emas.', 'unavailable'],
+    gift_orders_unavailable: ['Sovgʻa buyurtmalari hali mavjud emas.', 'unavailable'],
+    vendor_earnings_unavailable: ['Daromad maʼlumoti hali jonli emas.', 'unavailable'],
+    otp_delivery_unavailable: ['SMS yuborish hozircha mavjud emas.', 'unavailable'],
+    customer_role_required: ['Bu amal uchun “Mijoz” roli kerak.', 'role'],
+    companion_role_required: ['Bu amal uchun “Hamroh” roli kerak.', 'role'],
+    account_role_required: ['Bu amal uchun mos rol kerak.', 'role'],
+    role_required: ['Bu amal uchun mos rol kerak.', 'role'],
+    account_unavailable: ['Hisobingiz cheklangan. Qoʻllab-quvvatlashga murojaat qiling.', 'blocked'],
+    authentication_required: ['Qayta kiring.', 'auth'], invalid_access_token: ['Seans tugadi. Qayta kiring.', 'auth'],
+    invalid_phone_number: ['Telefon raqam notoʻgʻri.', 'form'], invalid_otp: ['Kod notoʻgʻri.', 'form'], otp_expired: ['Kod muddati tugadi. Yangisini soʻrang.', 'form'],
+    otp_rate_limited: ['Juda koʻp urinish. Keyinroq urinib koʻring.', 'wait'], otp_resend_cooldown: ['Kodni qayta yuborish uchun biroz kuting.', 'wait'], otp_temporarily_blocked: ['Vaqtincha bloklandi. Keyinroq urinib koʻring.', 'wait'],
+    meeting_too_early: ['Uchrashuv vaqti hali kelmadi.', 'info'], meeting_check_in_required: ['Avval ikkala tomon yetib kelganini belgilashi kerak.', 'info'],
+    meeting_not_ready: ['Uchrashuvni boshlash uchun ikkala tomon yetib kelishi kerak.', 'info'], meeting_not_active: ['Uchrashuv faol emas.', 'stale'], meeting_already_ended: ['Uchrashuv allaqachon yakunlangan.', 'stale'], meeting_state_conflict: ['Uchrashuv holati oʻzgargan. Yangilang.', 'stale'],
+    review_already_exists: ['Siz allaqachon sharh qoldirgansiz.', 'info'], review_not_ready: ['Sharh uchrashuv yakunlangach mumkin.', 'info'], review_not_allowed: ['Sharh qoldirish mumkin emas.', 'blocked'], invalid_review_tag: ['Teg notoʻgʻri.', 'form'],
+    chat_closed: ['Chat yopilgan.', 'info'], chat_blocked: ['Chat bloklangan.', 'blocked'],
+    sos_requires_active_booking: ['SOS faqat faol uchrashuvda ishlaydi.', 'info'], sos_confirmation_required: ['SOS ni tasdiqlang.', 'form'],
+    invalid_report: ['Shikoyat maʼlumoti notoʻgʻri.', 'form'], invalid_block: ['Bloklash mumkin emas.', 'form'],
+    gift_unavailable: ['Sovgʻa hozir mavjud emas yoki tugagan.', 'stale'], cart_conflict: ['Savat oʻzgargan. Yangilang.', 'stale'], cart_empty: ['Savat boʻsh.', 'form'],
+    gift_delivery_note_required: ['Yetkazib berish uchun izoh yozing.', 'form'], click_test_disabled: ['Test rejimi oʻchirilgan.', 'unavailable'], gift_not_found: ['Sovgʻa topilmadi.', 'notfound'], gift_currency_mismatch: ['Valyuta mos kelmaydi.', 'blocked'],
+    stale_companion_revision: ['Profil boshqa joyda oʻzgargan. Yangilang.', 'stale'], invalid_price: ['Narx notoʻgʻri.', 'form'], validation_error: ['Maʼlumotlarni tekshiring.', 'form'],
+    invalid_discovery_filter: ['Filtr notoʻgʻri.', 'form'], network_offline: ['Internet aloqasi yoʻq.', 'offline']
+  };
+  const BYSTATUS = { 401: 'auth', 403: 'role', 404: 'notfound', 409: 'stale', 422: 'form', 429: 'wait', 503: 'unavailable' };
+  function classify(err) {
+    const code = err && err.code, st = err && err.status, hit = E[code];
+    if (hit) return { code, text: hit[0], kind: hit[1], retry: ['unavailable', 'offline', 'wait'].includes(hit[1]) || st >= 500, rid: err.request_id || null };
+    const kind = BYSTATUS[st] || (st >= 500 ? 'unavailable' : 'error');
+    return { code: code || 'unknown', text: 'Xatolik yuz berdi. Qayta urinib koʻring.', kind, retry: kind === 'unavailable' || kind === 'error', rid: (err && err.request_id) || null };
+  }
+  const isUnavailable503 = (err) => !!err && err.status === 503; // distinct from a declined/failed payment
+  // ---- validators (limits from OpenAPI schemas) ----
+  const bad = (f, m) => ({ field: f, text: m });
+  function validateProfile(p) {
+    const e = [], n = (p.display_name || '').trim();
+    if (!n) e.push(bad('display_name', 'Ismni kiriting.')); else if (n.length > 128) e.push(bad('display_name', 'Ism 128 belgidan oshmasligi kerak.'));
+    if ((p.bio || '').length > 8000) e.push(bad('bio', 'Tavsif 8000 belgidan oshmasligi kerak.'));
+    const list = (k, nm) => { const a = p[k] || [], low = a.map((x) => x.trim().toLowerCase()); if (a.some((x) => !x.trim() || x.length > 64)) e.push(bad(k, nm + ': har biri 1–64 belgi.')); else if (new Set(low).size !== low.length) e.push(bad(k, nm + ': takrorlanmasin.')); };
+    list('interests', 'Qiziqishlar'); list('languages', 'Tillar'); return e;
+  }
+  function validateService(s) {
+    const e = [];
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(s.service_code || '')) e.push(bad('service_code', 'Xizmat turini tanlang.'));
+    if (!Number.isInteger(s.price_minor) || s.price_minor < 0) e.push(bad('price_minor', 'Narx 0 dan kam boʻlmasligi kerak.'));
+    if (!Number.isInteger(s.unit_minutes) || s.unit_minutes <= 0) e.push(bad('unit_minutes', 'Birlik musbat daqiqa boʻlishi kerak.'));
+    if (!/^[A-Z]{3}$/.test(s.currency || '')) e.push(bad('currency', 'Valyuta kodi 3 ta bosh harf.'));
+    if ((s.description || '').length > 4000) e.push(bad('description', 'Tavsif 4000 belgidan oshmasligi kerak.')); return e;
+  }
+  function validateAvailability(a) {
+    const e = [], s = Date.parse(a.starts_at), t = Date.parse(a.ends_at);
+    if (!a.starts_at || isNaN(s)) e.push(bad('starts_at', 'Boshlanish vaqtini kiriting.'));
+    if (!a.ends_at || isNaN(t)) e.push(bad('ends_at', 'Tugash vaqtini kiriting.'));
+    if (!isNaN(s) && !isNaN(t) && t <= s) e.push(bad('ends_at', 'Tugash vaqti boshlanishdan keyin boʻlishi kerak.'));
+    if (!a.timezone || a.timezone.length > 64) e.push(bad('timezone', 'Vaqt zonasi (IANA) kerak.')); return e;
+  }
+  function validateBooking(b) {
+    const e = [];
+    if (!b.service_id) e.push(bad('service_id', 'Xizmatni tanlang.'));
+    if (!b.starts_at) e.push(bad('starts_at', 'Sana va vaqtni tanlang.')); else if (Date.parse(b.starts_at) <= (b.now || Date.now())) e.push(bad('starts_at', 'Vaqt kelajakda boʻlishi kerak.'));
+    if (!b.duration_minutes) e.push(bad('duration_minutes', 'Davomiylikni tanlang.'));
+    if (!b.meeting_place || b.meeting_place.trim().length < 3) e.push(bad('meeting_place', 'Uchrashuv joyini yozing (kamida 3 belgi).'));
+    if (!b.timezone) e.push(bad('timezone', 'Vaqt zonasi kerak.')); return e;
+  }
+  const REPORT_CATS = { harassment: 'Bezovta qilish', inappropriate_request: 'Nomaqbul soʻrov', fake_profile: 'Soxta profil', fraud: 'Firibgarlik', unsafe_behavior: 'Xavfli xatti-harakat', no_show: 'Kelmadi', payment_issue: 'Toʻlov muammosi', other: 'Boshqa' };
+  function validateReport(r) { const e = []; if (!REPORT_CATS[r.category]) e.push(bad('category', 'Sababni tanlang.')); const d = (r.description || '').trim(); if (!d) e.push(bad('description', 'Qisqacha izoh yozing.')); else if (d.length > 4000) e.push(bad('description', 'Izoh 4000 belgidan oshmasligi kerak.')); return e; }
+  function validateContact(c) { const e = []; if (!(c.name || '').trim() || c.name.length > 128) e.push(bad('name', 'Ism 1–128 belgi.')); if (!/^\+?[0-9]{7,15}$/.test(c.phone_number || '')) e.push(bad('phone_number', 'Raqam 7–15 raqamdan iborat boʻlsin.')); return e; }
+  function validateProduct(p) { const e = []; const nm = (p.name || '').trim(); if (nm.length < 2 || nm.length > 160) e.push(bad('name', 'Nom 2–160 belgi boʻlsin.')); if (!Number.isInteger(p.price_minor) || p.price_minor < 0) e.push(bad('price_minor', 'Narx 0 dan kam boʻlmasin.')); if (!Number.isInteger(p.stock) || p.stock < 0) e.push(bad('stock', 'Zaxira 0 dan kam boʻlmasin.')); if (!(p.description || '').trim()) e.push(bad('description', 'Qisqacha tavsif yozing.')); if (!/^[A-Z]{3}$/.test(p.currency || '')) e.push(bad('currency', 'Valyuta kodi.')); return e; }
+  function validatePhone(raw) { const d = String(raw || '').replace(/\D/g, ''); return d.length === 9 ? { ok: true, e164: '+998' + d } : { ok: false }; }
+  const idemKey = () => 'ui-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  const GIFT_LABEL = { flowers: 'Gullar', chocolate: 'Shokolad', gift_box: 'Sovgʻa qutisi', toys: 'Oʻyinchoqlar', birthday: 'Tugʻilgan kun', romantic: 'Maxsus kunlar', custom: 'Maxsus buyurtma' };
+  const SERVICE_LABEL = { coffee: 'Kofe', walking: 'Sayr', cinema: 'Kino', shopping: 'Shopping', event: 'Tadbir', city_friend: 'Shahar doʻsti', conversation: 'Suhbat', study: 'Oʻqish / Coworking' };
+  const BLOCKER = { application_not_approved: 'Ariza hali tasdiqlanmagan', content_not_approved: 'Profil kontenti tasdiqlanmagan', account_not_active: 'Hisob faol emas', companion_role_required: 'Hamroh roli kerak', identity_not_verified: 'Shaxs tasdiqlanmagan' };
+  return { money, estimate, durations, STATUSES, LABEL, actions, E, classify, isUnavailable503, validateProfile, validateService, validateAvailability, validateBooking, validateReport, validateContact, validateProduct, validatePhone, REPORT_CATS, idemKey, GIFT_LABEL, SERVICE_LABEL, BLOCKER };
+});
+
+/* mockapi.js */
+/* DEMO mock of the Yondo API. Mirrors docs/openapi-v1.json shapes and the backend's real error codes. NOT the real backend. */
+(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.YM = factory(); })(typeof self !== 'undefined' ? self : this, function () {
+  const cfg = { offline: false, latency: 180, pay: 'ok', feeBps: 1000, clock: 0, giftTest: true, calls: [] };
+  const now = () => Date.now() + cfg.clock;
+  let n = 0; const uid = () => { n++; const h = (n + 0x1000000).toString(16); return `00000000-0000-4000-8000-${h.padStart(12, '0')}`; };
+  const iso = (t) => new Date(t).toISOString();
+  const err = (status, code, message, extra) => Object.assign(new Error(code), { status, code, message: message || code, request_id: 'req-demo-' + (++n) }, extra || {});
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const T0 = Math.floor(Date.now() / 864e5) * 864e5; // start of today (UTC); availability seeded relative to it
+  const svc = (code, p, u, d) => ({ id: uid(), service_code: code, price_minor: p, unit_minutes: u, currency: 'UZS', description: d });
+  const mkProf = (name, age, langs, ints, bio, services, o) => Object.assign({ id: uid(), user_id: uid(), display_name: name, age, city: 'Toshkent', gender: null, bio, languages: langs, interests: ints, services, photos: [], rating: null, review_count: 0, verified: false, hue: 0 }, o || {});
+  const S = {
+    user: null, roles: [], token: null, otp: false,
+    profiles: [], bookings: [], payments: [], messages: {}, meetings: {}, reviews: [], reports: [], blocks: [], contacts: [], cart: [], testOrders: [], products: [], notifs: [], sos: [],
+    me: { app: null, prof: null, status: null, services: [], avail: [] }
+  };
+  function seed() {
+    S.profiles = [
+      mkProf('Madina K.', 26, ['Oʻzbek', 'Rus', 'Ingliz'], ['kitoblar', 'kofe'], 'Sokin suhbat va yaxshi kofe sevaman.', [svc('coffee', 9000000, 60, 'Kofe ustida suhbat'), svc('walking', 8000000, 60, 'Xiyobonda sayr')], { rating: 4.8, review_count: 23, verified: true, hue: 160 }),
+      mkProf('Jasur A.', 29, ['Oʻzbek', 'Rus'], ['kino', 'sport'], 'Kino va shahar tadbirlariga hamroh.', [svc('cinema', 12000000, 120, 'Kinoga hamroh'), svc('event', 10000000, 60, 'Tadbirga hamroh')], { rating: 4.6, review_count: 12, verified: true, hue: 30 }),
+      mkProf('Nilufar R.', 24, ['Oʻzbek', 'Ingliz'], ['tillar', 'sayohat'], 'Shaharga yangi kelganlarga yoʻl koʻrsataman.', [svc('city_friend', 11000000, 120, 'Shahar doʻsti'), svc('conversation', 7000000, 60, 'Ingliz tilida suhbat')], { rating: 4.9, review_count: 31, verified: true, hue: 200 }),
+      mkProf('Sardor T.', 31, ['Oʻzbek', 'Rus'], ['biznes', 'kitoblar'], 'Yangi profil. Coworking uchun hamroh.', [svc('study', 6000000, 60, 'Birga oʻqish'), svc('conversation', 6500000, 60, 'Suhbat')], { hue: 80 }),
+      mkProf('Dilnoza M.', 27, ['Oʻzbek', 'Rus', 'Ingliz'], ['moda', 'shopping'], 'Xaridda maslahat va hamrohlik.', [svc('shopping', 9500000, 120, 'Xaridda hamroh'), svc('coffee', 9000000, 60, 'Kofe')], { rating: 4.7, review_count: 18, verified: true, hue: 340 })
+    ];
+    S.profiles.forEach((p) => { p.avail = []; for (let d = 0; d < 14; d++) { const day = Math.floor(T0 / 864e5) * 864e5 + d * 864e5; p.avail.push({ id: uid(), profile_id: p.id, starts_at: iso(day + 5 * 36e5), ends_at: iso(day + 16 * 36e5), timezone: 'Asia/Tashkent' }); } });
+    // Madina closed on day 2 → exercises availability_not_found
+    S.profiles[0].avail = S.profiles[0].avail.filter((a, i) => i !== 2);
+    S.products = [
+      { id: uid(), vendor_id: '00000000-0000-4000-8000-0000000000aa', name: 'Mavsumiy gul buketi', category: 'flowers', price_minor: 15000000, currency: 'UZS', description: 'DEMO', stock: 12, published: true },
+      { id: uid(), vendor_id: '00000000-0000-4000-8000-0000000000aa', name: 'Shokolad toʻplami', category: 'chocolate', price_minor: 8000000, currency: 'UZS', description: 'DEMO', stock: 30, published: true },
+      { id: uid(), vendor_id: '00000000-0000-4000-8000-0000000000aa', name: 'Maxsus kun buketi', category: 'romantic', price_minor: 18000000, currency: 'UZS', description: 'DEMO', stock: 0, published: true }
+    ];
+  }
+  seed();
+  const card = (p) => ({ id: p.id, display_name: p.display_name, age: p.age, bio: p.bio, city: p.city, gender: p.gender, interests: p.interests, languages: p.languages, photos: p.photos, rating: p.rating, review_count: p.review_count, services: p.services.map(({ id, service_code, price_minor, unit_minutes, currency, description }) => ({ id, service_code, price_minor, unit_minutes, currency, description })), verified: p.verified });
+  const myProfile = () => S.profiles.find((p) => p.user_id === S.user.id);
+  const need = (role) => { if (!S.token) throw err(401, 'authentication_required'); if (!S.roles.includes(role)) throw err(403, role === 'customer' ? 'customer_role_required' : role === 'companion' ? 'companion_role_required' : 'role_required'); };
+  const bk = (id) => { const b = S.bookings.find((x) => x.id === id); if (!b) throw err(404, 'booking_not_found'); return b; };
+  const isCust = (b) => b.customer_id === S.user.id;
+  const isComp = (b) => { const p = myProfile(); return !!p && p.id === b.profile_id; };
+  function part(b) { if (!isCust(b) && !isComp(b)) throw err(404, 'booking_not_found'); return isCust(b) ? 'customer' : 'companion'; }
+  const sysmsg = (b, code, text) => { (S.messages[b.id] = S.messages[b.id] || []).push({ id: uid(), booking_id: b.id, sender_id: null, kind: 'system', body: text, payload: { status: b.status }, system_code: code, created_at: iso(now()) }); };
+  const notify = (b, kind) => S.notifs.unshift({ id: uid(), booking_id: b.id, gift_order_id: null, kind, details: { status: b.status }, created_at: iso(now()), read_at: null });
+  function profileStatus() {
+    const m = S.me, bl = [];
+    if (!m.app || m.app.status !== 'approved') bl.push('application_not_approved');
+    if (!m.prof || m.prof.content_status !== 'approved') bl.push('content_not_approved');
+    if (m.identity !== 'verified') bl.push('identity_not_verified');
+    return { account_status: 'active', activation_requested: !!(m.prof && m.prof.activation_requested), application_status: m.app ? m.app.status : 'draft', blockers: bl, content_status: m.prof ? m.prof.content_status : 'draft', identity_status: m.identity || 'unknown', publicly_active: !bl.length && !!(m.prof && m.prof.activation_requested) };
+  }
+  function syncPublic() { const m = S.me; let p = S.profiles.find((x) => x.user_id === S.user.id); const st = profileStatus(); if (st.publicly_active && !p) { p = mkProf(m.prof.display_name, null, m.prof.languages, m.prof.interests, m.prof.bio, m.services, { user_id: S.user.id, verified: true, id: m.prof.id }); p.avail = m.avail; S.profiles.push(p); } if (p) { p.display_name = m.prof ? m.prof.display_name : p.display_name; p.bio = m.prof ? m.prof.bio : p.bio; p.interests = m.prof ? m.prof.interests : p.interests; p.languages = m.prof ? m.prof.languages : p.languages; p.services = m.services; p.avail = m.avail; if (!st.publicly_active) S.profiles = S.profiles.filter((x) => x !== p); } }
+  const need422 = (cond, loc, msg) => { if (cond) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'value_error', loc: ['body', loc], msg }] }); };
+  const avail = (p, s, e) => p.avail.some((a) => Date.parse(a.starts_at) <= s && Date.parse(a.ends_at) >= e);
+  const overlap = (p, s, e) => S.bookings.some((b) => b.profile_id === p.id && ['pending', 'accepted', 'confirmed', 'active'].includes(b.status) && Date.parse(b.starts_at) < e && Date.parse(b.ends_at) > s);
+
+  const R = [];
+  const on = (m, re, fn) => R.push([m, re, fn]);
+  // ---- auth ----
+  on('POST', /^\/auth\/otp\/request$/, ({ body }) => { if (!/^\+998\d{9}$/.test(body.phone_number || '')) throw err(422, 'invalid_phone_number'); S.otp = true; return { development_otp: '1234', expires_in_seconds: 300, message: 'DEMO', resend_after_seconds: 30 }; });
+  on('POST', /^\/auth\/otp\/verify$/, ({ body }) => { if (body.code !== '1234') throw err(401, 'invalid_otp'); if (!S.user) S.user = { id: uid(), phone_number: body.phone_number }; S.token = 'demo-' + uid(); return { access_token: S.token, refresh_token: 'demo-r', expires_in: 900, token_type: 'bearer' }; });
+  on('GET', /^\/auth\/me$/, () => { if (!S.token) throw err(401, 'authentication_required'); return { id: S.user.id, roles: S.roles, account_status: 'active' }; });
+  on('PUT', /^\/auth\/roles$/, ({ body }) => { if (!S.token) throw err(401, 'authentication_required'); const r = body.roles || []; if (new Set(r).size !== r.length) throw err(422, 'duplicate_role'); S.roles = r; return { roles: r }; });
+  // ---- discovery ----
+  on('GET', /^\/discovery\/companions$/, ({ query: q }) => {
+    let l = S.profiles.filter((p) => !(S.user && p.user_id === S.user.id));
+    if (q.q) { const k = q.q.toLowerCase(); l = l.filter((p) => (p.display_name + ' ' + p.city + ' ' + p.interests.join(' ')).toLowerCase().includes(k)); }
+    if (q.service_code) l = l.filter((p) => p.services.some((s) => s.service_code === q.service_code));
+    if (q.rating_min) l = l.filter((p) => p.rating !== null && p.rating >= +q.rating_min);
+    if (q.language) l = l.filter((p) => p.languages.includes(q.language));
+    const pr = (p) => Math.min(...p.services.map((s) => s.price_minor * 60 / s.unit_minutes));
+    if (q.price_min_minor) l = l.filter((p) => pr(p) >= +q.price_min_minor);
+    if (q.price_max_minor) l = l.filter((p) => pr(p) <= +q.price_max_minor);
+    if (q.available_from && q.available_until) { const a = Date.parse(q.available_from), b = Date.parse(q.available_until); if (isNaN(a) || isNaN(b) || b <= a) throw err(422, 'invalid_discovery_filter'); l = l.filter((p) => avail(p, a, b) && !overlap(p, a, b)); }
+    const lim = +q.limit || 30, off = +q.offset || 0;
+    return { items: l.slice(off, off + lim).map(card), has_more: off + lim < l.length, limit: lim, offset: off };
+  });
+  on('GET', /^\/discovery\/companions\/([^/]+)$/, ({ m }) => { const p = S.profiles.find((x) => x.id === m[1]); if (!p) throw err(404, 'companion_not_found'); return card(p); });
+  // ---- bookings ----
+  on('GET', /^\/bookings$/, () => { if (!S.token) throw err(401, 'authentication_required'); const p = S.roles.includes('companion') ? myProfile() : null; return S.bookings.filter((b) => isCust(b) || (p && b.profile_id === p.id)).map(clone).sort((a, b) => (a.starts_at < b.starts_at ? 1 : -1)); });
+  on('POST', /^\/bookings$/, ({ body }) => {
+    need('customer'); const p = S.profiles.find((x) => x.services.some((s) => s.id === body.service_id)); if (!p) throw err(404, 'companion_service_not_found');
+    if (p.user_id === S.user.id) throw err(403, 'self_booking_forbidden');
+    if (S.blocks.includes(p.user_id) || S.blocks.includes(p.id)) throw err(403, 'booking_blocked');
+    const s = p.services.find((x) => x.id === body.service_id); const st = Date.parse(body.starts_at);
+    need422(!body.meeting_place || !body.meeting_place.trim(), 'meeting_place', 'required'); need422(!body.timezone, 'timezone', 'required'); need422(isNaN(st), 'starts_at', 'invalid');
+    if (!Number.isInteger(body.duration_minutes) || body.duration_minutes <= 0 || body.duration_minutes % s.unit_minutes) throw err(422, 'invalid_booking_duration');
+    if (st <= now()) throw err(422, 'booking_start_in_past'); const en = st + body.duration_minutes * 6e4;
+    if (!avail(p, st, en)) throw err(409, 'availability_not_found'); if (overlap(p, st, en)) throw err(409, 'booking_time_unavailable');
+    const b = { id: uid(), customer_id: S.user.id, profile_id: p.id, service_id: s.id, service_code: s.service_code, service_description: s.description, starts_at: iso(st), ends_at: iso(en), duration_minutes: body.duration_minutes, meeting_place: body.meeting_place.trim(), timezone: body.timezone, price_minor: s.price_minor * (body.duration_minutes / s.unit_minutes), currency: s.currency, status: 'pending', created_at: iso(now()), customer_contract_accepted_at: iso(now()), companion_contract_accepted_at: null };
+    S.bookings.push(b); sysmsg(b, 'booking_requested', 'Bron soʻrovi yuborildi.'); notify(b, 'booking_requested'); return clone(b);
+  });
+  on('GET', /^\/bookings\/([^/]+)$/, ({ m }) => { const b = bk(m[1]); part(b); return clone(b); });
+  on('POST', /^\/bookings\/([^/]+)\/(accept|decline|cancel)$/, ({ m, body }) => {
+    const b = bk(m[1]); const who = part(b), act = m[2];
+    if (act === 'cancel') { if (!['pending', 'accepted', 'confirmed'].includes(b.status)) throw err(409, 'invalid_booking_transition'); const paid = S.payments.some((x) => x.booking_id === b.id && x.status === 'succeeded'); b.status = 'cancelled'; if (paid) S.payments.filter((x) => x.booking_id === b.id).forEach((x) => (x.refund_required = true)); sysmsg(b, 'booking_cancelled', 'Bron bekor qilindi.'); notify(b, 'booking_cancelled'); return clone(b); }
+    if (who !== 'companion') throw err(403, 'companion_role_required'); if (b.status !== 'pending') throw err(409, 'invalid_booking_transition');
+    if (act === 'accept') { b.status = 'accepted'; b.companion_contract_accepted_at = iso(now()); sysmsg(b, 'booking_accepted', 'Hamroh bronni qabul qildi. Endi toʻlash mumkin.'); notify(b, 'booking_accepted'); } else { b.status = 'cancelled'; sysmsg(b, 'booking_declined', 'Hamroh bronni rad etdi.'); notify(b, 'booking_declined'); }
+    return clone(b);
+  });
+  // ---- payments (only for ACCEPTED bookings; Idempotency-Key required) ----
+  const payResp = (p) => clone(p);
+  on('POST', /^\/payments\/bookings\/([^/]+)$/, ({ m, headers }) => {
+    const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); const key = headers['Idempotency-Key'];
+    if (!key || key.length < 8 || key.length > 128) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'string_too_short', loc: ['header', 'idempotency-key'], msg: 'invalid' }] });
+    const ex = S.payments.find((x) => x.key === key); if (ex) { if (ex.booking_id !== b.id) throw err(409, 'idempotency_key_conflict'); return payResp(ex); }
+    if (b.status !== 'accepted') throw err(409, 'booking_not_payable');
+    if (cfg.feeBps === null) throw err(503, 'payment_configuration_unavailable');
+    if (cfg.pay === '503') throw err(503, 'payment_provider_unavailable');
+    const fee = Math.round(b.price_minor * cfg.feeBps / 10000); const p = { id: uid(), key, booking_id: b.id, subtotal_minor: b.price_minor, platform_fee_minor: fee, amount_minor: b.price_minor + fee, currency: b.currency, status: 'pending', checkout_url: 'demo://provider/' + b.id, refund_required: false, created_at: iso(now()) };
+    S.payments.push(p); return payResp(p);
+  });
+  on('GET', /^\/payments\/bookings\/([^/]+)$/, ({ m }) => { const b = bk(m[1]); part(b); return S.payments.filter((p) => p.booking_id === b.id).map(payResp); });
+  // ---- integration (gift + booking): preview works, checkout is unavailable in the real backend ----
+  on('GET', /^\/integration\/bookings\/([^/]+)\/preview$/, ({ m }) => { need('customer'); const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); if (b.status !== 'accepted') throw err(409, 'booking_not_payable'); const items = S.cart.map((c) => { const pr = S.products.find((x) => x.id === c.product_id); return { product_id: pr.id, name: pr.name, quantity: c.quantity, unit_price_minor: pr.price_minor, line_total_minor: pr.price_minor * c.quantity }; }); const g = items.reduce((a, i) => a + i.line_total_minor, 0); return { booking_id: b.id, booking_service_minor: b.price_minor, gift_items: items, gift_subtotal_minor: g, subtotal_minor: b.price_minor + g, currency: b.currency, platform_fee_minor: null, delivery_fee_minor: null, total_minor: null, checkout_available: false, reason: 'combined_payment_and_delivery_policy_unconfigured' }; });
+  on('POST', /^\/integration\/bookings\/([^/]+)\/checkout$/, ({ m }) => { need('customer'); const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); if (b.status !== 'accepted') throw err(409, 'booking_not_payable'); throw err(503, 'combined_checkout_unavailable'); });
+  // ---- gifts ----
+  on('GET', /^\/gifts\/products$/, () => S.products.filter((p) => p.published).map(clone));
+  on('GET', /^\/gifts\/cart$/, () => { need('customer'); return clone(S.cart); });
+  on('PUT', /^\/gifts\/cart\/([^/]+)$/, ({ m, body }) => { need('customer'); const p = S.products.find((x) => x.id === m[1]); if (!p) throw err(404, 'gift_not_found'); if (!p.published || p.stock < body.quantity) throw err(409, 'gift_unavailable'); need422(!(body.quantity >= 1 && body.quantity <= 100), 'quantity', 'range'); const c = S.cart.find((x) => x.product_id === p.id); if (c) c.quantity = body.quantity; else S.cart.push({ product_id: p.id, quantity: body.quantity }); return clone(S.cart.find((x) => x.product_id === p.id)); });
+  on('DELETE', /^\/gifts\/cart\/([^/]+)$/, ({ m }) => { need('customer'); S.cart = S.cart.filter((c) => c.product_id !== m[1]); return null; });
+  on('POST', /^\/gifts\/test-orders$/, ({ body }) => { need('customer'); if (!cfg.giftTest) throw err(404, 'click_test_disabled'); if (!S.cart.length) throw err(409, 'cart_empty'); if (body.delivery_method === 'manual_delivery' && !(body.delivery_note || '').trim()) throw err(422, 'gift_delivery_note_required'); const items = S.cart.map((c) => { const p = S.products.find((x) => x.id === c.product_id); return { product_id: p.id, name_snapshot: p.name, quantity: c.quantity, unit_price_minor: p.price_minor, line_total_minor: p.price_minor * c.quantity }; }); const o = { id: uid(), customer_id: S.user.id, items, subtotal_minor: items.reduce((a, i) => a + i.line_total_minor, 0), currency: 'UZS', status: 'awaiting_test_payment', delivery_method: body.delivery_method, delivery_note: body.delivery_note || null, delivery_fee_minor: null, payable_total_minor: null, is_test_order: true, real_money_moved: false, operator_fulfillment: true, click_test_trans_id: null, created_at: iso(now()) }; S.testOrders.push(o); S.cart = []; return clone(o); });
+  on('GET', /^\/gifts\/test-orders$/, () => { need('customer'); return clone(S.testOrders); });
+  // ---- meetings / chat / reviews / safety ----
+  const meet = (b) => { const m = (S.meetings[b.id] = S.meetings[b.id] || { c: false, p: false, ec: false, ep: false }); return m; };
+  const mstate = (b) => { const m = meet(b); return { arrived_count: +m.c + +m.p, booking_id: b.id, booking_status: b.status, companion_arrived: m.p, customer_arrived: m.c, ended_count: +m.ec + +m.ep }; };
+  on('GET', /^\/meetings\/bookings\/([^/]+)$/, ({ m }) => { const b = bk(m[1]); part(b); return mstate(b); });
+  on('POST', /^\/meetings\/bookings\/([^/]+)\/(check-in|start|end)$/, ({ m }) => {
+    const b = bk(m[1]), who = part(b), s = meet(b), a = m[2];
+    if (a === 'check-in') { if (b.status !== 'confirmed') throw err(409, 'meeting_state_conflict'); if (now() < Date.parse(b.starts_at)) throw err(409, 'meeting_too_early'); if (who === 'customer') s.c = true; else s.p = true; sysmsg(b, 'checked_in', (who === 'customer' ? 'Mijoz' : 'Hamroh') + ' yetib keldi.'); }
+    if (a === 'start') { if (b.status !== 'confirmed') throw err(409, 'meeting_state_conflict'); if (!(s.c && s.p)) throw err(409, 'meeting_not_ready'); b.status = 'active'; sysmsg(b, 'meeting_started', 'Uchrashuv boshlandi.'); }
+    if (a === 'end') { if (b.status === 'completed') throw err(409, 'meeting_already_ended'); if (b.status !== 'active') throw err(409, 'meeting_not_active'); if (who === 'customer') s.ec = true; else s.ep = true; if (s.ec || s.ep) { b.status = 'completed'; sysmsg(b, 'meeting_ended', 'Uchrashuv yakunlandi.'); notify(b, 'review_reminder'); } }
+    return mstate(b);
+  });
+  on('GET', /^\/chat\/bookings\/([^/]+)\/messages$/, ({ m }) => { const b = bk(m[1]); part(b); return clone(S.messages[b.id] || []); });
+  on('POST', /^\/chat\/bookings\/([^/]+)\/messages$/, ({ m, body }) => { const b = bk(m[1]); part(b); if (b.status === 'cancelled' || b.status === 'completed') throw err(409, 'chat_closed'); need422(!body.body || !body.body.trim() || body.body.length > 4000, 'body', 'length'); const x = { id: uid(), booking_id: b.id, sender_id: S.user.id, kind: body.kind || 'text', body: body.body, payload: null, system_code: null, created_at: iso(now()) }; (S.messages[b.id] = S.messages[b.id] || []).push(x); return clone(x); });
+  on('POST', /^\/reviews\/bookings\/([^/]+)$/, ({ m, body }) => { const b = bk(m[1]); const who = part(b); if (b.status !== 'completed') throw err(409, 'review_not_ready'); if (S.reviews.some((r) => r.booking_id === b.id && r.reviewer_id === S.user.id)) throw err(409, 'review_already_exists'); need422(!(body.stars >= 1 && body.stars <= 5), 'stars', 'range'); const r = { id: uid(), booking_id: b.id, reviewer_id: S.user.id, reviewee_id: who === 'customer' ? b.profile_id : b.customer_id, stars: body.stars, comment: body.comment || '', tags: body.tags || [] }; S.reviews.push(r); return clone(r); });
+  on('POST', /^\/safety\/reports$/, ({ body }) => { if (!S.token) throw err(401, 'authentication_required'); const c = ['harassment', 'inappropriate_request', 'fake_profile', 'fraud', 'unsafe_behavior', 'no_show', 'payment_issue', 'other']; if (!c.includes(body.category) || !(body.description || '').trim()) throw err(422, 'invalid_report'); const r = Object.assign({ id: uid(), status: 'open' }, body); S.reports.push(r); return clone(r); });
+  on('PUT', /^\/safety\/blocks\/([^/]+)$/, ({ m }) => { if (!S.token) throw err(401, 'authentication_required'); if (!S.blocks.includes(m[1])) S.blocks.push(m[1]); return { user_id: m[1] }; });
+  on('POST', /^\/safety\/bookings\/([^/]+)\/sos$/, ({ m, query }) => { const b = bk(m[1]); part(b); if (query.confirmed !== 'true') throw err(422, 'sos_confirmation_required'); if (b.status !== 'active') throw err(409, 'sos_requires_active_booking'); const a = { id: uid(), emergency_service_contacted: false }; S.sos.push(a); return a; });
+  on('GET', /^\/safety\/trusted-contacts$/, () => { if (!S.token) throw err(401, 'authentication_required'); return clone(S.contacts); });
+  on('POST', /^\/safety\/trusted-contacts$/, ({ body }) => { if (!S.token) throw err(401, 'authentication_required'); const c = { id: uid(), name: body.name, phone_number: body.phone_number }; S.contacts.push(c); return clone(c); });
+  on('DELETE', /^\/safety\/trusted-contacts\/([^/]+)$/, ({ m }) => { S.contacts = S.contacts.filter((c) => c.id !== m[1]); return null; });
+  on('GET', /^\/notifications$/, () => clone(S.notifs));
+  // ---- companion self-service ----
+  const cm = () => { need('companion'); return S.me; };
+  on('GET', /^\/companions\/me\/status$/, () => { cm(); return profileStatus(); });
+  on('GET', /^\/companions\/me\/application$/, () => { const m = cm(); if (!m.app) throw err(404, 'application_not_found'); return clone(m.app); });
+  on('POST', /^\/companions\/me\/application$/, ({ body }) => { const m = cm(); if (!m.app) m.app = { id: uid(), user_id: S.user.id, statement: body.statement || '', status: 'draft', revision: 1, review_note: null }; return clone(m.app); });
+  on('PUT', /^\/companions\/me\/application$/, ({ body }) => { const m = cm(); if (!m.app) throw err(404, 'application_not_found'); need422((body.statement || '').length > 4000, 'statement', 'max'); m.app.statement = body.statement || ''; m.app.revision++; return clone(m.app); });
+  on('POST', /^\/companions\/me\/application\/(submit|withdraw)$/, ({ m: x }) => { const m = cm(); if (!m.app) throw err(404, 'application_not_found'); m.app.status = x[1] === 'submit' ? 'submitted' : 'withdrawn'; return clone(m.app); });
+  on('GET', /^\/companions\/me\/profile$/, () => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); return clone(m.prof); });
+  on('POST', /^\/companions\/me\/profile$/, ({ body }) => { const m = cm(); if (!m.app) throw err(404, 'application_not_found'); need422(!(body.display_name || '').trim() || body.display_name.length > 128, 'display_name', 'length'); m.prof = { id: uid(), application_id: m.app.id, display_name: body.display_name, bio: body.bio || '', interests: body.interests || [], languages: body.languages || [], content_status: 'draft', activation_requested: false, review_note: null, revision: 1 }; return clone(m.prof); });
+  on('PUT', /^\/companions\/me\/profile$/, ({ body }) => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); need422(!(body.display_name || '').trim() || body.display_name.length > 128, 'display_name', 'length'); Object.assign(m.prof, { display_name: body.display_name, bio: body.bio || '', interests: body.interests || [], languages: body.languages || [] }); m.prof.revision++; m.prof.content_status = 'draft'; syncPublic(); return clone(m.prof); });
+  on('POST', /^\/companions\/me\/profile\/submit$/, () => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); m.prof.content_status = 'pending'; return clone(m.prof); });
+  on('POST', /^\/companions\/me\/(activate|deactivate)$/, ({ m: x }) => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); m.prof.activation_requested = x[1] === 'activate'; syncPublic(); return profileStatus(); });
+  on('GET', /^\/companions\/me\/services$/, () => clone(cm().services));
+  on('POST', /^\/companions\/me\/services$/, ({ body }) => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); if (body.price_minor < 0) throw err(422, 'invalid_price'); const s = Object.assign({ id: uid(), profile_id: m.prof.id }, body); m.services.push(s); syncPublic(); return clone(s); });
+  on('PUT', /^\/companions\/me\/services\/([^/]+)$/, ({ m: x, body }) => { const m = cm(); const s = m.services.find((v) => v.id === x[1]); if (!s) throw err(404, 'companion_service_not_found'); if (body.price_minor < 0) throw err(422, 'invalid_price'); Object.assign(s, body); syncPublic(); return clone(s); });
+  on('DELETE', /^\/companions\/me\/services\/([^/]+)$/, ({ m: x }) => { const m = cm(); m.services = m.services.filter((v) => v.id !== x[1]); syncPublic(); return null; });
+  on('GET', /^\/companions\/me\/availability$/, () => clone(cm().avail));
+  on('POST', /^\/companions\/me\/availability$/, ({ body }) => { const m = cm(); if (!m.prof) throw err(404, 'profile_not_found'); if (Date.parse(body.ends_at) <= Date.parse(body.starts_at)) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'value_error', loc: ['body', 'ends_at'], msg: 'ends_at must be after starts_at' }] }); const a = Object.assign({ id: uid(), profile_id: m.prof.id }, body); m.avail.push(a); syncPublic(); return clone(a); });
+  on('DELETE', /^\/companions\/me\/availability\/([^/]+)$/, ({ m: x }) => { const m = cm(); m.avail = m.avail.filter((a) => a.id !== x[1]); syncPublic(); return null; });
+  on('GET', /^\/companions\/me\/photos$/, () => { cm(); return []; });
+  // ---- vendor (gift vendor) ----
+  const vn = () => need('vendor');
+  on('GET', /^\/gifts\/vendor\/products$/, () => { vn(); return clone(S.products.filter((p) => p.vendor_id === S.user.id)); });
+  on('POST', /^\/gifts\/vendor\/products$/, ({ body }) => { vn(); if (body.price_minor < 0) throw err(422, 'invalid_product_update'); const p = Object.assign({ id: uid(), vendor_id: S.user.id, published: false }, body); S.products.push(p); return clone(p); });
+  on('PATCH', /^\/vendor\/products\/([^/]+)$/, ({ m, body }) => { vn(); const p = S.products.find((x) => x.id === m[1] && x.vendor_id === S.user.id); if (!p) throw err(404, 'gift_not_found'); if (body.price_minor !== undefined && body.price_minor < 0) throw err(422, 'invalid_product_update'); Object.assign(p, body); return clone(p); });
+  on('POST', /^\/vendor\/products\/([^/]+)\/unpublish$/, ({ m }) => { vn(); const p = S.products.find((x) => x.id === m[1] && x.vendor_id === S.user.id); if (!p) throw err(404, 'gift_not_found'); p.published = false; return clone(p); });
+  on('GET', /^\/vendor\/summary$/, () => { vn(); const mine = S.products.filter((p) => p.vendor_id === S.user.id); return { products_total: mine.length, products_published: mine.filter((p) => p.published).length }; });
+  on('GET', /^\/vendor\/orders$/, () => { vn(); return []; });
+  on('GET', /^\/vendor\/earnings$/, () => { vn(); throw err(503, 'vendor_earnings_unavailable'); });
+
+  async function api(method, path, opt) {
+    opt = opt || {}; const q = opt.query || {}; cfg.calls.push(method + ' ' + path);
+    if (cfg.offline) throw err(0, 'network_offline');
+    await new Promise((r) => setTimeout(r, cfg.latency));
+    for (const [mm, re, fn] of R) { if (mm !== method) continue; const m = path.match(re); if (m) return clone(await fn({ m, body: opt.body || {}, query: q, headers: opt.headers || {} })); }
+    throw err(404, 'http_error', 'Not found');
+  }
+  // ---- DEMO-only controls (simulate provider / admin / other party; NOT API endpoints) ----
+  const demo = {
+    cfg, S,
+    providerComplete(paymentId, result) { const p = S.payments.find((x) => x.id === paymentId); if (!p || p.status !== 'pending') return null; p.status = result; if (result === 'succeeded') { const b = S.bookings.find((x) => x.id === p.booking_id); if (b.status === 'accepted') { b.status = 'confirmed'; sysmsg(b, 'payment_confirmed', 'Toʻlov tasdiqlandi (DEMO).'); notify(b, 'payment_confirmed'); } } return p; },
+    companionAccept(id) { const b = S.bookings.find((x) => x.id === id); if (b && b.status === 'pending') { b.status = 'accepted'; b.companion_contract_accepted_at = iso(now()); sysmsg(b, 'booking_accepted', 'Hamroh bronni qabul qildi. Endi toʻlash mumkin.'); notify(b, 'booking_accepted'); } return b; },
+    companionCheckIn(id) { const b = S.bookings.find((x) => x.id === id); if (b && b.status === 'confirmed' && now() >= Date.parse(b.starts_at)) { meet(b).p = true; sysmsg(b, 'checked_in', 'Hamroh yetib keldi.'); } return b; },
+    skipToStart(id) { const b = S.bookings.find((x) => x.id === id); if (b) cfg.clock = Math.max(cfg.clock, Date.parse(b.starts_at) - Date.now() + 1000); },
+    adminApprove() { const m = S.me; if (m.app) m.app.status = 'approved'; if (m.prof) m.prof.content_status = 'approved'; m.identity = 'verified'; syncPublic(); },
+    adminPublish(id) { const p = S.products.find((x) => x.id === id); if (p) p.published = true; },
+    incomingRequests() { const p = myProfile(); if (!p || S.bookings.some((b) => b.profile_id === p.id)) return; const s = p.services[0]; if (!s) return; [26, 52].forEach((h, i) => { const st = Date.parse(p.avail[0] ? p.avail[Math.min(i + 1, p.avail.length - 1)].starts_at : iso(now() + 864e5)) + 3 * 36e5; S.bookings.push({ id: uid(), customer_id: uid(), profile_id: p.id, service_id: s.id, service_code: s.service_code, service_description: s.description, starts_at: iso(st), ends_at: iso(st + s.unit_minutes * 6e4), duration_minutes: s.unit_minutes, meeting_place: 'Amir Temur xiyoboni (DEMO)', timezone: 'Asia/Tashkent', price_minor: s.price_minor, currency: s.currency, status: 'pending', created_at: iso(now()), customer_contract_accepted_at: iso(now()), companion_contract_accepted_at: null }); }); },
+    reset() { Object.assign(S, { user: null, roles: [], token: null, bookings: [], payments: [], messages: {}, meetings: {}, reviews: [], reports: [], blocks: [], contacts: [], cart: [], testOrders: [], notifs: [], sos: [], me: { app: null, prof: null, status: null, services: [], avail: [] } }); cfg.clock = 0; cfg.offline = false; cfg.pay = 'ok'; cfg.feeBps = 1000; seed(); }
+  };
+  return { api, demo, card };
+});
+
+/* components.js */
+/* YONDO component library (HTML-string components). Class names are defined in design-system/components.css. */
+(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.YC = factory(); })(typeof self !== 'undefined' ? self : this, function () {
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const attr = (o) => Object.entries(o || {}).filter(([, v]) => v !== false && v != null && v !== '').map(([k, v]) => (v === true ? k : `${k}="${esc(v)}"`)).join(' ');
+  const Spinner = (label) => `<span class="spin" role="status" aria-label="${esc(label || 'Yuklanmoqda')}"></span>`;
+  // variant: '' (primary) | 'sec' | 'danger'. States: default, :active, :focus-visible, disabled, loading (aria-busy).
+  const Button = (label, o) => { o = o || {}; return `<button type="${o.type || 'button'}" class="btn${o.variant ? ' ' + o.variant : ''}${o.full ? ' full' : ''}" ${attr({ 'data-a': o.a, id: o.id, disabled: o.disabled || o.loading, 'aria-busy': o.loading ? 'true' : false, 'aria-label': o.aria })}>${o.loading ? Spinner() : ''}${label}</button>`; };
+  const Chip = (label, o) => { o = o || {}; return `<button type="button" class="chip${o.on ? ' on' : ''}" ${attr({ 'data-a': o.a, disabled: o.disabled, 'aria-pressed': o.pressed === false ? false : String(!!o.on) })}>${label}</button>`; };
+  const Tag = (t) => `<span class="tg">${esc(t)}</span>`;
+  const Demo = () => '<span class="demo">DEMO</span>';
+  const Avatar = (name, hue, size) => `<span class="av${size === 'lg' ? ' big' : ''}" style="background:hsl(${hue || 0} 45% 78%)" aria-hidden="true">${esc((name || '?')[0])}</span>`;
+  // Verification: ONLY from the backend `verified` boolean. Unverified shows nothing in lists; detail views may pass {explicit:true}.
+  const Verified = (v, o) => (v === true ? '<span class="bdg"><span aria-hidden="true">✓</span> Tasdiqlangan</span>' : o && o.explicit ? '<span class="bdg off">Tasdiqlanmagan</span>' : '');
+  const Alert = (kind, text, o) => { o = o || {}; const role = kind === 'error' || kind === 'unavailable' ? 'alert' : 'status'; return `<div class="alert ${kind}" role="${role}"><div class="alert-b"><b>${esc(o.title || '')}</b>${o.title ? '<br>' : ''}${esc(text)}${o.rid ? `<div class="cap">Murojaat uchun kod: ${esc(o.rid)}</div>` : ''}</div>${o.actions || ''}</div>`; };
+  const Field = (id, label, o) => { o = o || {}; const d = (o.err ? id + '-e ' : '') + (o.hint ? id + '-h' : ''); const common = `id="${id}" name="${id}" ${attr({ 'aria-invalid': o.err ? 'true' : false, 'aria-describedby': d.trim() || false, required: o.required, inputmode: o.mode, placeholder: o.ph, maxlength: o.max, autocomplete: o.ac, min: o.min, step: o.step, disabled: o.disabled })}`; const ctl = o.area ? `<textarea ${common} rows="${o.rows || 3}">${esc(o.value)}</textarea>` : o.options ? `<select ${common}>${o.options.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(o.value) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>` : `<input type="${o.type || 'text'}" ${common} value="${esc(o.value)}">`; return `<div class="fld${o.err ? ' bad' : ''}"><label for="${id}">${esc(label)}${o.required ? ' <span aria-hidden="true">*</span>' : ''}</label>${ctl}${o.hint ? `<div class="cap mu" id="${id}-h">${esc(o.hint)}</div>` : ''}${o.err ? `<div class="err" id="${id}-e">${esc(o.err)}</div>` : ''}</div>`; };
+  const Empty = (title, text, cta) => `<div class="empty"><h2>${esc(title)}</h2><p class="mu sm">${esc(text)}</p>${cta || ''}</div>`;
+  const Skeleton = (n, h) => Array.from({ length: n || 3 }, () => `<div class="sk" style="height:${h || 96}px" aria-hidden="true"></div>`).join('') + '<span class="sr">Yuklanmoqda</span>';
+  // Card: a button when `a` is given (whole card is the hit area).
+  const Card = (inner, o) => { o = o || {}; return o.a ? `<button type="button" class="card${o.up ? ' up' : ''}" data-a="${esc(o.a)}" ${o.style ? `style="${esc(o.style)}"` : ''}>${inner}</button>` : `<div class="card${o.col ? ' col' : ''}">${inner}</div>`; };
+  const NavBar = (items, active) => `<nav class="nav" aria-label="Asosiy navigatsiya">${items.map((i) => `<a class="navi" href="${i.href}"${active === i.id ? ' aria-current="page"' : ''}><span class="ni" aria-hidden="true">${i.icon}</span><span>${esc(i.label)}</span></a>`).join('')}</nav>`;
+  const Status = (label, key) => `<span class="stc" data-st="${esc(key)}">${esc(label)}</span>`;
+  const Timeline = (steps, idx) => `<ol class="tl" aria-label="Bron holati">${steps.map((s, i) => `<li${i < idx ? ' class="done"' : i === idx ? ' class="cur" aria-current="step"' : ''}><span>${esc(s)}</span></li>`).join('')}</ol>`;
+  const Check = () => '<svg class="ck" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle pathLength="1" cx="36" cy="36" r="30"/><path pathLength="1" d="M24 37l8 8 16-17"/></svg>';
+  const Logo = (sz, animate) => `<svg class="lg${animate ? ' an' : ''}" viewBox="0 0 64 64" width="${sz}" height="${sz}" role="img" aria-label="Yondo"><g class="d" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path pathLength="1" d="M14 12 28 33Q31 37 32 40"/><path pathLength="1" d="M50 12 36 33Q33 37 32 40"/><path pathLength="1" d="M32 40v12"/></g><circle class="n n1" cx="14" cy="12" r="7"/><circle class="n n2 ac" cx="50" cy="12" r="7"/><circle class="n n3" cx="32" cy="55" r="5.5"/></svg>`;
+  return { esc, attr, Spinner, Button, Chip, Tag, Demo, Avatar, Verified, Alert, Field, Empty, Skeleton, Card, NavBar, Status, Timeline, Check, Logo };
+});
+
+/* app.js */
+/* YONDO prototype app (core + customer). DEMO: talks to the in-browser mock (mockapi.js), never to a real server. */
+(function () {
+  const L = YL, M = YM, C = YC, D = M.demo, esc = C.esc, api = M.api;
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const RM = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const OFF = 5 * 36e5, TZ = 'Asia/Tashkent';
+  const nowMs = () => Date.now() + D.cfg.clock;
+  const MO = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'], DW = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+  const loc = (ms) => new Date(ms + OFF);
+  const hhmm = (ms) => { const d = loc(ms); return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+  const dm = (ms) => { const d = loc(ms); return d.getUTCDate() + ' ' + MO[d.getUTCMonth()]; };
+  const when = (iso) => { const t = Date.parse(iso); return dm(t) + ', ' + hhmm(t); };
+  const dayStart = (n) => { const d = loc(nowMs()); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + n) - OFF; };
+  const S = { roles: [], role: null, authed: false, me: null, rt: 0, vt: null, svc: {}, bf: null, srch: { q: '', service_code: '', language: '', rating_min: '', price_max_minor: '' }, otp: false, ph: '', pay: {}, anim: -1 };
+  const BASE_NAV = {
+    customer: [{ id: 'home', href: '#/home', icon: '⌂', label: 'Bosh sahifa' }, { id: 'search', href: '#/search', icon: '⌕', label: 'Qidiruv' }, { id: 'bookings', href: '#/bookings', icon: '☰', label: 'Bronlar' }, { id: 'gifts', href: '#/gifts', icon: '✿', label: 'Sovgʻalar' }],
+    companion: [{ id: 'me', href: '#/me', icon: '◉', label: 'Holat' }, { id: 'prof', href: '#/me/profile', icon: '✎', label: 'Profil' }, { id: 'svcs', href: '#/me/services', icon: '☷', label: 'Xizmatlar' }, { id: 'avail', href: '#/me/availability', icon: '◷', label: 'Vaqtlar' }, { id: 'req', href: '#/me/requests', icon: '☰', label: 'Soʻrovlar' }],
+    vendor: [{ id: 'v', href: '#/v', icon: '✿', label: 'Mahsulotlar' }, { id: 'vo', href: '#/v/orders', icon: '☰', label: 'Buyurtmalar' }, { id: 've', href: '#/v/earnings', icon: '₸', label: 'Daromad' }]
+  };
+  const ROLE_LABEL = { customer: 'Mijoz', companion: 'Hamroh', vendor: 'Sotuvchi' };
+  const HOME = { customer: '#/home', companion: '#/me', vendor: '#/v' };
+
+  // ---------- plumbing ----------
+  async function call(m, p, o) { if (navigator.onLine === false) throw Object.assign(new Error('network_offline'), { status: 0, code: 'network_offline' }); return api(m, p, o); }
+  function toast(t) { const e = $('#ts'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 3500); }
+  function dlg(html) { const d = $('#dlg'); d.innerHTML = '<div class="gh"></div>' + html; d.setAttribute('aria-labelledby', 'dt'); if (!d.open) { d.showModal(); requestAnimationFrame(() => d.classList.add('in')); } const f = $('[autofocus]', d); if (f) f.focus(); }
+  function closeDlg() { const d = $('#dlg'); if (!d.open) return; d.classList.remove('in'); if (RM) d.close(); else setTimeout(() => d.open && d.close(), 200); }
+  function busy(el, fn) { if (!el || el.disabled) return Promise.resolve(); el.disabled = true; el.setAttribute('aria-busy', 'true'); return Promise.resolve(fn()).finally(() => { el.disabled = false; el.removeAttribute('aria-busy'); }); }
+  const parse = () => { const h = location.hash.replace(/^#\/?/, ''), [p, qs] = h.split('?'); const q = {}; (qs || '').split('&').filter(Boolean).forEach((x) => { const [k, v] = x.split('='); q[decodeURIComponent(k)] = decodeURIComponent(v || ''); }); return { p: p.split('/').filter(Boolean), q }; };
+  const go = (h) => { if (location.hash === h) route(); else location.hash = h; };
+  function errBox(e, retry, extra) { const c = L.classify(e); const kind = c.kind === 'unavailable' || c.kind === 'offline' ? 'unavailable' : 'error'; const title = c.kind === 'offline' ? 'Internet yoʻq' : c.kind === 'unavailable' ? 'Xizmat vaqtincha mavjud emas' : c.kind === 'role' ? 'Ruxsat yoʻq' : c.kind === 'stale' ? 'Maʼlumot eskirgan' : 'Xatolik'; return C.Alert(kind, c.text, { title, rid: c.rid, actions: (retry !== false && c.retry ? C.Button('Qayta urinish', { a: 'retry', variant: 'sec' }) : '') + (extra || '') }); }
+  const money = (m, c) => L.money(m, c);
+  const svcName = (c) => L.SERVICE_LABEL[c] || c;
+  const fromPrice = (c) => Math.min(...c.services.map((s) => Math.round(s.price_minor * 60 / s.unit_minutes)));
+  const hue = (c) => (c.display_name.charCodeAt(0) * 7) % 360;
+  const rating = (c) => (c.rating == null ? '<span class="mu sm">Hali baho yoʻq</span>' : `<span class="sm"><span aria-hidden="true">★</span> ${c.rating.toFixed(1)} <span class="mu">(${c.review_count})</span><span class="sr"> baho, ${c.review_count} sharh</span></span>`);
+
+  // ---------- shell ----------
+  function shell() {
+    const roles = S.roles;
+    $('#app').innerHTML = `<div id="off" class="offline" role="status" hidden>Internet aloqasi yoʻq. Maʼlumotlar yangilanmaydi.</div>
+<header class="top"><a class="skip" href="#/" data-a="skip">Asosiy mazmunga oʻtish</a><a href="${S.role ? HOME[S.role] : '#/'}" aria-label="Yondo bosh sahifa" class="row" style="text-decoration:none;min-height:44px">${C.Logo(32)}<b style="font:700 18px var(--font-display)">YONDO</b></a><span class="ttl"></span>
+${roles.length > 1 ? `<select id="rolesel" aria-label="Rol" style="min-height:44px;width:auto">${roles.map((r) => `<option value="${r}"${r === S.role ? ' selected' : ''}>${ROLE_LABEL[r] || r}</option>`).join('')}</select>` : ''}
+<button class="ib" data-a="demo" aria-label="DEMO sozlamalari">⚙</button></header><main id="v" tabindex="-1"></main><div id="nav"></div>`;
+    const rs = $('#rolesel'); if (rs) rs.onchange = () => { S.role = rs.value; go(HOME[S.role]); };
+    syncOff();
+  }
+  function syncOff() { const o = $('#off'); if (o) o.hidden = !(navigator.onLine === false || D.cfg.offline); }
+  function nav(active) { const n = $('#nav'); if (n) n.innerHTML = S.authed && S.role && BASE_NAV[S.role] ? C.NavBar(BASE_NAV[S.role], active) : ''; }
+  function swap(html, init) { const v = $('#v'); if (!v) return; const run = () => { v.className = 'scr'; v.innerHTML = html; if (init) init(); const h = $('h1', v); window.scrollTo(0, 0); if (h && S.booted) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } S.booted = true; }; if (S.vt && document.startViewTransition && !RM) { S.vt = null; document.startViewTransition(run); } else { S.vt = null; run(); } }
+  function rerender(fn) { const ae = document.activeElement, id = ae && ae.id, da = ae && ae.getAttribute && ae.getAttribute('data-a'), v = $('#v'), top = window.scrollY; v.innerHTML = fn(); window.scrollTo(0, top); const n = id ? document.getElementById(id) : da ? $(`[data-a="${da}"]`, v) : null; if (n && !n.disabled) n.focus({ preventScroll: true }); }
+
+  // ---------- router ----------
+  const R = [];
+  const on = (re, role, fn, navId) => R.push({ re, role, fn, navId });
+  async function route() {
+    const my = ++S.rt, { p, q } = parse(), path = '/' + p.join('/');
+    if (!$('#v')) shell();
+    if (path.startsWith('/screen/')) return YAPP.seedScreen(p[1]);
+    const r = R.find((x) => x.re.test(path)); const m = r && path.match(r.re);
+    const pub = ['/', '/login', '/roles'].includes(path);
+    if (!r) return swap(C.Empty('Sahifa topilmadi', 'Manzil notoʻgʻri.', C.Button('Bosh sahifaga', { a: 'home' })));
+    if (!pub && !S.authed) return go('#/login');
+    if (path === '/roles' && !S.authed) return go('#/login');
+    if (r.role && S.authed && !S.roles.includes(r.role)) { nav(r.navId); return swap(`<div class="pad col"><h1>Ruxsat yoʻq</h1>${C.Alert('info', `Bu boʻlim uchun “${ROLE_LABEL[r.role]}” roli kerak. Bu faqat interfeys cheklovi: xavfsizlikni server har bir soʻrovda oʻzi tekshiradi.`)}${C.Button('Rolni tanlash', { a: 'go:#/roles', variant: 'sec' })}</div>`); }
+    if (r.role && r.role !== S.role) { S.role = r.role; shell(); }
+    nav(r.navId); S.cur = { m, q, path };
+    if (!S.vt) $('#v').innerHTML = `<div class="pad">${C.Skeleton(3)}</div>`;
+    try { const out = await r.fn(m, q); if (my !== S.rt) return; if (out) swap(out.html || out, out.init); }
+    catch (e) { if (my !== S.rt) return; S.vt = null; const c = L.classify(e); if (c.kind === 'auth') { S.authed = false; return go('#/login'); } swap(`<div class="pad col"><h1>Yuklab boʻlmadi</h1>${errBox(e)}${C.Button('Bosh sahifa', { a: 'home', variant: 'sec' })}</div>`); }
+  }
+  const A = {}, F = {};
+  document.addEventListener('click', (e) => { const a = e.target.closest('[data-a]'); if (!a) return; const i = a.dataset.a.indexOf(':'), n = i < 0 ? a.dataset.a : a.dataset.a.slice(0, i), x = i < 0 ? '' : a.dataset.a.slice(i + 1); if (A[n]) { e.preventDefault(); const r = A[n](x, a, e); if (r && r.then) busy(a, () => r); } });
+  document.addEventListener('submit', (e) => { const f = e.target.closest('form[data-f]'); if (!f) return; e.preventDefault(); const sb = f.querySelector('[type=submit]'); const r = F[f.dataset.f](f, e); if (r && r.then) busy(sb, () => r); });
+  addEventListener('hashchange', route); addEventListener('online', syncOff); addEventListener('offline', syncOff);
+  A.retry = () => route(); A.home = () => go(S.role ? HOME[S.role] : '#/'); A.go = (x) => go(x); A.close = () => closeDlg();
+  A.skip = () => { const v = $('#v'); v.setAttribute('tabindex', '-1'); v.focus(); };
+  A.back = () => (history.length > 1 ? history.back() : A.home());
+  $('#dlg').addEventListener('click', (e) => { if (e.target.id === 'dlg') closeDlg(); });
+  $('#dlg').addEventListener('close', () => $('#dlg').classList.remove('in'));
+  $('#dlg').addEventListener('cancel', () => $('#dlg').classList.remove('in'));
+  $('#dlg').addEventListener('keydown', (e) => { if (e.key !== 'Tab') return; const f = $$('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])', $('#dlg')).filter((x) => x.offsetParent !== null); if (!f.length) return; const i = f.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && (i === f.length - 1 || i < 0)) { e.preventDefault(); f[0].focus(); } });
+  const field = (f, n) => (f.elements[n] ? f.elements[n].value : '');
+  const fieldErrs = (errs) => Object.fromEntries((errs || []).map((e) => [e.field, e.text]));
+  function serverFieldErrs(e) { const o = {}; ((e && e.errors) || []).forEach((x) => { const k = x.loc && x.loc[x.loc.length - 1]; if (k) o[k] = x.msg; }); return o; }
+
+  // ---------- DEMO panel ----------
+  A.demo = () => {
+    const c = D.cfg; dlg(`<h2 id="dt">DEMO sozlamalari</h2><p class="sm mu" style="margin:8px 0">Bu boshqaruvlar faqat prototipda. Haqiqiy API da yoʻq.</p>
+<div class="lb">Tarmoq</div><div class="chips w">${C.Chip('Oflayn', { on: c.offline, a: 'dm:offline' })}${C.Chip('Sekin tarmoq', { on: c.latency > 1000, a: 'dm:slow' })}</div>
+<div class="lb">Toʻlov provayderi</div><div class="chips w">${C.Chip('Ishlaydi', { on: c.pay === 'ok', a: 'dm:payok' })}${C.Chip('503 mavjud emas', { on: c.pay === '503', a: 'dm:pay503' })}</div>
+<div class="lb">Platforma haqi sozlamasi</div><div class="chips w">${C.Chip('Sozlangan (10%)', { on: c.feeBps !== null, a: 'dm:feeon' })}${C.Chip('Sozlanmagan (503)', { on: c.feeBps === null, a: 'dm:feeoff' })}</div>
+<div class="lb">Mavzu</div><div class="chips w">${C.Chip('Yorugʻ', { on: document.documentElement.dataset.theme === 'light', a: 'dm:light' })}${C.Chip('Qorongʻi', { on: document.documentElement.dataset.theme === 'dark', a: 'dm:dark' })}</div>
+<div class="col" style="margin-top:16px">${C.Button('Maʼlumotlarni tiklash', { a: 'dm:reset', variant: 'sec' })}${C.Button('Yopish', { a: 'close', variant: 'sec' })}</div>`);
+  };
+  A.dm = (x) => { const c = D.cfg, r = document.documentElement; if (x === 'offline') c.offline = !c.offline; if (x === 'slow') c.latency = c.latency > 1000 ? 180 : 1500; if (x === 'payok') c.pay = 'ok'; if (x === 'pay503') c.pay = '503'; if (x === 'feeon') c.feeBps = 1000; if (x === 'feeoff') c.feeBps = null; if (x === 'light' || x === 'dark') r.dataset.theme = x; if (x === 'reset') { D.reset(); S.authed = false; S.roles = []; S.role = null; S.bf = null; closeDlg(); toast('Maʼlumotlar tiklandi.'); shell(); return go('#/'); } syncOff(); A.demo(); const b = $(`[data-a="dm:${x}"]`); if (b) b.focus(); };
+
+  // ---------- auth ----------
+  on(/^\/$/, null, () => ({ html: `<div class="pad col" style="min-height:85vh;justify-content:center;align-items:center;text-align:center;gap:20px">${C.Logo(120, true)}<h1 style="font-size:40px;line-height:44px">YONDO</h1><p class="mu" style="max-width:30ch">Yoningizda boʻladigan ishonchli inson. Kofe, sayr, kino va suhbat uchun.</p>${C.Button('Telefon raqam bilan davom etish', { a: 'go:#/login', full: true })}<p class="cap mu">Prototip: DEMO maʼlumotlar, haqiqiy toʻlov yoki SMS yoʻq.</p></div>` }));
+  on(/^\/login$/, null, () => loginView());
+  function loginView(err, errs) { return { html: `<div class="pad col"><h1>Kirish</h1><p class="mu">Telefon raqamingizni kiriting. Raqam boshqa foydalanuvchilarga koʻrsatilmaydi.</p>${err || ''}<form data-f="${S.otp ? 'otp' : 'phone'}" class="col" novalidate>${C.Field('ph', 'Telefon raqam (+998)', { value: S.ph, mode: 'tel', ph: '90 123 45 67', ac: 'tel-national', max: 13, required: true, err: errs && errs.ph, disabled: S.otp })}${S.otp ? C.Field('ot', 'Tasdiqlash kodi', { mode: 'numeric', max: 4, ph: '••••', required: true, err: errs && errs.ot, hint: 'DEMO kod: 1234 (haqiqiy SMS yuborilmaydi)' }) : ''}<button class="btn full" type="submit">${S.otp ? 'Tasdiqlash' : 'Kod yuborish'}</button>${S.otp ? C.Button('Raqamni oʻzgartirish', { a: 'chphone', variant: 'sec', full: true }) : ''}</form></div>`, init: () => { const i = $(S.otp ? '#ot' : '#ph'); if (i) i.focus(); } }; }
+  A.chphone = () => { S.otp = false; const o = loginView(); swap(o.html, o.init); };
+  F.phone = async (f) => { S.ph = field(f, 'ph'); const v = L.validatePhone(S.ph); if (!v.ok) { const o = loginView(null, { ph: 'Raqam 9 ta raqamdan iborat boʻlishi kerak (masalan, 90 123 45 67).' }); return swap(o.html, o.init); } try { await call('POST', '/auth/otp/request', { body: { phone_number: v.e164 } }); S.e164 = v.e164; S.otp = true; const o = loginView(); swap(o.html, o.init); } catch (e) { const o = loginView(errBox(e, false)); swap(o.html, o.init); } };
+  F.otp = async (f) => { const code = field(f, 'ot'); if (!/^\d{4}$/.test(code)) { const o = loginView(null, { ot: 'Kod 4 ta raqamdan iborat.' }); return swap(o.html, o.init); } try { await call('POST', '/auth/otp/verify', { body: { phone_number: S.e164, code } }); S.authed = true; S.otp = false; S.me = await call('GET', '/auth/me'); S.roles = S.me.roles; S.role = S.roles.includes('customer') ? 'customer' : S.roles[0] || null; shell(); go(S.roles.length ? HOME[S.role] : '#/roles'); } catch (e) { const c = L.classify(e), o = loginView(errBox(e, false), { ot: c.kind === 'form' ? c.text : '' }); swap(o.html, o.init); } };
+  on(/^\/roles$/, null, () => ({ html: `<div class="pad col"><h1>Rolni tanlang</h1><p class="mu">Bir yoki bir nechta rolni tanlashingiz mumkin. Keyinroq oʻzgartirish mumkin.</p><form data-f="roles" class="col" novalidate><fieldset style="border:0;padding:0;margin:0"><legend class="sr">Rollar</legend>${['customer', 'companion', 'vendor'].map((r) => `<label class="chk"><input type="checkbox" name="r" value="${r}"${S.roles.includes(r) ? ' checked' : ''}><span><b>${ROLE_LABEL[r]}</b><br><span class="sm mu">${{ customer: 'Hamroh topish va bron qilish', companion: 'Profil yaratish, xizmat va vaqt belgilash', vendor: 'Gul va sovgʻa mahsulotlarini boshqarish' }[r]}</span></span></label>`).join('')}</fieldset><div id="re" role="alert"></div><button class="btn full" type="submit">Davom etish</button></form></div>` }));
+  F.roles = async (f) => { const r = $$('input[name=r]:checked', f).map((x) => x.value); if (!r.length) { $('#re').innerHTML = '<div class="err">Kamida bitta rolni tanlang.</div>'; return; } try { await call('PUT', '/auth/roles', { body: { roles: r } }); S.roles = r; S.role = r.includes('customer') ? 'customer' : r[0]; shell(); go(HOME[S.role]); } catch (e) { $('#re').innerHTML = errBox(e, false); } };
+
+  // ---------- customer: home / search / profile ----------
+  const cardHtml = (c, i, anim) => C.Card(`<span class="av" style="background:hsl(${hue(c)} 45% 78%)" aria-hidden="true">${esc(c.display_name[0])}</span><span class="grow col" style="gap:4px"><span class="row sp"><b>${esc(c.display_name)}${c.age ? ', ' + c.age : ''}</b>${C.Demo()}</span>${C.Verified(c.verified)}<span class="sm mu">${[...new Set(c.services.map((s) => svcName(s.service_code)))].join(' · ')}</span><span class="row sp">${rating(c)}<b class="sm">${money(fromPrice(c))}/soat</b></span></span>`, { a: 'open:' + c.id, up: anim, style: '--i:' + Math.min(i, 6) });
+  A.open = (id, el) => { const av = el.querySelector('.av'); if (av) av.style.viewTransitionName = 'av'; S.vt = true; go('#/c/' + id); };
+  on(/^\/home$/, 'customer', async () => {
+    const [pg, bks] = await Promise.all([call('GET', '/discovery/companions', { query: { limit: 30 } }), call('GET', '/bookings')]); const live = bks.find((b) => !['completed', 'cancelled'].includes(b.status));
+    const top = pg.items.filter((c) => c.rating != null).sort((a, b) => b.rating - a.rating).slice(0, 3), fresh = pg.items.filter((c) => c.review_count === 0);
+    const sec = (t, l) => (l.length ? `<h2 style="margin:16px 0 8px">${t}</h2><div class="list g2">${l.map((c, i) => cardHtml(c, i, true)).join('')}</div>` : '');
+    return `<div class="ban">DEMO maʼlumotlar: ismlar, baholar va narxlar haqiqiy emas.</div>${live ? `<div class="pad" style="padding-bottom:0">${C.Card(`<span class="grow col" style="gap:2px"><b>Mening bronim</b><span class="sm mu">${svcName(live.service_code)} · ${when(live.starts_at)} · ${L.LABEL[live.status]}</span></span><span aria-hidden="true">›</span>`, { a: 'go:#/b/' + live.id })}</div>` : ''}
+<div class="pad"><h1>Toshkent</h1><p class="mu sm">Qaysi hamroh kerak?</p><div class="chips w" style="margin-top:8px">${Object.entries(L.SERVICE_LABEL).map(([k, v]) => `<a class="chip" style="display:inline-flex;align-items:center;text-decoration:none" href="#/search?service_code=${k}">${v}</a>`).join('')}</div>
+${pg.items.length ? sec('Eng yuqori baholilar', top) + sec('Yangi profillar', fresh) + `<h2 style="margin:16px 0 8px">Barcha hamrohlar</h2><div class="list g2">${pg.items.map((c, i) => cardHtml(c, i, true)).join('')}</div>` : C.Empty('Hozircha hamrohlar yoʻq', 'Keyinroq qayta tekshiring.')}</div>`;
+  }, 'home');
+  const priceOpts = [['', 'Hammasi'], ['8000000', '80 000 soʻmgacha'], ['10000000', '100 000 soʻmgacha'], ['12000000', '120 000 soʻmgacha']];
+  function searchForm() { const s = S.srch; return `<form data-f="search" class="col" role="search" novalidate>${C.Field('q', 'Qidirish', { type: 'search', value: s.q, ph: 'Ism, shahar yoki qiziqish' })}<div class="chips w" role="group" aria-label="Xizmat turi">${Object.entries(L.SERVICE_LABEL).map(([k, v]) => C.Chip(v, { on: s.service_code === k, a: 'sf:' + k })).join('')}</div><div class="row wrap"><div class="grow">${C.Field('language', 'Til', { value: s.language, options: [['', 'Hammasi'], ['Oʻzbek', 'Oʻzbek'], ['Rus', 'Rus'], ['Ingliz', 'Ingliz']] })}</div><div class="grow">${C.Field('rating_min', 'Baho', { value: s.rating_min, options: [['', 'Hammasi'], ['4', '4 va yuqori'], ['4.5', '4.5 va yuqori']] })}</div><div class="grow">${C.Field('price_max_minor', 'Narx (soatiga)', { value: s.price_max_minor, options: priceOpts })}</div></div></form>`; }
+  async function loadResults() { const box = $('#res'); if (!box) return; const my = ++loadResults.n; box.innerHTML = C.Skeleton(3); const s = S.srch, query = { limit: 30 }; Object.entries(s).forEach(([k, v]) => { if (v) query[k] = v; }); try { const pg = await call('GET', '/discovery/companions', { query }); if (my !== loadResults.n) return; const n = pg.items.length; box.innerHTML = `<p class="sm mu" role="status">${n} ta natija${pg.has_more ? ' (yana bor)' : ''}</p>` + (n ? `<div class="list g2">${pg.items.map((c, i) => cardHtml(c, i, true)).join('')}</div>` : C.Empty('Hech narsa topilmadi', 'Filtrni oʻzgartirib koʻring.', C.Button('Filtrni tozalash', { a: 'sreset', variant: 'sec' }))); } catch (e) { if (my !== loadResults.n) return; box.innerHTML = errBox(e, true); } }
+  loadResults.n = 0;
+  on(/^\/search$/, 'customer', (m, q) => { if (q.service_code) S.srch.service_code = q.service_code; return { html: `<div class="pad col"><h1>Qidiruv</h1>${searchForm()}<div id="res" aria-live="polite"></div></div>`, init: loadResults }; }, 'search');
+  let sdeb; const syncS = (f) => { Object.assign(S.srch, { q: field(f, 'q').trim(), language: field(f, 'language'), rating_min: field(f, 'rating_min'), price_max_minor: field(f, 'price_max_minor') }); clearTimeout(sdeb); sdeb = setTimeout(loadResults, 250); };
+  document.addEventListener('input', (e) => { const f = e.target.closest('form[data-f=search]'); if (f) syncS(f); }); document.addEventListener('change', (e) => { const f = e.target.closest('form[data-f=search]'); if (f) syncS(f); });
+  F.search = (f) => syncS(f);
+  A.retryres = () => loadResults();
+  A.sf = (x) => { S.srch.service_code = S.srch.service_code === x ? '' : x; $$('[data-a^="sf:"]').forEach((b) => { const o = b.dataset.a === 'sf:' + S.srch.service_code; b.classList.toggle('on', o); b.setAttribute('aria-pressed', o); }); loadResults(); };
+  A.sreset = () => { S.srch = { q: '', service_code: '', language: '', rating_min: '', price_max_minor: '' }; route(); };
+  on(/^\/c\/([^/]+)$/, 'customer', async (m) => { const c = await call('GET', '/discovery/companions/' + m[1]); const sid = S.svc[c.id] || c.services[0].id; S.svc[c.id] = sid; const s = c.services.find((x) => x.id === sid) || c.services[0]; return { html: `<div class="row" style="padding:12px 12px 0"><button class="ib" data-a="back" aria-label="Orqaga">‹</button></div><div class="pad col" style="padding-bottom:140px"><div class="row" style="gap:16px"><span class="av big" style="background:hsl(${hue(c)} 45% 78%);view-transition-name:av" aria-hidden="true">${esc(c.display_name[0])}</span><div class="col" style="gap:4px;min-width:0"><h1>${esc(c.display_name)}${c.age ? ', ' + c.age : ''}</h1>${C.Verified(c.verified, { explicit: true })}${rating(c)}${C.Demo()}</div></div>
+<p>${esc(c.bio)}</p><p class="sm mu">Hudud: ${esc(c.city)} (aniq manzil koʻrsatilmaydi). Tillar: ${c.languages.map(esc).join(', ')}</p><div class="chips w">${c.interests.map(C.Tag).join(' ')}</div>
+<h2>Xizmatlar</h2><div class="col" role="group" aria-label="Xizmat">${c.services.map((x) => `<button type="button" class="card" data-a="svc:${c.id}:${x.id}" aria-pressed="${x.id === s.id}" style="${x.id === s.id ? 'border:2px solid var(--tx)' : ''}"><span class="grow col" style="gap:2px"><b>${svcName(x.service_code)}</b><span class="sm mu">${esc(x.description)}</span></span><b>${money(x.price_minor, x.currency)}<span class="sm mu"> / ${x.unit_minutes} daq</span></b></button>`).join('')}</div>
+<h2>Sharhlar ${C.Demo()}</h2>${c.review_count ? '<div class="card col"><b>★ 5 · Vaqtida va samimiy</b><span class="sm mu">“Suhbat yoqimli oʻtdi.”</span></div>' : '<p class="sm mu">Hali sharhlar yoʻq.</p>'}
+<div class="row wrap"><button class="btn sec" data-a="rep:${c.id}">Shikoyat qilish</button><button class="btn sec" data-a="blk:${c.id}">Bloklash</button></div></div>
+<div class="bar-b"><div class="row sp"><div><div class="cap mu">Tanlangan xizmat</div><b>${money(s.price_minor, s.currency)} / ${s.unit_minutes} daq</b></div>${C.Button('Bron qilish', { a: 'go:#/book/' + c.id })}</div></div>` }; }, 'home');
+  A.svc = (x) => { const [cid, sid] = x.split(':'); S.svc[cid] = sid; route(); };
+  // ASSUMPTION: ReportWrite.reported_user_id needs a user id, but public cards expose only the profile id; the profile id is sent. Open contract question (see docs).
+  A.rep = (id) => dlg(`<h2 id="dt">Shikoyat</h2><form data-f="report" data-t="${esc(id)}" class="col" novalidate style="margin-top:12px">${C.Field('category', 'Sabab', { options: [['', 'Tanlang…'], ...Object.entries(L.REPORT_CATS)], required: true })}${C.Field('description', 'Izoh', { area: true, required: true, max: 4000 })}<p class="cap mu">Moderatsiya koʻrib chiqadi. Favqulodda xizmatlar chaqirilmaydi.</p><div id="fe" role="alert"></div><button class="btn full" type="submit">Yuborish</button><button class="btn sec full" type="button" data-a="close">Bekor qilish</button></form>`);
+  F.report = async (f) => { const r = { category: field(f, 'category'), description: field(f, 'description'), reported_user_id: f.dataset.t }; if (f.dataset.b) r.booking_id = f.dataset.b; const v = L.validateReport(r); if (v.length) { $('#fe').innerHTML = `<div class="err">${v.map((x) => esc(x.text)).join(' ')}</div>`; return; } try { await call('POST', '/safety/reports', { body: r }); closeDlg(); toast('Shikoyat yuborildi (DEMO).'); } catch (e) { $('#fe').innerHTML = errBox(e, false); } };
+  A.blk = (id) => dlg(`<h2 id="dt">Bloklash</h2><p class="mu" style="margin:8px 0 16px">Bu foydalanuvchi bilan yangi bronlar va chat toʻxtatiladi.</p><div class="col" id="fe">${C.Button('Bloklash', { a: 'blkgo:' + id, variant: 'danger' })}${C.Button('Bekor qilish', { a: 'close', variant: 'sec' })}</div>`);
+  A.blkgo = async (id) => { try { await call('PUT', '/safety/blocks/' + id); closeDlg(); toast('Bloklandi.'); } catch (e) { $('#fe').innerHTML = errBox(e, false); } };
+
+  // ---------- booking form: creates a booking with ONLY the five documented fields ----------
+  const HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  on(/^\/book\/([^/]+)$/, 'customer', async (m) => { const c = await call('GET', '/discovery/companions/' + m[1]); const sid = S.svc[c.id] || c.services[0].id; if (!S.bf || S.bf.cid !== c.id) S.bf = { cid: c.id, svc: sid, date: 0, time: null, dur: null, place: '', errs: {}, chk: null, top: '' }; S.bf.card = c; const s = c.services.find((x) => x.id === S.bf.svc) || c.services[0]; S.bf.svc = s.id; if (!S.bf.dur || S.bf.dur % s.unit_minutes) S.bf.dur = s.unit_minutes; return { html: bookHtml(), init: () => { if (S.bf.time !== null) checkSlot(); } }; }, 'home');
+  const slotMs = (b) => dayStart(b.date) + b.time * 36e5;
+  const slotPast = (b, h) => dayStart(b.date) + h * 36e5 <= nowMs();
+  function bookHtml() {
+    const b = S.bf, c = b.card, s = c.services.find((x) => x.id === b.svc), est = L.estimate(s, b.dur), e = b.errs || {};
+    return `<div class="row" style="padding:12px 12px 0"><button class="ib" data-a="back" aria-label="Orqaga">‹</button><h1>Bron: ${esc(c.display_name)}</h1></div>
+<form data-f="book" class="pad col" novalidate><div id="fe">${b.top || ''}</div>
+<div class="fld"><b id="l1">Xizmat</b><div class="chips w" role="group" aria-labelledby="l1">${c.services.map((x) => C.Chip(svcName(x.service_code), { on: x.id === b.svc, a: 'bs:' + x.id })).join('')}</div></div>
+<div class="fld${e.starts_at ? ' bad' : ''}"><b id="l2">Sana</b><div class="chips w" role="group" aria-labelledby="l2">${[0, 1, 2, 3, 4, 5, 6].map((n) => { const d = loc(dayStart(n) + OFF); return C.Chip((n === 0 ? 'Bugun' : DW[d.getUTCDay()]) + ' ' + d.getUTCDate() + ' ' + MO[d.getUTCMonth()], { on: b.date === n, a: 'bd:' + n }); }).join('')}</div>
+<b id="l3" style="margin-top:8px">Vaqt (Toshkent)</b><div class="chips w" role="group" aria-labelledby="l3">${HOURS.map((h) => C.Chip(h + ':00', { on: b.time === h, a: 'bt:' + h, disabled: slotPast(b, h) })).join('')}</div>${e.starts_at ? `<div class="err" role="alert">${esc(e.starts_at)}</div>` : ''}<div id="chk" class="sm" role="status" aria-live="polite"></div><p class="cap mu">Oʻtib ketgan vaqtlar oʻchirilgan. Hamroh bandligi yuborishdan oldin tekshiriladi.</p></div>
+<div class="fld"><b id="l4">Davomiylik</b><div class="chips w" role="group" aria-labelledby="l4">${L.durations(s).map((m) => C.Chip(m % 60 ? m + ' daq' : m / 60 + ' soat', { on: b.dur === m, a: 'bu:' + m })).join('')}</div></div>
+<div class="fld"><b id="l5">Uchrashuv joyi</b><div class="chips w" role="group" aria-labelledby="l5">${['Amir Temur xiyoboni', 'Magic City hududi', 'Mustaqillik maydoni'].map((x) => C.Chip(x, { on: b.place === x, a: 'bp:' + x })).join('')}</div></div>
+${C.Field('place', 'Yoki joyni yozing', { value: b.place, err: e.meeting_place, max: 200, hint: 'Ommaviy, gavjum joy tanlashni tavsiya qilamiz.' })}
+<div class="card col" aria-live="polite"><div class="pl"><span>Xizmat (taxminiy)</span><b>${est.ok ? money(est.price_minor, s.currency) : '—'}</b></div><p class="cap mu">Yakuniy narx bron yaratilgach serverdan keladi. Platforma haqi toʻlov bosqichida aniqlanadi. Sovgʻa bronni hamroh qabul qilgach, alohida qoʻshiladi.</p></div>
+<button class="btn full" type="submit" id="sub"${b.chk === 'no' ? ' disabled' : ''}>Soʻrov yuborish</button><p class="cap mu">Soʻrov yuborilgach hamroh qabul qilishi kerak. Toʻlov faqat qabul qilingandan keyin.</p></form>`;
+  }
+  const reBook = () => { rerender(bookHtml); renderChk(); };
+  A.bs = (x) => { S.bf.svc = x; S.svc[S.bf.cid] = x; const s = S.bf.card.services.find((v) => v.id === x); S.bf.dur = s.unit_minutes; S.bf.chk = null; reBook(); if (S.bf.time !== null) checkSlot(); };
+  A.bd = (x) => { S.bf.date = +x; if (S.bf.time !== null && slotPast(S.bf, S.bf.time)) S.bf.time = null; S.bf.chk = null; reBook(); if (S.bf.time !== null) checkSlot(); };
+  A.bt = (x) => { S.bf.time = +x; S.bf.chk = null; S.bf.errs.starts_at = ''; reBook(); checkSlot(); };
+  A.bu = (x) => { S.bf.dur = +x; S.bf.chk = null; reBook(); if (S.bf.time !== null) checkSlot(); };
+  A.bp = (x) => { S.bf.place = x; S.bf.errs.meeting_place = ''; reBook(); };
+  document.addEventListener('input', (e) => { if (e.target.id === 'place' && S.bf) S.bf.place = e.target.value; });
+  function renderChk() { const b = S.bf, o = $('#chk'); if (!o || !b) return; o.innerHTML = b.chk === 'pending' ? C.Spinner() + ' Hamroh bandligi tekshirilmoqda…' : b.chk === 'ok' ? '<span style="color:var(--ok)">✓ Hamroh bu vaqtda mavjud.</span>' : b.chk === 'no' ? '<span class="err">✗ Hamroh bu vaqtda mavjud emas. Boshqa vaqtni tanlang.</span>' : b.chk === 'err' ? errBox(b.cerr, false) : ''; const sub = $('#sub'); if (sub) sub.disabled = b.chk === 'no'; }
+  async function checkSlot() { const b = S.bf, my = (checkSlot.n = (checkSlot.n || 0) + 1); b.chk = 'pending'; renderChk(); const s = b.card.services.find((x) => x.id === b.svc), st = slotMs(b); try { const pg = await call('GET', '/discovery/companions', { query: { service_code: s.service_code, q: b.card.display_name, available_from: new Date(st).toISOString(), available_until: new Date(st + b.dur * 6e4).toISOString() } }); if (my !== checkSlot.n) return; b.chk = pg.items.some((c) => c.id === b.card.id) ? 'ok' : 'no'; } catch (e) { if (my !== checkSlot.n) return; b.chk = 'err'; b.cerr = e; } renderChk(); }
+  F.book = async (f) => {
+    const b = S.bf; b.place = field(f, 'place') || b.place; const body = { service_id: b.svc, starts_at: b.time === null ? '' : new Date(slotMs(b)).toISOString(), duration_minutes: b.dur, meeting_place: b.place, timezone: TZ };
+    const v = L.validateBooking(Object.assign({ now: nowMs() }, body)); b.errs = fieldErrs(v); b.top = '';
+    const focusTop = () => { const t = $('#fe [role=alert]'); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); } };
+    if (v.length) { b.top = C.Alert('error', 'Maʼlumotlarni tekshiring: ' + v.map((x) => x.text).join(' '), { title: 'Toʻldirilmagan maydonlar' }); rerender(bookHtml); renderChk(); return focusTop(); }
+    try { const bk = await call('POST', '/bookings', { body }); S.bf = null; toast('Soʻrov yuborildi. Hamroh javobini kuting.'); go('#/b/' + bk.id); } catch (e) { const c = L.classify(e); if (['booking_time_unavailable', 'availability_not_found'].includes(c.code)) b.chk = 'no'; Object.assign(b.errs, serverFieldErrs(e)); b.top = errBox(e, c.retry); rerender(bookHtml); renderChk(); focusTop(); }
+  };
+
+  // ---------- bookings list + detail (+chat) ----------
+  const STEPS = ['Soʻrov', 'Qabul', 'Tasdiq', 'Faol', 'Yakun'];
+  on(/^\/bookings$/, 'customer', async () => { const l = await call('GET', '/bookings'); return `<div class="pad col"><h1>Bronlarim</h1>${l.length ? `<div class="list g2">${l.map((b, i) => C.Card(`<span class="grow col" style="gap:2px"><b>${svcName(b.service_code)}</b><span class="sm mu">${when(b.starts_at)} · ${b.duration_minutes} daq</span><span class="sm">${money(b.price_minor, b.currency)}</span></span>${C.Status(L.LABEL[b.status] || b.status, b.status)}`, { a: 'go:#/b/' + b.id, up: true, style: '--i:' + Math.min(i, 6) })).join('')}</div>` : C.Empty('Hali bronlar yoʻq', 'Hamroh tanlab, birinchi bronni yarating.', C.Button('Hamroh topish', { a: 'go:#/search' }))}</div>`; }, 'bookings');
+  const SID = () => S.me && S.me.id;
+  async function loadDetail(id) { const b = await call('GET', '/bookings/' + id); const who = b.customer_id === SID() ? 'customer' : 'companion'; const [pay, msgs, meet] = await Promise.all([who === 'customer' ? call('GET', '/payments/bookings/' + id).catch(() => []) : [], call('GET', '/chat/bookings/' + id + '/messages').catch(() => []), ['confirmed', 'active', 'completed'].includes(b.status) ? call('GET', '/meetings/bookings/' + id).catch(() => null) : null]); return { b, who, pay, msgs, meet }; }
+  const HINT = { customer: { pending: 'Hamroh javobini kutmoqda. Toʻlov qabul qilingach ochiladi.', accepted: 'Hamroh qabul qildi. Endi toʻlashingiz mumkin.', confirmed: 'Toʻlov tasdiqlandi. Uchrashuv vaqtida “Men yetib keldim” ni bosing.', active: 'Uchrashuv davom etmoqda. Joylashuv kuzatilmaydi.', completed: 'Uchrashuv yakunlandi. Sharh qoldirishingiz mumkin.', cancelled: 'Bron bekor qilingan.' }, companion: { pending: 'Mijoz soʻrovi. Qabul qilasizmi?', accepted: 'Mijoz toʻlovini kutyapsiz.', confirmed: 'Toʻlov tasdiqlangan. Vaqti kelganda yetib kelganingizni belgilang.', active: 'Uchrashuv davom etmoqda.', completed: 'Uchrashuv yakunlandi.', cancelled: 'Bron bekor qilingan.' } };
+  function detailHtml(d) {
+    const { b, who, pay, msgs, meet } = d, a = L.actions(who, b, meet), idx = ['pending', 'accepted', 'confirmed', 'active', 'completed'].indexOf(b.status), lp = pay[pay.length - 1], closed = ['cancelled', 'completed'].includes(b.status);
+    const btn = (k, label, o) => (a.includes(k) ? C.Button(label, Object.assign({ a: (k === 'pay' ? 'topay' : k) + ':' + b.id }, o)) : '');
+    const demoBox = who === 'customer' && ['pending', 'confirmed'].includes(b.status) ? `<details class="card col"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer"><b>DEMO: boshqa tomonni simulyatsiya</b></summary><p class="cap mu">Haqiqiy ilovada bu amallarni hamroh bajaradi.</p><div class="row wrap">${b.status === 'pending' ? C.Button('Hamroh qabul qildi', { a: 'dacc:' + b.id, variant: 'sec' }) : ''}${b.status === 'confirmed' ? C.Button('Uchrashuv vaqtiga oʻtish', { a: 'dskip:' + b.id, variant: 'sec' }) + C.Button('Hamroh yetib keldi', { a: 'dcin:' + b.id, variant: 'sec' }) : ''}</div></details>` : '';
+    return `<div class="row" style="padding:12px 12px 0"><button class="ib" data-a="back" aria-label="Orqaga">‹</button><h1 class="grow">${svcName(b.service_code)}</h1>${C.Status(L.LABEL[b.status] || b.status, b.status)}</div><div class="pad col">
+<div class="card col"><div class="pl"><span class="mu">Vaqt</span><b>${when(b.starts_at)} – ${hhmm(Date.parse(b.ends_at))}</b></div><div class="pl"><span class="mu">Joy</span><b>${esc(b.meeting_place)}</b></div><div class="pl"><span class="mu">Xizmat narxi</span><b>${money(b.price_minor, b.currency)}</b></div>${who === 'companion' ? `<div class="pl"><span class="mu">Mijoz</span><b>#${esc(b.customer_id.slice(-4))}</b></div>` : ''}</div>
+${b.status === 'cancelled' ? C.Alert('info', HINT[who].cancelled + (lp && lp.refund_required ? ' Pul qaytarish qoʻlda koʻrib chiqiladi; avtomatik emas.' : ''), { title: 'Bekor qilindi' }) : C.Timeline(STEPS, idx)}
+<p class="sm" role="status">${HINT[who][b.status] || ''}</p>
+${lp ? `<div class="card col"><div class="pl"><span class="mu">Toʻlov</span><b>${{ pending: 'Kutilmoqda', succeeded: 'Muvaffaqiyatli', failed: 'Rad etildi', creating: 'Yaratilmoqda' }[lp.status] || lp.status}</b></div><div class="pl"><span class="mu">Platforma haqi</span><span>${money(lp.platform_fee_minor, lp.currency) || 'Aniqlanmagan'}</span></div><div class="pl"><span class="mu">Jami</span><b>${money(lp.amount_minor, lp.currency)}</b></div><p class="cap mu">Demo toʻlov: haqiqiy pul yechilmagan.</p></div>` : ''}
+${meet ? `<div class="sm card col"><span>Mijoz yetib keldi: <b>${meet.customer_arrived ? 'ha' : 'yoʻq'}</b></span><span>Hamroh yetib keldi: <b>${meet.companion_arrived ? 'ha' : 'yoʻq'}</b></span></div>` : ''}
+<div class="row wrap">${btn('accept', 'Qabul qilish')}${btn('decline', 'Rad etish', { variant: 'sec' })}${btn('pay', 'Toʻlashga oʻtish')}${btn('checkin', 'Men yetib keldim')}${btn('start', 'Uchrashuvni boshlash')}${btn('end', 'Uchrashuvni yakunlash')}${btn('review', 'Sharh qoldirish')}${btn('cancel', 'Bronni bekor qilish', { variant: 'danger' })}</div>
+${demoBox}<div class="row wrap">${C.Button('Xavfsizlik markazi', { a: 'safe:' + b.id, variant: 'sec' })}${a.includes('sos') ? C.Button('SOS signali', { a: 'sos:' + b.id, variant: 'danger' }) : ''}</div>
+<h2>Chat</h2><div class="col" id="ms" aria-live="polite" aria-label="Xabarlar" role="log" style="min-height:80px">${msgs.length ? msgs.map((m, i) => `<div class="m ${m.kind === 'system' ? 'sys' : m.sender_id === SID() ? 'me' : 'her'}${i === S.anim ? '' : ' old'}">${esc(m.body)}</div>`).join('') : '<p class="sm mu">Xabarlar yoʻq.</p>'}</div>
+<form data-f="msg" data-b="${b.id}" class="row" novalidate><div class="grow"><label class="sr" for="mi">Xabar</label><input id="mi" placeholder="Xabar yozing" maxlength="4000" autocomplete="off"${closed ? ' disabled' : ''}></div><button class="btn" type="submit"${closed ? ' disabled' : ''}>Yuborish</button></form><div id="me" role="alert"></div><p class="cap mu">Telefon raqamlar chatda koʻrsatilmaydi. Yangi xabarlar uchun “Yangilash”ni bosing (prototipda jonli ulanish yoʻq).</p>${C.Button('Yangilash', { a: 'refresh', variant: 'sec' })}</div>`;
+  }
+  on(/^\/b\/([^/]+)$/, null, async (m) => { const d = await loadDetail(m[1]); S.det = d; return detailHtml(d); }, 'bookings');
+  const refresh = async () => { const id = S.cur.m[1]; try { const d = await loadDetail(id); S.det = d; rerender(() => detailHtml(d)); } catch (e) { toast(L.classify(e).text); } };
+  A.refresh = refresh;
+  async function act(path, okMsg) { try { await call('POST', path); if (okMsg) toast(okMsg); await refresh(); } catch (e) { const c = L.classify(e); toast(c.text); if (c.kind === 'stale' || c.kind === 'info') await refresh(); } }
+  A.accept = (id) => act('/bookings/' + id + '/accept', 'Qabul qilindi.'); A.checkin = (id) => act('/meetings/bookings/' + id + '/check-in', 'Yetib kelganingiz belgilandi.'); A.start = (id) => act('/meetings/bookings/' + id + '/start', 'Uchrashuv boshlandi.'); A.end = (id) => act('/meetings/bookings/' + id + '/end', 'Uchrashuv yakunlandi.');
+  A.topay = (id) => go('#/pay/' + id);
+  A.decline = (id) => dlg(`<h2 id="dt">Soʻrovni rad etish</h2><p class="mu" style="margin:8px 0 16px">Soʻrov bekor qilinadi.</p><div class="col">${C.Button('Rad etish', { a: 'declgo:' + id, variant: 'danger' })}${C.Button('Orqaga', { a: 'close', variant: 'sec' })}</div>`);
+  A.declgo = async (id) => { closeDlg(); await act('/bookings/' + id + '/decline', 'Rad etildi.'); };
+  A.cancel = (id) => dlg(`<h2 id="dt">Bronni bekor qilish</h2><p class="mu" style="margin:8px 0">Bekor qilish shartlari (DEMO): aniq foizlar hali belgilanmagan. Toʻlov qilingan boʻlsa, pulni qaytarish qoʻlda koʻrib chiqiladi.</p><form data-f="cancel" data-b="${id}" class="col" novalidate>${C.Field('reason', 'Sabab (ixtiyoriy)', { area: true, max: 500 })}<div id="fe" role="alert"></div><button class="btn danger full" type="submit">Bekor qilish</button><button class="btn sec full" type="button" data-a="close">Orqaga</button></form>`);
+  F.cancel = async (f) => { try { await call('POST', '/bookings/' + f.dataset.b + '/cancel', { body: { reason: field(f, 'reason') } }); closeDlg(); toast('Bron bekor qilindi.'); await refresh(); } catch (e) { const c = L.classify(e); $('#fe').innerHTML = errBox(e, false); if (c.kind === 'stale') await refresh(); } };
+  F.msg = async (f) => { const i = $('#mi'), t = i.value.trim(); if (!t) { $('#me').innerHTML = '<div class="err">Xabar boʻsh boʻlmasin.</div>'; i.focus(); return; } try { await call('POST', '/chat/bookings/' + f.dataset.b + '/messages', { body: { body: t } }); S.anim = 9999; await refresh(); const n = $('#mi'); if (n) n.focus(); } catch (e) { $('#me').innerHTML = errBox(e, false); } };
+  A.sos = (id) => dlg(`<h2 id="dt">SOS signali</h2><p class="mu" style="margin:8px 0 16px">Signal Yondo koʻrib chiqish navbatiga yoziladi. <b>Favqulodda xizmatlar chaqirilmaydi va joylashuv kuzatilmaydi.</b> Xavf boʻlsa, avval mahalliy favqulodda xizmatlarga qoʻngʻiroq qiling.</p><div class="col" id="fe" role="alert">${C.Button('Signalni yuborish', { a: 'sosgo:' + id, variant: 'danger' })}${C.Button('Bekor qilish', { a: 'close', variant: 'sec' })}</div>`);
+  A.sosgo = async (id) => { try { const r = await call('POST', '/safety/bookings/' + id + '/sos', { query: { confirmed: 'true' } }); closeDlg(); toast(r.emergency_service_contacted ? 'Signal yuborildi.' : 'Signal yozildi. Favqulodda xizmat chaqirilmadi.'); } catch (e) { $('#fe').innerHTML = errBox(e, false); } };
+  A.safe = async (id) => { let cs = []; try { cs = await call('GET', '/safety/trusted-contacts'); } catch (e) { /* shown empty */ } const d = S.det; const target = d && (d.who === 'customer' ? d.b.profile_id : d.b.customer_id); dlg(`<h2 id="dt">Xavfsizlik markazi</h2><div class="col" style="margin-top:12px"><div class="card col"><b>Ishonchli kontaktlar</b>${cs.length ? cs.map((c) => `<span class="sm">${esc(c.name)} · ${esc(c.phone_number)}</span>`).join('') : '<span class="sm mu">Hali qoʻshilmagan.</span>'}<form data-f="contact" class="col" novalidate>${C.Field('cname', 'Ism', { max: 128 })}${C.Field('cphone', 'Telefon (+998…)', { mode: 'tel' })}<div id="fe" role="alert"></div><button class="btn sec" type="submit">Kontakt qoʻshish</button></form></div><button class="btn sec" data-a="repb:${id}:${target}">Shikoyat qilish</button><button class="btn sec" data-a="blk:${target}">Foydalanuvchini bloklash</button><p class="sm mu">SOS faqat faol uchrashuvda ishlaydi va signal Yondo koʻrib chiqish navbatiga yoziladi. <b>U favqulodda xizmatlarni chaqirmaydi va joylashuvni kuzatmaydi.</b></p>${C.Button('Yopish', { a: 'close' })}</div>`); };
+  A.repb = (x) => { const [b, t] = x.split(':'); A.rep(t); $('form[data-f=report]').dataset.b = b; };
+  F.contact = async (f) => { const c = { name: field(f, 'cname'), phone_number: field(f, 'cphone').replace(/[\s-]/g, '') }; const v = L.validateContact(c); if (v.length) { $('#fe').innerHTML = `<div class="err">${v.map((x) => esc(x.text)).join(' ')}</div>`; return; } try { await call('POST', '/safety/trusted-contacts', { body: c }); toast('Kontakt qoʻshildi.'); A.safe(S.cur.m[1]); } catch (e) { $('#fe').innerHTML = errBox(e, false); } };
+  A.dacc = (id) => { D.companionAccept(id); refresh(); }; A.dskip = (id) => { D.skipToStart(id); toast('Vaqt uchrashuv boshlanishiga siljitildi (DEMO).'); refresh(); }; A.dcin = (id) => { D.companionCheckIn(id); refresh(); };
+  A.review = (id) => { S.rv = { stars: 0, tags: [] }; reviewDlg(id); };
+  const reviewDlg = (id, keep) => { dlg(`<h2 id="dt">Sharh qoldirish</h2><form data-f="review" data-b="${id}" class="col" novalidate style="margin-top:8px"><div class="row" style="gap:0" role="group" aria-label="Baho">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star${S.rv.stars >= n ? ' on' : ''}" data-a="star:${id}:${n}" aria-label="${n} yulduz" aria-pressed="${S.rv.stars >= n}"><span aria-hidden="true">★</span></button>`).join('')}</div><div class="chips w">${['Vaqtida', 'Samimiy', 'Profil toʻgʻri', 'Xavfsiz his qildim'].map((t) => C.Chip(t, { on: S.rv.tags.includes(t), a: 'rtag:' + id + ':' + t })).join('')}</div>${C.Field('comment', 'Izoh (ixtiyoriy)', { area: true, max: 1000, value: keep })}<div id="fe" role="alert"></div><button class="btn full" type="submit">Yuborish</button><button class="btn sec full" type="button" data-a="close">Bekor qilish</button></form>`); };
+  A.star = (x) => { const [id, n] = x.split(':'); S.rv.stars = +n; const v = ($('[name=comment]') || {}).value; reviewDlg(id, v); const s = $(`[data-a="star:${id}:${n}"]`); if (s) s.focus(); };
+  A.rtag = (x) => { const [id, ...r] = x.split(':'), t = r.join(':'); S.rv.tags = S.rv.tags.includes(t) ? S.rv.tags.filter((y) => y !== t) : [...S.rv.tags, t]; const v = ($('[name=comment]') || {}).value; reviewDlg(id, v); const b = $$('[data-a^="rtag:"]').find((y) => y.dataset.a === 'rtag:' + id + ':' + t); if (b) b.focus(); };
+  F.review = async (f) => { if (!S.rv.stars) { $('#fe').innerHTML = '<div class="err">Baho tanlang (1–5).</div>'; return; } try { await call('POST', '/reviews/bookings/' + f.dataset.b, { body: { stars: S.rv.stars, tags: S.rv.tags, comment: field(f, 'comment') } }); closeDlg(); toast('Sharhingiz uchun rahmat!'); await refresh(); } catch (e) { $('#fe').innerHTML = errBox(e, false); } };
+
+  // ---------- pay (booking must be ACCEPTED; Idempotency-Key; 503 ≠ failed) ----------
+  on(/^\/pay\/([^/]+)$/, 'customer', async (m) => { const b = await call('GET', '/bookings/' + m[1]); const pays = await call('GET', '/payments/bookings/' + m[1]).catch(() => []); S.pay = { id: b.id, key: S.pay.id === b.id && S.pay.key ? S.pay.key : L.idemKey() }; return payHtml(b, pays); }, 'bookings');
+  function payHtml(b, pays, top) {
+    const lp = pays[pays.length - 1];
+    if (b.status === 'confirmed' || (lp && lp.status === 'succeeded')) return `<div class="pad col" style="align-items:center;text-align:center;min-height:60vh;justify-content:center">${C.Check()}<h1>Toʻlov tasdiqlandi</h1><p class="mu">Bron tasdiqlandi. Demo toʻlov: haqiqiy pul yechilmadi.</p>${C.Button('Bronni koʻrish', { a: 'go:#/b/' + b.id, full: true })}</div>`;
+    if (b.status !== 'accepted') return `<div class="pad col"><h1>Toʻlov</h1>${C.Alert('info', L.E.booking_not_payable[0], { title: 'Hozir toʻlab boʻlmaydi' })}${C.Button('Bronga qaytish', { a: 'go:#/b/' + b.id })}</div>`;
+    const pend = lp && lp.status === 'pending';
+    return `<div class="row" style="padding:12px 12px 0"><button class="ib" data-a="back" aria-label="Orqaga">‹</button><h1>Toʻlov</h1></div><div class="pad col"><div id="fe">${top || ''}</div>
+<div class="card col"><div class="pl"><span>Xizmat (${svcName(b.service_code)})</span><b>${money(b.price_minor, b.currency)}</b></div><div class="pl"><span>Platforma haqi</span><span>${lp ? money(lp.platform_fee_minor, lp.currency) : 'Toʻlov bosqichida aniqlanadi'}</span></div>${lp ? `<div class="pl tot"><span>Jami</span><span>${money(lp.amount_minor, lp.currency)}</span></div>` : ''}</div>
+${lp && lp.status === 'failed' ? C.Alert('error', 'Oldingi toʻlov rad etildi. Bron saqlangan, qayta urinib koʻring.', { title: 'Toʻlov amalga oshmadi' }) : ''}
+<div class="card col"><b>Sovgʻa (ixtiyoriy, alohida)</b><p class="sm mu">Bron va sovgʻa uchun yagona toʻlov hali mavjud emas. Sovgʻani bron toʻlovidan keyin alohida test buyurtma sifatida rasmiylashtirish mumkin.</p><div class="row wrap">${C.Button('Birlashgan narxni koʻrish', { a: 'prev:' + b.id, variant: 'sec' })}${C.Button('Sovgʻalar', { a: 'go:#/gifts', variant: 'sec' })}</div><div id="prev" aria-live="polite"></div></div>
+<div class="card col"><b>Toʻlov usuli</b><span class="sm">Demo karta</span><span class="cap mu">Haqiqiy toʻlov provayderi hali tanlanmagan.</span></div>
+${pend ? C.Button('Demo toʻlov oynasini ochish', { a: 'prov:' + lp.id, full: true }) : C.Button('Toʻlash (demo)', { a: 'paygo:' + b.id, full: true })}</div>`;
+  }
+  A.prev = async (id) => { const o = $('#prev'); o.innerHTML = C.Spinner(); try { const p = await call('GET', '/integration/bookings/' + id + '/preview'); o.innerHTML = `<div class="pl"><span>Xizmat</span><span>${money(p.booking_service_minor, p.currency)}</span></div><div class="pl"><span>Sovgʻalar</span><span>${money(p.gift_subtotal_minor, p.currency)}</span></div><div class="pl"><span>Oraliq jami</span><b>${money(p.subtotal_minor, p.currency)}</b></div><div class="pl"><span>Platforma haqi, yetkazib berish, jami</span><span>Aniqlanmagan</span></div>${C.Alert('unavailable', 'Yagona toʻlov hali mavjud emas (checkout_available: false). Bronni alohida toʻlang.', { title: 'Birlashgan toʻlov yoʻq' })}`; } catch (e) { o.innerHTML = errBox(e, false); } };
+  A.paygo = async (id) => { try { const p = await call('POST', '/payments/bookings/' + id, { headers: { 'Idempotency-Key': S.pay.key } }); A.prov(p.id); } catch (e) { const c = L.classify(e); if (c.kind === 'stale') S.pay.key = L.idemKey(); const b = await call('GET', '/bookings/' + id).catch(() => null), pays = await call('GET', '/payments/bookings/' + id).catch(() => []); if (b) rerender(() => payHtml(b, pays, errBox(e, false, c.retry ? C.Button('Qayta urinish', { a: 'paygo:' + id, variant: 'sec' }) : ''))); else toast(c.text); const t = $('#fe [role=alert]'); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); } } };
+  A.prov = (pid) => dlg(`<h2 id="dt">Demo toʻlov oynasi</h2><p class="mu" style="margin:8px 0 16px">Bu toʻlov provayderi sahifasining simulyatsiyasi. Haqiqiy pul yechilmaydi.</p><div class="col">${C.Button('Muvaffaqiyatli toʻlash', { a: 'provres:' + pid + ':succeeded' })}${C.Button('Rad etilsin', { a: 'provres:' + pid + ':failed', variant: 'sec' })}${C.Button('Keyinroq', { a: 'close', variant: 'sec' })}</div>`);
+  A.provres = async (x) => { const [pid, r] = x.split(':'); D.providerComplete(pid, r); S.pay.key = L.idemKey(); closeDlg(); const id = S.cur.m[1]; try { const b = await call('GET', '/bookings/' + id), pays = await call('GET', '/payments/bookings/' + id); rerender(() => payHtml(b, pays)); } catch (e) { toast(L.classify(e).text); } };
+
+  window.YAPP = { route, S, go, call, toast, dlg, closeDlg, rerender, swap, shell, nav, errBox, cardHtml, when, hhmm, svcName, money, F, A, on, field, serverFieldErrs, fieldErrs, busy, loc, dayStart, nowMs, OFF, TZ, ROLE_LABEL, HOME, BASE_NAV, esc, $, $$ };
+})();
+
+/* roles.js */
+/* YONDO prototype: gifts (customer), companion flow, vendor flow, hi-fi screen seeding, boot. */
+(function () {
+  const Y = YAPP, L = YL, M = YM, C = YC, D = M.demo, { S, call, A, F, on, go, toast, dlg, closeDlg, rerender, errBox, money, when, hhmm, esc, $, $$, field, serverFieldErrs, fieldErrs, svcName, OFF, TZ } = Y;
+  const confirmDlg = (title, text, label, a) => dlg(`<h2 id="dt">${title}</h2><p class="mu" style="margin:8px 0 16px">${text}</p><div class="col" id="fe" role="alert">${C.Button(label, { a, variant: 'danger' })}${C.Button('Orqaga', { a: 'close', variant: 'sec' })}</div>`);
+  const errDlg = (e) => { const f = $('#fe'); if (f) f.innerHTML = errBox(e, false); else toast(L.classify(e).text); };
+  const stLabel = { draft: 'Qoralama', submitted: 'Yuborilgan', approved: 'Tasdiqlangan', rejected: 'Rad etilgan', withdrawn: 'Qaytarib olingan', pending: 'Koʻrib chiqilmoqda', unknown: 'Maʼlum emas', verified: 'Tasdiqlangan' };
+  const stBadge = (s) => `<span class="stc">${stLabel[s] || esc(s)}</span>`;
+
+  // ================= customer: gifts (cart + offline test order) =================
+  S.gf = { delivery: 'pickup', note: '', err: '', last: null };
+  async function giftData() { const [prods, cart, orders] = await Promise.all([call('GET', '/gifts/products'), call('GET', '/gifts/cart'), call('GET', '/gifts/test-orders').catch(() => [])]); return { prods, cart, orders }; }
+  function giftsHtml(d) {
+    const { prods, cart, orders } = d, byId = Object.fromEntries(prods.map((p) => [p.id, p])), sub = cart.reduce((a, c) => a + (byId[c.product_id] ? byId[c.product_id].price_minor * c.quantity : 0), 0), g = S.gf;
+    return `<div class="pad col"><h1>Gul va sovgʻalar</h1><div class="ban" style="margin:0">DEMO mahsulotlar. Buyurtma <b>test rejimida</b>: haqiqiy pul yechilmaydi va yetkazib berish operator tomonidan qoʻlda bajariladi.</div>
+${prods.length ? `<div class="list g2">${prods.map((p, i) => { const q = (cart.find((c) => c.product_id === p.id) || {}).quantity || 0; return C.Card(`<span class="grow col" style="gap:4px"><b>${esc(p.name)}</b><span class="sm mu">${L.GIFT_LABEL[p.category] || esc(p.category)}</span><b>${money(p.price_minor, p.currency)}</b>${p.stock ? '' : '<span class="sm mu">Tugagan</span>'}</span>${q ? `<span class="row"><button class="ib" data-a="gq:${p.id}:${q - 1}" aria-label="Kamaytirish">−</button><b aria-label="${q} dona">${q}</b><button class="ib" data-a="gq:${p.id}:${q + 1}" aria-label="Koʻpaytirish">+</button></span>` : C.Button(p.stock ? 'Savatga' : 'Tugagan', { a: 'gq:' + p.id + ':1', disabled: !p.stock, variant: 'sec' })}`, { up: true }); }).join('')}</div>` : C.Empty('Mahsulotlar yoʻq', 'Hozircha sotuvda sovgʻa yoʻq.')}
+<h2>Savat</h2>${cart.length ? `<div class="card col">${cart.map((c) => `<div class="pl"><span>${esc((byId[c.product_id] || {}).name || '?')} × ${c.quantity}</span><span>${byId[c.product_id] ? money(byId[c.product_id].price_minor * c.quantity, 'UZS') : ''}</span></div>`).join('')}<div class="pl tot"><span>Oraliq jami</span><span>${money(sub, 'UZS')}</span></div><p class="cap mu">Yetkazib berish narxi va toʻlov summasi hali aniqlanmagan.</p></div>
+<form data-f="gift" class="col" novalidate><fieldset style="border:0;padding:0;margin:0"><legend class="lb" style="padding:0">Qanday olinadi?</legend><label class="chk"><input type="radio" name="dm" value="pickup"${g.delivery === 'pickup' ? ' checked' : ''}> Oʻzim olib ketaman</label><label class="chk"><input type="radio" name="dm" value="manual_delivery"${g.delivery === 'manual_delivery' ? ' checked' : ''}> Yetkazib berish (operator qoʻlda)</label></fieldset>${C.Field('note', 'Yetkazib berish izohi', { area: true, value: g.note, max: 512, err: g.err, hint: 'Yetkazib berish uchun manzil va izoh majburiy.' })}<button class="btn full" type="submit">Test buyurtma berish</button></form>` : '<p class="sm mu">Savat boʻsh.</p>'}
+${g.last ? `<div class="alert success" role="status"><div class="alert-b"><b>Test buyurtma yaratildi</b><br>Haqiqiy pul yechilmadi (real_money_moved: ${g.last.real_money_moved}). Holat: ${esc(g.last.status)}. Oraliq jami ${money(g.last.subtotal_minor, g.last.currency)}; toʻlov summasi hali aniqlanmagan.</div></div>` : ''}
+${orders.length ? `<h2>Test buyurtmalarim</h2><div class="list">${orders.map((o) => C.Card(`<span class="grow col" style="gap:2px"><b>${o.items.map((i) => esc(i.name_snapshot) + ' × ' + i.quantity).join(', ')}</b><span class="sm mu">${money(o.subtotal_minor, o.currency)} · ${o.delivery_method === 'pickup' ? 'oʻzi olib ketadi' : 'yetkazib berish'}</span></span><span class="demo">TEST</span>`)).join('')}</div>` : ''}</div>`;
+  }
+  on(/^\/gifts$/, 'customer', async () => giftsHtml(await giftData()), 'gifts');
+  const regift = async () => { try { const d = await giftData(); rerender(() => giftsHtml(d)); } catch (e) { toast(L.classify(e).text); } };
+  A.gq = async (x) => { const [id, q] = x.split(':'); try { if (+q <= 0) await call('DELETE', '/gifts/cart/' + id); else await call('PUT', '/gifts/cart/' + id, { body: { quantity: +q } }); } catch (e) { toast(L.classify(e).text); } await regift(); };
+  F.gift = async (f) => { const g = S.gf; g.delivery = (f.elements.dm.value) || 'pickup'; g.note = field(f, 'note'); g.err = ''; try { g.last = await call('POST', '/gifts/test-orders', { body: { delivery_method: g.delivery, delivery_note: g.note.trim() || null } }); g.note = ''; await regift(); } catch (e) { const c = L.classify(e); if (c.code === 'gift_delivery_note_required') g.err = c.text; else toast(c.text); await regift(); if (g.err) { const n = $('#note'); if (n) n.focus(); } } };
+
+  // ================= companion flow (uses /companions/me/*) =================
+  const cwrap = (title, body) => `<div class="pad col"><h1>${title}</h1>${body}</div>`;
+  on(/^\/me$/, 'companion', async () => {
+    const st = await call('GET', '/companions/me/status'); const [app, prof] = await Promise.all([call('GET', '/companions/me/application').catch(() => null), call('GET', '/companions/me/profile').catch(() => null)]);
+    const row = (t, s) => `<div class="pl"><span>${t}</span>${stBadge(s)}</div>`;
+    return cwrap('Holat', `${st.publicly_active ? C.Alert('success', 'Profilingiz mijozlarga koʻrinadi.', { title: 'Faol' }) : C.Alert('info', 'Profil hali mijozlarga koʻrinmaydi.', { title: 'Faol emas' })}
+<div class="card col">${row('Ariza', st.application_status)}${row('Shaxs tasdiqlash', st.identity_status)}${row('Profil kontenti', st.content_status)}${row('Hisob', st.account_status === 'active' ? 'approved' : st.account_status)}</div>
+${st.blockers.length ? `<div class="card col"><b>Faollashtirishga toʻsiqlar</b><ul style="margin:0;padding-left:20px">${st.blockers.map((b) => `<li class="sm">${L.BLOCKER[b] || esc(b)}</li>`).join('')}</ul></div>` : ''}
+<p class="cap mu">Ariza tasdiqlanishi, shaxs tekshiruvi va kontent tasdiqlanishi alohida jarayonlar. Hech biri “faol profil” degani emas.</p>
+<div class="col">${!app ? `<form data-f="app" class="col" novalidate>${C.Field('statement', 'Ariza matni', { area: true, max: 4000, hint: 'Oʻzingiz haqingizda qisqacha.' })}<button class="btn full" type="submit">Ariza yaratish</button></form>` : ''}
+${app && app.status === 'draft' ? C.Button('Arizani yuborish', { a: 'appsub', full: true }) : ''}${app && !prof ? C.Button('Profil yaratish', { a: 'go:#/me/profile', full: true }) : ''}${prof && prof.content_status === 'draft' ? C.Button('Profilni tekshiruvga yuborish', { a: 'profsub', full: true }) : ''}
+${prof ? C.Button(st.activation_requested ? 'Faollashtirishni bekor qilish' : 'Faollashtirishni soʻrash', { a: st.activation_requested ? 'deact' : 'act', variant: 'sec', full: true }) : ''}${C.Button('Daromad', { a: 'go:#/me/earnings', variant: 'sec', full: true })}</div>
+<details class="card col"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer"><b>DEMO: administrator qarori</b></summary><p class="cap mu">Haqiqiy ilovada ariza, shaxs va kontentni administrator tasdiqlaydi.</p>${C.Button('Hammasini tasdiqlash (demo)', { a: 'adm', variant: 'sec' })}</details>`);
+  }, 'me');
+  const reMe = () => Y.route();
+  F.app = async (f) => { try { await call('POST', '/companions/me/application', { body: { statement: field(f, 'statement') } }); toast('Ariza yaratildi.'); reMe(); } catch (e) { toast(L.classify(e).text); } };
+  A.appsub = async () => { try { await call('POST', '/companions/me/application/submit'); toast('Ariza yuborildi.'); reMe(); } catch (e) { toast(L.classify(e).text); } };
+  A.profsub = async () => { try { await call('POST', '/companions/me/profile/submit'); toast('Profil tekshiruvga yuborildi.'); reMe(); } catch (e) { toast(L.classify(e).text); } };
+  A.act = async () => { try { await call('POST', '/companions/me/activate'); toast('Faollashtirish soʻraldi.'); reMe(); } catch (e) { toast(L.classify(e).text); } };
+  A.deact = async () => { try { await call('POST', '/companions/me/deactivate'); toast('Faollashtirish bekor qilindi.'); reMe(); } catch (e) { toast(L.classify(e).text); } };
+  A.adm = () => { D.adminApprove(); toast('Tasdiqlandi (DEMO).'); reMe(); };
+  on(/^\/me\/earnings$/, 'companion', () => cwrap('Daromad', C.Alert('info', 'Hamroh daromadi uchun jonli maʼlumot manbai hali ulanmagan. Bu yerda raqamlar koʻrsatilmaydi.', { title: 'Hali jonli emas' }) + C.Button('Holatga qaytish', { a: 'go:#/me', variant: 'sec' })), 'me');
+
+  const csv = (s) => s.split(',').map((x) => x.trim()).filter(Boolean);
+  const profForm = (p, errs, top) => `<form data-f="prof" class="col" novalidate>${top || ''}${C.Field('display_name', 'Koʻrsatiladigan ism', { value: p.display_name, required: true, max: 128, err: errs.display_name })}${C.Field('bio', 'Oʻzingiz haqingizda', { area: true, value: p.bio, max: 8000, err: errs.bio, rows: 4 })}${C.Field('interests', 'Qiziqishlar (vergul bilan)', { value: (p.interests || []).join(', '), err: errs.interests, hint: 'Har biri 1–64 belgi, takrorlanmasin.' })}${C.Field('languages', 'Tillar (vergul bilan)', { value: (p.languages || []).join(', '), err: errs.languages })}<div class="card col"><b>Fotosuratlar</b><p class="sm mu">Rasm yuklash prototipda ulanmagan. Haqiqiy ilovada rasmlar serverda qayta ishlanadi va koʻrib chiqiladi.</p></div><button class="btn full" type="submit">Saqlash</button></form>`;
+  on(/^\/me\/profile$/, 'companion', async () => { const p = await call('GET', '/companions/me/profile').catch((e) => { if (e.code === 'profile_not_found') return null; throw e; }); Y.S.prof = p; return cwrap(p ? 'Profil' : 'Profil yaratish', (p ? `<p class="sm mu">Tahrirlangan profil qayta tekshiruvga tushadi (holat: ${stLabel[p.content_status] || p.content_status}).</p>` : '<p class="sm mu">Profil yaratish uchun avval ariza yarating (Holat sahifasi).</p>') + profForm(p || { display_name: '', bio: '', interests: [], languages: [] }, {})); }, 'prof');
+  F.prof = async (f) => { const p = { display_name: field(f, 'display_name'), bio: field(f, 'bio'), interests: csv(field(f, 'interests')), languages: csv(field(f, 'languages')) }; const v = L.validateProfile(p); if (v.length) { rerender(() => cwrap('Profil', profForm(p, fieldErrs(v), C.Alert('error', 'Maydonlarni tekshiring.', { title: 'Saqlab boʻlmadi' })))); const a = $('[role=alert]'); if (a) { a.setAttribute('tabindex', '-1'); a.focus(); } return; } try { await call(Y.S.prof ? 'PUT' : 'POST', '/companions/me/profile', { body: p }); toast('Profil saqlandi.'); Y.route(); } catch (e) { const c = L.classify(e), se = serverFieldErrs(e); rerender(() => cwrap('Profil', profForm(p, se, errBox(e, false)))); const a = $('[role=alert]'); if (a) { a.setAttribute('tabindex', '-1'); a.focus(); } } };
+
+  const svcForm = (s, errs) => `<h2 id="dt">${s.id ? 'Xizmatni tahrirlash' : 'Yangi xizmat'}</h2><form data-f="svc" data-id="${s.id || ''}" class="col" novalidate style="margin-top:8px">${C.Field('service_code', 'Xizmat turi', { options: Object.entries(L.SERVICE_LABEL), value: s.service_code || 'coffee', err: errs.service_code })}${C.Field('price', 'Narx (soʻm)', { type: 'number', mode: 'numeric', min: 0, step: 1000, value: s.price_minor != null ? s.price_minor / 100 : '', err: errs.price_minor, required: true })}${C.Field('unit_minutes', 'Birlik (daqiqa)', { options: [30, 60, 90, 120].map((m) => [m, m + ' daqiqa']), value: s.unit_minutes || 60, err: errs.unit_minutes, hint: 'Mijoz bronining davomiyligi shu birlikka karrali boʻladi.' })}${C.Field('description', 'Tavsif', { area: true, value: s.description, max: 4000, err: errs.description })}<div id="fe" role="alert"></div><button class="btn full" type="submit">Saqlash</button><button class="btn sec full" type="button" data-a="close">Bekor qilish</button></form>`;
+  on(/^\/me\/services$/, 'companion', async () => { const l = await call('GET', '/companions/me/services'); S.msvc = l; return cwrap('Xizmatlar', `${l.length ? `<div class="list">${l.map((s) => C.Card(`<span class="grow col" style="gap:2px"><b>${svcName(s.service_code)}</b><span class="sm mu">${esc(s.description || '')}</span><b>${money(s.price_minor, s.currency)} / ${s.unit_minutes} daq</b></span><span class="col" style="gap:8px"><button class="btn sec" data-a="svced:${s.id}">Tahrirlash</button><button class="btn danger" data-a="svcdel:${s.id}">Oʻchirish</button></span>`)).join('')}</div>` : C.Empty('Hali xizmat yoʻq', 'Mijozlar bron qilishi uchun kamida bitta xizmat qoʻshing.')}${C.Button('Xizmat qoʻshish', { a: 'svcnew', full: true })}`); }, 'svcs');
+  A.svcnew = () => dlg(svcForm({}, {})); A.svced = (id) => dlg(svcForm(S.msvc.find((s) => s.id === id), {}));
+  A.svcdel = (id) => confirmDlg('Xizmatni oʻchirish', 'Mavjud bronlarga taʼsir qilmaydi.', 'Oʻchirish', 'svcdelgo:' + id);
+  A.svcdelgo = async (id) => { try { await call('DELETE', '/companions/me/services/' + id); closeDlg(); toast('Oʻchirildi.'); Y.route(); } catch (e) { errDlg(e); } };
+  F.svc = async (f) => { const price = f.elements.price.value; const s = { service_code: field(f, 'service_code'), price_minor: price === '' ? NaN : Math.round(Number(price) * 100), unit_minutes: +field(f, 'unit_minutes'), currency: 'UZS', description: field(f, 'description') }; const v = L.validateService(s); if (v.length) { dlg(svcForm(Object.assign({ id: f.dataset.id }, s, { price_minor: isNaN(s.price_minor) ? null : s.price_minor }), fieldErrs(v))); return; } try { await call(f.dataset.id ? 'PUT' : 'POST', '/companions/me/services' + (f.dataset.id ? '/' + f.dataset.id : ''), { body: s }); closeDlg(); toast('Xizmat saqlandi.'); Y.route(); } catch (e) { const se = serverFieldErrs(e); if (L.classify(e).code === 'invalid_price') se.price_minor = L.classify(e).text; if (Object.keys(se).length) dlg(svcForm(Object.assign({ id: f.dataset.id }, s), se)); else errDlg(e); } };
+
+  const availForm = (d, errs) => `<form data-f="avail" class="col" novalidate>${C.Field('date', 'Sana', { type: 'date', value: d.date, err: errs.starts_at })}<div class="row wrap"><div class="grow">${C.Field('from', 'Boshlanish', { type: 'time', value: d.from || '10:00' })}</div><div class="grow">${C.Field('to', 'Tugash', { type: 'time', value: d.to || '18:00', err: errs.ends_at })}</div></div><p class="cap mu">Vaqt zonasi: ${TZ}. Mijozlar faqat shu oraliqlarga bron qila oladi.</p><div id="fe" role="alert"></div><button class="btn full" type="submit">Vaqt qoʻshish</button></form>`;
+  on(/^\/me\/availability$/, 'companion', async () => { const l = (await call('GET', '/companions/me/availability')).sort((a, b) => (a.starts_at < b.starts_at ? -1 : 1)); return cwrap('Ish vaqtlari', `${l.length ? `<div class="list">${l.map((a) => C.Card(`<span class="grow col" style="gap:2px"><b>${when(a.starts_at)} – ${hhmm(Date.parse(a.ends_at))}</b><span class="cap mu">${esc(a.timezone)}</span></span><button class="btn danger" data-a="avdel:${a.id}" aria-label="${when(a.starts_at)} vaqtini oʻchirish">Oʻchirish</button>`)).join('')}</div>` : C.Empty('Ish vaqti belgilanmagan', 'Vaqt qoʻshmasangiz, mijozlar bron qila olmaydi.')}<h2>Yangi vaqt</h2>${availForm({ date: '' }, {})}`); }, 'avail');
+  F.avail = async (f) => { const d = field(f, 'date'), from = field(f, 'from'), to = field(f, 'to'); const mk = (t) => { const ms = d && t ? Date.parse(d + 'T' + t + ':00Z') : NaN; return isNaN(ms) ? '' : new Date(ms - OFF).toISOString(); }; const a = { starts_at: mk(from), ends_at: mk(to), timezone: TZ }; const v = L.validateAvailability(a); if (!d) v.unshift({ field: 'starts_at', text: 'Sanani tanlang.' }); if (v.length) { rerender(() => cwrap('Ish vaqtlari', availForm({ date: d, from, to }, fieldErrs(v)))); return; } try { await call('POST', '/companions/me/availability', { body: a }); toast('Vaqt qoʻshildi.'); Y.route(); } catch (e) { const se = serverFieldErrs(e); if (Object.keys(se).length) rerender(() => cwrap('Ish vaqtlari', availForm({ date: d, from, to }, { ends_at: se.ends_at || se.starts_at }))); else { const b = $('#fe'); if (b) b.innerHTML = errBox(e, false); } } };
+  A.avdel = (id) => confirmDlg('Vaqtni oʻchirish', 'Bu oraliqqa yangi bronlar qabul qilinmaydi.', 'Oʻchirish', 'avdelgo:' + id);
+  A.avdelgo = async (id) => { try { await call('DELETE', '/companions/me/availability/' + id); closeDlg(); toast('Oʻchirildi.'); Y.route(); } catch (e) { errDlg(e); } };
+
+  on(/^\/me\/requests$/, 'companion', async () => { const l = await call('GET', '/bookings'); return cwrap('Soʻrovlar', `${l.length ? `<div class="list g2">${l.map((b) => C.Card(`<span class="grow col" style="gap:2px"><b>${svcName(b.service_code)}</b><span class="sm mu">${when(b.starts_at)} · ${b.duration_minutes} daq · mijoz #${esc(b.customer_id.slice(-4))}</span><span class="sm">${money(b.price_minor, b.currency)}</span></span>${C.Status(L.LABEL[b.status], b.status)}`, { a: 'go:#/b/' + b.id })).join('')}</div>` : C.Empty('Soʻrovlar yoʻq', 'Faol profilga mijozlar soʻrov yuboradi.')}<details class="card col"><summary style="min-height:44px;display:flex;align-items:center;cursor:pointer"><b>DEMO</b></summary><p class="cap mu">Mijoz soʻrovlarini simulyatsiya qiladi.</p>${C.Button('Demo soʻrovlar qoʻshish', { a: 'dreq', variant: 'sec' })}</details>`); }, 'req');
+  A.dreq = () => { D.incomingRequests(); Y.route(); };
+
+  // ================= vendor flow (gift products) =================
+  const prodForm = (p, errs) => `<h2 id="dt">${p.id ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'}</h2><form data-f="prod" data-id="${p.id || ''}" class="col" novalidate style="margin-top:8px">${C.Field('name', 'Nomi', { value: p.name, max: 160, required: true, err: errs.name })}${C.Field('category', 'Kategoriya', { options: Object.entries(L.GIFT_LABEL), value: p.category || 'flowers' })}${C.Field('price', 'Narx (soʻm)', { type: 'number', mode: 'numeric', min: 0, step: 1000, value: p.price_minor != null ? p.price_minor / 100 : '', err: errs.price_minor, required: true })}${C.Field('stock', 'Zaxira (dona)', { type: 'number', mode: 'numeric', min: 0, step: 1, value: p.stock != null ? p.stock : '', err: errs.stock, required: true })}${C.Field('description', 'Tavsif', { area: true, value: p.description, err: errs.description, required: true })}<div id="fe" role="alert"></div><button class="btn full" type="submit">Saqlash</button><button class="btn sec full" type="button" data-a="close">Bekor qilish</button></form>`;
+  on(/^\/v$/, 'vendor', async () => { const [sm, l] = await Promise.all([call('GET', '/vendor/summary'), call('GET', '/gifts/vendor/products')]); S.vprods = l; const kv = Object.entries(sm || {}).filter(([, v]) => typeof v === 'number'); return cwrap('Mahsulotlarim', `${kv.length ? `<div class="card col">${kv.map(([k, v]) => `<div class="pl"><span class="mu">${{ products_total: 'Jami mahsulot', products_published: 'Eʼlon qilingan' }[k] || esc(k)}</span><b>${v}</b></div>`).join('')}</div>` : ''}${l.length ? `<div class="list g2">${l.map((p) => C.Card(`<span class="grow col" style="gap:4px"><b>${esc(p.name)}</b><span class="sm mu">${L.GIFT_LABEL[p.category] || esc(p.category)} · zaxira ${p.stock}</span><b>${money(p.price_minor, p.currency)}</b>${p.published ? '<span class="bdg">Eʼlon qilingan</span>' : '<span class="bdg off">Eʼlon qilinmagan</span>'}</span><span class="col" style="gap:8px"><button class="btn sec" data-a="pred:${p.id}">Tahrirlash</button>${p.published ? `<button class="btn sec" data-a="punp:${p.id}">Yashirish</button>` : `<button class="btn sec" data-a="ppub:${p.id}">DEMO: eʼlon qilish</button>`}</span>`)).join('')}</div>` : C.Empty('Hali mahsulot yoʻq', 'Birinchi mahsulotingizni qoʻshing.')}${C.Button('Mahsulot qoʻshish', { a: 'pnew', full: true })}<p class="cap mu">Eʼlon qilish administrator tasdigʻidan keyin (demoda tugma bilan).</p>`); }, 'v');
+  A.pnew = () => dlg(prodForm({}, {})); A.pred = (id) => dlg(prodForm(S.vprods.find((p) => p.id === id), {}));
+  A.ppub = (id) => { D.adminPublish(id); toast('Eʼlon qilindi (DEMO).'); Y.route(); };
+  A.punp = async (id) => { try { await call('POST', '/vendor/products/' + id + '/unpublish'); toast('Yashirildi.'); Y.route(); } catch (e) { toast(L.classify(e).text); } };
+  F.prod = async (f) => { const price = f.elements.price.value, st = f.elements.stock.value; const p = { name: field(f, 'name'), category: field(f, 'category'), price_minor: price === '' ? NaN : Math.round(Number(price) * 100), stock: st === '' ? NaN : Math.floor(Number(st)), currency: 'UZS', description: field(f, 'description') }; const v = L.validateProduct(p); if (v.length) { dlg(prodForm(Object.assign({ id: f.dataset.id }, p, { price_minor: isNaN(p.price_minor) ? null : p.price_minor, stock: isNaN(p.stock) ? null : p.stock }), fieldErrs(v))); return; } try { await call(f.dataset.id ? 'PATCH' : 'POST', f.dataset.id ? '/vendor/products/' + f.dataset.id : '/gifts/vendor/products', { body: p }); closeDlg(); toast('Mahsulot saqlandi.'); Y.route(); } catch (e) { errDlg(e); } };
+  on(/^\/v\/orders$/, 'vendor', async () => { const l = await call('GET', '/vendor/orders'); return cwrap('Buyurtmalar', Array.isArray(l) && l.length ? `<div class="list">${l.map((o) => C.Card(`<span class="grow col"><b>Buyurtma #${esc(String(o.id || '').slice(-4))}</b><span class="sm mu">${esc(o.status || '')}</span></span>`)).join('')}</div>` : C.Empty('Buyurtmalar yoʻq', 'Mijozlar sizning mahsulotingizni buyurtma qilganda shu yerda koʻrinadi.') + '<p class="cap mu">Buyurtma maʼlumotlari sxemasi hujjatlashtirilmagan; prototip uni ehtiyotkorlik bilan koʻrsatadi.</p>'); }, 'vo');
+  on(/^\/v\/earnings$/, 'vendor', async () => { try { await call('GET', '/vendor/earnings'); return cwrap('Daromad', C.Alert('info', 'Maʼlumot qaytdi, lekin sxemasi hujjatlashtirilmagan.')); } catch (e) { if (e.status === 503) return cwrap('Daromad', errBox(e, true)); throw e; } }, 've');
+
+  // ================= hi-fi screens (seeded, independently openable) =================
+  async function ensureSession(roles) { if (Y.S.authed) return; await call('POST', '/auth/otp/request', { body: { phone_number: '+998901234567' } }); await call('POST', '/auth/otp/verify', { body: { phone_number: '+998901234567', code: '1234' } }); await call('PUT', '/auth/roles', { body: { roles } }); Y.S.me = await call('GET', '/auth/me'); Y.S.authed = true; Y.S.roles = roles; Y.S.role = roles[0]; Y.shell(); }
+  const day1 = (h) => Y.dayStart(1) + h * 36e5;
+  async function seedActive() { const pg = await call('GET', '/discovery/companions', { query: { q: 'Madina' } }), c = pg.items[0]; let b = null; for (let d = 1; d <= 6 && !b; d++) { try { b = await call('POST', '/bookings', { body: { service_id: c.services[0].id, starts_at: new Date(Y.dayStart(d) + 12 * 36e5).toISOString(), duration_minutes: 60, meeting_place: 'Amir Temur xiyoboni', timezone: TZ } }); } catch (e) { if (!['availability_not_found', 'booking_time_unavailable'].includes(e.code)) throw e; } } if (!b) throw new Error('availability_not_found'); D.companionAccept(b.id); const p = await call('POST', '/payments/bookings/' + b.id, { headers: { 'Idempotency-Key': L.idemKey() } }); D.providerComplete(p.id, 'succeeded'); D.skipToStart(b.id); await call('POST', '/meetings/bookings/' + b.id + '/check-in'); D.companionCheckIn(b.id); await call('POST', '/meetings/bookings/' + b.id + '/start'); await call('POST', '/chat/bookings/' + b.id + '/messages', { body: { body: 'Salom! Men kirish oldidaman.' } }); return b; }
+  Y.seedScreen = async function (name) {
+    try { await ensureSession(['customer']); const pg = await call('GET', '/discovery/companions', { query: { limit: 30 } }); const first = pg.items[0];
+      const t = { home: '#/home', search: '#/search?service_code=coffee', profile: '#/c/' + first.id, booking: '#/book/' + first.id, gifts: '#/gifts' }[name];
+      if (name === 'chat') { const b = await seedActive(); return location.replace('#/b/' + b.id); }
+      if (!t) return location.replace('#/home'); location.replace(t);
+    } catch (e) { Y.swap(`<div class="pad col"><h1>Ekran tayyorlanmadi</h1>${errBox(e)}</div>`); }
+  };
+  // ---- boot ----
+  if (!location.hash) history.replaceState(null, '', '#/');
+  Y.shell(); Y.route();
+})();
+
+</script></body></html>
