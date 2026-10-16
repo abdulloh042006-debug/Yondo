@@ -40,13 +40,17 @@ Decide behaviour from `error.code` (+`status`), never from `message`. `YL.classi
 Mobile-first; breakpoints 360/390/430/768/1024/1440; container 480→640→880. Native `<dialog>` modals (focus move, wrap, Esc, restore); skip link in header; headings focused after route changes (not on first load); `scroll-padding` keeps focus clear of fixed bars; `prefers-reduced-motion` honoured; live regions for status/alerts/chat log; labels/`aria-invalid`/`aria-describedby` on fields.
 
 ## Open contract questions (need backend owner)
-1. **Report/block target:** `ReportWrite.reported_user_id` and `PUT /safety/blocks/{user_id}` need a *user* id, but public cards/bookings expose profile id (and `customer_id` for companions). Prototype sends the profile id — ASSUMPTION.
+1. **Report/block target — DECIDED, contract change pending:** see Decisions below. Remaining backend work: map profile id → user id and name the two id types distinctly in `openapi-v1.json`.
 2. Discovery `available_from/until` semantics (containment vs overlap) are inferred; no public availability endpoint, so the UI pre-checks per slot.
 3. Minor-unit exponent for UZS (assumed 2 = tiyin).
-4. Cancellation percentages, platform fee, delivery fee, payout/earnings — undefined; UI shows “not determined”.
+4. Platform fee, delivery fee, payout/earnings — undefined; UI shows “not determined”. (Cancellation percentage and refund rules: DECIDED, see Decisions.)
 5. `/vendor/summary|orders` response schemas are untyped; vendor/companion “earnings” have no live source.
 6. Whether “decline” maps to `cancelled` (assumed from the enum; no `declined` status).
 7. Product decision: keep category `romantic` internally vs rename (brand forbids romantic wording).
+
+## Decisions (from backend owner)
+1. **Report target.** `reported_user_id` = the *user* id of the reported person, never the companion profile id. If the frontend only has a profile id, the backend must map it to the owning user, and the API contract/responses must label the two id types explicitly. Prototype status: it still sends the profile id (no user id is exposed to customers); this works only once the backend maps it. Action for backend: expose/name ids unambiguously.
+2. **Cancellation and refunds.** Financial rules are not defined. Do not invent a cancellation percentage or refundable amount. Real refund calculation stays off. Payment-dependent checkout may return 503 while settings are missing, and test payments must never be mixed with real refunds. Prototype status: cancel dialog and booking page state that percentages/amounts are undefined and that no refund is calculated; a demo payment moves no real money; `refund_required` is shown only as a flag.
 
 ## Known limitations / risks
 Mock instead of real API; Chromium-only; no screen reader/device/Safari/Firefox; no photo upload/WebSocket/notifications UI/admin; logo symbol not outlined, no merch, no legal clearance; Uzbek copy not reviewed by a native speaker; animations not profiled on budget Android.

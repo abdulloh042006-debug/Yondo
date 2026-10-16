@@ -7,7 +7,7 @@ Prefix `/api/v1`. The prototype calls these paths on an in-browser **mock** (`pr
 | Roles (`#/roles`) | PUT /auth/roles | customer / companion / vendor |
 | **01 Home** (`#/home`) | GET /discovery/companions, GET /bookings | sections are client-side views of one page of results (no server-side “top rated”/“new” endpoints exist) |
 | **02 Search** (`#/search`) | GET /discovery/companions (q, service_code, language, rating_min, price_max_minor, limit) | debounce 250 ms; states: loading, empty, error+retry |
-| **03 Profile** (`#/c/:id`) | GET /discovery/companions/{id}; POST /safety/reports; PUT /safety/blocks/{id} | badge from `verified`; report/block target id is an **open question** (see handoff) |
+| **03 Profile** (`#/c/:id`) | GET /discovery/companions/{id}; POST /safety/reports; PUT /safety/blocks/{id} | badge from `verified`; report/block target must be a **user id** (backend decision, see handoff → Decisions); prototype sends the profile id until the API separates the id types |
 | **04 Booking** (`#/book/:id`) | GET /discovery/companions (available_from/until pre-check); POST /bookings | body = exactly service_id, starts_at (UTC ISO), duration_minutes, meeting_place, timezone |
 | Bookings (`#/bookings`) | GET /bookings | |
 | **05 Chat / active booking** (`#/b/:id`) | GET /bookings/{id}, /payments/bookings/{id}, /chat/bookings/{id}/messages, /meetings/bookings/{id}; POST …/messages, /meetings/…/check-in\|start\|end, /bookings/{id}/cancel\|accept\|decline, /reviews/bookings/{id}, /safety/bookings/{id}/sos?confirmed=true, /safety/trusted-contacts | no websocket in prototype (manual refresh) |

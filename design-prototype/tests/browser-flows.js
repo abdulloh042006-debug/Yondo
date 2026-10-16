@@ -153,6 +153,14 @@ module.exports = async function (X) {
     await page.evaluate(() => { YM.demo.cfg.latency = 900; }); await page.evaluate(() => { location.hash = '#/search'; }); await sleep(250); mk(await page.$('#v .sk') !== null, 'skeleton visible'); await ready(); await page.evaluate(() => { YM.demo.cfg.latency = 0; }); return 'ok';
   });
 
+  await T('F7b decided copy @360: cancel dialog + paid-cancel page say no % / no refund calculation; layout/contrast clean', async () => {
+    await P(360); await ready(); await session(['customer']); const b = await mkBooking(6, 12); await API(async (id) => { YM.demo.companionAccept(id); const p = await YAPP.call('POST', '/payments/bookings/' + id, { headers: { 'Idempotency-Key': 'k-f7b-' + id.slice(-6) } }); YM.demo.providerComplete(p.id, 'succeeded'); }, b);
+    await nav('#/b/' + b); await clickText('Bronni bekor qilish'); await sleep(500); const d = await dtxt(); mk(/refund hisoblanmaydi/.test(d) && /foiz hali belgilanmagan/.test(d) && !/%/.test(d), 'dialog copy: ' + d.slice(0, 160));
+    const m1 = await page.evaluate(X.MEASURE); const p1 = m1.off.concat(m1.small, m1.clip, m1.contrast, m1.overflowX > 0 ? ['overflow ' + m1.overflowX] : []); mk(!p1.length, 'dialog layout: ' + p1.slice(0, 3).join(' | '));
+    await submit('dialog form[data-f=cancel]'); await sleep(900); const t2 = await txt(); mk(/Bekor qilindi/.test(t2) && /refund hisoblanmaydi/.test(t2) && /Demo toʻlovda haqiqiy pul qaytarilmaydi/.test(t2) && !/%/.test(t2), 'page copy: ' + t2.replace(/\n+/g, ' / ').slice(0, 220));
+    const m2 = await page.evaluate(X.MEASURE); const p2 = m2.off.concat(m2.small, m2.clip, m2.contrast, m2.overflowX > 0 ? ['overflow ' + m2.overflowX] : []); mk(!p2.length, 'page layout: ' + p2.slice(0, 3).join(' | ')); return 'ok';
+  });
+
   // ===== F11 keyboard + dialog focus =====
   await T('F11 keyboard: skip link first Tab; dialog opens with Enter, traps Tab (25 presses), Esc closes and restores focus to opener', async () => {
     await P(390); await ready(); mk(await page.evaluate(() => document.activeElement.tagName) === 'BODY', 'initial load must not steal focus: ' + await page.evaluate(() => document.activeElement.tagName)); await page.keyboard.press('Tab'); mk(await page.evaluate(() => document.activeElement.className) === 'skip', 'skip link not first'); await page.keyboard.press('Enter'); await sleep(200); mk(await page.evaluate(() => document.activeElement.id) === 'v', 'skip target: ' + await page.evaluate(() => document.activeElement.outerHTML.slice(0, 70))); await session(['customer']); await nav('#/home');

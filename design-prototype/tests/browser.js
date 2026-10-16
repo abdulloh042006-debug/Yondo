@@ -74,5 +74,5 @@ const MEASURE = `(() => {
   }
   if (sweep.length) { const fp = path.join(ROOT, 'reports/browser-sweep.json'); let old = {}; try { old = JSON.parse(fs.readFileSync(fp, 'utf8')); } catch (e) { /* none */ } fs.writeFileSync(fp, JSON.stringify(Object.assign(old, summary), null, 1)); }
   if (process.env.ONLY_SWEEP) { console.log(errors.length ? 'JS ERRORS: ' + errors.slice(0, 5).join(' | ') : 'no JS errors'); const f = out.filter((x) => x.st === 'FAIL').length; console.log(`\n${out.length - f} passed, ${f} failed`); await browser.close(); process.exit(f ? 1 : 0); }
-  require('./browser-flows.js')({ open, ready, nav, session, click, text, T, mk, sleep, rec, errors, out, get page() { return page; }, browser, SHOTS, path });
+  require('./browser-flows.js')({ MEASURE, OCCL, open, ready, nav, session, click, text, T, mk, sleep, rec, errors, out, get page() { return page; }, browser, SHOTS, path });
 })();
