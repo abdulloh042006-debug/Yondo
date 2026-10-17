@@ -5,7 +5,7 @@ const ROOT = path.join(__dirname, '..'), URL = 'file://' + path.join(ROOT, 'prot
 const WIDTHS = [360, 375, 390, 430, 768, 1024, 1440];
 const out = []; const rec = (st, name, info) => { out.push({ st, name, info }); console.log(st.padEnd(5), name, info ? '→ ' + info : ''); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const OCCL = `(async()=>{const bad=[];const els=[...document.querySelectorAll('#v button,#v a[href],#v input,#v select,#v textarea,#v summary,dialog[open] button,dialog[open] input,dialog[open] textarea,dialog[open] select')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&!e.disabled});
+const OCCL = `(async()=>{const bad=[];const open_=document.querySelector('dialog[open]');const els=[...document.querySelectorAll(open_?'dialog[open] button,dialog[open] input,dialog[open] textarea,dialog[open] select,dialog[open] a[href]':'#v button,#v a[href],#v input,#v select,#v textarea,#v summary')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&!e.disabled});
 for(const e of els){e.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(r));const r=e.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;if(x<0||y<0||x>innerWidth||y>innerHeight){bad.push('offscreen '+(e.textContent||e.id).trim().slice(0,25));continue}const t=document.elementFromPoint(x,y);if(t&&t!==e&&!e.contains(t)&&!t.contains(e)){const lab=e.closest('label');if(lab&&lab.contains(t))continue;bad.push((e.textContent||e.id||e.name||'').trim().slice(0,28)+' ← covered by '+t.tagName+'.'+(t.className||t.id||'').toString().slice(0,24))}}
 return bad})()`;
 const AXE = `(async () => { window.scrollTo(0, 0); await new Promise((q) => setTimeout(q, 80)); const r = await axe.run(document.body, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] }); return r.violations.map((v) => v.id + ' [' + v.impact + '] x' + v.nodes.length + ' ' + v.nodes[0].target.join(' ').slice(0, 60)); })()`;
@@ -59,6 +59,7 @@ const MEASURE = `(() => {
     // dialog measurement
     await nav('#/home'); await page.evaluate(() => YAPP.A.demo()); await sleep(400); rows.push(['demo-dialog', await page.evaluate(MEASURE)]);
     await page.keyboard.press('Escape'); await sleep(300);
+    for (const [nm, code] of [['nosafe-dialog', 'YAPP.A.nosafe()'], ['service-form-dialog', 'YAPP.A.svcnew()'], ['product-form-dialog', 'YAPP.A.pnew()'], ['cancel-dialog', `YAPP.A.cancel('${ids.bid}')`], ['safety-centre-dialog', `YAPP.A.safe('${ids.bid}')`]]) { await nav('#/b/' + ids.bid); await page.evaluate(code); await sleep(500); const m_ = await page.evaluate(MEASURE); m_.occl = await page.evaluate(OCCL); rows.push([nm, m_]); await page.keyboard.press('Escape'); await sleep(300); }
     const agg = { ovf: 0, axe: new Set(), occl: new Set(), off: new Set(), small: new Set(), clip: new Set(), contrast: new Set() };
     const BADH = /Yuklab boʻlmadi|Ruxsat yoʻq|Sahifa topilmadi|Ekran tayyorlanmadi|^$/; const bad = rows.filter(([n, m]) => BADH.test(m.h1)).map(([n, m]) => n + '="' + m.h1 + '"');
     rec(bad.length ? 'FAIL' : 'PASS', `all ${rows.length} views render real content @${tag}`, bad.length ? bad.join(', ') : rows.map(([n, m]) => m.h1).filter((v, i, a) => a.indexOf(v) === i).slice(0, 6).join(' / '));

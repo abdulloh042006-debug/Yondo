@@ -49,8 +49,13 @@ Mobile-first; breakpoints 360/390/430/768/1024/1440; container 480→640→880. 
 7. Product decision: keep category `romantic` internally vs rename (brand forbids romantic wording).
 
 ## Decisions (from backend owner)
-1. **Report target.** `reported_user_id` = the *user* id of the reported person, never the companion profile id. If the frontend only has a profile id, the backend must map it to the owning user, and the API contract/responses must label the two id types explicitly. Prototype status: it still sends the profile id (no user id is exposed to customers); this works only once the backend maps it. Action for backend: expose/name ids unambiguously.
-2. **Cancellation and refunds.** Financial rules are not defined. Do not invent a cancellation percentage or refundable amount. Real refund calculation stays off. Payment-dependent checkout may return 503 while settings are missing, and test payments must never be mixed with real refunds. Prototype status: cancel dialog and booking page state that percentages/amounts are undefined and that no refund is calculated; a demo payment moves no real money; `refund_required` is shown only as a flag.
+Full text, evidence and contract proposals: **`docs/03-decisions-and-contract.md`**. Summary:
+1. Fees are backend-configured/calculated; frontend displays API values; unset policy ⇒ 503 (default). Delivery fee has no backend setting yet (owner to define).
+2. Availability filter = full containment (already how the backend works); UTC/offset instants only; invalid intervals rejected.
+3. Category label “Maxsus kunlar”; internal id `romantic` unchanged.
+4. Money = integer tiyin; BigInt-safe, no floats; no refund/payment operation introduced; cancellation % and refund amounts remain undefined.
+5. `reported_user_id` is a user id; prototype no longer sends profile ids; customers cannot report/block companions until a profile→user mapping exists.
+Staging: nothing documented; see `docs/04-staging-readiness.md`.
 
 ## Known limitations / risks
 Mock instead of real API; Chromium-only; no screen reader/device/Safari/Firefox; no photo upload/WebSocket/notifications UI/admin; logo symbol not outlined, no merch, no legal clearance; Uzbek copy not reviewed by a native speaker; animations not profiled on budget Android.

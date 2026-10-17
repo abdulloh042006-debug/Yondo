@@ -1,6 +1,8 @@
 /* DEMO mock of the Yondo API. Mirrors docs/openapi-v1.json shapes and the backend's real error codes. NOT the real backend. */
 (function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.YM = factory(); })(typeof self !== 'undefined' ? self : this, function () {
-  const cfg = { offline: false, latency: 180, pay: 'ok', feeBps: 1000, clock: 0, giftTest: true, calls: [] };
+  const L = typeof require === 'function' ? require('./logic.js') : self.YL; // single source for money/interval semantics
+  // feeBps mirrors backend YONDO_PLATFORM_FEE_BPS: null (default) = fee policy NOT configured → payment returns 503. Any number set here is a DEMO fixture, not a business rule.
+  const cfg = { offline: false, latency: 180, pay: 'ok', feeBps: null, clock: 0, giftTest: true, calls: [] };
   const now = () => Date.now() + cfg.clock;
   let n = 0; const uid = () => { n++; const h = (n + 0x1000000).toString(16); return `00000000-0000-4000-8000-${h.padStart(12, '0')}`; };
   const iso = (t) => new Date(t).toISOString();
@@ -50,8 +52,10 @@
   }
   function syncPublic() { const m = S.me; let p = S.profiles.find((x) => x.user_id === S.user.id); const st = profileStatus(); if (st.publicly_active && !p) { p = mkProf(m.prof.display_name, null, m.prof.languages, m.prof.interests, m.prof.bio, m.services, { user_id: S.user.id, verified: true, id: m.prof.id }); p.avail = m.avail; S.profiles.push(p); } if (p) { p.display_name = m.prof ? m.prof.display_name : p.display_name; p.bio = m.prof ? m.prof.bio : p.bio; p.interests = m.prof ? m.prof.interests : p.interests; p.languages = m.prof ? m.prof.languages : p.languages; p.services = m.services; p.avail = m.avail; if (!st.publicly_active) S.profiles = S.profiles.filter((x) => x !== p); } }
   const need422 = (cond, loc, msg) => { if (cond) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'value_error', loc: ['body', loc], msg }] }); };
-  const avail = (p, s, e) => p.avail.some((a) => Date.parse(a.starts_at) <= s && Date.parse(a.ends_at) >= e);
-  const overlap = (p, s, e) => S.bookings.some((b) => b.profile_id === p.id && ['pending', 'accepted', 'confirmed', 'active'].includes(b.status) && Date.parse(b.starts_at) < e && Date.parse(b.ends_at) > s);
+  const iv = (a, b) => ({ start: Date.parse(a), end: Date.parse(b) });
+  // DECISION: full containment (available_from <= from AND available_until >= until). Booking conflicts are checked separately and stay in force.
+  const avail = (p, s, e) => p.avail.some((a) => L.contains(iv(a.starts_at, a.ends_at), { start: s, end: e }));
+  const overlap = (p, s, e) => S.bookings.some((b) => b.profile_id === p.id && ['pending', 'accepted', 'confirmed', 'active'].includes(b.status) && L.overlaps(iv(b.starts_at, b.ends_at), { start: s, end: e }));
 
   const R = [];
   const on = (m, re, fn) => R.push([m, re, fn]);
@@ -70,7 +74,7 @@
     const pr = (p) => Math.min(...p.services.map((s) => s.price_minor * 60 / s.unit_minutes));
     if (q.price_min_minor) l = l.filter((p) => pr(p) >= +q.price_min_minor);
     if (q.price_max_minor) l = l.filter((p) => pr(p) <= +q.price_max_minor);
-    if (q.available_from && q.available_until) { const a = Date.parse(q.available_from), b = Date.parse(q.available_until); if (isNaN(a) || isNaN(b) || b <= a) throw err(422, 'invalid_discovery_filter'); l = l.filter((p) => avail(p, a, b) && !overlap(p, a, b)); }
+    if (q.available_from || q.available_until) { if (!q.available_from || !q.available_until) throw err(422, 'invalid_discovery_filter', 'available_from and available_until must be supplied together'); const v = L.validateInterval(q.available_from, q.available_until); if (!v.ok) throw err(422, 'invalid_discovery_filter', v.code); l = l.filter((p) => avail(p, v.start, v.end) && !overlap(p, v.start, v.end)); }
     const lim = +q.limit || 30, off = +q.offset || 0;
     return { items: l.slice(off, off + lim).map(card), has_more: off + lim < l.length, limit: lim, offset: off };
   });
@@ -80,7 +84,7 @@
   on('POST', /^\/bookings$/, ({ body }) => {
     need('customer'); const p = S.profiles.find((x) => x.services.some((s) => s.id === body.service_id)); if (!p) throw err(404, 'companion_service_not_found');
     if (p.user_id === S.user.id) throw err(403, 'self_booking_forbidden');
-    if (S.blocks.includes(p.user_id) || S.blocks.includes(p.id)) throw err(403, 'booking_blocked');
+    if (S.blocks.includes(p.user_id)) throw err(403, 'booking_blocked');
     const s = p.services.find((x) => x.id === body.service_id); const st = Date.parse(body.starts_at);
     need422(!body.meeting_place || !body.meeting_place.trim(), 'meeting_place', 'required'); need422(!body.timezone, 'timezone', 'required'); need422(isNaN(st), 'starts_at', 'invalid');
     if (!Number.isInteger(body.duration_minutes) || body.duration_minutes <= 0 || body.duration_minutes % s.unit_minutes) throw err(422, 'invalid_booking_duration');
@@ -104,14 +108,14 @@
     if (!key || key.length < 8 || key.length > 128) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'string_too_short', loc: ['header', 'idempotency-key'], msg: 'invalid' }] });
     const ex = S.payments.find((x) => x.key === key); if (ex) { if (ex.booking_id !== b.id) throw err(409, 'idempotency_key_conflict'); return payResp(ex); }
     if (b.status !== 'accepted') throw err(409, 'booking_not_payable');
-    if (cfg.feeBps === null) throw err(503, 'payment_configuration_unavailable');
+    if (cfg.feeBps === null || !Number.isInteger(cfg.feeBps) || cfg.feeBps < 0 || cfg.feeBps > 10000) throw err(503, 'payment_configuration_unavailable');
     if (cfg.pay === '503') throw err(503, 'payment_provider_unavailable');
-    const fee = Math.round(b.price_minor * cfg.feeBps / 10000); const p = { id: uid(), key, booking_id: b.id, subtotal_minor: b.price_minor, platform_fee_minor: fee, amount_minor: b.price_minor + fee, currency: b.currency, status: 'pending', checkout_url: 'demo://provider/' + b.id, refund_required: false, created_at: iso(now()) };
+    const fee = Number((BigInt(b.price_minor) * BigInt(cfg.feeBps) + 5000n) / 10000n); /* DEMO: mirrors backend integer round-half-up; the percentage itself is a fixture */ const p = { id: uid(), key, booking_id: b.id, subtotal_minor: b.price_minor, platform_fee_minor: fee, amount_minor: b.price_minor + fee, currency: b.currency, status: 'pending', checkout_url: 'demo://provider/' + b.id, refund_required: false, created_at: iso(now()) };
     S.payments.push(p); return payResp(p);
   });
   on('GET', /^\/payments\/bookings\/([^/]+)$/, ({ m }) => { const b = bk(m[1]); part(b); return S.payments.filter((p) => p.booking_id === b.id).map(payResp); });
   // ---- integration (gift + booking): preview works, checkout is unavailable in the real backend ----
-  on('GET', /^\/integration\/bookings\/([^/]+)\/preview$/, ({ m }) => { need('customer'); const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); if (b.status !== 'accepted') throw err(409, 'booking_not_payable'); const items = S.cart.map((c) => { const pr = S.products.find((x) => x.id === c.product_id); return { product_id: pr.id, name: pr.name, quantity: c.quantity, unit_price_minor: pr.price_minor, line_total_minor: pr.price_minor * c.quantity }; }); const g = items.reduce((a, i) => a + i.line_total_minor, 0); return { booking_id: b.id, booking_service_minor: b.price_minor, gift_items: items, gift_subtotal_minor: g, subtotal_minor: b.price_minor + g, currency: b.currency, platform_fee_minor: null, delivery_fee_minor: null, total_minor: null, checkout_available: false, reason: 'combined_payment_and_delivery_policy_unconfigured' }; });
+  on('GET', /^\/integration\/bookings\/([^/]+)\/preview$/, ({ m }) => { need('customer'); const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); if (b.status !== 'accepted') throw err(409, 'booking_not_payable'); if (!S.cart.length) throw err(409, 'cart_empty', 'Cart has no items'); const items = S.cart.map((c) => { const pr = S.products.find((x) => x.id === c.product_id); return { product_id: pr.id, name: pr.name, quantity: c.quantity, unit_price_minor: pr.price_minor, line_total_minor: pr.price_minor * c.quantity }; }); const g = items.reduce((a, i) => a + i.line_total_minor, 0); return { booking_id: b.id, booking_service_minor: b.price_minor, gift_items: items, gift_subtotal_minor: g, subtotal_minor: b.price_minor + g, currency: b.currency, platform_fee_minor: null, delivery_fee_minor: null, total_minor: null, checkout_available: false, reason: 'combined_payment_and_delivery_policy_unconfigured' }; });
   on('POST', /^\/integration\/bookings\/([^/]+)\/checkout$/, ({ m }) => { need('customer'); const b = bk(m[1]); if (!isCust(b)) throw err(404, 'booking_not_found'); if (b.status !== 'accepted') throw err(409, 'booking_not_payable'); throw err(503, 'combined_checkout_unavailable'); });
   // ---- gifts ----
   on('GET', /^\/gifts\/products$/, () => S.products.filter((p) => p.published).map(clone));
@@ -134,8 +138,27 @@
   on('GET', /^\/chat\/bookings\/([^/]+)\/messages$/, ({ m }) => { const b = bk(m[1]); part(b); return clone(S.messages[b.id] || []); });
   on('POST', /^\/chat\/bookings\/([^/]+)\/messages$/, ({ m, body }) => { const b = bk(m[1]); part(b); if (b.status === 'cancelled' || b.status === 'completed') throw err(409, 'chat_closed'); need422(!body.body || !body.body.trim() || body.body.length > 4000, 'body', 'length'); const x = { id: uid(), booking_id: b.id, sender_id: S.user.id, kind: body.kind || 'text', body: body.body, payload: null, system_code: null, created_at: iso(now()) }; (S.messages[b.id] = S.messages[b.id] || []).push(x); return clone(x); });
   on('POST', /^\/reviews\/bookings\/([^/]+)$/, ({ m, body }) => { const b = bk(m[1]); const who = part(b); if (b.status !== 'completed') throw err(409, 'review_not_ready'); if (S.reviews.some((r) => r.booking_id === b.id && r.reviewer_id === S.user.id)) throw err(409, 'review_already_exists'); need422(!(body.stars >= 1 && body.stars <= 5), 'stars', 'range'); const r = { id: uid(), booking_id: b.id, reviewer_id: S.user.id, reviewee_id: who === 'customer' ? b.profile_id : b.customer_id, stars: body.stars, comment: body.comment || '', tags: body.tags || [] }; S.reviews.push(r); return clone(r); });
-  on('POST', /^\/safety\/reports$/, ({ body }) => { if (!S.token) throw err(401, 'authentication_required'); const c = ['harassment', 'inappropriate_request', 'fake_profile', 'fraud', 'unsafe_behavior', 'no_show', 'payment_issue', 'other']; if (!c.includes(body.category) || !(body.description || '').trim()) throw err(422, 'invalid_report'); const r = Object.assign({ id: uid(), status: 'open' }, body); S.reports.push(r); return clone(r); });
-  on('PUT', /^\/safety\/blocks\/([^/]+)$/, ({ m }) => { if (!S.token) throw err(401, 'authentication_required'); if (!S.blocks.includes(m[1])) S.blocks.push(m[1]); return { user_id: m[1] }; });
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const validation = (loc, type, msg) => err(422, 'validation_error', 'Request validation failed', { errors: [{ type, loc: ['body', loc], msg }] });
+  // A USER id is: the authenticated user, a booking's customer_id, or a companion's hidden owner user_id. A companion PROFILE id is NOT a user id.
+  const knownUser = (id) => (S.user && id === S.user.id) || S.bookings.some((b) => b.customer_id === id) || S.profiles.some((p) => p.user_id === id);
+  on('POST', /^\/safety\/reports$/, ({ body }) => {
+    if (!S.token) throw err(401, 'authentication_required');
+    const allowed = ['reported_user_id', 'booking_id', 'category', 'description'], extra = Object.keys(body).filter((k) => !allowed.includes(k));
+    if (extra.length) throw err(422, 'validation_error', 'Request validation failed', { errors: extra.map((k) => ({ type: 'extra_forbidden', loc: ['body', k], msg: 'Extra inputs are not permitted' })) }); // reporter identity is NEVER taken from the client
+    if (!UUID_RE.test(body.reported_user_id || '')) throw validation('reported_user_id', 'uuid_parsing', 'Input should be a valid UUID');
+    if (body.booking_id != null && !UUID_RE.test(body.booking_id)) throw validation('booking_id', 'uuid_parsing', 'Input should be a valid UUID');
+    const c = ['harassment', 'inappropriate_request', 'fake_profile', 'fraud', 'unsafe_behavior', 'no_show', 'payment_issue', 'other'];
+    if (!c.includes(body.category)) throw validation('category', 'literal_error', 'Input should be a valid category');
+    const d = (body.description || ''); if (!d.length || d.length > 4000) throw validation('description', 'string_length', 'Description must be 1-4000 characters');
+    if (body.reported_user_id === S.user.id) throw err(422, 'invalid_report', 'Cannot report own account');
+    if (!knownUser(body.reported_user_id)) throw err(404, 'reported_user_not_found', 'Account not found');
+    if (body.booking_id) { const b = bk(body.booking_id); const who = part(b); const prof = S.profiles.find((x) => x.id === b.profile_id); const other = who === 'customer' ? (prof && prof.user_id) : b.customer_id; if (body.reported_user_id !== other) throw err(422, 'invalid_report_target', 'Report target is not participant'); }
+    const r = { id: uid(), reporter_id: S.user.id, status: 'open', reported_user_id: body.reported_user_id, booking_id: body.booking_id || null, category: body.category, description: d.trim() }; S.reports.push(r);
+    return { id: r.id, reported_user_id: r.reported_user_id, booking_id: r.booking_id, category: r.category, description: r.description, status: r.status };
+  });
+  on('GET', /^\/safety\/reports$/, () => { if (!S.token) throw err(401, 'authentication_required'); return S.reports.filter((r) => r.reporter_id === S.user.id).map(({ reporter_id, ...x }) => x); });
+  on('PUT', /^\/safety\/blocks\/([^/]+)$/, ({ m }) => { if (!S.token) throw err(401, 'authentication_required'); if (!UUID_RE.test(m[1])) throw err(422, 'validation_error', 'Request validation failed', { errors: [{ type: 'uuid_parsing', loc: ['path', 'user_id'], msg: 'Input should be a valid UUID' }] }); if (m[1] === S.user.id) throw err(422, 'invalid_block', 'Cannot block own account'); if (!knownUser(m[1])) throw err(404, 'user_not_found', 'Account not found'); if (!S.blocks.includes(m[1])) S.blocks.push(m[1]); return { user_id: m[1] }; });
   on('POST', /^\/safety\/bookings\/([^/]+)\/sos$/, ({ m, query }) => { const b = bk(m[1]); part(b); if (query.confirmed !== 'true') throw err(422, 'sos_confirmation_required'); if (b.status !== 'active') throw err(409, 'sos_requires_active_booking'); const a = { id: uid(), emergency_service_contacted: false }; S.sos.push(a); return a; });
   on('GET', /^\/safety\/trusted-contacts$/, () => { if (!S.token) throw err(401, 'authentication_required'); return clone(S.contacts); });
   on('POST', /^\/safety\/trusted-contacts$/, ({ body }) => { if (!S.token) throw err(401, 'authentication_required'); const c = { id: uid(), name: body.name, phone_number: body.phone_number }; S.contacts.push(c); return clone(c); });
@@ -188,7 +211,7 @@
     adminApprove() { const m = S.me; if (m.app) m.app.status = 'approved'; if (m.prof) m.prof.content_status = 'approved'; m.identity = 'verified'; syncPublic(); },
     adminPublish(id) { const p = S.products.find((x) => x.id === id); if (p) p.published = true; },
     incomingRequests() { const p = myProfile(); if (!p || S.bookings.some((b) => b.profile_id === p.id)) return; const s = p.services[0]; if (!s) return; [26, 52].forEach((h, i) => { const st = Date.parse(p.avail[0] ? p.avail[Math.min(i + 1, p.avail.length - 1)].starts_at : iso(now() + 864e5)) + 3 * 36e5; S.bookings.push({ id: uid(), customer_id: uid(), profile_id: p.id, service_id: s.id, service_code: s.service_code, service_description: s.description, starts_at: iso(st), ends_at: iso(st + s.unit_minutes * 6e4), duration_minutes: s.unit_minutes, meeting_place: 'Amir Temur xiyoboni (DEMO)', timezone: 'Asia/Tashkent', price_minor: s.price_minor, currency: s.currency, status: 'pending', created_at: iso(now()), customer_contract_accepted_at: iso(now()), companion_contract_accepted_at: null }); }); },
-    reset() { Object.assign(S, { user: null, roles: [], token: null, bookings: [], payments: [], messages: {}, meetings: {}, reviews: [], reports: [], blocks: [], contacts: [], cart: [], testOrders: [], notifs: [], sos: [], me: { app: null, prof: null, status: null, services: [], avail: [] } }); cfg.clock = 0; cfg.offline = false; cfg.pay = 'ok'; cfg.feeBps = 1000; seed(); }
+    reset() { Object.assign(S, { user: null, roles: [], token: null, bookings: [], payments: [], messages: {}, meetings: {}, reviews: [], reports: [], blocks: [], contacts: [], cart: [], testOrders: [], notifs: [], sos: [], me: { app: null, prof: null, status: null, services: [], avail: [] } }); cfg.clock = 0; cfg.offline = false; cfg.pay = 'ok'; cfg.feeBps = null; seed(); }
   };
   return { api, demo, card };
 });

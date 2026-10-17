@@ -44,3 +44,21 @@ The measurement harness was proven to detect defects: injected a 500 px element,
 
 ## Update after backend decisions (report target id; cancellation/refund)
 Copy and docs changed to match the decisions (no cancellation %, no refund calculation, test payments never treated as real refunds; report target = user id, profile id sent until the API separates id types). Re-run after the change: logic/contract 28/28; E2E flows 37 + fonts check, 0 failed; sweep spot-check at 360/1440 (+dark) with axe-core and real fonts, 28/28 + fonts check. The remaining 5 widths were not re-run after this copy-only change (the changed text appears only in the cancel dialog and the cancelled-booking state, both covered by F7b).
+
+
+## Decisions pass (D1–D5) and backend audit: exact results
+Run in this environment; exit codes were 0 unless stated. Details and labels: `reports/backend-audit.md`, `docs/03-decisions-and-contract.md`.
+| Suite | Target | Result |
+|---|---|---|
+| Existing backend suite | native PostgreSQL 16 (clean DB) | **200 passed, 0 skipped** |
+| Existing backend suite | SQLite | 192 passed, 8 skipped (PG-only) |
+| PG-only concurrency (`-k postgres`) | PostgreSQL / SQLite | 4 passed / 4 skipped |
+| New decision tests against the REAL backend (`tests/backend`) | PostgreSQL 16 / SQLite | **50 / 50 passed** |
+| Migrations (up 14, check, down 14, up 14, check) | clean PostgreSQL 16 | all passed, no drift |
+| OpenAPI export check; `ruff check` | — | passed |
+| Logic + mock + contract + overlay (`tests/run.js`, ajv vs `openapi-v1.json`) | mock | **40 / 40 passed** |
+| Chromium E2E flows (`tests/browser.js`) | mock, real Inter/Space Grotesk fonts | **39 / 39 passed** |
+| Chromium responsive sweep (360, 375, 390, 430, 768, 1024, 1440 + dark at 360/1440) | mock | **63 assertions passed (+3 font-load checks)**; 9 configs × 25 views = 225 view measurements, 0 issues (overflow, touch ≥44 px, clipping, measured contrast, controls hidden behind fixed bars, axe-core WCAG A/AA + best practice) |
+| Component gallery (360/768/1440, light/dark) | static | 5 / 5 passed |
+Cancellation dialog (F7b) and the new dialogs (no-user-id notice, service/product forms, safety centre, DEMO panel) were inspected for text, layout and contrast at 360 and 1440 px.
+**Not run / BLOCKED:** staging or any remote backend; real payments/SMS/identity providers; real devices (iOS Safari, Android) and screen readers; Firefox/WebKit; CI for the pushed branch; the Windows `D:\Yondo-Phase6-validation` reports.
