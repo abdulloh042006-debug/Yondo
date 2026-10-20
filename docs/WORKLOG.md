@@ -2,12 +2,12 @@
 Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT IMPLEMENTED / OUT OF SCOPE.
 
 ## Status snapshot
-- Branch `design/prototype` (base `origin/codex/notification-integration`). Last commits: `dbc9113` (decisions D1–D5, audit) on top of `065741f` (remote). **Push of `dbc9113` and later: BLOCKED (no approved auth in the sandbox).** A verified `design-prototype.bundle` carries the commits.
+- Branch `design/prototype` (base `origin/codex/notification-integration`), **pushed** (remote SHA verified equal to local at `88b410a`; later docs-only commits may follow). Includes `dbc9113` (decisions D1–D5, audit) and `c643b03` (CLAUDE.md, WORKLOG). CI read-out for the push: no runs yet.
 - Backend: PostgreSQL 16 200/200 PASS (SQLite 192 + 8 skipped); migrations 14 up/down/up PASS; 50 real-backend decision tests PASS on both DBs.
 - Prototype (mock-backed, NOT a real client): node 40/40, Chromium E2E 39/39, sweep 63 (+3) over 9 configs × 25 views, gallery 5/5.
 
 ## Next steps (priority order)
-1. **Push** the branch once auth exists (`gh auth login` / credential manager / SSH / `GH_TOKEN` env). Verify remote SHA. Then read CI results for the branch (BLOCKED so far).
+1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
 2. **Backend owner decisions needed:** delivery-fee configuration schema; profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
 3. **Staging:** none documented. Obtain URL, test-login method (staging has no dev OTP; no SMS provider), payment sandbox, approved fee policy (`docs/04-staging-readiness.md`). Then add a read-only real-API contract check and an adapter that swaps the mock for the real client.
 4. **Real clients:** `apps/mobile`/`apps/admin` are stubs. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
@@ -15,7 +15,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-### S9 — CLAUDE.md + WORKLOG (this entry's commit)
+### S10 — Push completed (`88b410a`)
+Done: owner supplied a one-off token; pushed `design/prototype` via a per-command header (token never stored); verified remote == local without credentials; CLAUDE.md §5 now documents the owner-supplied-token exception.
+Not done: CI fix-ups (see snapshot for the read-out); token revocation is the owner's action. Evidence: `git ls-remote --heads origin design/prototype` = local HEAD.
+
+### S9 — CLAUDE.md + WORKLOG (`c643b03`)
 Done: created `CLAUDE.md` (credit-saving rules, commands, product rules, git/push policy, session protocol) and this worklog. Owner granted standing permission to push without asking (merge/force/deploy still need explicit instruction).
 Not done: push (BLOCKED, no auth). Evidence: files exist; no secrets (scanned). Commit: see `git log -1 -- CLAUDE.md`.
 
