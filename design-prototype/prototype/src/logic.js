@@ -125,7 +125,10 @@
     const code = err && err.code, st = err && err.status, hit = E[code];
     if (hit) return { code, text: hit[0], kind: hit[1], retry: ['unavailable', 'offline', 'wait'].includes(hit[1]) || st >= 500, rid: err.request_id || null };
     const kind = BYSTATUS[st] || (st >= 500 ? 'unavailable' : 'error');
-    return { code: code || 'unknown', text: 'Xatolik yuz berdi. Qayta urinib koʻring.', kind, retry: kind === 'unavailable' || kind === 'error', rid: (err && err.request_id) || null };
+    const text = st === 503
+      ? 'Server vaqtincha xizmat koʻrsata olmayapti (503). Iltimos, birozdan soʻng qayta urinib koʻring.'
+      : 'Xatolik yuz berdi. Qayta urinib koʻring.';
+    return { code: code || 'unknown', text, kind, retry: kind === 'unavailable' || kind === 'error', rid: (err && err.request_id) || null };
   }
   const isUnavailable503 = (err) => !!err && err.status === 503; // distinct from a declined/failed payment
   // ---- validators (limits from OpenAPI schemas) ----
