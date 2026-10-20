@@ -48,7 +48,12 @@ def install_exception_handlers(app: FastAPI) -> None:
             status_code=422,
             code='validation_error',
             message='Request validation failed',
-            errors=exc.errors(),
+            # Pydantic validators can include ValueError/bytes objects in ctx/input.
+            # Return only safe, stable details; do not echo potentially sensitive input.
+            errors=[
+                {'type': error['type'], 'loc': list(error['loc']), 'msg': error['msg']}
+                for error in exc.errors()
+            ],
         )
 
     @app.exception_handler(HTTPException)
