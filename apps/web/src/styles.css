@@ -247,12 +247,9 @@ img {
   gap: 8px;
   min-height: 44px;
 }
-.brand b {
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: var(--c-primary);
-  display: inline-block;
+.brand-mark {
+  flex: none;
+  color: var(--c-fg);
 }
 .topnav {
   display: none;

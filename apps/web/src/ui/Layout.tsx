@@ -17,6 +17,19 @@ const ICONS = {
   shield: 'M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6z',
 };
 
+/** Official Yondo symbol (design-prototype/brand/logo): two converging lines, ink + the single accent node. */
+function BrandMark() {
+  return (
+    <svg className="brand-mark" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">
+      <g stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="9">
+        <path d="M16 15 28 34Q31 38 32 40M48 15 36 34Q33 38 32 40M32 40v17" />
+      </g>
+      <circle cx="16" cy="15" r="9" fill="currentColor" />
+      <circle cx="48" cy="15" r="9" fill="#E8501A" />
+    </svg>
+  );
+}
+
 function Pill() {
   return (
     <motion.span
@@ -56,7 +69,7 @@ export function Layout() {
       <div className="shell">
         <header className={`glass-bar topbar${scrolled ? ' scrolled' : ''}`}>
           <NavLink to="/" className="brand" aria-label="Yondo — bosh sahifa">
-            <b aria-hidden="true" />
+            <BrandMark />
             Yondo
           </NavLink>
           <nav className="topnav" aria-label="Asosiy">

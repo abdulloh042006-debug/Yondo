@@ -33,7 +33,7 @@ export function Discovery() {
     <div className="stack" style={{ gap: 24 }}>
       <motion.section className="glass hero" onPointerMove={par.onPointerMove} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }}>
         <Orbs sx={par.sx} sy={par.sy} />
-        <span className="tag" style={{ width: 'fit-content' }}>Ochiq joylarda, ochiq narxlarda</span>
+        <span className="tag" style={{ width: 'fit-content' }}>Yondo doim yoningda</span>
         <h1>Suhbat, sayr yoki shahar bo‘ylab hamroh toping</h1>
         <p>
           Tasdiqlangan profillar, aniq xizmatlar va narxlar. Uchrashuvlar faqat jamoat joylarida, xavfsizlik vositalari
