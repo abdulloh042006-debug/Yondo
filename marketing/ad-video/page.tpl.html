@@ -465,8 +465,8 @@ function render(t) {
 
   /* S6 part 1: public places, map pin + big phrase over a frosted veil */
   const s6 = inOut(t, v6.s - .15, TL.p6[1] - .05, .45, .35);
-  K6.forEach((el) => { el.style.whiteSpace = 'normal'; el.style.width = (VERT ? W - 144 : 900) + 'px'; el.style.textAlign = 'center';
-    css(el, { x: (W - el.offsetWidth) / 2, y: (VERT ? H * .43 : H * .5) + 50 * (1 - s6), o: s6, blur: 10 * (1 - s6) }); });
+  K6.forEach((el) => { el.style.whiteSpace = 'normal'; el.style.width = (VERT ? W - 144 : 1500) + 'px'; el.style.textAlign = 'center';
+    css(el, { x: (W - el.offsetWidth) / 2, y: (VERT ? H * .43 : H * .46) + 50 * (1 - s6), o: s6, blur: 10 * (1 - s6) }); });
   const pin = $('pin'); const pk = lin(t, v6.s + .2, v6.s + .7);
   css(pin, { x: W / 2 - (VERT ? 60 : 55), y: (VERT ? H * .43 - 190 : H * .5 - 170) - 40 * Math.abs(Math.sin(Math.min(pk, 1) * Math.PI)) * (1 - pk), s: t > v6.s + .2 ? back(pk) : 0, o: s6 });
   // veil while S6 phrase is shown: dim app
