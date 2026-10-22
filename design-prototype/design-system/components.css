@@ -53,22 +53,50 @@ input[type=checkbox],input[type=radio]{width:24px;min-height:24px;height:24px;fl
 .m{max-width:85%;padding:10px 14px;border-radius:16px;animation:in .2s var(--ease)}.m.me{align-self:flex-end;background:var(--ink);color:var(--oi)}.m.her{align-self:flex-start;background:var(--sf2)}.m.sys{align-self:center;font-size:13px;color:var(--mu);text-align:center;background:none}.m.old{animation:none}
 /* dialog / sheet */
 dialog.sheet{border:0;padding:12px var(--sp-5) calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg);color:var(--tx);width:100%;max-width:var(--maxw);max-height:92vh;margin:auto auto 0;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .3s var(--ease)}
-dialog.sheet.in{transform:none}dialog.sheet::backdrop{background:rgba(0,0,0,.45)}@media(min-width:768px){dialog.sheet{margin:auto;border-radius:24px}}
+dialog.sheet.in{transform:none}dialog.sheet::backdrop{background:rgba(0,0,0,.45);opacity:0;transition:opacity .3s var(--ease)}dialog.sheet.in::backdrop{opacity:1}@media(min-width:768px){dialog.sheet{margin:auto;border-radius:24px}}
 .gh{width:40px;height:4px;border-radius:2px;background:var(--bs);margin:0 auto 12px}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;background:var(--ink);color:var(--oi);padding:12px 16px;border-radius:var(--r-md);max-width:min(440px,92vw);font-size:14px;line-height:20px;transition:transform .2s var(--ease),opacity .2s;z-index:50;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
 .offline{background:var(--wn);color:#fff;text-align:center;padding:6px 12px;font-size:14px}
 /* motion */
 .scr{animation:in .2s var(--ease)}.scr.na{animation:none}@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.up{animation:in .3s var(--ease) both;animation-delay:calc(var(--i,0)*40ms)}
+.up{animation:in .3s var(--ease) backwards;animation-delay:calc(var(--i,0)*40ms)}
 .sk{position:relative;overflow:hidden;background:var(--sf2);border-radius:16px;margin-bottom:12px}.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sh 1.2s linear infinite;transform:translateX(-100%)}@keyframes sh{to{transform:translateX(100%)}}
 .lg{color:var(--tx)}.lg .n{fill:var(--tx)}.lg .n.ac{fill:var(--ac)}
 .lg.an .d path{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .4s var(--ease) forwards}.lg.an .n{transform-box:fill-box;transform-origin:center;opacity:0;animation:pop .2s var(--ease) forwards}.lg.an .n1{animation-delay:.3s}.lg.an .n2{animation-delay:.35s}.lg.an .n3{animation-delay:.4s}
 @keyframes dr{to{stroke-dashoffset:0}}@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 .ck{color:var(--ok)}.ck path,.ck circle{stroke-dasharray:1;stroke-dashoffset:1;animation:dr .35s .1s var(--ease) forwards}
 .star{width:44px;height:44px;border:0;background:none;font-size:30px;color:var(--bs);transition:transform .15s var(--ease),color .15s}.star.on{color:var(--ac);transform:scale(1.1)}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 ::view-transition-group(*){animation-duration:.28s;animation-timing-function:var(--ease)}
 .bar-b{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--bg);border-top:1px solid var(--bd);padding:12px var(--sp-5)}.bar-b>div{max-width:var(--maxw);margin:0 auto}
 /* programmatic focus targets (headings, main, alerts) get no ring: they are not interactive */
 [tabindex="-1"]:focus{outline:none}
 .empty h2{font-size:var(--fs-h3);line-height:var(--lh-h3)}
+
+/* motion v2: tactile feedback, entrances, states. transform/opacity only; every rule collapses under prefers-reduced-motion (rule above) */
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes down{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:none}}
+@keyframes ring{0%{opacity:.55;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes bump{0%{transform:none}40%{transform:translateY(-4px) scale(1.15)}100%{transform:none}}
+@keyframes spop{0%{transform:scale(.7)}60%{transform:scale(1.3)}100%{transform:scale(1.1)}}
+/* forms: focus + error */
+input,select,textarea{transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--ink)}
+.fld.bad{animation:shake .35s var(--ease)}.fld .err{animation:in .2s var(--ease)}
+/* buttons: busy spinner on any [aria-busy] button, hover lift on pointer devices, press on icon buttons/nav */
+.btn[aria-busy=true]:not(:has(.spin))::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:rot .8s linear infinite}
+.ib{transition:transform .15s var(--ease)}.ib:active{transform:scale(.92)}.chip:active{transform:scale(.96)}.chip{transition:background-color .15s,color .15s,transform .15s var(--ease)}
+.navi{transition:transform .15s var(--ease),color .15s}.navi:active{transform:scale(.94)}
+.navi[aria-current=page]{position:relative}.navi[aria-current=page]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--ac);transform-origin:center;animation:bar .3s var(--ease)}.navi[aria-current=page] .ni{animation:bump .4s var(--ease)}
+@media (hover:hover){.btn:not(:disabled):hover{transform:translateY(-1px)}.btn:not(:disabled):active{transform:scale(.98)}button.card:hover{transform:translateY(-2px)}button.card:active{transform:scale(.99)}.chip:not(:disabled):hover{transform:translateY(-1px)}.ib[data-a=demo]:hover{transform:rotate(45deg)}}
+/* entrances: lists on role screens, alerts, empty states, offline banner, details, tiles */
+.list.st>*{animation:in .3s var(--ease) backwards}.list.st>*:nth-child(2){animation-delay:40ms}.list.st>*:nth-child(3){animation-delay:80ms}.list.st>*:nth-child(4){animation-delay:120ms}.list.st>*:nth-child(5){animation-delay:160ms}.list.st>*:nth-child(n+6){animation-delay:200ms}
+.alert{animation:in .25s var(--ease)}.empty{animation:in .3s var(--ease)}.offline{animation:down .25s var(--ease)}
+details[open]>:not(summary){animation:in .2s var(--ease)}
+/* booking timeline: current step pulses */
+.tl li.cur{position:relative}.tl li.cur::before,.tl li.cur::after{content:"";position:absolute;top:-7px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--ac)}.tl li.cur::after{animation:ring 1.8s var(--ease) infinite}
+/* payment confirmed: check pops, text follows */
+.ck{animation:pop .4s var(--ease-spring) backwards}.ck~h1,.ck~p,.ck~.btn{animation:in .3s .35s var(--ease) backwards}.ck~p{animation-delay:.42s}.ck~.btn{animation-delay:.5s}
+/* rating stars */
+.star.on{animation:spop .3s var(--ease-spring) backwards}

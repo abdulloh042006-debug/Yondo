@@ -6,6 +6,7 @@ Source of truth: `tokens.json` / `tokens.css` (design tokens) → `components.cs
 - Min touch target 44×44 px (buttons 48). Focus ring: 3 px `--c-focus` via `:focus-visible`. Programmatic-focus targets (`tabindex=-1`) show no ring.
 - Colours only from tokens. Accent `#E8501A` is for graphics (≥3:1), never text; text accent is `--c-accent-text`.
 - Motion: transform/opacity (path-draw for logo/check), 150–400 ms, `cubic-bezier(.22,1,.36,1)`, collapses to ~0 ms under `prefers-reduced-motion`.
+- Motion map (S14): welcome logo draw + text stagger · login field shake on error, OTP field slides in · roles/role-screen lists stagger (`.list.st`) · buttons hover-lift (pointer only) / press-scale, auto spinner on `[aria-busy]` · icon buttons, chips, nav press · active nav tab top bar + icon bump · sheet slide + backdrop fade · alerts/empty/offline banner enter · timeline current-step pulse ring · payment check spring-pop then text · rating star pop. Spring easing `--ease-spring` only for success/star moments. Loops (`ring`, `sh`, `rot`) stop under reduced motion (`animation-iteration-count:1`).
 - Uzbek copy uses ʻ (U+02BB) for oʻ/gʻ and ʼ (U+02BC) for tutuq.
 
 | Component | Helper | Classes | States | A11y contract |
