@@ -12,6 +12,7 @@ Also read `AGENTS.md` (repo rules; not repeated here) and **`docs/WORKLOG.md` â†
 
 ## 2. Where things are
 - `apps/api` FastAPI backend (14 migrations, 200 tests). `apps/mobile`, `apps/admin` are README stubs (no real client yet).
+- `marketing/ad-video/` = promo-video pipeline (scripts only, no audio/video committed; see its README). Owner video rules: 9:16 + 16:9, UZ + RU, voices from voicelab.uz supplied by the owner, **no DEMO labels in the video**, only ink/paper/carrot.
 - `docs/openapi-v1.json` = API contract (CI keeps it in sync). `docs/frontend-api-integration.md` = client rules.
 - `design-prototype/` = brand, tokens, component library, mock-backed prototype, tests, reports. Start at `design-prototype/docs/02-handoff.md`, decisions in `docs/03-decisions-and-contract.md`, staging in `docs/04-staging-readiness.md`, evidence in `reports/test-report.md` and `reports/backend-audit.md`.
 - Prototype sources: `prototype/src/{logic,mockapi,components,app,roles}.js`, `design-system/{tokens.*,components.css}`; `node design-prototype/prototype/build.js` builds `prototype/index.html`, `screens/*.html`, `design-system/gallery.html`. Never hand-edit the built files.

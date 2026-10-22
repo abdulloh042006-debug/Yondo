@@ -1,0 +1,399 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:SG;font-weight:700;src:url(__FS__/space-grotesk/files/space-grotesk-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:SG;font-weight:700;src:url(__FS__/space-grotesk/files/space-grotesk-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:MR;font-weight:500;src:url(__FS__/manrope/files/manrope-latin-500-normal.woff2)}
+@font-face{font-family:MR;font-weight:500;src:url(__FS__/manrope/files/manrope-cyrillic-500-normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:MR;font-weight:500;src:url(__FS__/manrope/files/manrope-latin-ext-500-normal.woff2);unicode-range:U+0100-02AF,U+1E00-1EFF}
+@font-face{font-family:MR;font-weight:800;src:url(__FS__/manrope/files/manrope-latin-800-normal.woff2)}
+@font-face{font-family:MR;font-weight:800;src:url(__FS__/manrope/files/manrope-cyrillic-800-normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:MR;font-weight:800;src:url(__FS__/manrope/files/manrope-latin-ext-800-normal.woff2);unicode-range:U+0100-02AF,U+1E00-1EFF}
+:root{--ink:#111111;--paper:#F5F2EC;--acc:#E8501A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);overflow:hidden}
+#stage{position:relative;overflow:hidden;background:var(--paper);font-family:MR,system-ui,sans-serif;color:var(--ink)}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+#paperbg{inset:0;width:100%;height:100%;background:radial-gradient(120% 80% at 20% 10%,#ffffff 0%,#f5f2ec 55%,#f5f2ec 100%)}
+.blob{border-radius:50%;filter:blur(90px);opacity:.1}#b2{opacity:.7}
+#grid{inset:0;width:100%;height:100%;opacity:0}
+#ink{inset:0;width:100%;height:100%;background:#111111}
+#vignette{inset:0;width:100%;height:100%;pointer-events:none;background:radial-gradient(130% 100% at 50% 50%,transparent 60%,rgba(0,0,0,.18) 100%)}
+.kin{font-family:SG,MR,sans-serif;font-weight:700;letter-spacing:-.035em;line-height:.98;white-space:nowrap}
+.ru .kin{font-family:MR,sans-serif;font-weight:800;letter-spacing:-.03em}
+.phone{border-radius:76px;background:#0d0d0d;padding:16px;box-shadow:0 60px 120px -30px rgba(17,17,17,.35),0 0 0 2px #2a2a2a inset,0 0 0 1px rgba(255,255,255,.08)}
+.screen{position:relative;width:100%;height:100%;border-radius:60px;overflow:hidden;background:#F5F2EC}
+.screen img,.bscreen img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.browser{border-radius:22px;background:rgba(255,255,255,.55);padding:0;box-shadow:0 50px 100px -30px rgba(17,17,17,.3),0 0 0 1px rgba(17,17,17,.08);backdrop-filter:blur(20px);overflow:hidden}
+.bbar{height:44px;display:flex;align-items:center;gap:9px;padding:0 18px;background:rgba(255,255,255,.6);border-bottom:1px solid rgba(17,17,17,.06)}
+.bbar i{width:13px;height:13px;border-radius:50%;background:rgba(17,17,17,.16);display:block}
+.bbar b{margin-left:18px;flex:1;height:24px;border-radius:12px;background:rgba(17,17,17,.06);font:500 13px MR;color:rgba(17,17,17,.6);display:flex;align-items:center;padding-left:14px}
+.bscreen{position:relative;width:100%;overflow:hidden}
+.chip{padding:.5em 1em;border-radius:999px;background:rgba(255,255,255,.62);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 12px 30px -10px rgba(17,17,17,.25),inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(17,17,17,.06);font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:.5em}
+.chip .dot{width:.55em;height:.55em;border-radius:50%;background:var(--acc)}
+#sub{left:50%;width:max-content;padding:.42em .9em;border-radius:18px;background:rgba(17,17,17,.78);color:#fff;font-weight:500;text-align:center;line-height:1.32;backdrop-filter:blur(8px)}
+#tap{border-radius:50%;border:4px solid rgba(255,255,255,.95);background:rgba(232,80,26,.25);width:90px;height:90px;margin:-45px 0 0 -45px;box-shadow:0 0 0 2px rgba(232,80,26,.6)}
+#demo{padding:.35em .8em;border-radius:999px;background:rgba(17,17,17,.82);color:#f5f2ec;font-weight:800;letter-spacing:.08em;font-size:22px}
+#flash{inset:0;width:100%;height:100%;background:#fff;opacity:0;mix-blend-mode:screen}
+#endpill{padding:.4em 1.1em;border-radius:999px;background:var(--acc);color:var(--ink);font-weight:800}
+svg{overflow:visible}
+</style></head>
+<body>
+<div id="stage">
+  <div id="paperbg" class="abs"></div>
+  <div id="b1" class="abs blob"></div><div id="b2" class="abs blob"></div><div id="b3" class="abs blob"></div>
+  <svg id="grid" class="abs"></svg>
+  <svg id="wander" class="abs" style="inset:0;width:100%;height:100%"></svg>
+  <div id="browser" class="abs browser"><div class="bbar"><i></i><i></i><i></i><b>yondo</b></div><div class="bscreen" id="bscreen"></div></div>
+  <div id="phone" class="abs phone"><div class="screen" id="pscreen"></div></div>
+  <div id="tap" class="abs"></div>
+  <div id="chips"></div>
+  <div id="head" class="abs kin"></div>
+  <div id="pin" class="abs"></div>
+  <div id="demo" class="abs"></div>
+  <div id="ink" class="abs"></div>
+  <svg id="lines" class="abs" style="inset:0;width:100%;height:100%"></svg>
+  <div id="kinwrap"></div>
+  <div id="logo" class="abs"></div>
+  <div id="endtxt"></div>
+  <div id="vignette" class="abs"></div>
+  <div id="sub" class="abs"></div>
+  <div id="flash" class="abs"></div>
+</div>
+<script>
+const TL_ALL = __TIMELINE__;
+const WORDMARK = `__WORDMARK__`;
+const SHOTS = __SHOTS__;
+const q = new URLSearchParams(location.search);
+const FMT = q.get('fmt') || 'v', LANG = q.get('lang') || 'uz';
+const TL = TL_ALL[LANG], TX = TL.text, V = TL.V;
+const W = FMT === 'v' ? 1080 : 1920, H = FMT === 'v' ? 1920 : 1080;
+const VERT = FMT === 'v';
+const $ = (id) => document.getElementById(id);
+const stage = $('stage'); stage.style.width = W + 'px'; stage.style.height = H + 'px';
+if (LANG === 'ru') stage.classList.add('ru');
+
+/* ---------- math ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 4);           // ease-out quart ~ cubic-bezier(.2,0,0,1)
+const eio = (x) => x < .5 ? 8 * x ** 4 : 1 - Math.pow(-2 * x + 2, 4) / 2;
+const back = (x) => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const mix = (a, b, k) => a + (b - a) * k;
+const inOut = (t, a, b, fi = .4, fo = .35) => Math.min(eo(lin(t, a, a + fi)), 1 - eo(lin(t, b - fo, b)));
+function css(el, o) {
+  const tr = `translate(${o.x || 0}px,${o.y || 0}px) scale(${o.s ?? 1}) rotate(${o.r || 0}deg)` + (o.extra || '');
+  el.style.transform = tr;
+  if (o.o !== undefined) el.style.opacity = o.o;
+  if (o.blur !== undefined) el.style.filter = o.blur > 0.05 ? `blur(${o.blur}px)` : 'none';
+}
+
+/* ---------- layout ---------- */
+const LY = VERT ? {
+  phone: { w: 640, x: (1080 - 640) / 2, y: 610 }, head: { x: 72, y: 230, size: 84 }, kin: 118,
+  sub: { y: 1500, size: 40, max: 900 }, chipSize: 38, demo: { x: 1080 - 72, y: 120 }, logoW: 760,
+} : {
+  phone: { w: 286, x: 610, y: 360 }, head: { x: 110, y: 210, size: 70 }, kin: 120,
+  browser: { w: 1060, x: 760, y: 140 },
+  sub: { y: 968, size: 32, max: 1300 }, chipSize: 30, demo: { x: 1920 - 96, y: 70 }, logoW: 820,
+};
+const ph = $('phone'); const PW = LY.phone.w, PH = Math.round(PW * 2110 / 975) + 32;
+ph.style.width = (PW + 32) + 'px'; ph.style.height = PH + 'px';
+const PHX = LY.phone.x - 16, PHY = LY.phone.y;
+const br = $('browser');
+if (!VERT) { br.style.width = LY.browser.w + 'px'; $('bscreen').style.height = Math.round(LY.browser.w * 800 / 1280) + 'px'; }
+else br.style.display = 'none';
+
+/* screens */
+function addImgs(host, names) { const m = {}; for (const n of names) { const i = new Image(); i.src = SHOTS + '/' + n + '.png'; i.style.opacity = 0; host.appendChild(i); m[n] = i; } return m; }
+const MS = addImgs($('pscreen'), ['m-discovery', 'n/m-discovery', 'm-discovery-scrolled', 'm-profile-services', 'm-profile', 'm-booking-dialog', 'm-bookings', 'm-admin-detail', 'm-admin-confirm']);
+const DS = VERT ? {} : addImgs($('bscreen'), ['d-discovery', 'n/d-discovery', 'd-discovery-scrolled', 'd-profile', 'd-profile-services', 'd-booking-dialog', 'd-bookings', 'd-admin-detail', 'd-admin-confirm']);
+
+/* blobs */
+const BL = [['b1', '#E8501A', .9], ['b2', '#FFFFFF', .75], ['b3', '#E8501A', .6]];
+BL.forEach(([id, c, k]) => { const e = $(id); const s = (VERT ? 900 : 1100) * k; e.style.width = e.style.height = s + 'px'; e.style.background = c; });
+
+/* grid (city lines) */
+(function () {
+  const g = $('grid'); let h = '';
+  for (let x = -200; x < W + 200; x += 120) h += `<line x1="${x}" y1="-50" x2="${x + 260}" y2="${H + 50}" stroke="#111" stroke-opacity=".06" stroke-width="2"/>`;
+  for (let y = 0; y < H; y += 140) h += `<line x1="-50" y1="${y}" x2="${W + 50}" y2="${y + 60}" stroke="#111" stroke-opacity=".05" stroke-width="2"/>`;
+  g.innerHTML = h;
+})();
+
+/* symbol svg (64 units) */
+const SYM = (stroke, node) => `<svg viewBox="0 0 64 64" width="100%" height="100%"><g stroke="${stroke}" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+<path class="armL" pathLength="1" d="M14 12 28 33Q31 37 32 40"/><path class="armR" pathLength="1" d="M50 12 36 33Q33 37 32 40"/><path class="stem" pathLength="1" d="M32 40v12"/></g>
+<circle class="nL" cx="14" cy="12" r="7" fill="${node}"/><circle class="nR" cx="50" cy="12" r="7" fill="#E8501A"/><circle class="nB" cx="32" cy="55" r="5.5" fill="${node}"/></svg>`;
+const logo = $('logo');
+logo.innerHTML = `<svg viewBox="0 0 219 64" width="${LY.logoW}" style="display:block"><g id="lsym"><g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+<path id="la" pathLength="1" d="M14 12 28 33Q31 37 32 40"/><path id="lb" pathLength="1" d="M50 12 36 33Q33 37 32 40"/><path id="lc" pathLength="1" d="M32 40v12"/></g>
+<circle id="ln1" cx="14" cy="12" r="7" fill="currentColor"/><circle id="ln2" cx="50" cy="12" r="7" fill="#E8501A"/><circle id="ln3" cx="32" cy="55" r="5.5" fill="currentColor"/></g>
+<g id="lwm">${WORDMARK}</g></svg><div id="slog" class="kin" style="text-align:center;margin-top:${VERT ? 34 : 26}px;font-size:${VERT ? 78 : 64}px"></div>`;
+$('slog').textContent = TX.slogan;
+const LH = LY.logoW * 64 / 219;
+
+/* lines svg for intro/end: two nodes + two strokes */
+$('lines').innerHTML = `<line id="Ll" stroke="#F5F2EC" stroke-width="10" stroke-linecap="round"/><line id="Lr" stroke="#F5F2EC" stroke-width="10" stroke-linecap="round"/>
+<circle id="Nl" r="26" fill="#F5F2EC"/><circle id="Nr" r="26" fill="#E8501A"/><circle id="ring" r="10" fill="none" stroke="#F5F2EC" stroke-width="4"/>`;
+$('wander').innerHTML = `<path id="w1" fill="none" stroke="#111" stroke-opacity=".75" stroke-width="7" stroke-linecap="round"/><path id="w2" fill="none" stroke="#E8501A" stroke-width="7" stroke-linecap="round"/>
+<circle id="wn1" r="16" fill="#111"/><circle id="wn2" r="16" fill="#E8501A"/>`;
+
+/* kinetic phrase elements */
+function mkKin(list, size, color) { return list.map((t) => { const d = document.createElement('div'); d.className = 'abs kin'; d.textContent = t; d.style.fontSize = size + 'px'; d.style.color = color; $('kinwrap').appendChild(d); const maxw = W - (VERT ? 144 : 280); if (d.offsetWidth > maxw) d.style.fontSize = (size * maxw / d.offsetWidth) + 'px'; return d; }); }
+const kinSize = VERT ? 112 : 128;
+const K1 = mkKin(TX.v1, kinSize, '#F5F2EC');
+const K2 = mkKin(TX.v2, kinSize * .86, '#111');
+const K6 = mkKin([TX.v6[0]], VERT ? 86 : 96, '#111');
+function chip(text, size) { const d = document.createElement('div'); d.className = 'abs chip'; d.innerHTML = `<span class="dot"></span>${text}`; d.style.fontSize = size + 'px'; $('chips').appendChild(d); return d; }
+const C3 = TX.v3chips.map((t) => chip(t, LY.chipSize + 4));
+const C4 = TX.v4chips.map((t) => chip(t, LY.chipSize));
+const CP = chip(LANG === 'ru' ? '110 000 сум' : '110 000 so‘m', LY.chipSize); // matches the price on the captured booking screen
+const CS = chip('✓ ' + TX.v5[2], LY.chipSize);
+const CA = chip('✓ ' + TX.v6[1], LY.chipSize);
+$('demo').style.display = 'none';
+$('pin').innerHTML = `<svg viewBox="0 0 48 64" width="${VERT ? 120 : 110}"><path d="M24 2C12 2 3 11 3 23c0 16 21 38 21 38s21-22 21-38C45 11 36 2 24 2z" fill="#111"/><circle cx="24" cy="23" r="8" fill="#E8501A"/></svg>`;
+// end texts
+$('endtxt').innerHTML = `<div id="e1" class="abs kin" style="font-size:${VERT ? 104 : 96}px;color:#F5F2EC"></div><div id="e2" class="abs" ><span id="endpill" style="font-size:${VERT ? 46 : 40}px"></span></div><div id="e3" class="abs" style="font:500 ${VERT ? 26 : 22}px MR;color:rgba(245,242,236,.62)"></div>`;
+$('e1').textContent = TX.end1; $('endpill').textContent = TX.end2; $('e3').textContent = '';
+const sub = $('sub'); sub.style.fontSize = LY.sub.size + 'px'; sub.style.maxWidth = LY.sub.max + 'px';
+
+function centerX(el) { return (W - el.offsetWidth) / 2; }
+
+/* ---------- screen sequencing ---------- */
+function screens(map, seq, t, dur = .5) {
+  // seq: [[time, name, mode]] mode: 'slide' | 'fade' | 'up'
+  let cur = -1; for (let i = 0; i < seq.length; i++) if (t >= seq[i][0]) cur = i;
+  for (const n in map) map[n].style.opacity = 0;
+  if (cur < 0) return;
+  const [t0, name, mode] = seq[cur]; const k = eo(lin(t, t0, t0 + dur));
+  const el = map[name]; if (!el) return;
+  const prev = cur > 0 ? map[seq[cur - 1][1]] : null;
+  if (prev && k < 1 && prev !== el) {
+    prev.style.opacity = 1;
+    prev.style.transform = mode === 'slide' ? `translateX(${-30 * k}%) scale(${1 - .06 * k})` : mode === 'up' ? `scale(${1 - .04 * k})` : 'none';
+    prev.style.filter = `brightness(${1 - .25 * k})`;
+  }
+  el.style.opacity = mode === 'fade' ? k : 1;
+  el.style.filter = 'none';
+  el.style.transform = mode === 'slide' ? `translateX(${100 * (1 - k)}%)` : mode === 'up' ? `translateY(${100 * (1 - k)}%)` : 'none';
+  el.style.zIndex = 2; if (prev) prev.style.zIndex = 1;
+}
+
+/* ---------- the timeline ---------- */
+const L = TL.L, E = TL.E;
+function render(t) {
+  const v1 = V[0], v2 = V[1], v3 = V[2], v4 = V[3], v5 = V[4], v6 = V[5], v7 = V[6];
+  // global drift (subtle camera breathing)
+  const breathe = Math.sin(t * .6) * 1;
+
+  /* --- background blobs --- */
+  BL.forEach(([id], i) => { const e = $(id); const a = t * (.18 + i * .07) + i * 2; css(e, { x: W * (.15 + .55 * ((i * .37) % 1)) + Math.cos(a) * 160 - 300, y: H * (.1 + .3 * i) + Math.sin(a * 1.3) * 140 - 300, s: 1 + .1 * Math.sin(a) }); });
+
+  /* --- ink layer: intro until v2 wipe, again at end --- */
+  const ink = $('ink');
+  const wipeIn = eio(lin(t, v2.s - .45, v2.s + .25));            // ink -> paper (circle shrinks)
+  const wipeOut = eio(lin(t, E, E + .7));                        // paper -> ink (circle grows)
+  const R = Math.hypot(W, H);
+  if (t < E) { ink.style.opacity = 1; ink.style.clipPath = `circle(${R * (1 - wipeIn)}px at 50% 50%)`; }
+  else { ink.style.opacity = 1; ink.style.clipPath = `circle(${R * wipeOut}px at 50% 50%)`; }
+  if (t > v2.s + .3 && t < E) ink.style.opacity = 0;
+
+  /* --- intro lines: nodes fly in and meet (0 -> .85), burst, then rest above text --- */
+  const Nl = $('Nl'), Nr = $('Nr'), Ll = $('Ll'), Lr = $('Lr'), ring = $('ring');
+  const cx = W / 2, cy = VERT ? H * .36 : H * .3;
+  const meet = eio(lin(t, 0, .85));
+  const sep = 1 - eo(lin(t, .9, 1.5)) * .82;   // after impact, nodes settle a bit apart
+  const spread = W * .62 * (1 - meet) + 58 * (meet >= 1 ? (1 - sep) * 1.2 + .25 : 0);
+  let lx = cx - spread, rx = cx + spread;
+  let introVis = 1 - lin(t, v2.s - .5, v2.s - .1);
+  // end-card convergence uses the same nodes
+  const endK = eio(lin(t, E + .2, E + 1.1));
+  let lineOpacity = introVis;
+  if (t >= E) { lineOpacity = 1 - lin(t, E + 1.05, E + 1.25); const sp = W * .7 * (1 - endK); lx = cx - sp - 40; rx = cx + sp + 40; }
+  [Nl, Nr].forEach((n, i) => { n.setAttribute('cx', i ? rx : lx); n.setAttribute('cy', cy); n.style.opacity = lineOpacity; });
+  Ll.setAttribute('x1', 0); Ll.setAttribute('y1', cy); Ll.setAttribute('x2', lx); Ll.setAttribute('y2', cy);
+  Lr.setAttribute('x1', W); Lr.setAttribute('y1', cy); Lr.setAttribute('x2', rx); Lr.setAttribute('y2', cy);
+  const trail = t < 1 ? 1 - lin(t, .5, .95) : (t >= E ? 1 - lin(t, E + .8, E + 1.1) : 0);
+  Ll.style.opacity = Lr.style.opacity = trail * lineOpacity;
+  const rk = lin(t, .85, 1.45);
+  ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.setAttribute('r', 20 + 520 * eo(rk));
+  ring.style.opacity = rk > 0 && rk < 1 ? (1 - rk) * .9 : 0;
+  // flash on impacts
+  const fl = Math.max(1 - lin(t, .85, 1.15), 0) * (t >= .85 ? .55 : 0) + (t >= L + .62 ? Math.max(0, 1 - lin(t, L + .62, L + .95)) * .35 : 0)
+    + (t >= TL.p7[0] ? Math.max(0, 1 - lin(t, TL.p7[0], TL.p7[0] + .3)) * .3 : 0)
+    + TL.swap.reduce((a, s) => a + (t >= s ? Math.max(0, 1 - lin(t, s, s + .22)) * .4 : 0), 0);
+  $('flash').style.opacity = clamp(fl);
+  // camera shake on the first impact
+  const sh = t > .85 && t < 1.25 ? (1 - lin(t, .85, 1.25)) * 10 : 0;
+  stage.style.transform = sh ? `translate(${Math.sin(t * 90) * sh}px,${Math.cos(t * 77) * sh}px)` : 'none';
+
+  /* --- S1 kinetic (v1) --- */
+  K1.forEach((el, i) => {
+    const s = TL.p1[i]; const next = i < 2 ? TL.p1[i + 1] : v2.s - .4;
+    const k = eo(lin(t, s - .05, s + .4));
+    const kout = lin(t, next - .1, next + .35);
+    const baseY = (VERT ? H * .5 : H * .54) - el.offsetHeight / 2;
+    const vis = t >= s - .05 && t < (i < 2 ? next + .35 : v2.s);
+    const big = i === 2 ? 1.12 : 1;
+    css(el, { x: centerX(el), y: baseY + 90 * (1 - k) - 150 * eo(kout), s: big * (1 + .12 * (1 - k)) * (1 - .25 * eo(kout)), o: vis ? k * (1 - kout) : 0, blur: 18 * (1 - k) + 10 * kout });
+    el.style.letterSpacing = `${-0.035 + .12 * (1 - k)}em`;
+  });
+
+  /* --- S2 (v2): paper, city grid, wandering lines that don't meet --- */
+  const s2 = inOut(t, v2.s - .2, L + .1, .5, .35);
+  $('grid').style.opacity = s2;
+  $('grid').style.transform = `translate(${-t * 14}px,${-t * 6}px)`;
+  const w1 = $('w1'), w2 = $('w2');
+  const wv = (ph0, side) => { let d = ''; for (let i = 0; i <= 40; i++) { const u = i / 40; const x = side ? W - u * W * .46 : u * W * .46; const y = H * (.7 + .05 * Math.sin(u * 7 + t * 1.6 + ph0)) - (VERT ? 0 : 60); d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); } return d; };
+  const conv = eio(lin(t, L - .1, L + .45));
+  w1.setAttribute('d', wv(0, 0)); w2.setAttribute('d', wv(2, 1));
+  const drawn = eo(lin(t, v2.s - .1, v2.s + 1.2));
+  [w1, w2].forEach((w) => { w.style.strokeDasharray = 3000; w.style.strokeDashoffset = 3000 * (1 - drawn); w.style.opacity = s2 * (1 - conv); });
+  const wn1 = $('wn1'), wn2 = $('wn2');
+  const ex = W * .46 * drawn; const ey1 = H * (.7 + .05 * Math.sin(7 + t * 1.6)) - (VERT ? 0 : 60), ey2 = H * (.7 + .05 * Math.sin(9 + t * 1.6)) - (VERT ? 0 : 60);
+  const lgx = W / 2, lgy = VERT ? H * .42 : H * .42;
+  wn1.setAttribute('cx', mix(ex, lgx - 60, conv)); wn1.setAttribute('cy', mix(ey1, lgy, conv));
+  wn2.setAttribute('cx', mix(W - ex, lgx + 60, conv)); wn2.setAttribute('cy', mix(ey2, lgy, conv));
+  wn1.style.opacity = wn2.style.opacity = s2 * (1 - lin(t, L + .35, L + .5));
+  K2.forEach((el, i) => {
+    const s = TL.p2[i]; const k = eo(lin(t, s - .05, s + .45)); const out = lin(t, L - .2, L + .15);
+    const y0 = (VERT ? H * .34 : H * .3) + i * (el.offsetHeight * 1.05);
+    css(el, { x: VERT ? 72 : 140, y: y0 + 60 * (1 - k) - 60 * eo(out), o: (t >= s - .05) ? k * (1 - out) : 0, blur: 12 * (1 - k) + 14 * out });
+  });
+
+  /* --- LOGO reveal (L .. v3.s + 1.4), then shrinks to header --- */
+  const draw = eio(lin(t, L, L + .55));
+  ['la', 'lb'].forEach((id) => { const p = $(id); p.style.strokeDasharray = 1; p.style.strokeDashoffset = 1 - draw; });
+  $('lc').style.strokeDasharray = 1; $('lc').style.strokeDashoffset = 1 - eo(lin(t, L + .4, L + .62));
+  const pop = lin(t, L + .55, L + 1.0);
+  const nodeS = t < L + .55 ? 0 : back(pop);
+  [['ln1', 14, 12], ['ln2', 50, 12], ['ln3', 32, 55]].forEach(([id, x, y], i) => { const c = $(id); const sc = i === 2 ? eo(lin(t, L + .6, L + .9)) : (i === 1 ? nodeS : eo(lin(t, L + .45, L + .7))); c.style.transformOrigin = `${x}px ${y}px`; c.style.transform = `scale(${sc})`; });
+  const wmk = eo(lin(t, L + .8, L + 1.3));
+  $('lwm').style.opacity = wmk; $('lwm').style.transform = `translate(${-26 * (1 - wmk)}px,0)`;
+  const symShift = 0; // keep symbol fixed
+  const slk = eo(lin(t, L + 1.05, L + 1.55)); const slog = $('slog');
+  slog.style.opacity = slk * (1 - lin(t, v3.s + .9, v3.s + 1.2)); slog.style.transform = `translateY(${30 * (1 - slk)}px)`; slog.style.letterSpacing = `${.2 * (1 - slk) - .02}em`;
+  const toHead = eio(lin(t, v3.s + .9, v3.s + 1.6));
+  const lvis = t >= L - .05 && t < E + .15 ? 1 : 0;
+  const lw = LY.logoW;
+  const big = { x: (W - lw) / 2, y: (VERT ? H * .42 : H * .42) - LH * .55, s: 1 };
+  const small = VERT ? { x: 72, y: 118, s: 260 / lw } : { x: 110, y: 74, s: 230 / lw };
+  logo.style.color = '#111';
+  logo.style.transformOrigin = '0 0';
+  css(logo, { x: mix(big.x, small.x, toHead), y: mix(big.y, small.y, toHead), s: mix(1, small.s, toHead) * (1 + .03 * Math.sin(Math.max(0, t - L) * 2) * (1 - toHead)), o: lvis * (1 - lin(t, E - .1, E + .15)) });
+
+  /* --- APP stage: phone + browser --- */
+  const appIn = eo(lin(t, v3.s + 1.0, v3.s + 1.8));
+  const appOut = eio(lin(t, E - .05, E + .55));
+  const appVis = t > v3.s + .9 && t < E + .7;
+  // phone motion: fly in from below with tilt, small idle float; per-scene nudges
+  let pdx = 0, pdy = 0, ps = 1, pr = 0;
+  const sc4 = eo(lin(t, v4.s - .3, v4.s + .4)), sc6 = eo(lin(t, v6.s - .25, v6.s + .4));
+  if (VERT) { pdx = 0; ps = 1 - .05 * sc4 + .05 * sc6; }
+  else { pdx = -20 * sc4; }
+  const float = Math.sin(t * 1.1) * 8;
+  const pY = PHY + (1 - appIn) * (VERT ? 900 : 700) + float + pdy;
+  css(ph, { x: PHX + pdx + (VERT ? 0 : -60 * appOut), y: pY + appOut * 80, s: ps * (1 - .35 * appOut), r: (1 - appIn) * 8 + pr, o: appVis ? 1 - appOut : 0 });
+  ph.style.transformOrigin = '50% 60%';
+  if (!VERT) {
+    const bIn = eo(lin(t, v3.s + .8, v3.s + 1.6));
+    css(br, { x: LY.browser.x + (1 - bIn) * 900 + 40 * appOut, y: LY.browser.y + Math.sin(t * .8 + 1) * 5, s: 1 - .2 * appOut, o: appVis ? (1 - appOut) : 0 });
+  }
+  const seqM = [[0, 'm-discovery', 'fade'], [TL.p3[2] + .5, 'm-discovery-scrolled', 'up'],
+    [TL.swap[0], 'n/m-discovery', 'fade'], [TL.swap[1], 'm-discovery', 'fade'], [TL.swap[2], 'n/m-discovery', 'fade'], [TL.swap[2] + .5, 'm-discovery', 'fade'],
+    [v4.s - .2, 'm-profile-services', 'slide'], [TL.p4[3] - .1, 'm-profile', 'up'],
+    [TL.p5[1] - .2, 'm-booking-dialog', 'up'], [TL.p5[2] + .6, 'm-bookings', 'slide'],
+    [TL.p6[1] - .2, 'm-admin-detail', 'slide'], [TL.p6[1] + .45, 'm-admin-confirm', 'fade']];
+  screens(MS, seqM, t, .5);
+  if (!VERT) screens(DS, seqM.map(([a, n, m]) => [a, n.replace('m-', 'd-'), m]), t, .55);
+
+  // taps on the phone (fractions of the screen)
+  const taps = [[TL.p3[0], .42, .66, 'm'], [TL.p3[1], .59, .66, 'm'], [TL.p5[1] - .35, .79, .71, 'm'], [TL.p5[2] + .35, .66, .80, 'm'], [TL.p6[1] + .4, .70, .79, 'm']];
+  const tap = $('tap'); tap.style.opacity = 0;
+  for (const [tt, fx, fy] of taps) {
+    const k = lin(t, tt - .12, tt + .4);
+    if (k > 0 && k < 1) {
+      const sx = PHX + 16 + 16 + fx * PW, sy = pY + 16 + fy * (PH - 32);
+      const scale = PH > 0 ? (VERT ? 1 : .7) : 1;
+      css(tap, { x: sx + (VERT ? 0 : pdx), y: sy, s: scale * (k < .25 ? .6 + 1.6 * k : .9 + .9 * eo((k - .25) / .75)), o: k < .25 ? 1 : 1 - (k - .25) / .75 });
+    }
+  }
+
+  /* headline (top area) */
+  const head = $('head');
+  let htxt = '', hk = 0, hs = LY.head.size;
+  const segs = [[v3.s + 1.4, v4.s - .25, TX.v3], [v4.s - .1, v5.s - .25, TX.v4],
+    [TL.p5[0] - .1, TL.p5[1] - .1, TX.v5[0]], [TL.p5[1] - .1, TL.p5[2] - .1, TX.v5[1]], [TL.p5[2] - .1, v6.s - .3, TX.v5[2]],
+    [TL.p6[1] - .1, E, TX.v6[1]]];
+  for (const [a, b, tx] of segs) if (t >= a && t < b) { htxt = tx; hk = inOut(t, a, b, .45, .3); }
+  if (head.textContent !== htxt) head.textContent = htxt;
+  head.style.fontSize = hs + 'px';
+  head.style.whiteSpace = VERT ? 'normal' : 'normal';
+  head.style.width = (VERT ? W - 144 : 600) + 'px';
+  const headY = VERT ? 250 : LY.head.y + 40;
+  css(head, { x: LY.head.x, y: headY + 40 * (1 - hk), o: hk, blur: 10 * (1 - hk) });
+
+  /* chips */
+  const placeV3 = VERT ? [[60, 470], [380, 470], [640, 470]] : [[110, 470], [110, 560], [110, 650]];
+  C3.forEach((c, i) => { const s = TL.p3[i]; const k = lin(t, s, s + .5); const vis = t >= s && t < TL.swap[0] - .2; const [x, y] = placeV3[i];
+    css(c, { x, y: y + Math.sin(t * 1.4 + i) * 5, s: vis ? back(k) : 0, o: vis ? 1 - lin(t, TL.swap[0] - .5, TL.swap[0] - .2) : 0 }); });
+  const placeV4 = VERT ? [[40, 760], [600, 930], [30, 1180], [560, 1330]] : [[110, 440], [110, 530], [110, 620], [110, 710]];
+  C4.forEach((c, i) => { const s = TL.p4[i]; const k = lin(t, s, s + .5); const vis = t >= s && t < v5.s - .2; const [x, y] = placeV4[i];
+    css(c, { x, y: y + Math.sin(t * 1.3 + i * 1.7) * 6, s: vis ? back(k) : 0, o: vis ? 1 - lin(t, v5.s - .5, v5.s - .2) : 0 }); });
+  { const s = TL.p5[1] + .15; const vis = t >= s && t < TL.p5[2] + .5; const k = lin(t, s, s + .5);
+    css(CP, { x: VERT ? 560 : 110, y: VERT ? 1250 : 520, s: vis ? back(k) : 0, o: vis ? 1 - lin(t, TL.p5[2] + .2, TL.p5[2] + .5) : 0 }); }
+  { const s = TL.p5[2] + .75; const vis = t >= s && t < v6.s - .2; const k = lin(t, s, s + .5);
+    css(CS, { x: VERT ? 90 : 110, y: VERT ? 1330 : 560, s: vis ? back(k) : 0, o: vis ? 1 - lin(t, v6.s - .5, v6.s - .2) : 0 }); }
+  { const s = TL.p6[1] + .8; const vis = t >= s && t < E; const k = lin(t, s, s + .5);
+    css(CA, { x: VERT ? 80 : 110, y: VERT ? 1320 : 600, s: vis ? back(k) : 0, o: vis ? 1 - lin(t, E - .2, E + .1) : 0 }); }
+
+  /* S6 part 1: public places, map pin + big phrase over a frosted veil */
+  const s6 = inOut(t, v6.s - .15, TL.p6[1] - .05, .45, .35);
+  K6.forEach((el) => { el.style.whiteSpace = 'normal'; el.style.width = (VERT ? W - 144 : 900) + 'px'; el.style.textAlign = 'center';
+    css(el, { x: (W - el.offsetWidth) / 2, y: (VERT ? H * .43 : H * .5) + 50 * (1 - s6), o: s6, blur: 10 * (1 - s6) }); });
+  const pin = $('pin'); const pk = lin(t, v6.s + .2, v6.s + .7);
+  css(pin, { x: W / 2 - (VERT ? 60 : 55), y: (VERT ? H * .43 - 190 : H * .5 - 170) - 40 * Math.abs(Math.sin(Math.min(pk, 1) * Math.PI)) * (1 - pk), s: t > v6.s + .2 ? back(pk) : 0, o: s6 });
+  // veil while S6 phrase is shown: dim app
+  const veil = s6;
+  if (veil > 0) { ph.style.filter = `blur(${14 * veil}px)`; ph.style.opacity = (appVis ? (1 - appOut) : 0) * (1 - .55 * veil); if (!VERT) { br.style.filter = `blur(${14 * veil}px)`; br.style.opacity = (1 - appOut) * (1 - .55 * veil); } }
+  else { ph.style.filter = 'none'; if (!VERT) br.style.filter = 'none'; }
+
+  /* DEMO tag during app */
+  const demo = $('demo'); const dk = appVis ? inOut(t, v3.s + 1.5, E, .4, .3) : 0;
+  css(demo, { x: LY.demo.x - demo.offsetWidth, y: LY.demo.y, o: dk });
+
+  /* --- END card --- */
+  const e1 = $('e1'), e2 = $('e2'), e3 = $('e3');
+  const endLogoK = t >= TL.p7[0] - .05 ? 1 : 0;
+  // re-use logo element in light colour for the end
+  if (t >= E + .15) {
+    logo.style.color = '#F5F2EC';
+    const lk = eo(lin(t, TL.p7[0] - .15, TL.p7[0] + .35));
+    $('la').style.strokeDashoffset = 1 - eio(lin(t, E + .9, E + 1.25)); $('lb').style.strokeDashoffset = 1 - eio(lin(t, E + .9, E + 1.25));
+    $('lc').style.strokeDashoffset = 1 - eo(lin(t, E + 1.15, E + 1.35));
+    [['ln1'], ['ln2'], ['ln3']].forEach(([id], i) => { $(id).style.transform = `scale(${i === 1 ? (t > TL.p7[0] - .1 ? back(lin(t, TL.p7[0] - .1, TL.p7[0] + .35)) : 0) : eo(lin(t, E + 1.0, E + 1.3))})`; });
+    $('lwm').style.opacity = lk; $('lwm').style.transform = `translate(${-26 * (1 - lk)}px,0)`;
+    slog.style.opacity = 0;
+    const ey = VERT ? H * .36 : H * .3;
+    css(logo, { x: (W - lw) / 2, y: ey, s: 1 + .025 * eo(lin(t, TL.p7[0], V[6].e + 1.7)), o: 1 });
+    logo.style.transformOrigin = '50% 50%';
+  }
+  const k1 = eo(lin(t, TL.p7[1] - .1, TL.p7[1] + .4)), k2 = lin(t, TL.p7[2] - .05, TL.p7[2] + .45);
+  css(e1, { x: centerX(e1), y: (VERT ? H * .36 + LH + 110 : H * .3 + LH + 80) + 40 * (1 - k1), o: k1, blur: 10 * (1 - k1) });
+  css(e2, { x: centerX(e2), y: (VERT ? H * .36 + LH + 290 : H * .3 + LH + 230), s: t >= TL.p7[2] - .05 ? back(k2) : 0, o: k2 > 0 ? 1 : 0 });
+  css(e3, { x: centerX(e3), y: VERT ? H - 300 : H - 110, o: eo(lin(t, TL.p7[2] + .2, TL.p7[2] + .7)) * .9 });
+
+  /* --- subtitles --- */
+  let st = '', sk = 0;
+  V.forEach((v, i) => { if (i < 6 && t >= v.s - .1 && t < v.e + .25) { st = TX.sub[i]; sk = inOut(t, v.s - .1, v.e + .25, .2, .2); } });
+  if (sub.textContent !== st) sub.textContent = st;
+  const subY = (t >= E || t < v2.s + .2) ? (VERT ? H - 460 : H - 200) : LY.sub.y;
+  sub.style.display = st ? 'block' : 'none';
+  if (st) css(sub, { x: -sub.offsetWidth / 2, y: subY - sub.offsetHeight / 2 + 8 * (1 - sk), o: sk });
+}
+window.render = render;
+window.TOTAL = TL.total;
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => 0))]);
+</script>
+</body></html>
