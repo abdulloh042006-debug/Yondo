@@ -415,11 +415,11 @@ try {
     const small = await mp.evaluate(() => [...document.querySelectorAll('button, a.btn, .dock a, input, select')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.height && (r.height < 43.5 || r.width < 43.5) && getComputedStyle(e).visibility !== 'hidden' && !e.classList.contains('sr-only'); }).map((e) => `${e.tagName}.${e.className}:${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`));
     assert(small.length === 0, `targets < 44px: ${small.slice(0, 5).join(', ')}`);
   });
-  for (const theme of ['gul', 'rausch', 'stone', 'yondo']) {
+  for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`theme ${theme}: switch persists and screenshots captured`, async () => {
       await mp.goto(`${WEB}/settings`);
       await mp.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
-      await mp.getByRole('button', { name: new RegExp(`${theme === 'rausch' ? 'Jurnal' : theme === 'gul' ? 'Gul' : theme === 'yondo' ? 'Yondo' : 'Stone'} mavzusi`) }).click();
+      await mp.getByRole('button', { name: new RegExp(`${theme === 'rausch' ? 'Jurnal' : theme === 'gul' ? 'Gul' : theme === 'yondo' ? 'Yondo kunduzgi' : theme === 'yondo-tun' ? 'Yondo tungi' : 'Stone'} mavzusi`) }).click();
       assert((await mp.evaluate(() => document.documentElement.dataset.theme)) === theme, 'data-theme');
       await mp.reload();
       assert((await mp.evaluate(() => document.documentElement.dataset.theme)) === theme, 'theme must persist across reload');
@@ -459,7 +459,7 @@ try {
     assert(parseFloat(dur) < 0.01, `aurora animation ${dur}`);
   });
 
-  for (const theme of ['gul', 'rausch', 'stone', 'yondo']) {
+  for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
       for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 export const THEMES = [
-  { id: 'yondo', label: 'Yondo', hint: 'Logotip ranglari: siyoh va to‘q sariq', swatch: 'linear-gradient(135deg, #111111 55%, #e8501a 55%)' },
+  { id: 'yondo', label: 'Yondo kunduzgi', hint: 'Oq fon · qora · sabzi rang', swatch: 'linear-gradient(135deg, #f5f2ec 50%, #111111 50%)' },
+  { id: 'yondo-tun', label: 'Yondo tungi', hint: 'Qora fon · oq · sabzi rang', swatch: 'linear-gradient(135deg, #111111 50%, #e8501a 50%)' },
   { id: 'gul', label: 'Gul', hint: 'Iliq atirgul-bordo', swatch: '#8e3140' },
   { id: 'rausch', label: 'Jurnal', hint: 'Yorqin atirgul-qizil', swatch: '#de1b5a' },
   { id: 'stone', label: 'Stone', hint: 'Sokin tungi ko‘k', swatch: '#1a2b49' },

@@ -11,7 +11,8 @@ Also read `AGENTS.md` (repo rules; not repeated here) and **`docs/WORKLOG.md` �
 - **If a limit looks near: stop starting new work, finish the WORKLOG entry (§6), commit, make the bundle, then stop.**
 
 ## 2. Where things are
-- `apps/api` FastAPI backend (14 migrations, 200 tests). `apps/mobile`, `apps/admin` are README stubs (no real client yet).
+- `apps/api` FastAPI backend (14 migrations, 212 tests on PostgreSQL). `apps/web` = the real web app + secured admin console (React/TS/Vite, talks to the real API via `/api`; see `apps/web/README.md`, `docs/web-and-admin.md`). `apps/mobile` is a README stub; `apps/admin/README.md` points to `apps/web/src/admin`.
+- `marketing/ad-video/` = the promo-video pipeline (scripts only; see its README).
 - `docs/openapi-v1.json` = API contract (CI keeps it in sync). `docs/frontend-api-integration.md` = client rules.
 - `design-prototype/` = brand, tokens, component library, mock-backed prototype, tests, reports. Start at `design-prototype/docs/02-handoff.md`, decisions in `docs/03-decisions-and-contract.md`, staging in `docs/04-staging-readiness.md`, evidence in `reports/test-report.md` and `reports/backend-audit.md`.
 - Prototype sources: `prototype/src/{logic,mockapi,components,app,roles}.js`, `design-system/{tokens.*,components.css}`; `node design-prototype/prototype/build.js` builds `prototype/index.html`, `screens/*.html`, `design-system/gallery.html`. Never hand-edit the built files.
@@ -48,3 +49,16 @@ Also read `AGENTS.md` (repo rules; not repeated here) and **`docs/WORKLOG.md` �
 2. Work in small steps; after each meaningful step run its focused test.
 3. **End (always, even if stopping early):** prepend an entry to `docs/WORKLOG.md` using the template there (Done / Not done / Next / Blockers / Evidence / Commit); update "Next steps"; commit; push (§5).
 4. Keep entries short (≤ 25 lines). After ~10 entries, move the oldest to "Archive" at the bottom.
+
+## 7. Owner decisions and preferences (living log — append, never delete; newest last)
+Keep this list current: when the owner states a preference or decision, add one line here in the same session.
+- Language: answer the owner in **Uzbek** (Latin). Owner sometimes writes Russian/English.
+- Product: Yondo = companion discovery/booking ("hamroh topish"), **never** dating/escort. Slogan: **"Yondo doim yoningda"** (RU: "Yondo. Всегда рядом.").
+- Backend is the real FastAPI API; **no Supabase**, no duplicate tables. Admin must be server-authorized; no client-trusted roles.
+- Brand/logo: `design-prototype/brand/logo` (Y-fork with nodes, wordmark = outlined paths, never retyped). Logo colours: ink `#111111`, paper `#F5F2EC`, carrot accent `#E8501A` (graphic only, never small text: 3.36:1 on paper).
+- **"Yondo" themes (owner rule, 2026-10-22): only white/paper, black/ink and carrot `#E8501A` — no other hue** (greys only as ink/paper mixes; status colours collapse to ink + carrot border, meaning carried by words). Two variants: `yondo` (kunduzgi/day: paper ground, ink actions) and `yondo-tun` (tungi/night: ink ground, paper actions). Glow is carrot at low opacity, never mixed into brown/peach. Other themes (Gul/Jurnal/Stone) stay available in Settings.
+- Theme switcher lives **only in Settings** (`/settings`), not in the top bar. Settings is linked from Account and Login.
+- Style the owner wants: glass UI (frosted, translucent, blur) + strong but meaningful motion; `prefers-reduced-motion` respected.
+- Promo video (2026-10-22, for the owner's own viewing, not an official ad): 9:16 + 16:9, Uzbek + Russian, voices from voicelab.uz supplied by the owner (3 speakers: **A narrator = woman, B customer = young man, C companion = young woman**; lines 1/3/7 = A, 2/5 = B, 4/6 = C). Owner asked to **remove every "DEMO" label from the video**; screens use seed names without the DEMO prefix and the "Yondo" theme. Music and SFX are original synthesis. Voice script: `marketing/ad-video/README.md`.
+- voicelab.uz is not reachable from the cloud sandbox (proxy 403); the owner generates voices and uploads them.
+- Push: still BLOCKED by the session permission classifier even with a pasted token or the GitHub connector; do not work around it. Local commits + `git bundle` are the fallback. Tokens pasted in chat are considered exposed: owner should revoke them.

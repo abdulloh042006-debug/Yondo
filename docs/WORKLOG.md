@@ -15,6 +15,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S15 — Yondo day/night themes, promo video, settings (2026-10-22)
+Done: theme switch moved to `/settings`; official logo mark/favicon; slogan "Yondo doim yoningda"; themes `yondo` (day) and `yondo-tun` (night) restricted to the logo colours (ink, paper/white, carrot #E8501A); promo video pipeline in `marketing/ad-video/` (real app captures, synthesized music/SFX, owner's voicelab voices, uz/ru × 9:16/16:9); single-file screen gallery. CLAUDE.md §7 now logs owner decisions.
+Not done: push (BLOCKED by the session permission classifier); real-device/screen-reader checks.
+Next: owner revokes chat-pasted tokens; owner decides whether `yondo` becomes the default theme.
+Evidence: web e2e 45/45 (axe A/AA in 5 themes), tsc/eslint/build clean, unit 18/18.
+Commit: see `git log -1 -- docs/WORKLOG.md`.
+
 ## S14 — Real web app + secured admin console (apps/web) (2026-10-22)
 Done: `apps/web` (React 19/TS/Vite, Uzbek-first, glass + motion, themes Gul/Jurnal/Stone) on the REAL FastAPI backend (no Supabase): discovery, profile, OTP login, bookings, favorites, account, companion studio, admin (dashboard, applications/content moderation, safety signals, users, bookings read-only, audit log). Backend: `GET /companions/admin/applications`, `GET /admin/audit-events`, audit rows in the same transaction for application/content decisions and safety acknowledgements, masked-phone users list, typed summary/bookings. OpenAPI regenerated; CI `web` job added. Details: `docs/web-and-admin.md`.
 Not done: payments/chat/SOS creation/reviews/gift UI (NOT IMPLEMENTED, endpoints exist); studio activate/availability/withdraw not browser-tested; real-device, screen-reader, Firefox/WebKit not tested; photo bytes in e2e come from an in-memory storage double.
