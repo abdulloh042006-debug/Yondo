@@ -41,7 +41,7 @@ the theme beat shows day ↔ night (`yondo-tun`). No "DEMO" labels on screen (ow
 6. `./mux.sh v uz` … → `yondo-reklama-<lang>-<9x16|16x9>.mp4` (loudnorm I=-14, TP=-1.5).
 7. `python3 mk_preview.py` → single-file HTML gallery of all screens.
 
-## Alternative: screens from `design-prototype` + draft without voices (S15, 2026-10-22)
+## Alternative: screens from `design-prototype` + draft without voices (S17, 2026-10-22)
 `apps/web` is not in this repository, so the screens can be taken from the mock-backed prototype instead:
 - `AD=<dir>; OUT=$AD/shots-yondo THEME=light node capture_proto.mjs` and `OUT=$AD/shots-yondo-tun THEME=dark ONLY=discovery node capture_proto.mjs`,
   then `ln -sfn ../shots-yondo-tun $AD/shots-yondo/n`. Needs `@fontsource/inter`, `@fontsource/space-grotesk`, `@fontsource/manrope`,
@@ -53,7 +53,7 @@ the theme beat shows day ↔ night (`yondo-tun`). No "DEMO" labels on screen (ow
   `audio.py` mixes music + SFX only. Drop the 14 voicelab.uz files into `$AD/voice/` and re-run steps 2–6 for the final cut.
 - All scripts read the working folder from the `AD` environment variable.
 
-## Illustrations (S16, owner request 2026-10-22: "show the words as pictures")
+## Illustrations (S18, owner request 2026-10-22: "show the words as pictures")
 `page.tpl.html` has a `#scene` SVG layer with line-art drawn on per line (brand palette only): line 1 Tashkent skyline
 (TV tower, domed building, minarets, windows light up) → city map with a carrot route and pins → one person and an empty
 dashed silhouette with "?"; line 2 faint ink skyline; line 6 public square (trees, bench, lamps, café awning, people);
