@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { PageTransition } from './motion';
 
 const Icon = ({ d }: { d: string }) => (
@@ -85,6 +86,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
+          <LanguageSwitch />
         </header>
         <main id="main" className="page" tabIndex={-1}>
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>

@@ -1,4 +1,4 @@
-import { Fragment, useSyncExternalStore, type ReactNode } from 'react';
+import { useSyncExternalStore } from 'react';
 import { uz, type Key } from './uz';
 
 export type { Key };
@@ -7,7 +7,7 @@ type Params = Record<string, string | number>;
 
 /** `locale` feeds Intl (dates, plurals); `label` is always written in the language itself. */
 export const LANGS: ReadonlyArray<{ id: Lang; label: string; short: string; locale: string }> = [
-  { id: 'uz', label: 'O‘zbekcha', short: 'UZ', locale: 'uz-UZ' },
+  { id: 'uz', label: 'Özbekça', short: 'UZ', locale: 'uz-UZ' },
   { id: 'ru', label: 'Русский', short: 'RU', locale: 'ru-RU' },
   { id: 'en', label: 'English', short: 'EN', locale: 'en-GB' },
 ];
@@ -104,15 +104,8 @@ function subscribe(listener: () => void) {
     listeners.delete(listener);
   };
 }
-/** Re-renders the caller when the language changes. */
-export const useLang = (): Lang => useSyncExternalStore(subscribe, getLang, getLang);
-
 /**
- * Remounts everything below it when the language changes, so every string (including those produced by
- * plain helper functions such as `serviceLabel`) is re-evaluated. Place it inside the providers that must
- * keep their state (router, session, toasts).
+ * Re-renders the caller when the language changes. `App` calls it at the root: the router elements are then
+ * rebuilt, so every page re-renders in place (no remount, hence typed text, dialogs and the OTP step survive).
  */
-export function LanguageBoundary({ children }: { children: ReactNode }) {
-  const lang = useLang();
-  return <Fragment key={lang}>{children}</Fragment>;
-}
+export const useLang = (): Lang => useSyncExternalStore(subscribe, getLang, getLang);

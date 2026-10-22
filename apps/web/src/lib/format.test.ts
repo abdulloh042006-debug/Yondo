@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { formatMoney, prettyPhone, toMinor } from './format';
 
 describe('money is integer tiyin', () => {
-  it('formats whole so‘m with grouping', () => {
-    expect(formatMoney(15000000, 'UZS')).toBe('150 000 so‘m');
-    expect(formatMoney(0, 'UZS')).toBe('0 so‘m');
+  it('formats whole söm with grouping', () => {
+    expect(formatMoney(15000000, 'UZS')).toBe('150 000 söm');
+    expect(formatMoney(0, 'UZS')).toBe('0 söm');
   });
   it('shows tiyin only when present', () => {
-    expect(formatMoney(150050, 'UZS')).toBe('1 500.50 so‘m');
+    expect(formatMoney(150050, 'UZS')).toBe('1 500.50 söm');
   });
   it('parses user input without floating point', () => {
     expect(toMinor('150 000')).toBe(15000000);

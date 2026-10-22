@@ -315,6 +315,46 @@ img {
   }
 }
 
+/* ---------- language switch (top bar) ---------- */
+.lang-switch {
+  margin-left: auto; /* mobile: brand left, switch right (the nav lives in the dock) */
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--c-fg) 16%, transparent);
+}
+.lang-opt {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-fg);
+  cursor: pointer;
+  transition:
+    background 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.lang-opt:hover:not([aria-pressed='true']) {
+  background: color-mix(in oklab, var(--c-fg) 10%, transparent);
+}
+.lang-opt[aria-pressed='true'] {
+  background: var(--c-fg);
+  color: var(--c-bg);
+}
+@media (min-width: 860px) {
+  .lang-switch {
+    margin-left: 6px; /* desktop: right after the nav links, which already carry margin-left:auto */
+  }
+}
+
 /* ---------- controls ---------- */
 .btn {
   font: inherit;

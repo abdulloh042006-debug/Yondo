@@ -11,6 +11,8 @@ export class ApiError extends Error {
   readonly fields: Record<string, string>;
   constructor(status: number, code: string, requestId?: string, fields: Record<string, string> = {}) {
     super(messageFor(code, status));
+    // Looked up on every read, so an error already on screen follows a language change.
+    Object.defineProperty(this, 'message', { get: () => messageFor(code, status), enumerable: false });
     this.name = 'ApiError';
     this.status = status;
     this.code = code;

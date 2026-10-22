@@ -25,7 +25,7 @@ describe('RequireAuth (UX guard only; the server enforces the real rule)', () =>
   });
   it('shows a denial for a signed-in non-admin and never renders children', () => {
     mount({ state: { status: 'authed' }, user: { roles: ['customer'] } }, 'admin');
-    expect(screen.getByText('Bu bo‘lim siz uchun emas')).toBeInTheDocument();
+    expect(screen.getByText('Bu bölim siz uçun emas')).toBeInTheDocument();
     expect(screen.queryByText('SECRET')).toBeNull();
   });
   it('renders for an admin', () => {

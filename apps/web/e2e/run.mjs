@@ -49,10 +49,10 @@ const assert = (cond, msg) => {
 async function otpLogin(page, phone) {
   await page.goto(`${WEB}/login`);
   await page.getByLabel('Telefon raqami').fill(phone);
-  await page.getByRole('button', { name: 'Kod yuborish' }).click();
+  await page.getByRole('button', { name: 'Kod yuboriş' }).click();
   const code = (await page.locator('b.mono').first().innerText()).trim();
-  await page.getByLabel('Tasdiqlash kodi').fill(code);
-  await page.getByRole('button', { name: 'Kirish', exact: true }).click();
+  await page.getByLabel('Tasdiqlaş kodi').fill(code);
+  await page.getByRole('button', { name: 'Kiriş', exact: true }).click();
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
 }
 
@@ -93,39 +93,39 @@ try {
     const text = await page.locator('main').innerText();
     assert(text.includes('DEMO Jasur'), 'Jasur missing');
     assert(!text.includes('DEMO Sevara'), 'unapproved Sevara must not be listed');
-    assert(text.includes('Shaxsi tasdiqlangan'), 'verified badge expected from API verified=true');
+    assert(text.includes('Şaxsi tasdiqlangan'), 'verified badge expected from API verified=true');
   });
   await step('glass surfaces really use backdrop-filter', async () => {
     const bf = await page.evaluate(() => getComputedStyle(document.querySelector('.glass')).backdropFilter || getComputedStyle(document.querySelector('.glass')).webkitBackdropFilter);
     assert(bf && bf !== 'none', `backdrop-filter=${bf}`);
   });
   await step('search + service/price filters hit the real API', async () => {
-    await page.getByLabel('Ism yoki tavsif bo‘yicha qidirish').fill('Jasur');
-    await page.getByRole('button', { name: 'Qidirish' }).first().click();
+    await page.getByLabel('Ism yoki tavsif böyiça qidiriş').fill('Jasur');
+    await page.getByRole('button', { name: 'Qidiriş' }).first().click();
     await page.waitForFunction(() => { const t = document.body.innerText; return t.includes('DEMO Jasur') && !t.includes('DEMO Madina'); });
     assert((await page.locator('main').innerText()).includes('DEMO Jasur'), 'Jasur expected');
-    await page.getByRole('button', { name: /Hammasini tozalash/ }).click();
+    await page.getByRole('button', { name: /Hammasini tozalaş/ }).click();
     await page.getByText('DEMO Madina').first().waitFor();
-    await page.getByLabel('Eng yuqori narx (so‘m)').fill('50000');
-    await page.getByLabel('Eng yuqori narx (so‘m)').blur();
+    await page.getByLabel('Eng yuqori narx (söm)').fill('50000');
+    await page.getByLabel('Eng yuqori narx (söm)').blur();
     await page.waitForFunction(() => { const t = document.body.innerText; return t.includes('DEMO Jasur') && !t.includes('DEMO Madina'); });
     assert((await page.locator('main').innerText()).includes('DEMO Jasur'), 'cheaper Jasur expected');
   });
   await step('empty state with clear-filters action', async () => {
     await page.goto(`${WEB}/?q=zzzz-yoq`);
     await page.getByText('Mos hamroh topilmadi').waitFor();
-    await page.getByRole('button', { name: 'Filtrlarni tozalash' }).click();
+    await page.getByRole('button', { name: 'Filtrlarni tozalaş' }).click();
     await page.getByText('DEMO Madina').first().waitFor();
   });
   await step('profile shows bio, services, prices, honest availability note', async () => {
     await page.goto(WEB);
-    await page.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
+    await page.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
     await page.getByRole('heading', { name: 'DEMO Madina', level: 1 }).waitFor();
     const t = await page.locator('main').innerText();
-    assert(t.includes('150 000 so‘m'), 'price 150 000 so‘m');
+    assert(t.includes('150 000 söm'), 'price 150 000 söm');
     assert(t.includes('Kofe') && t.includes('Sayr'), 'service labels');
-    assert(t.includes('Tillar') && t.includes('Qiziqishlar'), 'languages/interests');
-    assert(t.includes('mavjudlikni bron paytida server tekshiradi'), 'availability honesty note');
+    assert(t.includes('Tillar') && t.includes('Qiziqişlar'), 'languages/interests');
+    assert(t.includes('mavjudlikni bron paytida server tekşiradi'), 'availability honesty note');
     await page.waitForTimeout(1500); // let reveal animations finish (axe would sample half-faded text)
     await axeScan(page, 'profile');
   });
@@ -135,8 +135,8 @@ try {
   });
   await step('anonymous booking click goes to login; admin URL redirects to login', async () => {
     await page.goto(WEB);
-    await page.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
-    await page.getByRole('button', { name: 'Bron qilish' }).click();
+    await page.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
+    await page.getByRole('button', { name: 'Bron qiliş' }).click();
     await page.waitForURL(/\/login/);
     await page.goto(`${WEB}/admin`);
     await page.waitForURL(/\/login/);
@@ -144,13 +144,13 @@ try {
   await step('login validation: bad phone + wrong code are shown in Uzbek, from error codes', async () => {
     await page.goto(`${WEB}/login`);
     await page.getByLabel('Telefon raqami').fill('+99');
-    await page.getByRole('button', { name: 'Kod yuborish' }).click();
-    await page.getByText('Telefon raqami noto‘g‘ri').waitFor();
+    await page.getByRole('button', { name: 'Kod yuboriş' }).click();
+    await page.getByText('Telefon raqami notöğri').waitFor();
     await page.getByLabel('Telefon raqami').fill('+998901110099');
-    await page.getByRole('button', { name: 'Kod yuborish' }).click();
-    await page.getByLabel('Tasdiqlash kodi').fill('000000');
-    await page.getByRole('button', { name: 'Kirish', exact: true }).click();
-    await page.getByText('Kod noto‘g‘ri').waitFor();
+    await page.getByRole('button', { name: 'Kod yuboriş' }).click();
+    await page.getByLabel('Tasdiqlaş kodi').fill('000000');
+    await page.getByRole('button', { name: 'Kiriş', exact: true }).click();
+    await page.getByText('Kod notöğri').waitFor();
   });
   await axeScan(page, 'login').then(() => results.push({ name: 'axe login', ok: true }), (e) => results.push({ name: 'axe login', ok: false, error: e.message }));
 
@@ -168,41 +168,41 @@ try {
   await step('favorite toggles only after the server confirms', async () => {
     await cp.goto(WEB);
     await cp.getByText('DEMO Madina').first().waitFor();
-    await cp.getByRole('button', { name: /DEMO Madinani sevimlilarga qo‘shish|DEMO Madina.*sevimlilarga qo‘shish/ }).first().click();
-    await cp.getByText('Sevimlilarga qo‘shildi.').waitFor();
+    await cp.getByRole('button', { name: /DEMO Madinani sevimlilarga qöşiş|DEMO Madina.*sevimlilarga qöşiş/ }).first().click();
+    await cp.getByText('Sevimlilarga qöşildi.').waitFor();
     await cp.goto(`${WEB}/favorites`);
     await cp.getByText('DEMO Madina').first().waitFor();
   });
   await step('booking dialog validates, then creates a pending booking on the server', async () => {
     await cp.goto(WEB);
-    await cp.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
-    await cp.getByRole('button', { name: 'Bron qilish' }).click();
-    await cp.getByRole('button', { name: 'So‘rov yuborish' }).click();
-    await cp.getByText('Boshlanish vaqtini tanlang.').waitFor();
-    await cp.getByText('Uchrashuv joyini yozing').waitFor();
+    await cp.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
+    await cp.getByRole('button', { name: 'Bron qiliş' }).click();
+    await cp.getByRole('button', { name: 'Sörov yuboriş' }).click();
+    await cp.getByText('Boşlaniş vaqtini tanlang.').waitFor();
+    await cp.getByText('Uçraşuv joyini yozing').waitFor();
     const d = new Date(Date.now() + 2 * 86400000 + 4 * 3600000 + 5 * 3600000);
     const local = d.toISOString().slice(0, 16);
-    await cp.getByLabel('Boshlanish vaqti (Toshkent vaqti)').fill(local);
-    await cp.getByLabel('Uchrashuv joyi').fill('DEMO: Amir Temur xiyoboni');
-    await cp.getByRole('button', { name: 'So‘rov yuborish' }).click();
+    await cp.getByLabel('Boşlaniş vaqti (Toşkent vaqti)').fill(local);
+    await cp.getByLabel('Uçraşuv joyi').fill('DEMO: Amir Temur xiyoboni');
+    await cp.getByRole('button', { name: 'Sörov yuboriş' }).click();
     await cp.waitForURL(/\/bookings/);
     await cp.getByText('Javob kutilmoqda').first().waitFor();
     assert((await cp.locator('main').innerText()).includes('DEMO: Amir Temur xiyoboni'), 'booking place');
   });
   await step('booking an already-reserved slot shows the server refusal (no fake success)', async () => {
     await cp.goto(WEB);
-    await cp.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
-    await cp.getByRole('button', { name: 'Bron qilish' }).click();
+    await cp.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
+    await cp.getByRole('button', { name: 'Bron qiliş' }).click();
     const d = new Date(Date.now() + 2 * 86400000 + 4 * 3600000 + 5 * 3600000);
-    await cp.getByLabel('Boshlanish vaqti (Toshkent vaqti)').fill(d.toISOString().slice(0, 16));
-    await cp.getByLabel('Uchrashuv joyi').fill('DEMO: takroriy urinish');
-    await cp.getByRole('button', { name: 'So‘rov yuborish' }).click();
-    await cp.getByText('Tanlangan vaqt band yoki hamroh bo‘sh emas.').waitFor();
+    await cp.getByLabel('Boşlaniş vaqti (Toşkent vaqti)').fill(d.toISOString().slice(0, 16));
+    await cp.getByLabel('Uçraşuv joyi').fill('DEMO: takroriy urinish');
+    await cp.getByRole('button', { name: 'Sörov yuboriş' }).click();
+    await cp.getByText('Tanlangan vaqt band yoki hamroh böş emas.').waitFor();
     assert(!/\/bookings/.test(cp.url()), 'must stay on profile');
   });
   await step('customer cannot reach admin UI nor admin API (server-side 403)', async () => {
     await cp.goto(`${WEB}/admin`);
-    await cp.getByText('Bu bo‘lim siz uchun emas').waitFor();
+    await cp.getByText('Bu bölim siz uçun emas').waitFor();
     const codes = await cp.evaluate(async () => {
       const token = sessionStorage.getItem('yondo.access');
       const h = { Authorization: `Bearer ${token}` };
@@ -221,10 +221,10 @@ try {
   });
   await step('account profile validates age and saves via server', async () => {
     await cp.goto(`${WEB}/account`);
-    await cp.getByLabel('Yosh').fill('12');
-    await cp.getByText('Yosh 18 dan 120 gacha bo‘lishi kerak.').waitFor();
-    await cp.getByLabel('Yosh').fill('29');
-    await cp.getByRole('button', { name: 'Saqlash' }).click();
+    await cp.getByLabel('Yoş').fill('12');
+    await cp.getByText('Yoş 18 dan 120 gaça bölişi kerak.').waitFor();
+    await cp.getByLabel('Yoş').fill('29');
+    await cp.getByRole('button', { name: 'Saqlaş' }).click();
     await cp.getByText('Profil saqlandi.').waitFor();
   });
 
@@ -239,34 +239,34 @@ try {
     await kp.getByText('Rollar yangilandi.').waitFor();
     await kp.getByRole('link', { name: 'Hamroh studiyasi' }).first().click();
     await kp.getByRole('tab', { name: 'Ariza' }).click();
-    await kp.getByLabel('O‘zingiz haqingizda qisqacha').fill('E2E: men yangi hamrohman.');
-    await kp.getByRole('button', { name: 'Saqlash' }).click();
+    await kp.getByLabel('Özingiz haqingizda qisqaça').fill('E2E: men yangi hamrohman.');
+    await kp.getByRole('button', { name: 'Saqlaş' }).click();
     await kp.getByText('Ariza saqlandi.').waitFor();
-    await kp.getByRole('button', { name: 'Ko‘rib chiqishga yuborish' }).click();
-    await kp.getByText('Ariza ko‘rib chiqishga yuborildi.').waitFor();
-    await kp.getByText('Ko‘rib chiqilmoqda').first().waitFor();
+    await kp.getByRole('button', { name: 'Körib çiqişga yuboriş' }).click();
+    await kp.getByText('Ariza körib çiqişga yuborildi.').waitFor();
+    await kp.getByText('Körib çiqilmoqda').first().waitFor();
     await kp.getByRole('tab', { name: 'Profil' }).click();
-    await kp.getByLabel('Ko‘rsatiladigan ism').fill('E2E Dilnoza');
+    await kp.getByLabel('Körsatiladigan ism').fill('E2E Dilnoza');
     await kp.getByLabel('Tavsif').fill('E2E profil tavsifi.');
     await kp.getByLabel('Tillar').fill('uz, en');
-    await kp.getByRole('button', { name: 'Saqlash' }).click();
+    await kp.getByRole('button', { name: 'Saqlaş' }).click();
     await kp.getByText('Profil saqlandi.').waitFor();
     await kp.getByRole('tab', { name: 'Xizmatlar' }).click();
-    await kp.getByRole('button', { name: 'Xizmat qo‘shish' }).click();
-    await kp.getByLabel('Narx (so‘m)').fill('0');
-    await kp.getByRole('button', { name: 'Saqlash' }).click();
-    await kp.getByText('Narxni so‘mda kiriting').waitFor();
-    await kp.getByLabel('Narx (so‘m)').fill('120 000');
-    await kp.getByRole('button', { name: 'Saqlash' }).click();
+    await kp.getByRole('button', { name: 'Xizmat qöşiş' }).click();
+    await kp.getByLabel('Narx (söm)').fill('0');
+    await kp.getByRole('button', { name: 'Saqlaş' }).click();
+    await kp.getByText('Narxni sömda kiriting').waitFor();
+    await kp.getByLabel('Narx (söm)').fill('120 000');
+    await kp.getByRole('button', { name: 'Saqlaş' }).click();
     await kp.getByText('Xizmat saqlandi.').waitFor();
     await kp.getByRole('tab', { name: 'Profil' }).click();
-    await kp.getByRole('button', { name: 'Ko‘rib chiqishga yuborish' }).click();
-    await kp.getByText('Profil kontenti ko‘rib chiqishga yuborildi.').waitFor();
+    await kp.getByRole('button', { name: 'Körib çiqişga yuboriş' }).click();
+    await kp.getByText('Profil kontenti körib çiqişga yuborildi.').waitFor();
   });
   await step('status tab explains blockers (content ≠ identity), activation gated', async () => {
     await kp.getByRole('tab', { name: 'Holat' }).click();
-    await kp.getByText('Ommaga ko‘rinmaydi').waitFor();
-    assert((await kp.locator('main').innerText()).includes('Kontent tasdig‘i shaxs tasdig‘i emas'), 'distinction note');
+    await kp.getByText('Ommaga körinmaydi').waitFor();
+    assert((await kp.locator('main').innerText()).includes('Kontent tasdiği şaxs tasdiği emas'), 'distinction note');
   });
   await step('photo upload works against the (in-memory) storage double', async () => {
     await kp.getByRole('tab', { name: 'Rasmlar' }).click();
@@ -283,10 +283,10 @@ try {
     await otpLogin(ap, '+998901110001');
     await ap.goto(`${WEB}/admin`);
     await ap.getByRole('heading', { name: 'Administrator paneli' }).waitFor();
-    await ap.getByText('Ko‘rib chiqilishi kutilayotgan arizalar').waitFor();
+    await ap.getByText('Körib çiqilişi kutilayotgan arizalar').waitFor();
     await ap.waitForTimeout(1500); // counters animate
     const t = await ap.locator('main').innerText();
-    assert(/Ochiq shikoyatlar/.test(t) && /Foydalanuvchilar/.test(t), 'tiles');
+    assert(/Oçiq şikoyatlar/.test(t) && /Foydalanuvçilar/.test(t), 'tiles');
     await axeScan(ap, 'admin dashboard');
   });
   await step('applications queue shows pending applicants; detail has content + photo + history', async () => {
@@ -297,16 +297,16 @@ try {
     await ap.getByRole('heading', { name: 'Profil kontenti' }).waitFor();
     await ap.getByText('E2E profil tavsifi.').waitFor();
     const t = await ap.locator('main').innerText();
-    assert(t.includes('E2E profil tavsifi.') && t.includes('120 000 so‘m'), 'content shown');
-    assert(t.includes('shaxs tasdig‘i emas'), 'distinction banner');
+    assert(t.includes('E2E profil tavsifi.') && t.includes('120 000 söm'), 'content shown');
+    assert(t.includes('şaxs tasdiği emas'), 'distinction banner');
   });
   await step('rejecting requires a reason (≥8) and a confirmation; result persists after refresh', async () => {
-    await ap.getByRole('button', { name: 'Arizani rad etish' }).click();
-    const confirm = ap.getByRole('button', { name: 'Rad etish', exact: true });
+    await ap.getByRole('button', { name: 'Arizani rad etiş' }).click();
+    const confirm = ap.getByRole('button', { name: 'Rad etiş', exact: true });
     assert(await confirm.isDisabled(), 'confirm must be disabled without reason');
-    await ap.getByLabel('Rad etish sababi').fill('qisqa');
+    await ap.getByLabel('Rad etiş sababi').fill('qisqa');
     assert(await confirm.isDisabled(), 'still disabled for short reason');
-    await ap.getByLabel('Rad etish sababi').fill('E2E: bayon yetarli emas');
+    await ap.getByLabel('Rad etiş sababi').fill('E2E: bayon yetarli emas');
     await confirm.click();
     await ap.getByText('Qaror saqlandi: rad etildi.').waitFor();
     await ap.getByText('Rad etilgan').first().waitFor();
@@ -321,14 +321,14 @@ try {
   await step('approve application + approve content: approval ≠ public (activation/identity gates)', async () => {
     await ap.goto(`${WEB}/admin/applications`);
     await ap.getByRole('link', { name: /DEMO Sevara/ }).click();
-    await ap.getByRole('button', { name: 'Arizani tasdiqlash' }).click();
+    await ap.getByRole('button', { name: 'Arizani tasdiqlaş' }).click();
     await ap.getByLabel('Izoh').fill('E2E ok');
-    await ap.getByRole('button', { name: 'Tasdiqlash', exact: true }).click();
+    await ap.getByRole('button', { name: 'Tasdiqlaş', exact: true }).click();
     await ap.getByText('Qaror saqlandi: tasdiqlandi.').waitFor();
-    await ap.getByRole('button', { name: 'Kontentni tasdiqlash' }).click();
+    await ap.getByRole('button', { name: 'Kontentni tasdiqlaş' }).click();
     await ap.getByLabel('Izoh').fill('E2E kontent ok');
-    await ap.getByRole('button', { name: 'Tasdiqlash', exact: true }).click();
-    await ap.waitForFunction(() => document.body.innerText.includes('Faqat “Ko‘rib chiqilmoqda” kontentga'));
+    await ap.getByRole('button', { name: 'Tasdiqlaş', exact: true }).click();
+    await ap.waitForFunction(() => document.body.innerText.includes('Faqat “Körib çiqilmoqda” kontentga'));
     const list = await (await fetch(`${API}/api/v1/discovery/companions`)).json();
     assert(!list.items.some((c) => c.display_name === 'DEMO Sevara'), 'Sevara must stay hidden until she requests activation');
   });
@@ -347,17 +347,17 @@ try {
     await ap.waitForFunction(() => document.querySelectorAll('table.data tbody tr').length >= 1);
     const t = await ap.locator('main').innerText();
     assert(!t.includes('901110004') && !t.includes('+998901110004'), 'raw phone leaked');
-    await ap.getByRole('button', { name: 'Holatni o‘zgartirish' }).first().click();
+    await ap.getByRole('button', { name: 'Holatni özgartiriş' }).first().click();
     const dlg = ap.getByRole('dialog');
-    const save = dlg.getByRole('button', { name: 'Holatni saqlash' });
+    const save = dlg.getByRole('button', { name: 'Holatni saqlaş' });
     assert(await save.isDisabled(), 'save disabled initially');
     const shortId = (await dlg.locator('b.mono').first().innerText()).trim();
     await dlg.getByLabel(/Sabab/).fill('E2E: hisob tekshirildi');
-    await dlg.getByLabel(/Tasdiqlash uchun ID/).fill('wrong');
+    await dlg.getByLabel(/Tasdiqlaş uçun ID/).fill('wrong');
     assert(await save.isDisabled(), 'wrong typed id keeps disabled');
-    await dlg.getByLabel(/Tasdiqlash uchun ID/).fill(shortId);
+    await dlg.getByLabel(/Tasdiqlaş uçun ID/).fill(shortId);
     await save.click();
-    await ap.getByText(/Hisob holati o‘zgartirildi/).waitFor();
+    await ap.getByText(/Hisob holati özgartirildi/).waitFor();
   });
   await step('admin rows protect admin accounts and self', async () => {
     await ap.goto(`${WEB}/admin/users`);
@@ -373,16 +373,16 @@ try {
     await ap.goto(`${WEB}/admin/safety`);
     await ap.getByText('avtomatik xabar yubormaydi').waitFor();
     await ap.getByText('DEMO shikoyat').waitFor();
-    await ap.getByRole('button', { name: 'Ko‘rib chiqildi deb belgilash' }).first().click();
+    await ap.getByRole('button', { name: 'Körib çiqildi deb belgilaş' }).first().click();
     await ap.getByLabel('Operator izohi').fill('E2E: operator ko‘rib chiqdi');
-    await ap.getByRole('button', { name: 'Belgilash', exact: true }).click();
-    await ap.getByText('Ko‘rib chiqildi deb qayd etildi.').waitFor();
+    await ap.getByRole('button', { name: 'Belgilaş', exact: true }).click();
+    await ap.getByText('Körib çiqildi deb qayd etildi.').waitFor();
     await ap.getByRole('button', { name: 'SOS signallari' }).click();
-    await ap.getByText('SOS signallari yo‘q').waitFor();
+    await ap.getByText('SOS signallari yöq').waitFor();
   });
   await step('admin bookings is read-only and honest about missing admin actions', async () => {
     await ap.goto(`${WEB}/admin/bookings`);
-    await ap.getByText('Faqat ko‘rish').waitFor();
+    await ap.getByText('Faqat köriş').waitFor();
     await ap.waitForFunction(() => document.querySelectorAll('table.data tbody tr').length >= 1);
   });
 
@@ -392,9 +392,9 @@ try {
     watch(p, 'mock503');
     await p.route('**/api/v1/discovery/companions**', (r) => r.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'identity_status_unavailable', message: 'x', request_id: 'req-123' }) }));
     await p.goto(WEB);
-    await p.getByRole('heading', { name: 'Xizmat hozircha mavjud emas' }).waitFor();
+    await p.getByRole('heading', { name: 'Xizmat hozirça mavjud emas' }).waitFor();
     await p.getByText('req-123').waitFor();
-    await p.getByRole('button', { name: 'Qayta urinish' }).waitFor();
+    await p.getByRole('button', { name: 'Qayta uriniş' }).waitFor();
     await p.close();
   });
 
@@ -408,7 +408,7 @@ try {
     const overflow = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert(overflow <= 1, `horizontal overflow ${overflow}px`);
     assert(await mp.locator('.dock').isVisible(), 'dock');
-    await mp.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
+    await mp.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
     await mp.getByRole('heading', { name: 'DEMO Madina', level: 1 }).waitFor();
     const [bar, dock] = await Promise.all([mp.locator('.book-bar').boundingBox(), mp.locator('.dock').boundingBox()]);
     assert(bar.y + bar.height <= dock.y + 1, `booking bar overlaps dock (${bar.y + bar.height} > ${dock.y})`);
@@ -436,7 +436,7 @@ try {
     await page.getByText('DEMO Madina').first().waitFor();
     await page.waitForTimeout(900);
     await page.screenshot({ path: 'e2e/shots/desktop-discovery.png' });
-    await page.getByRole('link', { name: /DEMO Madina profilini ochish/ }).click();
+    await page.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).click();
     await page.getByRole('heading', { name: 'DEMO Madina', level: 1 }).waitFor();
     await page.waitForTimeout(900);
     await page.screenshot({ path: 'e2e/shots/desktop-profile.png' });
@@ -462,7 +462,7 @@ try {
   await step('language: Settings switches uz → ru → en → uz, persists on reload, sets <html lang>, translates API-backed pages', async () => {
     try {
       await page.goto(`${WEB}/settings`);
-      await page.getByRole('button', { name: /Русский/ }).click();
+      await page.locator('.lang-picker').getByRole('button', { name: /Русский/ }).click();
       await page.getByRole('heading', { name: 'Настройки', level: 1 }).waitFor();
       assert((await page.evaluate(() => document.documentElement.lang)) === 'ru', '<html lang> should be ru');
       assert((await page.evaluate(() => document.activeElement?.textContent ?? '')).includes('Русский'), 'focus should stay on the chosen language button');
@@ -472,13 +472,13 @@ try {
       assert(ru.includes('Найдите компаньона'), 'Russian hero expected');
       assert(ru.includes('Личность подтверждена'), 'verified badge (from API verified=true) should be Russian');
       assert(/сум/.test(ru), 'prices should use the Russian currency word');
-      assert(!ru.includes('Shaxsi tasdiqlangan') && !ru.includes('Hammasi'), 'no Uzbek leftovers in Russian UI');
+      assert(!ru.includes('Şaxsi tasdiqlangan') && !ru.includes('Hammasi'), 'no Uzbek leftovers in Russian UI');
       await page.goto(`${WEB}/login`);
       await page.getByLabel('Номер телефона').fill('+998');
       await page.getByRole('button', { name: 'Отправить код' }).click();
       await page.getByText('Неверный номер телефона').first().waitFor(); // chosen from the error code, in Russian
       await page.goto(`${WEB}/settings`);
-      await page.getByRole('button', { name: /English/ }).click();
+      await page.locator('.lang-picker').getByRole('button', { name: /English/ }).click();
       await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor();
       await page.goto(WEB);
       await page.getByText('DEMO Madina').first().waitFor();
@@ -486,9 +486,17 @@ try {
       assert(en.includes('Find a companion'), 'English hero expected');
       assert(en.includes('Identity verified'), 'verified badge should be English');
       await page.goto(`${WEB}/settings`);
-      await page.getByRole('button', { name: /O‘zbekcha/ }).click();
+      await page.locator('.lang-picker').getByRole('button', { name: /Özbekça/ }).click();
       await page.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
       assert((await page.evaluate(() => document.documentElement.lang)) === 'uz', '<html lang> should be uz again');
+      // Header switch: changing language must not wipe what the user is typing (no remount).
+      await page.goto(`${WEB}/login`);
+      await page.getByLabel('Telefon raqami').fill('+998901234567');
+      await page.locator('.lang-switch').getByRole('button', { name: /^RU/ }).click();
+      await page.getByLabel('Номер телефона').waitFor();
+      assert((await page.getByLabel('Номер телефона').inputValue()) === '+998901234567', 'typed phone must survive a language switch');
+      await page.locator('.lang-switch').getByRole('button', { name: /^UZ/ }).click();
+      await page.getByLabel('Telefon raqami').waitFor();
     } finally {
       await page.evaluate(() => localStorage.removeItem('yondo.lang'));
     }

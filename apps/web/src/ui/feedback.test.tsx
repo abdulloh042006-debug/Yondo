@@ -8,9 +8,9 @@ describe('ConfirmDialog', () => {
   it('blocks the action until a long-enough reason is typed and surfaces server refusals', async () => {
     const onConfirm = vi.fn().mockRejectedValue(new ApiError(409, 'stale_companion_revision'));
     render(
-      <ConfirmDialog open title="Rad etish" body="matn" confirmLabel="Tasdiqlash" reason={{ label: 'Sabab', min: 8, max: 100 }} onConfirm={onConfirm} onClose={() => {}} />,
+      <ConfirmDialog open title="Rad etiş" body="matn" confirmLabel="Tasdiqlaş" reason={{ label: 'Sabab', min: 8, max: 100 }} onConfirm={onConfirm} onClose={() => {}} />,
     );
-    const confirm = screen.getByRole('button', { name: 'Tasdiqlash' });
+    const confirm = screen.getByRole('button', { name: 'Tasdiqlaş' });
     expect(confirm).toBeDisabled();
     await userEvent.type(screen.getByLabelText('Sabab'), 'qisqa');
     expect(confirm).toBeDisabled();
@@ -18,7 +18,7 @@ describe('ConfirmDialog', () => {
     expect(confirm).toBeEnabled();
     await userEvent.click(confirm);
     expect(onConfirm).toHaveBeenCalledWith('qisqa va yetarli');
-    expect(await screen.findByRole('alert')).toHaveTextContent('o‘zgargan');
+    expect(await screen.findByRole('alert')).toHaveTextContent('özgargan');
   });
 
   it('moves focus into the dialog, closes on Escape', async () => {
@@ -34,9 +34,9 @@ describe('ErrorState', () => {
   it('describes 503 as unavailability, not refusal, and offers retry', async () => {
     const retry = vi.fn();
     render(<ErrorState error={new ApiError(503, 'payment_provider_unavailable', 'req-9')} onRetry={retry} />);
-    expect(screen.getByText('Xizmat hozircha mavjud emas')).toBeInTheDocument();
+    expect(screen.getByText('Xizmat hozirça mavjud emas')).toBeInTheDocument();
     expect(screen.getByText(/req-9/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Qayta urinish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Qayta uriniş' }));
     expect(retry).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
-import { t } from './i18n';
+import { t, useLang } from './i18n';
 import { RequireAuth } from './auth/guards';
 import { Account } from './pages/Account';
 import { Bookings } from './pages/Bookings';
@@ -18,6 +18,7 @@ const Studio = lazy(() => import('./pages/Studio').then((m) => ({ default: m.Stu
 const AdminRoutes = lazy(() => import('./admin/routes'));
 
 export function App() {
+  useLang(); // re-render the whole route tree in place when the language changes
   return (
     <Suspense fallback={<div className="shell page"><Loading rows={2} /></div>}>
       <Routes>

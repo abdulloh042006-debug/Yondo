@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { en } from './en';
 import { LanguagePicker } from './LanguagePicker';
-import { getLang, LanguageBoundary, setLang, t, type Key } from './index';
+import { LanguageSwitch } from './LanguageSwitch';
+import { getLang, setLang, t, useLang, type Key } from './index';
 import { ru } from './ru';
 import { uz } from './uz';
 import { formatInstant, formatMoney } from '../lib/format';
@@ -58,7 +59,7 @@ describe('t()', () => {
     expect(t('profile.reviews', { count: 1 })).toBe('1 review');
     expect(t('profile.reviews', { count: 2 })).toBe('2 reviews');
     await setLang('uz');
-    expect(t('profile.reviews', { count: 3 })).toBe('3 ta sharh');
+    expect(t('profile.reviews', { count: 3 })).toBe('3 ta şarh');
   });
 });
 
@@ -78,8 +79,8 @@ describe('language switching', () => {
     expect(messageFor(undefined, 500)).toBe(en['errStatus.5xx']);
   });
   it('formats money and dates per language', async () => {
-    expect(formatMoney(15000000, 'UZS')).toBe('150 000 so‘m');
-    expect(formatMoney(150050, 'UZS')).toBe('1 500.50 so‘m');
+    expect(formatMoney(15000000, 'UZS')).toBe('150 000 söm');
+    expect(formatMoney(150050, 'UZS')).toBe('1 500.50 söm');
     await setLang('ru');
     expect(formatMoney(15000000, 'UZS')).toBe('150 000 сум');
     expect(formatMoney(150050, 'UZS')).toBe('1 500,50 сум');
@@ -89,14 +90,17 @@ describe('language switching', () => {
     expect(formatInstant(null)).toBe('—');
   });
   it('LanguagePicker switches the whole tree and keeps focus on the chosen language', async () => {
-    const Probe = () => <p data-testid="probe">{t('nav.login')}</p>;
+    const Probe = () => {
+      useLang(); // like App: re-renders in place, no remount
+      return <p data-testid="probe">{t('nav.login')}</p>;
+    };
     render(
-      <LanguageBoundary>
+      <>
         <Probe />
         <LanguagePicker />
-      </LanguageBoundary>,
+      </>,
     );
-    expect(screen.getByTestId('probe')).toHaveTextContent('Kirish');
+    expect(screen.getByTestId('probe')).toHaveTextContent('Kiriş');
     await userEvent.click(screen.getByRole('button', { name: /Русский/ }));
     expect(screen.getByTestId('probe')).toHaveTextContent('Вход');
     const ruBtn = screen.getByRole('button', { name: /Русский/ });
@@ -105,5 +109,27 @@ describe('language switching', () => {
     await userEvent.click(screen.getByRole('button', { name: /English/ }));
     expect(screen.getByTestId('probe')).toHaveTextContent('Sign in');
     expect(document.documentElement.lang).toBe('en');
+  });
+  it('header LanguageSwitch re-renders in place: typed input survives, labels follow', async () => {
+    const Form = () => {
+      useLang();
+      return (
+        <label>
+          {t('nav.login')}
+          <input />
+        </label>
+      );
+    };
+    render(
+      <>
+        <LanguageSwitch />
+        <Form />
+      </>,
+    );
+    await userEvent.type(screen.getByRole('textbox'), '+998901');
+    await userEvent.click(screen.getByRole('button', { name: /^RU/ }));
+    expect(screen.getByLabelText('Вход')).toHaveValue('+998901');
+    expect(screen.getByRole('button', { name: /^RU/ })).toHaveAttribute('aria-pressed', 'true');
+    await setLang('uz');
   });
 });

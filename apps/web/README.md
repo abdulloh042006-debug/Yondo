@@ -44,8 +44,11 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
 * Use `t('area.key', { name })` (`{name}` interpolation; `{n, plural, one {# x} few {# y} other {# z}}` for
   counts). Never hard-code UI text, and never branch on translated text — error messages are looked up by the
   backend's stable error `code` (`err.<code>`), status/role/service labels by their codes (`lib/labels.ts`).
-* Changing language remounts the tree below the router/session/toasts (`LanguageBoundary`), so helper
-  functions that call `t()` need no subscriptions. `lib/format.ts` formats money/dates per language
+* Changing language re-renders in place (`App` calls `useLang()`; no remount), so typed form text, dialogs and
+  the OTP step survive; `ApiError.message` is a lazy getter. The switch is `UZ | RU | EN` in the top bar
+  (`i18n/LanguageSwitch.tsx`) plus the full-name picker in Settings.
+* Uzbek text follows the **2026 alphabet** (law signed 2026-10-21, in force 2027-04-22): `sh→ş ch→ç o‘→ö g‘→ğ`,
+  `ng` is plain n+g, tutuq is `ʼ` (U+02BC). Write new `uz.ts` text that way. `lib/format.ts` formats money/dates per language
   (dates stay in Asia/Tashkent).
 * User-written text (bios, interests, notes) and backend messages are not translated.
 

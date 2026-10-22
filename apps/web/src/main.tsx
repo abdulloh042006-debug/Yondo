@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
-import { applySavedLang, LanguageBoundary } from './i18n';
+import { applySavedLang } from './i18n';
 import { ToastProvider } from './ui/feedback';
 import { applySavedTheme } from './ui/theme';
 import './styles.css';
@@ -32,9 +32,7 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <AuthProvider>
           <ToastProvider>
-            <LanguageBoundary>
-              <App />
-            </LanguageBoundary>
+            <App />
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
