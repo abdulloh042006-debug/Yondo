@@ -65,3 +65,4 @@ Keep this list current: when the owner states a preference or decision, add one 
 - Motion (owner, 2026-10-22): animate every button and every page (login, home, lists, sheets, success states); my choice of effects; always respect `prefers-reduced-motion` (S16, design-prototype).
 - Promo video (owner, 2026-10-22): illustrate every spoken line with pictures (e.g. "Yangi shahar" → a city behind the text); line-art in ink/paper/carrot only (S18). Voices: `yondo-ovozlar.zip` (uz+ru, 24 kHz mono) supplied in chat, not committed.
 - Push (2026-10-22, S16–S18): works from a cloud session once the repo is attached via the session's GitHub connection (no pasted token); the bundle from the blocked session was merged into `design/prototype` (merge commit, no force-push).
+- Promo video (owner, 2026-10-23): **no subtitles**; the RU cut must show the app **fully in Russian** (capture-time translation via `marketing/ad-video/ru-dict.json` until `apps/web` gets a RU locale).

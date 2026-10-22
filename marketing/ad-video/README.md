@@ -62,3 +62,12 @@ end card evening skyline. Chips carry icons (cup, steps, speech bubbles, globe, 
 ## Current cut (S19)
 Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the theme beat); owner voices in `$AD/voice/`.
 `server_video.py` seeds a daytime availability window so the booking shows 12:00 / 14:00 Tashkent.
+
+## Subtitles off, Russian app screens (S20, owner 2026-10-23)
+- Subtitles are off (`?subs=1` on the page turns them back on).
+- The RU cut shows the app in Russian: `APP_LANG=ru OUT=$AD/shots-web-ru node capture.mjs` (and `THEME=yondo-tun` into
+  `shots-web-ru-tun`, linked as `shots-web-ru/n`; `shots-yondo-ru` → `shots-web-ru`). The web app itself is Uzbek-only, so
+  the capture swaps every visible text to Russian from `ru-dict.json` right before each screenshot and restores it after;
+  dates become `dd.mm.yyyy`, the browser runs with `--lang=ru-RU`. Leftovers are listed in `$OUT/untranslated.json`
+  (expected: Yondo, Magic City, IDs). A real RU locale in `apps/web` is a separate task.
+- Long headlines auto-shrink to two lines.

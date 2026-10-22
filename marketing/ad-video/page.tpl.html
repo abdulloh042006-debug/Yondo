@@ -65,10 +65,14 @@ svg{overflow:visible}
 <script>
 const TL_ALL = __TIMELINE__;
 const WORDMARK = `__WORDMARK__`;
-const SHOTS = __SHOTS__;
+const SHOTS_ALL = __SHOTS__;
 const q = new URLSearchParams(location.search);
 const FMT = q.get('fmt') || 'v', LANG = q.get('lang') || 'uz';
 const TL = TL_ALL[LANG], TX = TL.text, V = TL.V;
+// screens per language (the RU cut shows the app in Russian); a plain string = same screens for both
+const SHOTS = typeof SHOTS_ALL === 'string' ? SHOTS_ALL : (SHOTS_ALL[LANG] || SHOTS_ALL.uz);
+// subtitles: off by owner request (2026-10-23); ?subs=1 turns them back on
+const SUBS = q.get('subs') === '1';
 const W = FMT === 'v' ? 1080 : 1920, H = FMT === 'v' ? 1920 : 1080;
 const VERT = FMT === 'v';
 const $ = (id) => document.getElementById(id);
@@ -446,6 +450,8 @@ function render(t) {
   head.style.fontSize = hs + 'px';
   head.style.whiteSpace = VERT ? 'normal' : 'normal';
   head.style.width = (VERT ? W - 144 : 600) + 'px';
+  // long (RU) headlines: shrink until they fit in two lines so they never touch the chips below
+  if (htxt) { let f = hs; head.style.fontSize = f + 'px'; while (head.offsetHeight > f * 2.25 && f > 40) { f -= 3; head.style.fontSize = f + 'px'; } }
   const headY = VERT ? 250 : LY.head.y + 40;
   css(head, { x: LY.head.x, y: headY + 40 * (1 - hk), o: hk, blur: 10 * (1 - hk) });
 
@@ -502,6 +508,7 @@ function render(t) {
   sceneRender(t);
   /* --- subtitles --- */
   let st = '', sk = 0;
+  if (!SUBS) { sub.style.display = 'none'; return; }
   V.forEach((v, i) => { if (i < 6 && t >= v.s - .1 && t < v.e + .25) { st = TX.sub[i]; sk = inOut(t, v.s - .1, v.e + .25, .2, .2); } });
   if (sub.textContent !== st) sub.textContent = st;
   const subY = (t >= E || t < v2.s + .2) ? (VERT ? H - 460 : H - 200) : LY.sub.y;
