@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { ApiError } from '../api/client';
+import { t } from '../i18n';
 import { Orb } from './motion';
 
 /* ---------------- toasts: only ever created after the server confirmed the outcome ---------------- */
@@ -175,7 +176,7 @@ function ConfirmBody({ body, confirmLabel, danger, reason, onConfirm, onClose }:
     try {
       await onConfirm(text.trim());
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Kutilmagan xatolik yuz berdi.');
+      setError(e instanceof ApiError ? e.message : t('common.unexpected'));
       setBusy(false);
     }
   };
@@ -194,7 +195,7 @@ function ConfirmBody({ body, confirmLabel, danger, reason, onConfirm, onClose }:
             aria-invalid={text.length > 0 && tooShort}
             aria-describedby={`${rid}-h`}
           />
-          <span id={`${rid}-h`} className="hint">Kamida {reason.min} belgi. Bu izoh audit jurnaliga yoziladi.</span>
+          <span id={`${rid}-h`} className="hint">{t('confirm.reasonHint', { min: reason.min })}</span>
         </div>
       )}
       {error && (
@@ -204,7 +205,7 @@ function ConfirmBody({ body, confirmLabel, danger, reason, onConfirm, onClose }:
       )}
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button className="btn ghost" onClick={onClose} disabled={busy}>
-          Bekor qilish
+          {t('common.cancel')}
         </button>
         <button className={`btn ${danger ? 'danger' : ''}`} onClick={submit} disabled={busy || tooShort}>
           {busy && <span className="spinner" aria-hidden="true" />}
@@ -216,7 +217,7 @@ function ConfirmBody({ body, confirmLabel, danger, reason, onConfirm, onClose }:
 }
 
 /* ---------------- states ---------------- */
-export function Loading({ rows = 3, label = 'Yuklanmoqda' }: { rows?: number; label?: string }) {
+export function Loading({ rows = 3, label = t('common.loading') }: { rows?: number; label?: string }) {
   return (
     <div className="stack" aria-busy="true" aria-live="polite">
       <span className="sr-only">{label}…</span>
@@ -243,12 +244,12 @@ export function ErrorState({ error, onRetry }: { error: ApiError; onRetry?: () =
   return (
     <div className="glass state" role="alert">
       <Orb />
-      <h3>{unavailable ? 'Xizmat hozircha mavjud emas' : 'Amalni bajarib bo‘lmadi'}</h3>
+      <h3>{unavailable ? t('common.unavailableTitle') : t('common.failedTitle')}</h3>
       <p className="muted">{error.message}</p>
-      {error.requestId && <p className="hint mono">So‘rov ID: {error.requestId}</p>}
+      {error.requestId && <p className="hint mono">{t('common.requestId', { id: error.requestId })}</p>}
       {onRetry && (
         <button className="btn ghost" onClick={onRetry}>
-          Qayta urinish
+          {t('common.retry')}
         </button>
       )}
     </div>

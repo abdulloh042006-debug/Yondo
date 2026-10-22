@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { t } from '../i18n';
 import { PageTransition } from './motion';
 
 const Icon = ({ d }: { d: string }) => (
@@ -50,11 +51,11 @@ export function Layout() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const items = [
-    { to: '/', label: 'Kashf', icon: ICONS.home, end: true },
-    ...(user ? [{ to: '/favorites', label: 'Sevimlilar', icon: ICONS.heart, end: false }] : []),
-    ...(user ? [{ to: '/bookings', label: 'Bronlar', icon: ICONS.cal, end: false }] : []),
-    { to: user ? '/account' : '/login', label: user ? 'Profil' : 'Kirish', icon: ICONS.user, end: false },
-    ...(user?.roles.includes('admin') ? [{ to: '/admin', label: 'Admin', icon: ICONS.shield, end: false }] : []),
+    { to: '/', label: t('nav.discover'), icon: ICONS.home, end: true },
+    ...(user ? [{ to: '/favorites', label: t('nav.favorites'), icon: ICONS.heart, end: false }] : []),
+    ...(user ? [{ to: '/bookings', label: t('nav.bookings'), icon: ICONS.cal, end: false }] : []),
+    { to: user ? '/account' : '/login', label: user ? t('nav.profile') : t('nav.login'), icon: ICONS.user, end: false },
+    ...(user?.roles.includes('admin') ? [{ to: '/admin', label: t('nav.admin'), icon: ICONS.shield, end: false }] : []),
   ];
   return (
     <>
@@ -64,15 +65,15 @@ export function Layout() {
         <i />
       </div>
       <a href="#main" className="skip-link">
-        Asosiy mazmunga o‘tish
+        {t('nav.skip')}
       </a>
       <div className="shell">
         <header className={`glass-bar topbar${scrolled ? ' scrolled' : ''}`}>
-          <NavLink to="/" className="brand" aria-label="Yondo — bosh sahifa">
+          <NavLink to="/" className="brand" aria-label={t('nav.brandHome')}>
             <BrandMark />
             Yondo
           </NavLink>
-          <nav className="topnav" aria-label="Asosiy">
+          <nav className="topnav" aria-label={t('nav.main')}>
             {items.map((i) => (
               <NavLink key={i.to} to={i.to} end={i.end}>
                 {({ isActive }) => (
@@ -89,10 +90,10 @@ export function Layout() {
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>
             <Outlet />
           </PageTransition>
-          {state.status === 'loading' && <span className="sr-only">Seans tekshirilmoqda…</span>}
+          {state.status === 'loading' && <span className="sr-only">{t('nav.sessionChecking')}</span>}
         </main>
       </div>
-      <nav className="glass-bar dock" aria-label="Mobil menyu">
+      <nav className="glass-bar dock" aria-label={t('nav.mobile')}>
         {items.map((i) => (
           <NavLink key={i.to} to={i.to} end={i.end}>
             {({ isActive }) => (

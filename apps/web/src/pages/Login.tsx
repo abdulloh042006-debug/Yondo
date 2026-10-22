@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { t } from '../i18n';
 import { Field } from '../ui/form';
 
 type Step = { kind: 'phone' } | { kind: 'code'; phone: string; resendIn: number; devOtp?: string | null };
@@ -64,21 +65,21 @@ export function Login() {
   return (
     <div className="stack" style={{ maxWidth: 480, margin: '0 auto' }}>
       <div className="stack">
-        <h1>Yondo’ga kirish</h1>
-        <p className="muted">Telefon raqamingizni kiriting — SMS orqali bir martalik kod yuboramiz.</p>
-        <p className="hint"><Link to="/settings">Sozlamalar</Link>: ilova ko‘rinishi (rang mavzulari).</p>
+        <h1>{t('login.title')}</h1>
+        <p className="muted">{t('login.lead')}</p>
+        <p className="hint"><Link to="/settings">{t('settings.link')}</Link>: {t('settings.linkHint')}</p>
       </div>
       <motion.div layout className="glass pad" transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
         {step.kind === 'phone' ? (
           <form className="stack" onSubmit={send} noValidate>
             <Field
-              label="Telefon raqami"
+              label={t('login.phone')}
               type="tel"
               inputMode="tel"
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              hint="Namuna: +998 90 123 45 67"
+              hint={t('login.phoneHint')}
               error={error?.code === 'invalid_phone_number' ? error.message : undefined}
             />
             {error && error.code !== 'invalid_phone_number' && (
@@ -87,25 +88,24 @@ export function Login() {
               </p>
             )}
             <button className="btn" disabled={busy}>
-              {busy && <span className="spinner" aria-hidden="true" />}Kod yuborish
+              {busy && <span className="spinner" aria-hidden="true" />}{t('login.sendCode')}
             </button>
           </form>
         ) : (
           <form className="stack" onSubmit={confirm} noValidate>
             <p>
-              <b>{step.phone}</b> raqamiga kod yuborildi.{' '}
+              {t('login.codeSentBefore')}<b>{step.phone}</b>{t('login.codeSentAfter')}{' '}
               <button type="button" className="chip" onClick={() => setStep({ kind: 'phone' })}>
-                Raqamni o‘zgartirish
+                {t('login.changeNumber')}
               </button>
             </p>
             {step.devOtp && (
               <p className="banner" role="note">
-                Faqat ishlab chiqish muhitida: kod <b className="mono">{step.devOtp}</b>. Ishlab chiqarishda server kodni
-                qaytarmaydi.
+                {t('login.devBefore')}<b className="mono">{step.devOtp}</b>{t('login.devAfter')}
               </p>
             )}
             <Field
-              label="Tasdiqlash kodi"
+              label={t('login.code')}
               inputMode="numeric"
               autoComplete="one-time-code"
               value={code}
@@ -114,18 +114,15 @@ export function Login() {
               autoFocus
             />
             <button className="btn" disabled={busy || code.trim().length < 4}>
-              {busy && <span className="spinner" aria-hidden="true" />}Kirish
+              {busy && <span className="spinner" aria-hidden="true" />}{t('login.submit')}
             </button>
             <button type="button" className="btn ghost" disabled={busy || step.resendIn > 0} onClick={() => void send()}>
-              {step.resendIn > 0 ? `Yangi kod: ${step.resendIn} s` : 'Kodni qayta yuborish'}
+              {step.resendIn > 0 ? t('login.resendIn', { n: step.resendIn }) : t('login.resend')}
             </button>
           </form>
         )}
       </motion.div>
-      <p className="hint">
-        Davom etib, Yondo — tanishuv yoki eskort xizmati emas, balki ochiq joylarda uchrashuvlar uchun hamroh topish
-        platformasi ekanini tasdiqlaysiz.
-      </p>
+      <p className="hint">{t('login.disclaimer')}</p>
     </div>
   );
 }

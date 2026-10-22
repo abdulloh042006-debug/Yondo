@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { t } from '../i18n';
 import { formatMoney, initial } from '../lib/format';
 import { serviceLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
@@ -34,7 +35,7 @@ export function CompanionImage({ profileId, photo, name, rounded }: { profileId:
   }, [photo, profileId]);
   return (
     <div className="media" style={rounded ? { borderRadius: 'var(--r-md)' } : undefined}>
-      {url ? <img className="img-in" onLoad={(e) => e.currentTarget.classList.add('loaded')} src={url} alt={photo?.caption || `${name} rasmi`} loading="lazy" width={photo?.width} height={photo?.height} /> : <span className="initial" aria-hidden="true">{initial(name)}</span>}
+      {url ? <img className="img-in" onLoad={(e) => e.currentTarget.classList.add('loaded')} src={url} alt={photo?.caption || t('card.photoAlt', { name })} loading="lazy" width={photo?.width} height={photo?.height} /> : <span className="initial" aria-hidden="true">{initial(name)}</span>}
     </div>
   );
 }
@@ -42,7 +43,7 @@ export function CompanionImage({ profileId, photo, name, rounded }: { profileId:
 export function minPrice(card: Card): string | null {
   if (!card.services.length) return null;
   const s = card.services.reduce((a, b) => (b.price_minor < a.price_minor ? b : a));
-  return `${formatMoney(s.price_minor, s.currency)} / ${s.unit_minutes} daq`;
+  return `${formatMoney(s.price_minor, s.currency)} / ${t('common.minutesShort', { n: s.unit_minutes })}`;
 }
 
 /* -------- favourites (customers only; every change waits for the server) -------- */
@@ -76,10 +77,10 @@ export function useFavorites(onChanged?: () => void) {
         else n.add(id);
         return n;
       });
-      toast.push('ok', had ? 'Sevimlilardan olib tashlandi.' : 'Sevimlilarga qo‘shildi.');
+      toast.push('ok', had ? t('card.favRemoved') : t('card.favAdded'));
       onChanged?.();
     } catch (e) {
-      toast.push('bad', e instanceof ApiError ? e.message : 'Amal bajarilmadi.');
+      toast.push('bad', e instanceof ApiError ? e.message : t('common.actionFailed'));
     } finally {
       setPending((p) => {
         const n = new Set(p);
@@ -100,7 +101,7 @@ export function HeartButton({ id, name, fav }: { id: string; name: string; fav: 
       className="chip"
       style={{ position: 'absolute', top: 10, right: 10, width: 44, padding: 0, justifyContent: 'center', background: 'color-mix(in oklab, var(--c-surface) 70%, transparent)' }}
       aria-pressed={on}
-      aria-label={on ? `${name}ni sevimlilardan olib tashlash` : `${name}ni sevimlilarga qo‘shish`}
+      aria-label={on ? t('card.favRemove', { name }) : t('card.favAdd', { name })}
       disabled={fav.pending.has(id)}
       onClick={(e) => {
         e.preventDefault();
@@ -119,13 +120,13 @@ export function CompanionCardView({ card, fav }: { card: Card; fav: ReturnType<t
   const price = minPrice(card);
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
-      <Link to={`/c/${card.id}`} className="glass card spot" aria-label={`${card.display_name} profilini ochish`}>
+      <Link to={`/c/${card.id}`} className="glass card spot" aria-label={t('card.open', { name: card.display_name })}>
         <div style={{ position: 'relative' }}>
           <CompanionImage profileId={card.id} photo={card.photos[0]} name={card.display_name} />
           <HeartButton id={card.id} name={card.display_name} fav={fav} />
           {card.verified === true && (
             <span className="tag ok glass" style={{ position: 'absolute', left: 10, bottom: 10 }}>
-              ✓ Shaxsi tasdiqlangan
+              {t('card.verified')}
             </span>
           )}
         </div>
@@ -136,7 +137,7 @@ export function CompanionCardView({ card, fav }: { card: Card; fav: ReturnType<t
               {card.age ? `, ${card.age}` : ''}
             </h3>
             {card.rating != null && card.review_count > 0 && (
-              <span className="tag" aria-label={`Reyting ${card.rating.toFixed(1)}, ${card.review_count} ta sharh`}>
+              <span className="tag" aria-label={t('card.ratingAria', { rating: card.rating.toFixed(1), count: card.review_count })}>
                 ★ {card.rating.toFixed(1)} <span className="muted">({card.review_count})</span>
               </span>
             )}
@@ -149,7 +150,7 @@ export function CompanionCardView({ card, fav }: { card: Card; fav: ReturnType<t
               </span>
             ))}
           </div>
-          {price ? <p className="price">dan {price}</p> : <p className="hint">Narxlar hali ko‘rsatilmagan</p>}
+          {price ? <p className="price">{t('card.priceFrom', { price })}</p> : <p className="hint">{t('card.noPrices')}</p>}
         </div>
       </Link>
     </motion.div>

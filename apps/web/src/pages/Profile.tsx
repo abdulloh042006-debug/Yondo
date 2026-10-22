@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { t } from '../i18n';
 import { formatMoney } from '../lib/format';
 import { serviceLabel } from '../lib/labels';
 import { useResource } from '../lib/useResource';
@@ -22,8 +23,8 @@ export function Profile() {
   if (res.loading && !res.data) return <Loading rows={3} />;
   if (res.error?.status === 404)
     return (
-      <Empty title="Profil topilmadi" action={<Link className="btn ghost" to="/">Kashfga qaytish</Link>}>
-        Profil mavjud emas yoki hozir ommaga ko‘rinmaydi (tasdiqlanmagan, nofaol yoki yashirilgan).
+      <Empty title={t('profile.notFound')} action={<Link className="btn ghost" to="/">{t('profile.backToDiscover')}</Link>}>
+        {t('profile.notFoundBody')}
       </Empty>
     );
   if (res.error) return <ErrorState error={res.error} onRetry={res.reload} />;
@@ -32,7 +33,7 @@ export function Profile() {
 
   return (
     <div className="stack" style={{ gap: 22 }}>
-      <Link to="/" className="chip" style={{ width: 'fit-content', textDecoration: 'none' }}>← Orqaga</Link>
+      <Link to="/" className="chip" style={{ width: 'fit-content', textDecoration: 'none' }}>{t('profile.back')}</Link>
       <div className="profile-grid">
         <Reveal>
           <div className="stack">
@@ -47,7 +48,7 @@ export function Profile() {
                 ))}
               </div>
             )}
-            {c.photos.length === 0 && <p className="hint">Bu profilda hali rasm yo‘q.</p>}
+            {c.photos.length === 0 && <p className="hint">{t('profile.noPhotos')}</p>}
           </div>
         </Reveal>
 
@@ -56,40 +57,40 @@ export function Profile() {
             <div className="glass pad stack">
               <div className="row">
                 <h1>{c.display_name}</h1>
-                {c.verified === true && <span className="tag ok">✓ Shaxsi tasdiqlangan</span>}
+                {c.verified === true && <span className="tag ok">{t('card.verified')}</span>}
               </div>
               <p className="muted">
-                {[c.age ? `${c.age} yosh` : null, c.city, c.gender].filter(Boolean).join(' · ') || 'Shaxsiy ma’lumotlar ko‘rsatilmagan'}
+                {[c.age ? t('profile.ageYears', { n: c.age }) : null, c.city, c.gender].filter(Boolean).join(' · ') || t('profile.noPersonal')}
               </p>
               {c.rating != null && c.review_count > 0 ? (
-                <p><span className="tag">★ {c.rating.toFixed(1)}</span> <span className="muted">{c.review_count} ta sharh</span></p>
+                <p><span className="tag">★ {c.rating.toFixed(1)}</span> <span className="muted">{t('profile.reviews', { count: c.review_count })}</span></p>
               ) : (
-                <p className="hint">Hali sharhlar yo‘q.</p>
+                <p className="hint">{t('profile.noReviews')}</p>
               )}
-              {c.bio ? <p style={{ whiteSpace: 'pre-line' }}>{c.bio}</p> : <p className="hint">Hamroh o‘zi haqida hali yozmagan.</p>}
+              {c.bio ? <p style={{ whiteSpace: 'pre-line' }}>{c.bio}</p> : <p className="hint">{t('profile.noBio')}</p>}
             </div>
           </Reveal>
 
           <Reveal delay={0.05}>
             <div className="bento">
               <div className="glass pad stack tight">
-                <h3>Tillar</h3>
+                <h3>{t('profile.languages')}</h3>
                 <div className="row" style={{ gap: 6 }}>
-                  {c.languages.length ? c.languages.map((l) => <span key={l} className="tag">{l}</span>) : <span className="hint">Ko‘rsatilmagan</span>}
+                  {c.languages.length ? c.languages.map((l) => <span key={l} className="tag">{l}</span>) : <span className="hint">{t('profile.notSpecified')}</span>}
                 </div>
               </div>
               <div className="glass pad stack tight">
-                <h3>Qiziqishlar</h3>
+                <h3>{t('profile.interests')}</h3>
                 <div className="row" style={{ gap: 6 }}>
-                  {c.interests.length ? c.interests.map((l) => <span key={l} className="tag">{l}</span>) : <span className="hint">Ko‘rsatilmagan</span>}
+                  {c.interests.length ? c.interests.map((l) => <span key={l} className="tag">{l}</span>) : <span className="hint">{t('profile.notSpecified')}</span>}
                 </div>
               </div>
             </div>
           </Reveal>
 
           <section aria-labelledby="svc" className="stack">
-            <h2 id="svc">Xizmatlar va narxlar</h2>
-            {c.services.length === 0 && <p className="hint">Hamroh hali xizmat qo‘shmagan — bron qilib bo‘lmaydi.</p>}
+            <h2 id="svc">{t('profile.services')}</h2>
+            {c.services.length === 0 && <p className="hint">{t('profile.noServices')}</p>}
             {c.services.map((s, i) => (
               <Item key={s.id} index={i}>
                 <div className="glass pad tight spread">
@@ -97,14 +98,11 @@ export function Profile() {
                     <h3>{serviceLabel(s.service_code)}</h3>
                     {s.description && <p className="muted">{s.description}</p>}
                   </div>
-                  <p className="price">{formatMoney(s.price_minor, s.currency)} <span className="muted">/ {s.unit_minutes} daq</span></p>
+                  <p className="price">{formatMoney(s.price_minor, s.currency)} <span className="muted">/ {t('common.minutesShort', { n: s.unit_minutes })}</span></p>
                 </div>
               </Item>
             ))}
-            <p className="hint">
-              Bo‘sh vaqtlarni ko‘rish uchun kashf sahifasida vaqt bo‘yicha filtrlang; yakuniy mavjudlikni bron paytida server tekshiradi.
-              Uchrashuvlar faqat jamoat joylarida o‘tkaziladi.
-            </p>
+            <p className="hint">{t('profile.availabilityNote')}</p>
           </section>
         </div>
       </div>
@@ -112,15 +110,15 @@ export function Profile() {
       <div className="book-bar glass-bar">
         <div>
           <b>{c.display_name}</b>
-          <p className="hint">{c.services.length ? 'Bron so‘rovi hamroh tasdig‘idan keyin amal qiladi.' : 'Xizmatlar mavjud emas'}</p>
+          <p className="hint">{c.services.length ? t('profile.bookNote') : t('profile.noServicesShort')}</p>
         </div>
         <motion.div whileTap={{ scale: 0.96 }}>
           {!user ? (
-            <button className="btn" onClick={() => navigate('/login', { state: { from: `/c/${c.id}` } })}>Bron qilish</button>
+            <button className="btn" onClick={() => navigate('/login', { state: { from: `/c/${c.id}` } })}>{t('profile.book')}</button>
           ) : isCustomer ? (
-            <button className="btn" disabled={!c.services.length} onClick={() => setBooking(true)}>Bron qilish</button>
+            <button className="btn" disabled={!c.services.length} onClick={() => setBooking(true)}>{t('profile.book')}</button>
           ) : (
-            <Link className="btn ghost" to="/account">Mijoz rolini tanlang</Link>
+            <Link className="btn ghost" to="/account">{t('profile.chooseCustomer')}</Link>
           )}
         </motion.div>
       </div>
@@ -149,9 +147,9 @@ function BookingDialog({ card, open, onClose }: { card: Card; open: boolean; onC
     const problems: Record<string, string> = {};
     // The picker yields wall-clock time; Uzbekistan is UTC+5 all year, so send an explicit instant.
     const start = when ? new Date(`${when}:00+05:00`) : null;
-    if (!start || Number.isNaN(start.getTime())) problems.when = 'Boshlanish vaqtini tanlang.';
-    else if (start.getTime() < Date.now()) problems.when = 'Boshlanish vaqti o‘tib ketgan.';
-    if (place.trim().length < 3) problems.place = 'Uchrashuv joyini yozing (jamoat joyi).';
+    if (!start || Number.isNaN(start.getTime())) problems.when = t('book.errWhen');
+    else if (start.getTime() < Date.now()) problems.when = t('err.booking_start_in_past');
+    if (place.trim().length < 3) problems.place = t('book.errPlace');
     setLocal(problems);
     if (Object.keys(problems).length || !start) return;
     setBusy(true);
@@ -164,7 +162,7 @@ function BookingDialog({ card, open, onClose }: { card: Card; open: boolean; onC
         meeting_place: place.trim(),
         timezone: 'Asia/Tashkent',
       });
-      toast.push('ok', 'Bron so‘rovi yuborildi. Hamroh javobini kuting.');
+      toast.push('ok', t('book.sent'));
       onClose();
       navigate('/bookings');
     } catch (error) {
@@ -175,26 +173,25 @@ function BookingDialog({ card, open, onClose }: { card: Card; open: boolean; onC
   };
 
   return (
-    <Dialog open={open} title={`${card.display_name} — bron qilish`} onClose={busy ? () => {} : onClose}>
+    <Dialog open={open} title={t('book.title', { name: card.display_name })} onClose={busy ? () => {} : onClose}>
       <form className="stack" onSubmit={submit} noValidate>
-        <Select label="Xizmat" value={service.id} onChange={(e) => { setServiceId(e.target.value); setUnits(1); }}>
+        <Select label={t('book.service')} value={service.id} onChange={(e) => { setServiceId(e.target.value); setUnits(1); }}>
           {card.services.map((s) => (
-            <option key={s.id} value={s.id}>{serviceLabel(s.service_code)} — {formatMoney(s.price_minor, s.currency)} / {s.unit_minutes} daq</option>
+            <option key={s.id} value={s.id}>{serviceLabel(s.service_code)} — {formatMoney(s.price_minor, s.currency)} / {t('common.minutesShort', { n: s.unit_minutes })}</option>
           ))}
         </Select>
-        <Field label="Boshlanish vaqti (Toshkent vaqti)" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} error={local.when} />
-        <Select label="Davomiyligi" value={units} onChange={(e) => setUnits(Number(e.target.value))}>
-          {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{service.unit_minutes * n} daqiqa</option>)}
+        <Field label={t('book.start')} type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} error={local.when} />
+        <Select label={t('book.duration')} value={units} onChange={(e) => setUnits(Number(e.target.value))}>
+          {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{t('book.minutesLong', { n: service.unit_minutes * n })}</option>)}
         </Select>
-        <Field label="Uchrashuv joyi" value={place} maxLength={512} onChange={(e) => setPlace(e.target.value)} error={local.place} hint="Jamoat joyi: kafe, park, savdo markazi. Uy manzilini yozmang." />
+        <Field label={t('book.place')} value={place} maxLength={512} onChange={(e) => setPlace(e.target.value)} error={local.place} hint={t('book.placeHint')} />
         <p className="banner">
-          Taxminiy narx: <b>{formatMoney(estimate, service.currency)}</b>. Yakuniy narxni server hisoblaydi; to‘lov hamroh bronni qabul
-          qilgandan keyingina mumkin bo‘ladi.
+          {t('book.estimateBefore')}<b>{formatMoney(estimate, service.currency)}</b>{t('book.estimateAfter')}
         </p>
         {err && <p className="err" role="alert">{err.message}</p>}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>Bekor qilish</button>
-          <button className="btn" disabled={busy}>{busy && <span className="spinner" aria-hidden="true" />}So‘rov yuborish</button>
+          <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
+          <button className="btn" disabled={busy}>{busy && <span className="spinner" aria-hidden="true" />}{t('book.send')}</button>
         </div>
       </form>
     </Dialog>

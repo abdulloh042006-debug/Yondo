@@ -34,6 +34,21 @@ the `motion` library (spring dialogs, shared-layout nav/filter pills, scroll rev
 cursor spotlight, pointer parallax) and honours `prefers-reduced-motion` globally
 (`<MotionConfig reducedMotion="user">` + a CSS fallback).
 
+## Languages (uz / ru / en)
+
+The UI is Uzbek (Latin) by default and also available in Russian and English. Choose it in **Settings**
+(stored in `localStorage['yondo.lang']`; there is deliberately no browser-language auto-detect).
+
+* `src/i18n/uz.ts` is the source of truth; `ru.ts` and `en.ts` are typed `Record<Key, string>`, so `tsc`
+  fails if a key is missing. Russian and English are lazy chunks.
+* Use `t('area.key', { name })` (`{name}` interpolation; `{n, plural, one {# x} few {# y} other {# z}}` for
+  counts). Never hard-code UI text, and never branch on translated text — error messages are looked up by the
+  backend's stable error `code` (`err.<code>`), status/role/service labels by their codes (`lib/labels.ts`).
+* Changing language remounts the tree below the router/session/toasts (`LanguageBoundary`), so helper
+  functions that call `t()` need no subscriptions. `lib/format.ts` formats money/dates per language
+  (dates stay in Asia/Tashkent).
+* User-written text (bios, interests, notes) and backend messages are not translated.
+
 ## Security notes
 
 * Roles in the UI are a convenience only. Every privileged endpoint authorizes on the server

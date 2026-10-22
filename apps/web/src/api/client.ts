@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { messageFor } from '../lib/messages';
 import type { components } from './schema';
 
@@ -104,7 +105,7 @@ function toFieldErrors(payload: unknown): Record<string, string> {
   const errors = (payload as { errors?: { loc?: unknown[]; field?: string }[] })?.errors;
   for (const e of errors ?? []) {
     const name = e.field ?? (Array.isArray(e.loc) ? String(e.loc[e.loc.length - 1]) : '');
-    if (name && !out[name]) out[name] = 'Qiymat noto‘g‘ri yoki to‘liq emas';
+    if (name && !out[name]) out[name] = t('err.fieldInvalid');
   }
   return out;
 }

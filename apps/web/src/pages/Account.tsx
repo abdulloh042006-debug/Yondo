@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth, type User } from '../auth/AuthContext';
+import { t } from '../i18n';
 import { prettyPhone } from '../lib/format';
+import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
 import { Field } from '../ui/form';
 import { Reveal } from '../ui/motion';
@@ -27,7 +29,7 @@ function AccountView({ user }: { user: User }) {
   const [rolesBusy, setRolesBusy] = useState(false);
 
   const ageNum = age.trim() === '' ? null : Number(age);
-  const ageError = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 120) ? 'Yosh 18 dan 120 gacha bo‘lishi kerak.' : err?.fields.age;
+  const ageError = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 120) ? t('account.ageRange') : err?.fields.age;
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,7 +39,7 @@ function AccountView({ user }: { user: User }) {
     try {
       await api.put('/auth/profile', { age: ageNum, gender: gender.trim() || null, city: city.trim() || null });
       await reload();
-      toast.push('ok', 'Profil saqlandi.');
+      toast.push('ok', t('account.saved'));
     } catch (error) {
       setErr(error instanceof ApiError ? error : new ApiError(0, 'network_error'));
     } finally {
@@ -50,16 +52,16 @@ function AccountView({ user }: { user: User }) {
     const current = user.roles.filter((r) => r !== 'admin');
     const next: Role[] = current.includes(role) ? current.filter((r) => r !== role) : [...current, role];
     if (next.length === 0) {
-      toast.push('bad', 'Kamida bitta rol tanlangan bo‘lishi kerak.');
+      toast.push('bad', t('account.minRole'));
       return;
     }
     setRolesBusy(true);
     try {
       await api.put('/auth/roles', { roles: next });
       await reload();
-      toast.push('ok', 'Rollar yangilandi.');
+      toast.push('ok', t('account.rolesUpdated'));
     } catch (error) {
-      toast.push('bad', error instanceof ApiError ? error.message : 'Amal bajarilmadi.');
+      toast.push('bad', error instanceof ApiError ? error.message : t('common.actionFailed'));
     } finally {
       setRolesBusy(false);
     }
@@ -67,50 +69,47 @@ function AccountView({ user }: { user: User }) {
 
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
-      <h1>Hisobim</h1>
-      <p className="hint"><Link to="/settings">Sozlamalar</Link>: ilova ko‘rinishi (rang mavzulari).</p>
+      <h1>{t('account.title')}</h1>
+      <p className="hint"><Link to="/settings">{t('settings.link')}</Link>: {t('settings.linkHint')}</p>
       <Reveal>
         <div className="glass pad stack">
-          <h2>Kirish ma’lumotlari</h2>
+          <h2>{t('account.loginInfo')}</h2>
           <dl className="kv">
-            <dt>Telefon</dt><dd>{prettyPhone(user.phone_number)}</dd>
-            <dt>Rollar</dt><dd>{user.roles.join(', ') || '—'}</dd>
+            <dt>{t('account.phone')}</dt><dd>{prettyPhone(user.phone_number)}</dd>
+            <dt>{t('account.roles')}</dt><dd>{user.roles.map(roleLabel).join(', ') || '—'}</dd>
           </dl>
           {!user.roles.includes('admin') && (
-            <p className="hint">
-              Hisob holati (tasdiqlangan/faol) administrator tomonidan belgilanadi; hamroh profili ommaga chiqishi uchun hisob
-              faol bo‘lishi shart.
-            </p>
+            <p className="hint">{t('account.statusNote')}</p>
           )}
         </div>
       </Reveal>
       <Reveal delay={0.05}>
         <form className="glass pad stack" onSubmit={save} noValidate>
-          <h2>Shaxsiy ma’lumotlar</h2>
+          <h2>{t('account.personal')}</h2>
           <div className="bento">
-            <Field label="Yosh" inputMode="numeric" value={age} onChange={(e) => setAge(e.target.value)} error={ageError} />
-            <Field label="Jins" value={gender} maxLength={64} onChange={(e) => setGender(e.target.value)} error={err?.fields.gender} />
-            <Field label="Shahar" value={city} maxLength={128} onChange={(e) => setCity(e.target.value)} error={err?.fields.city} />
+            <Field label={t('account.age')} inputMode="numeric" value={age} onChange={(e) => setAge(e.target.value)} error={ageError} />
+            <Field label={t('account.gender')} value={gender} maxLength={64} onChange={(e) => setGender(e.target.value)} error={err?.fields.gender} />
+            <Field label={t('common.city')} value={city} maxLength={128} onChange={(e) => setCity(e.target.value)} error={err?.fields.city} />
           </div>
           {err && !Object.keys(err.fields).length && <p className="err" role="alert">{err.message}</p>}
-          <div><button className="btn" disabled={busy || !!ageError}>{busy && <span className="spinner" aria-hidden="true" />}Saqlash</button></div>
+          <div><button className="btn" disabled={busy || !!ageError}>{busy && <span className="spinner" aria-hidden="true" />}{t('common.save')}</button></div>
         </form>
       </Reveal>
       <Reveal delay={0.1}>
         <div className="glass pad stack">
-          <h2>Men kimman</h2>
-          <p className="muted">Mijoz sifatida hamroh topasiz va bron qilasiz; hamroh sifatida o‘z profilingiz va xizmatlaringizni yuritasiz.</p>
+          <h2>{t('account.whoAmI')}</h2>
+          <p className="muted">{t('account.whoAmIHint')}</p>
           <div className="row">
             {(['customer', 'companion'] as const).map((r) => (
               <button key={r} className="chip" aria-pressed={user.roles.includes(r)} disabled={rolesBusy} onClick={() => void toggleRole(r)}>
-                {r === 'customer' ? 'Mijoz' : 'Hamroh'}
+                {roleLabel(r)}
               </button>
             ))}
           </div>
-          {user.roles.includes('companion') && <Link className="btn" to="/studio" style={{ width: 'fit-content' }}>Hamroh studiyasi</Link>}
+          {user.roles.includes('companion') && <Link className="btn" to="/studio" style={{ width: 'fit-content' }}>{t('account.studio')}</Link>}
         </div>
       </Reveal>
-      <div><button className="btn ghost" onClick={() => void logout()}>Chiqish</button></div>
+      <div><button className="btn ghost" onClick={() => void logout()}>{t('account.logout')}</button></div>
     </div>
   );
 }

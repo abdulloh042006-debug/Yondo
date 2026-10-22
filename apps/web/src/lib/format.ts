@@ -1,10 +1,13 @@
+import { getLocale, getLang, t } from '../i18n';
+
 /** Money is integer tiyin (100 tiyin = 1 so'm); never floats. */
 export function formatMoney(minor: number, currency: string): string {
   const whole = Math.trunc(minor / 100);
   const frac = Math.abs(minor % 100);
   const grouped = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  const amount = frac ? `${grouped}.${String(frac).padStart(2, '0')}` : grouped;
-  return `${amount} ${currency === 'UZS' ? 'so‘m' : currency}`;
+  const sep = getLang() === 'ru' ? ',' : '.';
+  const amount = frac ? `${grouped}${sep}${String(frac).padStart(2, '0')}` : grouped;
+  return `${amount} ${currency === 'UZS' ? t('currency.UZS') : currency}`;
 }
 
 /** Parse a user-typed amount in whole so'm into tiyin without floating point. */
@@ -15,18 +18,21 @@ export function toMinor(input: string): number | null {
   return Number(m[1]) * 100 + Number((m[2] ?? '').padEnd(2, '0') || 0);
 }
 
-const dtf = new Intl.DateTimeFormat('uz-UZ', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'Asia/Tashkent',
-});
+const dtfCache = new Map<string, Intl.DateTimeFormat>();
+/** Date formatter for the current UI language; times are always shown in Tashkent time. */
+function dtf(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  let f = dtfCache.get(locale);
+  if (!f) {
+    f = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' });
+    dtfCache.set(locale, f);
+  }
+  return f;
+}
 export function formatInstant(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : `${dtf.format(d)}`;
+  return Number.isNaN(d.getTime()) ? '—' : dtf().format(d);
 }
 
 export function shortId(id: string): string {

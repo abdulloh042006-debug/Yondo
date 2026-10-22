@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { api, type Schemas } from '../api/client';
+import { t } from '../i18n';
 import { formatInstant } from '../lib/format';
-import { ACCOUNT_STATUS } from '../lib/labels';
+import { ACCOUNT_STATUS, roleLabel } from '../lib/labels';
 import { useResource } from '../lib/useResource';
 import { Dialog, Empty, ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Field, Select, TextArea } from '../ui/form';
@@ -28,27 +29,27 @@ export function Users() {
     <div className="stack" style={{ gap: 16 }}>
       <div className="glass pad row" style={{ alignItems: 'end' }}>
         <div style={{ flex: '1 1 180px' }}>
-          <Select label="Hisob holati" value={status} onChange={(e) => { setOffset(0); setStatus(e.target.value); }}>
-            <option value="">Hammasi</option>
+          <Select label={t('admin.audit.account_status')} value={status} onChange={(e) => { setOffset(0); setStatus(e.target.value); }}>
+            <option value="">{t('discovery.all')}</option>
             {Object.entries(ACCOUNT_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         </div>
         <form style={{ flex: '2 1 240px' }} className="row" onSubmit={(e) => {
           e.preventDefault();
           const v = phoneDraft.replace(/[\s()-]/g, '');
-          if (v && !/^\+?\d{4,32}$/.test(v)) return setPhoneErr('Telefon bo‘lagini raqam bilan kiriting (kamida 4 ta raqam).');
+          if (v && !/^\+?\d{4,32}$/.test(v)) return setPhoneErr(t('users.phoneErr'));
           setPhoneErr(undefined);
           setOffset(0);
           setPhone(v);
         }}>
-          <div style={{ flex: 1 }}><Field label="Telefon bo‘yicha qidirish" inputMode="tel" value={phoneDraft} onChange={(e) => setPhoneDraft(e.target.value)} error={phoneErr} hint="Raqamning bir qismi" /></div>
-          <button className="btn sm">Qidirish</button>
+          <div style={{ flex: 1 }}><Field label={t('users.phoneSearch')} inputMode="tel" value={phoneDraft} onChange={(e) => setPhoneDraft(e.target.value)} error={phoneErr} hint={t('users.phoneHint')} /></div>
+          <button className="btn sm">{t('discovery.search')}</button>
         </form>
       </div>
-      {res.loading && !res.data ? <Loading /> : res.error ? <ErrorState error={res.error} onRetry={res.reload} /> : !res.data?.length ? <Empty title="Foydalanuvchi topilmadi" /> : (
+      {res.loading && !res.data ? <Loading /> : res.error ? <ErrorState error={res.error} onRetry={res.reload} /> : !res.data?.length ? <Empty title={t('users.none')} /> : (
         <div className="glass table-wrap">
           <table className="data">
-            <thead><tr><th>ID</th><th>Telefon</th><th>Rollar</th><th>Holat</th><th>Shahar</th><th>Ro‘yxatdan o‘tgan</th><th><span className="sr-only">Amal</span></th></tr></thead>
+            <thead><tr><th>ID</th><th>{t('account.phone')}</th><th>{t('account.roles')}</th><th>{t('admin.col.status')}</th><th>{t('common.city')}</th><th>{t('users.registered')}</th><th><span className="sr-only">{t('admin.col.action')}</span></th></tr></thead>
             <tbody>
               {res.data.map((u) => {
                 const isAdmin = u.roles.includes('admin');
@@ -57,12 +58,12 @@ export function Users() {
                   <tr key={u.id}>
                     <td><Id value={u.id} /></td>
                     <td className="mono">{u.phone_masked}</td>
-                    <td>{u.roles.join(', ') || '—'}</td>
+                    <td>{u.roles.map(roleLabel).join(', ') || '—'}</td>
                     <td><StatusTag map={ACCOUNT_STATUS} value={u.account_status} /></td>
                     <td>{u.city ?? '—'}</td>
                     <td>{formatInstant(u.created_at)}</td>
                     <td>
-                      {isAdmin || self ? <span className="hint">{self ? 'Siz' : 'Admin hisobi'}</span> : <button className="btn sm ghost" onClick={() => setTarget(u)}>Holatni o‘zgartirish</button>}
+                      {isAdmin || self ? <span className="hint">{self ? t('users.you') : t('users.adminAccount')}</span> : <button className="btn sm ghost" onClick={() => setTarget(u)}>{t('users.change')}</button>}
                     </td>
                   </tr>
                 );
@@ -72,7 +73,7 @@ export function Users() {
         </div>
       )}
       {res.data && <Pager offset={offset} count={res.data.length} onChange={setOffset} />}
-      <p className="hint">Telefon raqamlari maxfiylik uchun qisman yashirilgan. Administrator hisoblariga bu yerdan ta’sir qilib bo‘lmaydi.</p>
+      <p className="hint">{t('users.note')}</p>
       {target && <StatusDialog user={target} onClose={() => setTarget(undefined)} onDone={() => { setTarget(undefined); res.reload(); }} />}
     </div>
   );
@@ -92,28 +93,28 @@ function StatusDialog({ user, onClose, onDone }: { user: UserRow; onClose: () =>
     setErr(undefined);
     try {
       await api.post(`/admin/users/${user.id}/status`, { status: next, reason: reason.trim() });
-      toast.push('ok', `Hisob holati o‘zgartirildi: ${ACCOUNT_STATUS[next]?.label ?? next}.`);
+      toast.push('ok', t('users.changed', { status: ACCOUNT_STATUS[next]?.label ?? next }));
       onDone();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : 'Kutilmagan xatolik yuz berdi.');
+      setErr(e instanceof ApiError ? e.message : t('common.unexpected'));
     } finally {
       setBusy(false);
     }
   };
   return (
-    <Dialog open title="Hisob holatini o‘zgartirish" onClose={busy ? () => {} : onClose}>
+    <Dialog open title={t('users.dialogTitle')} onClose={busy ? () => {} : onClose}>
       <div className="stack">
-        <p>Foydalanuvchi: <b className="mono">{short}</b> · {user.phone_masked} · hozirgi holat: <StatusTag map={ACCOUNT_STATUS} value={user.account_status} /></p>
-        <Select label="Yangi holat" value={next} onChange={(e) => setNext(e.target.value as Status)}>
+        <p>{t('users.userPrefix')}<b className="mono">{short}</b> · {user.phone_masked}{t('users.currentStatus')}<StatusTag map={ACCOUNT_STATUS} value={user.account_status} /></p>
+        <Select label={t('users.newStatus')} value={next} onChange={(e) => setNext(e.target.value as Status)}>
           {Object.entries(ACCOUNT_STATUS).map(([k, v]) => <option key={k} value={k} disabled={k === user.account_status}>{v.label}</option>)}
         </Select>
-        <TextArea label="Sabab (audit jurnaliga yoziladi)" value={reason} maxLength={2000} onChange={(e) => setReason(e.target.value)} hint="Kamida 8 belgi." />
-        <Field label={`Tasdiqlash uchun ID boshini kiriting: ${short}`} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
-        {next !== 'active' && <p className="banner bad">To‘xtatilgan yoki bloklangan hisob tizimga kira olmaydi va yangi amallarni bajara olmaydi.</p>}
+        <TextArea label={t('users.reason')} value={reason} maxLength={2000} onChange={(e) => setReason(e.target.value)} hint={t('users.reasonHint')} />
+        <Field label={t('users.typeId', { id: short })} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
+        {next !== 'active' && <p className="banner bad">{t('users.blockBanner')}</p>}
         {err && <p className="err" role="alert">{err}</p>}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>Bekor qilish</button>
-          <button className={`btn ${next === 'active' ? '' : 'danger'}`} disabled={!ready || busy} onClick={() => void submit()}>{busy && <span className="spinner" aria-hidden="true" />}Holatni saqlash</button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
+          <button className={`btn ${next === 'active' ? '' : 'danger'}`} disabled={!ready || busy} onClick={() => void submit()}>{busy && <span className="spinner" aria-hidden="true" />}{t('users.save')}</button>
         </div>
       </div>
     </Dialog>

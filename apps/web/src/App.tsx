@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
+import { t } from './i18n';
 import { RequireAuth } from './auth/guards';
 import { Account } from './pages/Account';
 import { Bookings } from './pages/Bookings';
@@ -30,7 +31,7 @@ export function App() {
           <Route path="account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="studio" element={<RequireAuth role="companion"><Studio /></RequireAuth>} />
           <Route path="admin/*" element={<RequireAuth role="admin"><AdminRoutes /></RequireAuth>} />
-          <Route path="*" element={<Empty title="Sahifa topilmadi" action={<Link className="btn" to="/">Bosh sahifa</Link>}>Manzil noto‘g‘ri yoki sahifa o‘chirilgan.</Empty>} />
+          <Route path="*" element={<Empty title={t('app.notFound.title')} action={<Link className="btn" to="/">{t('app.notFound.home')}</Link>}>{t('app.notFound.body')}</Empty>} />
         </Route>
       </Routes>
     </Suspense>

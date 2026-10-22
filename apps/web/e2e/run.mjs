@@ -459,6 +459,56 @@ try {
     assert(parseFloat(dur) < 0.01, `aurora animation ${dur}`);
   });
 
+  await step('language: Settings switches uz → ru → en → uz, persists on reload, sets <html lang>, translates API-backed pages', async () => {
+    try {
+      await page.goto(`${WEB}/settings`);
+      await page.getByRole('button', { name: /Русский/ }).click();
+      await page.getByRole('heading', { name: 'Настройки', level: 1 }).waitFor();
+      assert((await page.evaluate(() => document.documentElement.lang)) === 'ru', '<html lang> should be ru');
+      assert((await page.evaluate(() => document.activeElement?.textContent ?? '')).includes('Русский'), 'focus should stay on the chosen language button');
+      await page.goto(WEB); // full reload: the choice must come back from storage
+      await page.getByText('DEMO Madina').first().waitFor();
+      const ru = await page.locator('main').innerText();
+      assert(ru.includes('Найдите компаньона'), 'Russian hero expected');
+      assert(ru.includes('Личность подтверждена'), 'verified badge (from API verified=true) should be Russian');
+      assert(/сум/.test(ru), 'prices should use the Russian currency word');
+      assert(!ru.includes('Shaxsi tasdiqlangan') && !ru.includes('Hammasi'), 'no Uzbek leftovers in Russian UI');
+      await page.goto(`${WEB}/login`);
+      await page.getByLabel('Номер телефона').fill('+998');
+      await page.getByRole('button', { name: 'Отправить код' }).click();
+      await page.getByText('Неверный номер телефона').first().waitFor(); // chosen from the error code, in Russian
+      await page.goto(`${WEB}/settings`);
+      await page.getByRole('button', { name: /English/ }).click();
+      await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor();
+      await page.goto(WEB);
+      await page.getByText('DEMO Madina').first().waitFor();
+      const en = await page.locator('main').innerText();
+      assert(en.includes('Find a companion'), 'English hero expected');
+      assert(en.includes('Identity verified'), 'verified badge should be English');
+      await page.goto(`${WEB}/settings`);
+      await page.getByRole('button', { name: /O‘zbekcha/ }).click();
+      await page.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
+      assert((await page.evaluate(() => document.documentElement.lang)) === 'uz', '<html lang> should be uz again');
+    } finally {
+      await page.evaluate(() => localStorage.removeItem('yondo.lang'));
+    }
+  });
+  for (const lang of ['ru', 'en']) {
+    await step(`axe (WCAG2 A/AA serious+critical) with the UI in ${lang}: public pages`, async () => {
+      try {
+        await page.goto(`${WEB}/settings`);
+        await page.evaluate((l) => localStorage.setItem('yondo.lang', l), lang);
+        for (const path of ['/', '/login', '/settings']) {
+          await page.goto(`${WEB}${path}`);
+          await page.waitForTimeout(1700);
+          assert((await page.evaluate(() => document.documentElement.lang)) === lang, `<html lang> on ${path}`);
+          await axeScan(page, `${path} [${lang}]`);
+        }
+      } finally {
+        await page.evaluate(() => localStorage.removeItem('yondo.lang'));
+      }
+    });
+  }
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
       for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
+import { t } from '../i18n';
 import { toMinor } from '../lib/format';
 import { SERVICE_LABELS } from '../lib/labels';
 import { Empty, ErrorState } from '../ui/feedback';
@@ -33,12 +34,9 @@ export function Discovery() {
     <div className="stack" style={{ gap: 24 }}>
       <motion.section className="glass hero" onPointerMove={par.onPointerMove} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }}>
         <Orbs sx={par.sx} sy={par.sy} />
-        <span className="tag" style={{ width: 'fit-content' }}>Yondo doim yoningda</span>
-        <h1>Suhbat, sayr yoki shahar bo‘ylab hamroh toping</h1>
-        <p>
-          Tasdiqlangan profillar, aniq xizmatlar va narxlar. Uchrashuvlar faqat jamoat joylarida, xavfsizlik vositalari
-          bilan.
-        </p>
+        <span className="tag" style={{ width: 'fit-content' }}>{t('discovery.tag')}</span>
+        <h1>{t('discovery.h1')}</h1>
+        <p>{t('discovery.lead')}</p>
         <form
           className="row"
           role="search"
@@ -47,15 +45,15 @@ export function Discovery() {
             set('q', draftQ.trim());
           }}
         >
-          <label className="sr-only" htmlFor="q">Ism yoki tavsif bo‘yicha qidirish</label>
-          <input id="q" className="input" style={{ flex: '1 1 240px', maxWidth: 420 }} placeholder="Ism yoki tavsif bo‘yicha qidirish" value={draftQ} onChange={(e) => setDraftQ(e.target.value)} maxLength={128} />
-          <button className="btn">Qidirish</button>
+          <label className="sr-only" htmlFor="q">{t('discovery.searchLabel')}</label>
+          <input id="q" className="input" style={{ flex: '1 1 240px', maxWidth: 420 }} placeholder={t('discovery.searchLabel')} value={draftQ} onChange={(e) => setDraftQ(e.target.value)} maxLength={128} />
+          <button className="btn">{t('discovery.search')}</button>
         </form>
       </motion.section>
 
-      <section aria-label="Filtrlar" className="glass pad stack">
-        <div role="group" aria-label="Xizmat turi" className="row" style={{ gap: 6 }}>
-          {[['', 'Hammasi'], ...Object.entries(SERVICE_LABELS)].map(([code, label]) => {
+      <section aria-label={t('discovery.filters')} className="glass pad stack">
+        <div role="group" aria-label={t('discovery.serviceType')} className="row" style={{ gap: 6 }}>
+          {[['', t('discovery.all')], ...Object.entries(SERVICE_LABELS)].map(([code, label]) => {
             const on = (params.get('service_code') ?? '') === code;
             return (
               <button key={code} className="chip chip-wrap" style={on ? { background: 'transparent', color: 'var(--c-bg)' } : undefined} aria-pressed={on} onClick={() => set('service_code', code)}>
@@ -67,15 +65,15 @@ export function Discovery() {
         </div>
         <div className="row" style={{ alignItems: 'end' }}>
           <div style={{ flex: '1 1 160px' }} className="field">
-            <label htmlFor="city">Shahar</label>
+            <label htmlFor="city">{t('common.city')}</label>
             <input id="city" key={params.get('city') ?? ''} className="input" defaultValue={params.get('city') ?? ''} onBlur={(e) => set('city', e.target.value.trim())} onKeyDown={(e) => e.key === 'Enter' && set('city', e.currentTarget.value.trim())} maxLength={128} placeholder="Toshkent" />
           </div>
           <div style={{ flex: '1 1 140px' }} className="field">
-            <label htmlFor="lang">Til</label>
+            <label htmlFor="lang">{t('settings.language')}</label>
             <input id="lang" key={params.get('language') ?? ''} className="input" defaultValue={params.get('language') ?? ''} onBlur={(e) => set('language', e.target.value.trim())} onKeyDown={(e) => e.key === 'Enter' && set('language', e.currentTarget.value.trim())} maxLength={64} placeholder="uz, ru, en" />
           </div>
           <div style={{ flex: '1 1 160px' }} className="field">
-            <label htmlFor="price">Eng yuqori narx (so‘m)</label>
+            <label htmlFor="price">{t('discovery.maxPrice')}</label>
             <input
               id="price" key={params.get('price_max') ?? ''}
               className="input"
@@ -84,7 +82,7 @@ export function Discovery() {
               defaultValue={params.get('price_max') ?? ''}
               onBlur={(e) => {
                 const v = e.target.value.trim();
-                if (v && toMinor(v) === null) return setPriceError('Faqat raqam kiriting.');
+                if (v && toMinor(v) === null) return setPriceError(t('discovery.numbersOnly'));
                 setPriceError(undefined);
                 set('price_max', v);
               }}
@@ -93,8 +91,8 @@ export function Discovery() {
             {priceError && <span className="err" role="alert">{priceError}</span>}
           </div>
           <div style={{ flex: '1 1 140px' }}>
-            <Select label="Reyting" value={params.get('rating_min') ?? ''} onChange={(e) => set('rating_min', e.target.value)}>
-              <option value="">Istalgan</option>
+            <Select label={t('discovery.rating')} value={params.get('rating_min') ?? ''} onChange={(e) => set('rating_min', e.target.value)}>
+              <option value="">{t('discovery.anyRating')}</option>
               {[4, 3, 2].map((n) => (
                 <option key={n} value={n}>{n}+ ★</option>
               ))}
@@ -109,7 +107,7 @@ export function Discovery() {
                   {k === 'service_code' ? (SERVICE_LABELS[params.get(k)!] ?? params.get(k)) : params.get(k)} ✕
                 </button>
               ))}
-              <button className="chip" onClick={() => { setParams({}, { replace: true }); setDraftQ(''); }}>Hammasini tozalash</button>
+              <button className="chip" onClick={() => { setParams({}, { replace: true }); setDraftQ(''); }}>{t('discovery.clearAll')}</button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -157,20 +155,20 @@ function Results({ params, hasFilters, onClear }: { params: URLSearchParams; has
   };
 
   return (
-    <section aria-live="polite" aria-label="Natijalar">
+    <section aria-live="polite" aria-label={t('discovery.results')}>
       {first.loading && !first.data ? (
         <div className="grid-cards">
           {Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton" style={{ minHeight: 360 }} />)}
-          <span className="sr-only">Yuklanmoqda…</span>
+          <span className="sr-only">{t('common.loading')}…</span>
         </div>
       ) : first.error ? (
         <ErrorState error={first.error} onRetry={first.reload} />
       ) : items.length === 0 ? (
         <Empty
-          title={hasFilters ? 'Mos hamroh topilmadi' : 'Hozircha ko‘rinadigan hamroh yo‘q'}
-          action={hasFilters ? <button className="btn ghost" onClick={onClear}>Filtrlarni tozalash</button> : undefined}
+          title={hasFilters ? t('discovery.noMatch') : t('discovery.noneVisible')}
+          action={hasFilters ? <button className="btn ghost" onClick={onClear}>{t('discovery.clearFilters')}</button> : undefined}
         >
-          {hasFilters ? 'Filtrlarni o‘zgartirib ko‘ring.' : 'Profillar ariza, kontent va shaxs tekshiruvidan o‘tgandan keyingina ko‘rinadi.'}
+          {hasFilters ? t('discovery.tryChange') : t('discovery.visibleAfter')}
         </Empty>
       ) : (
         <>
@@ -185,7 +183,7 @@ function Results({ params, hasFilters, onClear }: { params: URLSearchParams; has
           {canMore && (
             <div className="row" style={{ justifyContent: 'center', marginTop: 24 }}>
               <button className="btn ghost" disabled={more} onClick={() => void loadMore()}>
-                {more && <span className="spinner" aria-hidden="true" />}Yana ko‘rsatish
+                {more && <span className="spinner" aria-hidden="true" />}{t('discovery.more')}
               </button>
             </div>
           )}

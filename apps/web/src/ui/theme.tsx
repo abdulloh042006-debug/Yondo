@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { t } from '../i18n';
 
 export const THEMES = [
-  { id: 'yondo', label: 'Yondo kunduzgi', hint: 'Oq fon · qora · sabzi rang', swatch: 'linear-gradient(135deg, #f5f2ec 50%, #111111 50%)' },
-  { id: 'yondo-tun', label: 'Yondo tungi', hint: 'Qora fon · oq · sabzi rang', swatch: 'linear-gradient(135deg, #111111 50%, #e8501a 50%)' },
-  { id: 'gul', label: 'Gul', hint: 'Iliq atirgul-bordo', swatch: '#8e3140' },
-  { id: 'rausch', label: 'Jurnal', hint: 'Yorqin atirgul-qizil', swatch: '#de1b5a' },
-  { id: 'stone', label: 'Stone', hint: 'Sokin tungi ko‘k', swatch: '#1a2b49' },
+  { id: 'yondo', get label() { return t('theme.yondo.label'); }, get hint() { return t('theme.yondo.hint'); }, swatch: 'linear-gradient(135deg, #f5f2ec 50%, #111111 50%)' },
+  { id: 'yondo-tun', get label() { return t('theme.yondo-tun.label'); }, get hint() { return t('theme.yondo-tun.hint'); }, swatch: 'linear-gradient(135deg, #111111 50%, #e8501a 50%)' },
+  { id: 'gul', label: 'Gul', get hint() { return t('theme.gul.hint'); }, swatch: '#8e3140' },
+  { id: 'rausch', label: 'Jurnal', get hint() { return t('theme.rausch.hint'); }, swatch: '#de1b5a' },
+  { id: 'stone', label: 'Stone', get hint() { return t('theme.stone.hint'); }, swatch: '#1a2b49' },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]['id'];
 const KEY = 'yondo.theme';
@@ -38,23 +39,23 @@ function setTheme(id: ThemeId) {
 export function ThemePicker() {
   const [theme, set] = useState<ThemeId>(() => (document.documentElement.dataset.theme as ThemeId) || saved());
   return (
-    <div role="group" aria-label="Mavzu" className="theme-picker">
-      {THEMES.map((t) => (
+    <div role="group" aria-label={t('settings.themeGroup')} className="theme-picker">
+      {THEMES.map((th) => (
         <button
-          key={t.id}
+          key={th.id}
           type="button"
           className="theme-opt"
-          aria-label={`${t.label} mavzusi`}
-          aria-pressed={theme === t.id}
+          aria-label={t('settings.themeAria', { label: th.label })}
+          aria-pressed={theme === th.id}
           onClick={() => {
-            setTheme(t.id);
-            set(t.id);
+            setTheme(th.id);
+            set(th.id);
           }}
         >
-          <span className="theme-dot" style={{ background: t.swatch }} aria-hidden="true" />
+          <span className="theme-dot" style={{ background: th.swatch }} aria-hidden="true" />
           <span className="stack" style={{ gap: 0, textAlign: 'left' }}>
-            <b>{t.label}</b>
-            <span className="hint">{t.hint}</span>
+            <b>{th.label}</b>
+            <span className="hint">{th.hint}</span>
           </span>
         </button>
       ))}

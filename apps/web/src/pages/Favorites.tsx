@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { t } from '../i18n';
 import { useResource } from '../lib/useResource';
 import { Empty, ErrorState, Loading } from '../ui/feedback';
 import { Item } from '../ui/motion';
@@ -10,14 +11,14 @@ export function Favorites() {
   const fav = useFavorites(res.reload);
   if (res.loading && !res.data) return <Loading />;
   if (res.error?.status === 403)
-    return <Empty title="Sevimlilar mijozlar uchun" action={<Link className="btn" to="/account">Mijoz rolini tanlash</Link>}>Sevimlilar ro‘yxati faqat mijoz roli bilan ishlaydi.</Empty>;
+    return <Empty title={t('favorites.customersOnly')} action={<Link className="btn" to="/account">{t('favorites.chooseCustomer')}</Link>}>{t('favorites.customersOnlyBody')}</Empty>;
   if (res.error) return <ErrorState error={res.error} onRetry={res.reload} />;
   const items = res.data ?? [];
   return (
     <div className="stack" style={{ gap: 20 }}>
-      <h1>Sevimlilar</h1>
+      <h1>{t('nav.favorites')}</h1>
       {items.length === 0 ? (
-        <Empty title="Sevimlilar bo‘sh" action={<Link className="btn" to="/">Kashf qilish</Link>}>Yoqqan profillardagi yurakcha tugmasini bosing.</Empty>
+        <Empty title={t('favorites.empty')} action={<Link className="btn" to="/">{t('favorites.explore')}</Link>}>{t('favorites.emptyBody')}</Empty>
       ) : (
         <div className="grid-cards">
           {items.map((c, i) => (
