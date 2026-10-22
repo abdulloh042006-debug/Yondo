@@ -43,6 +43,7 @@ injection-shaped filters rejected, admin accounts protected, acknowledgement aud
 | Companion profile: bio, languages, interests, services + prices (integer tiyin), rating only when real, verified badge only from API `verified: true`, photos via signed URLs | PASS (e2e; photo bytes served by a test double) |
 | Booking request (exactly the 5 contract fields), server refusal shown, list, accept/decline/cancel | PASS (e2e) |
 | Favorites (confirmed by server before UI changes) | PASS (e2e) |
+| Settings (`/settings`): theme choice (Gul/Jurnal/Stone) lives only here, saved per device; linked from Account and Login | PASS (e2e: persists across reload, active on other pages, absent from top bar; axe) |
 | Account: age/gender/city, role selection (customer/companion; admin cannot be self-assigned) | PASS (e2e) |
 | Companion studio: application create/edit/submit/withdraw, profile, services, photo upload/delete, availability, status & blockers, activate/deactivate | PASS (e2e for application, profile, service, photo upload, status; activate/deactivate, availability and withdraw screens are **not** browser-tested; the underlying API is covered by backend tests) |
 | Admin dashboard (real counters only) | PASS (e2e) |

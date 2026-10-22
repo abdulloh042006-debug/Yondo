@@ -417,9 +417,15 @@ try {
   });
   for (const theme of ['gul', 'rausch', 'stone']) {
     await step(`theme ${theme}: switch persists and screenshots captured`, async () => {
-      await mp.goto(WEB);
+      await mp.goto(`${WEB}/settings`);
+      await mp.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
       await mp.getByRole('button', { name: new RegExp(`${theme === 'rausch' ? 'Jurnal' : theme === 'gul' ? 'Gul' : 'Stone'} mavzusi`) }).click();
       assert((await mp.evaluate(() => document.documentElement.dataset.theme)) === theme, 'data-theme');
+      await mp.reload();
+      assert((await mp.evaluate(() => document.documentElement.dataset.theme)) === theme, 'theme must persist across reload');
+      await mp.goto(WEB);
+      assert((await mp.evaluate(() => document.documentElement.dataset.theme)) === theme, 'theme active on other pages');
+      assert((await mp.locator('.topbar [aria-label="Mavzu"]').count()) === 0, 'no theme switch in the top bar');
       await mp.getByText('DEMO Madina').first().waitFor();
       await mp.waitForTimeout(900);
       await mp.screenshot({ path: `e2e/shots/mobile-discovery-${theme}.png` });
@@ -455,7 +461,7 @@ try {
 
   for (const theme of ['gul', 'rausch', 'stone']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
-      for (const [pg, path] of [[page, '/'], [page, '/login'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
+      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);
         await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
         await pg.waitForTimeout(1700);

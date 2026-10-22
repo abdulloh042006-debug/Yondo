@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { PageTransition } from './motion';
-import { ThemeSwitch } from './theme';
 
 const Icon = ({ d }: { d: string }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -72,9 +71,6 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div style={{ marginLeft: 'auto' }} className="row">
-            <ThemeSwitch />
-          </div>
         </header>
         <main id="main" className="page" tabIndex={-1}>
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>

@@ -5,7 +5,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './ui/feedback';
+import { applySavedTheme } from './ui/theme';
 import './styles.css';
+
+applySavedTheme();
 
 // One delegated listener feeds the cursor position to every `.spot` surface (CSS does the rest).
 document.addEventListener(

@@ -7,6 +7,7 @@ import { Discovery } from './pages/Discovery';
 import { Favorites } from './pages/Favorites';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { Settings } from './pages/Settings';
 import { Empty, Loading } from './ui/feedback';
 import { Layout } from './ui/Layout';
 
@@ -23,6 +24,7 @@ export function App() {
           <Route index element={<Discovery />} />
           <Route path="c/:id" element={<Profile />} />
           <Route path="login" element={<Login />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
           <Route path="bookings" element={<RequireAuth><Bookings /></RequireAuth>} />
           <Route path="account" element={<RequireAuth><Account /></RequireAuth>} />

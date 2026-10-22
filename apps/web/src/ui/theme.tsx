@@ -1,62 +1,59 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export const THEMES = [
-  { id: 'gul', label: 'Gul', swatch: '#8e3140' },
-  { id: 'rausch', label: 'Jurnal', swatch: '#de1b5a' },
-  { id: 'stone', label: 'Stone', swatch: '#1a2b49' },
+  { id: 'gul', label: 'Gul', hint: 'Iliq atirgul-bordo', swatch: '#8e3140' },
+  { id: 'rausch', label: 'Jurnal', hint: 'Yorqin atirgul-qizil', swatch: '#de1b5a' },
+  { id: 'stone', label: 'Stone', hint: 'Sokin tungi ko‘k', swatch: '#1a2b49' },
 ] as const;
-type ThemeId = (typeof THEMES)[number]['id'];
+export type ThemeId = (typeof THEMES)[number]['id'];
 const KEY = 'yondo.theme';
 
-function initial(): ThemeId {
+function saved(): ThemeId {
   try {
-    const saved = localStorage.getItem(KEY);
-    if (THEMES.some((t) => t.id === saved)) return saved as ThemeId;
+    const value = localStorage.getItem(KEY);
+    if (THEMES.some((t) => t.id === value)) return value as ThemeId;
   } catch {
     /* storage may be unavailable */
   }
   return 'gul';
 }
 
-export function ThemeSwitch() {
-  const [theme, setTheme] = useState<ThemeId>(initial);
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem(KEY, theme);
-    } catch {
-      /* ignore */
-    }
-  }, [theme]);
+/** Applied once at start-up (main.tsx), so the chosen look is active on every page, not only in Settings. */
+export function applySavedTheme() {
+  document.documentElement.dataset.theme = saved();
+}
+
+function setTheme(id: ThemeId) {
+  document.documentElement.dataset.theme = id;
+  try {
+    localStorage.setItem(KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Theme choice. Lives only on the Settings page. */
+export function ThemePicker() {
+  const [theme, set] = useState<ThemeId>(() => (document.documentElement.dataset.theme as ThemeId) || saved());
   return (
-    <div role="group" aria-label="Mavzu" className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
+    <div role="group" aria-label="Mavzu" className="theme-picker">
       {THEMES.map((t) => (
         <button
           key={t.id}
+          type="button"
+          className="theme-opt"
           aria-label={`${t.label} mavzusi`}
           aria-pressed={theme === t.id}
-          onClick={() => setTheme(t.id)}
-          style={{
-            width: 44,
-            height: 44,
-            border: 0,
-            background: 'transparent',
-            cursor: 'pointer',
-            display: 'grid',
-            placeItems: 'center',
+          onClick={() => {
+            setTheme(t.id);
+            set(t.id);
           }}
         >
-          <span
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: '50%',
-              background: t.swatch,
-              outline: theme === t.id ? '2px solid var(--c-fg)' : '2px solid transparent',
-              outlineOffset: 3,
-              transition: 'outline-color .2s',
-            }}
-          />
+          <span className="theme-dot" style={{ background: t.swatch }} aria-hidden="true" />
+          <span className="stack" style={{ gap: 0, textAlign: 'left' }}>
+            <b>{t.label}</b>
+            <span className="hint">{t.hint}</span>
+          </span>
         </button>
       ))}
     </div>

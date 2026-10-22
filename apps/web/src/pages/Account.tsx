@@ -68,6 +68,7 @@ function AccountView({ user }: { user: User }) {
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
       <h1>Hisobim</h1>
+      <p className="hint"><Link to="/settings">Sozlamalar</Link>: ilova ko‘rinishi (rang mavzulari).</p>
       <Reveal>
         <div className="glass pad stack">
           <h2>Kirish ma’lumotlari</h2>

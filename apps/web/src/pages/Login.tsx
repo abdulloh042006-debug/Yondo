@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Field } from '../ui/form';
@@ -66,6 +66,7 @@ export function Login() {
       <div className="stack">
         <h1>Yondo’ga kirish</h1>
         <p className="muted">Telefon raqamingizni kiriting — SMS orqali bir martalik kod yuboramiz.</p>
+        <p className="hint"><Link to="/settings">Sozlamalar</Link>: ilova ko‘rinishi (rang mavzulari).</p>
       </div>
       <motion.div layout className="glass pad" transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
         {step.kind === 'phone' ? (
