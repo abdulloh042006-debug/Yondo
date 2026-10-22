@@ -151,7 +151,7 @@ const ICON = { cup: '<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d
 function chip(text, size, ic) { const d = document.createElement('div'); d.className = 'abs chip'; d.innerHTML = (ic ? `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICON[ic]}</svg>` : '<span class="dot"></span>') + text; d.style.fontSize = size + 'px'; $('chips').appendChild(d); return d; }
 const C3 = TX.v3chips.map((t, i) => chip(t, LY.chipSize + 4, ['cup', 'steps', 'talk'][i]));
 const C4 = TX.v4chips.map((t, i) => chip(t, LY.chipSize, ['globe', 'book', 'compass', 'tag'][i]));
-const CP = chip(LANG === 'ru' ? '110 000 сум' : '110 000 so‘m', LY.chipSize, 'tag'); // matches the price on the captured booking screen
+const CP = chip(LANG === 'ru' ? '150 000 сум' : '150 000 so‘m', LY.chipSize, 'tag'); // matches the Kofe price on the apps/web booking screen (capture_proto.mjs screens show 110 000)
 const CS = chip(TX.v5[2], LY.chipSize, 'cal');
 const CA = chip(TX.v6[1], LY.chipSize, 'shield');
 $('demo').style.display = 'none';

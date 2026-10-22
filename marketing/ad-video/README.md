@@ -58,3 +58,7 @@ the theme beat shows day ↔ night (`yondo-tun`). No "DEMO" labels on screen (ow
 (TV tower, domed building, minarets, windows light up) → city map with a carrot route and pins → one person and an empty
 dashed silhouette with "?"; line 2 faint ink skyline; line 6 public square (trees, bench, lamps, café awning, people);
 end card evening skyline. Chips carry icons (cup, steps, speech bubbles, globe, book, compass, tag, calendar, shield).
+
+## Current cut (S19)
+Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the theme beat); owner voices in `$AD/voice/`.
+`server_video.py` seeds a daytime availability window so the booking shows 12:00 / 14:00 Tashkent.

@@ -123,7 +123,8 @@ async def seed(app):
 
         # Make Madina bookable: availability must cover the booking.
         mh, _ = await login(client, '+998901110011')
-        start = datetime.now(UTC).replace(microsecond=0) + timedelta(days=2, hours=1)
+        # daytime slot for the video: day+2 (UTC date) 10:00 Tashkent = 05:00 UTC; availability 09:00-16:00 Tashkent
+        start = (datetime.now(UTC) + timedelta(days=2)).replace(hour=5, minute=0, second=0, microsecond=0)
         await client.post('/api/v1/companions/me/availability', headers=mh, json={
             'starts_at': (start - timedelta(hours=1)).isoformat().replace('+00:00', 'Z'),
             'ends_at': (start + timedelta(hours=6)).isoformat().replace('+00:00', 'Z'),

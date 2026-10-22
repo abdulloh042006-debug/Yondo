@@ -15,6 +15,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S19 — Promo video: owner voices + apps/web screens (2026-10-22)
+Done: owner supplied `yondo-ovozlar.zip` (uz-01..07, ru-01..07; 24 kHz mono 16-bit; the separate ru zip is byte-identical) → timeline from real durations (uz 44.9 s, ru 40.5 s). Owner: "replace only the in-app screens, keep everything else" → screens now from `apps/web` (real FastAPI on SQLite + labelled doubles) via `capture.mjs`, themes `yondo` / `yondo-tun`. Fixes: booking time is a round daytime slot (server_video seeds day+2 09:00–16:00 Tashkent; capture books 12:00 / 14:00); price chip back to 150 000 (apps/web Kofe price).
+Evidence (PASS): 20 + 20 screens captured; contact sheets checked (no DEMO, verified badges hidden); stills v/h checked (taps land on "Bron qilish"); 4 renders produced in this session (see final message for durations/LUFS).
+Not done: app formats dates as "2026 M10 24" in headless Chromium (Intl uz fallback; app behaviour, not changed); voices/videos not committed (size/owner audio).
+Commit: this entry's commit.
+
 ## S18 — Promo video: line-art illustrations per line (2026-10-22)
 Done: owner asked to illustrate each spoken line with pictures. `marketing/ad-video/page.tpl.html` gained a `#scene` layer (skyline → map+route → lonely figure + dashed "?" silhouette; faint skyline in line 2; public square in line 6; evening skyline at the end) and chip icons. Owner asked why there is no voice: voicelab.uz files were never supplied to this session (site blocked from sandbox).
 Evidence (PASS): stills checked in 9:16 and 16:9 (overlaps with text fixed); 4 files rendered: uz/ru × 9:16 (1080×1920) / 16:9 (1920×1080), 41.33 s / 40.16 s, all ebur128 I = -14.4 LUFS; delivered to owner in chat (not committed: size).

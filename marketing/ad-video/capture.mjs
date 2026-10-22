@@ -81,8 +81,9 @@ try {
     await pg.evaluate(() => window.scrollTo(0, 0));
     // booking dialog filled
     await pg.getByRole('button', { name: 'Bron qilish' }).first().click();
-    const d = new Date(Date.now() + 2 * 86400000 + (mobile ? 8 : 10) * 3600000);
-    await pg.getByLabel('Boshlanish vaqti (Toshkent vaqti)').fill(d.toISOString().slice(0, 16));
+    // server_video.py seeds Madina's availability on day+2 (UTC date) 09:00-16:00 Tashkent, with a booking at 10:00
+    const day = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+    await pg.getByLabel('Boshlanish vaqti (Toshkent vaqti)').fill(`${day}T${mobile ? '12' : '14'}:00`);
     await pg.getByLabel('Uchrashuv joyi').fill('Amir Temur xiyoboni, kafe');
     await shot(pg, `${p}-booking-dialog`);
     await pg.getByRole('button', { name: 'So‘rov yuborish' }).click();
