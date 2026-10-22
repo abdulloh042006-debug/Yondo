@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -22,13 +23,48 @@ class AdminUserRead(BaseModel):
     city: str | None
 
 
+class AdminUserListItem(AdminUserRead):
+    """List row; the phone number is masked so the queue leaks the minimum."""
+
+    phone_masked: str
+    roles: list[UserRoleType]
+    created_at: datetime
+
+
+class AdminSummary(BaseModel):
+    users: int
+    bookings: int
+    payments: int
+    open_reports: int
+
+
+class AdminBookingRead(BaseModel):
+    id: UUID
+    status: str
+    created_at: datetime
+
+
+class AdminAuditRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    admin_id: UUID
+    target_id: UUID
+    action: str
+    reason: str
+    created_at: datetime
+
+
+def mask_phone(phone: str) -> str:
+    return f'{phone[:4]}{"•" * max(len(phone) - 7, 0)}{phone[-3:]}' if len(phone) > 7 else '•••'
+
+
 class AdminAccountDecision(BaseModel):
     model_config = ConfigDict(extra='forbid')
     status: AccountStatus
     reason: str = Field(min_length=8, max_length=2000)
 
 
-@router.get('/summary')
+@router.get('/summary', response_model=AdminSummary)
 async def summary(admin: Admin, session: Session):
     return {
         'users': await session.scalar(select(func.count()).select_from(User)),
@@ -40,17 +76,77 @@ async def summary(admin: Admin, session: Session):
     }
 
 
-@router.get('/users', response_model=list[AdminUserRead])
-async def users(admin: Admin, session: Session, limit: int = Query(default=50, ge=1, le=100)):
-    return list(await session.scalars(select(User).order_by(User.created_at.desc()).limit(limit)))
-
-
-@router.get('/bookings')
-async def bookings(admin: Admin, session: Session, limit: int = Query(default=50, ge=1, le=100)):
+@router.get('/users', response_model=list[AdminUserListItem])
+async def users(
+    admin: Admin,
+    session: Session,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    account_status: AccountStatus | None = None,
+    phone: str | None = Query(default=None, min_length=4, max_length=32, pattern=r'^\+?[0-9]+$'),
+):
+    query = select(User)
+    if account_status is not None:
+        query = query.where(User.account_status == account_status)
+    if phone is not None:
+        query = query.where(User.phone_number.like(f'%{phone}%'))
     records = list(
-        await session.scalars(select(Booking).order_by(Booking.created_at.desc()).limit(limit))
+        await session.scalars(
+            query.order_by(User.created_at.desc(), User.id.desc()).offset(offset).limit(limit)
+        )
     )
-    return [{'id': str(b.id), 'status': b.status, 'created_at': b.created_at} for b in records]
+    return [
+        AdminUserListItem(
+            id=u.id,
+            account_status=u.account_status,
+            city=u.city,
+            phone_masked=mask_phone(u.phone_number),
+            roles=sorted({r.role for r in u.roles}),
+            created_at=u.created_at,
+        )
+        for u in records
+    ]
+
+
+@router.get('/bookings', response_model=list[AdminBookingRead])
+async def bookings(
+    admin: Admin,
+    session: Session,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    records = list(
+        await session.scalars(
+            select(Booking)
+            .order_by(Booking.created_at.desc(), Booking.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+    )
+    return [AdminBookingRead(id=b.id, status=b.status, created_at=b.created_at) for b in records]
+
+
+@router.get('/audit-events', response_model=list[AdminAuditRead])
+async def audit_events(
+    admin: Admin,
+    session: Session,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    target_id: UUID | None = None,
+    action_prefix: str | None = Query(default=None, max_length=32, pattern=r'^[a-z_]+:?[a-z_]*$'),
+):
+    query = select(AdminAuditEvent)
+    if target_id is not None:
+        query = query.where(AdminAuditEvent.target_id == target_id)
+    if action_prefix:
+        query = query.where(AdminAuditEvent.action.like(f'{action_prefix}%'))
+    return list(
+        await session.scalars(
+            query.order_by(AdminAuditEvent.created_at.desc(), AdminAuditEvent.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+    )
 
 
 @router.get('/reports')

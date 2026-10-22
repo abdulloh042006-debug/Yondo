@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import exists, func, select
 from sqlalchemy.exc import IntegrityError
 
+from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.dependencies import Admin, Session
 from yondo_api.safety.models import SafetyAcknowledgement, SafetyAlert, SafetyReport
@@ -181,6 +182,14 @@ async def acknowledge(
         note=clean_note,
     )
     session.add(entry)
+    session.add(
+        AdminAuditEvent(
+            admin_id=admin_id,
+            target_id=target.reported_user_id if kind == 'report' else target.creator_id,
+            action=f'safety_{kind}:acknowledge',
+            reason=clean_note,
+        )
+    )
     try:
         await session.commit()
     except IntegrityError as exc:

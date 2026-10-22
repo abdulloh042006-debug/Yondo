@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.integrations import IdentityEligibility, IdentityStatus
 from yondo_api.companions.models import (
@@ -201,6 +202,14 @@ async def review_application(
     existing.reviewed_by = reviewer.id
     existing.reviewed_at = datetime.now(UTC)
     existing.review_note = note
+    session.add(
+        AdminAuditEvent(
+            admin_id=reviewer.id,
+            target_id=existing.user_id,
+            action=f'companion_application:{decision}',
+            reason=note.strip(),
+        )
+    )
     await save(session)
     return existing
 
@@ -232,5 +241,13 @@ async def review_content(
     profile.reviewed_by = reviewer.id
     profile.reviewed_at = datetime.now(UTC)
     profile.review_note = note
+    session.add(
+        AdminAuditEvent(
+            admin_id=reviewer.id,
+            target_id=application.user_id,
+            action=f'companion_content:{decision}',
+            reason=note.strip(),
+        )
+    )
     await save(session)
     return profile

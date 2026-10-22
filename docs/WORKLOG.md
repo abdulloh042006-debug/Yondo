@@ -10,11 +10,19 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
 2. **Backend owner decisions needed:** delivery-fee configuration schema; profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
 3. **Staging:** none documented. Obtain URL, test-login method (staging has no dev OTP; no SMS provider), payment sandbox, approved fee policy (`docs/04-staging-readiness.md`). Then add a read-only real-API contract check and an adapter that swaps the mock for the real client.
-4. **Real clients:** `apps/mobile`/`apps/admin` are stubs. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
+4. **Real clients:** web + admin exist in `apps/web` (S14); `apps/mobile` is a stub. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
 5. **Quality gaps:** native Uzbek copy review; real iOS Safari/Android, Firefox/WebKit and screen-reader testing; logo symbol outlining, kerning, similarity/legal check; merch + presentation (P1/P2) not started.
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S14 — Real web app + secured admin console (apps/web) (2026-10-22)
+Done: `apps/web` (React 19/TS/Vite, Uzbek-first, glass + motion, themes Gul/Jurnal/Stone) on the REAL FastAPI backend (no Supabase): discovery, profile, OTP login, bookings, favorites, account, companion studio, admin (dashboard, applications/content moderation, safety signals, users, bookings read-only, audit log). Backend: `GET /companions/admin/applications`, `GET /admin/audit-events`, audit rows in the same transaction for application/content decisions and safety acknowledgements, masked-phone users list, typed summary/bookings. OpenAPI regenerated; CI `web` job added. Details: `docs/web-and-admin.md`.
+Not done: payments/chat/SOS creation/reviews/gift UI (NOT IMPLEMENTED, endpoints exist); studio activate/availability/withdraw not browser-tested; real-device, screen-reader, Firefox/WebKit not tested; photo bytes in e2e come from an in-memory storage double.
+Next: owner bootstraps first admin by DB insert (see docs/web-and-admin.md); wire a real identity provider + SMS; owner revokes the exposed chat token.
+Blockers: BLOCKED (push): no token in session; never use the old tokens.
+Evidence: web unit 18/18, tsc/eslint/vite build clean; Chromium e2e 41/41 (real FastAPI on SQLite, 3 labelled doubles; axe A/AA in 3 themes); backend SQLite 204 passed + 8 skipped; PostgreSQL 16 full pytest 212 passed; ruff clean; openapi --check PASS.
+Commit: see `git log -1 -- docs/WORKLOG.md`.
+
 ## S13 — S12 verified by execution (2026-10-20)
 Done: before any change, HEAD == origin/design/prototype == d8ad0a6; 87015d8, 2bf4e73, d8ad0a6 present (logic.js 503 copy, run.js test, WORKLOG). Ran the S12 "Next" tests. No failures, so no source change.
 Evidence (PASS):
