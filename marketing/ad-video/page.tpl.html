@@ -31,6 +31,7 @@ html,body{margin:0;background:var(--ink);overflow:hidden}
 .bscreen{position:relative;width:100%;overflow:hidden}
 .chip{padding:.5em 1em;border-radius:999px;background:rgba(255,255,255,.62);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 12px 30px -10px rgba(17,17,17,.25),inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(17,17,17,.06);font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:.5em}
 .chip .dot{width:.55em;height:.55em;border-radius:50%;background:var(--acc)}
+.chip .ic{width:1.2em;height:1.2em;color:var(--acc);flex:none}
 #sub{left:50%;width:max-content;padding:.42em .9em;border-radius:18px;background:rgba(17,17,17,.78);color:#fff;font-weight:500;text-align:center;line-height:1.32;backdrop-filter:blur(8px)}
 #tap{border-radius:50%;border:4px solid rgba(255,255,255,.95);background:rgba(232,80,26,.25);width:90px;height:90px;margin:-45px 0 0 -45px;box-shadow:0 0 0 2px rgba(232,80,26,.6)}
 #demo{padding:.35em .8em;border-radius:999px;background:rgba(17,17,17,.82);color:#f5f2ec;font-weight:800;letter-spacing:.08em;font-size:22px}
@@ -52,6 +53,7 @@ svg{overflow:visible}
   <div id="pin" class="abs"></div>
   <div id="demo" class="abs"></div>
   <div id="ink" class="abs"></div>
+  <svg id="scene" class="abs" style="inset:0;width:100%;height:100%"></svg>
   <svg id="lines" class="abs" style="inset:0;width:100%;height:100%"></svg>
   <div id="kinwrap"></div>
   <div id="logo" class="abs"></div>
@@ -145,18 +147,131 @@ const kinSize = VERT ? 112 : 128;
 const K1 = mkKin(TX.v1, kinSize, '#F5F2EC');
 const K2 = mkKin(TX.v2, kinSize * .86, '#111');
 const K6 = mkKin([TX.v6[0]], VERT ? 86 : 96, '#111');
-function chip(text, size) { const d = document.createElement('div'); d.className = 'abs chip'; d.innerHTML = `<span class="dot"></span>${text}`; d.style.fontSize = size + 'px'; $('chips').appendChild(d); return d; }
-const C3 = TX.v3chips.map((t) => chip(t, LY.chipSize + 4));
-const C4 = TX.v4chips.map((t) => chip(t, LY.chipSize));
-const CP = chip(LANG === 'ru' ? '110 000 сум' : '110 000 so‘m', LY.chipSize); // matches the price on the captured booking screen
-const CS = chip('✓ ' + TX.v5[2], LY.chipSize);
-const CA = chip('✓ ' + TX.v6[1], LY.chipSize);
+const ICON = { cup: '<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4"/>', steps: '<path d="M7 21c-2 0-3-2-2.5-4.5S6 12 8 12s2.5 2 2 4.5S9 21 7 21z"/><path d="M16 12c-2 0-2.5-2-2-4.5S15.5 3 17.5 3 20 5 19.5 7.5 18 12 16 12z"/>', talk: '<path d="M3 4h11v8H8l-3 3v-3H3z"/><path d="M10 14v2h6l3 3v-3h2V8h-4"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.5 3.5 3.5 14.5 0 18M12 3c-3.5 3.5-3.5 14.5 0 18"/>', book: '<path d="M3 5c3-1 6-1 9 1v14c-3-2-6-2-9-1z"/><path d="M21 5c-3-1-6-1-9 1v14c3-2 6-2 9-1z"/>', compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>', tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>', cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>' };
+function chip(text, size, ic) { const d = document.createElement('div'); d.className = 'abs chip'; d.innerHTML = (ic ? `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICON[ic]}</svg>` : '<span class="dot"></span>') + text; d.style.fontSize = size + 'px'; $('chips').appendChild(d); return d; }
+const C3 = TX.v3chips.map((t, i) => chip(t, LY.chipSize + 4, ['cup', 'steps', 'talk'][i]));
+const C4 = TX.v4chips.map((t, i) => chip(t, LY.chipSize, ['globe', 'book', 'compass', 'tag'][i]));
+const CP = chip(LANG === 'ru' ? '110 000 сум' : '110 000 so‘m', LY.chipSize, 'tag'); // matches the price on the captured booking screen
+const CS = chip(TX.v5[2], LY.chipSize, 'cal');
+const CA = chip(TX.v6[1], LY.chipSize, 'shield');
 $('demo').style.display = 'none';
 $('pin').innerHTML = `<svg viewBox="0 0 48 64" width="${VERT ? 120 : 110}"><path d="M24 2C12 2 3 11 3 23c0 16 21 38 21 38s21-22 21-38C45 11 36 2 24 2z" fill="#111"/><circle cx="24" cy="23" r="8" fill="#E8501A"/></svg>`;
 // end texts
 $('endtxt').innerHTML = `<div id="e1" class="abs kin" style="font-size:${VERT ? 104 : 96}px;color:#F5F2EC"></div><div id="e2" class="abs" ><span id="endpill" style="font-size:${VERT ? 46 : 40}px"></span></div><div id="e3" class="abs" style="font:500 ${VERT ? 26 : 22}px MR;color:rgba(245,242,236,.62)"></div>`;
 $('e1').textContent = TX.end1; $('endpill').textContent = TX.end2; $('e3').textContent = '';
 const sub = $('sub'); sub.style.fontSize = LY.sub.size + 'px'; sub.style.maxWidth = LY.sub.max + 'px';
+
+/* ---------- illustrations: line art in the brand palette only (ink / paper / carrot), drawn on with stroke-dashoffset ---------- */
+const scene = $('scene');
+const NS = 'http://www.w3.org/2000/svg';
+const UM = Math.min(W, H) / 1080;
+function sv(tag, at, parent) { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); (parent || scene).appendChild(e); return e; }
+function grp(parent) { return sv('g', {}, parent); }
+let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+function mkP(g, lines, color) { return (d, w = 4, extra = {}) => { const p = sv('path', Object.assign({ d, fill: 'none', stroke: color, 'stroke-width': w * UM, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1 }, extra), g); lines.push(p); return p; }; }
+function orderLines(lines) { lines.forEach((p) => { const b = p.getBBox(); p._x = b.x + b.width / 2; }); }
+function drawSet(lines, k, span = .55) {
+  for (const p of lines) { const off = clamp((p._x || 0) / W) * (1 - span); const l = eo(clamp((k - off) / span)); p.style.strokeDasharray = 1; p.style.strokeDashoffset = 1 - l; }
+}
+function popSet(els, k, from = .45, to = .95) { els.forEach((e, i) => { const a = from + (to - from) * (i / Math.max(1, els.length)); const x = clamp((k - a) / .08); e.setAttribute('opacity', x); }); }
+
+function person(g, lines, x, y, s, color, w = 6) {
+  const P = mkP(g, lines, color);
+  P(`M${x - 28 * s} ${y - 150 * s}a${28 * s} ${28 * s} 0 1 1 ${56 * s} 0a${28 * s} ${28 * s} 0 1 1 ${-56 * s} 0`, w);
+  P(`M${x - 55 * s} ${y}V${y - 55 * s}Q${x - 55 * s} ${y - 106 * s} ${x} ${y - 106 * s}Q${x + 55 * s} ${y - 106 * s} ${x + 55 * s} ${y - 55 * s}V${y}`, w);
+}
+function skyline(color, baseY, hMax, sd) {
+  seed = sd; const g = grp(); const lines = [], wins = []; const P = mkP(g, lines, color);
+  const tower = W * .76, dome = W * .22; let x = -20;
+  while (x < W + 20) {
+    const bw = (60 + rnd() * 90) * UM, bh = hMax * (.25 + rnd() * .6);
+    if (Math.abs(x + bw / 2 - tower) < 80 * UM || Math.abs(x + bw / 2 - dome) < 150 * UM) { x += 40 * UM; continue; }
+    const top = baseY - bh; P(`M${x} ${baseY}V${top}H${x + bw}V${baseY}`);
+    if (bw > 70 * UM) for (let wy = top + 18 * UM; wy < baseY - 26 * UM; wy += 34 * UM) for (let wx = x + 14 * UM; wx < x + bw - 20 * UM; wx += 26 * UM) if (rnd() < .3 && wins.length < 60) wins.push(sv('rect', { x: wx, y: wy, width: 10 * UM, height: 14 * UM, rx: 2 * UM, fill: '#E8501A', opacity: 0 }, g));
+    x += bw + (8 + rnd() * 14) * UM;
+  }
+  const th = hMax * 1.75;
+  P(`M${tower - 30 * UM} ${baseY}L${tower - 6 * UM} ${baseY - th * .55}V${baseY - th * .9}M${tower + 30 * UM} ${baseY}L${tower + 6 * UM} ${baseY - th * .55}V${baseY - th * .9}M${tower} ${baseY - th * .9}V${baseY - th}`);
+  P(`M${tower - 26 * UM} ${baseY - th * .6}h${52 * UM}v${-20 * UM}h${-52 * UM}zM${tower - 17 * UM} ${baseY - th * .8}h${34 * UM}v${-14 * UM}h${-34 * UM}z`);
+  wins.push(sv('circle', { cx: tower, cy: baseY - th, r: 7 * UM, fill: '#E8501A', opacity: 0 }, g));
+  const dr = 66 * UM, dy = baseY - hMax * .42;
+  P(`M${dome - dr * 1.15} ${baseY}V${dy}H${dome + dr * 1.15}V${baseY}M${dome - 22 * UM} ${baseY}v${-40 * UM}a${22 * UM} ${22 * UM} 0 0 1 ${44 * UM} 0v${40 * UM}`);
+  P(`M${dome - dr} ${dy}A${dr} ${dr * 1.05} 0 0 1 ${dome + dr} ${dy}M${dome} ${dy - dr * 1.05}v${-24 * UM}`);
+  for (const s of [-1, 1]) { const mx = dome + s * dr * 1.7; P(`M${mx - 10 * UM} ${baseY}V${baseY - hMax * 1.05}h${20 * UM}V${baseY}M${mx - 14 * UM} ${baseY - hMax * 1.05}l${14 * UM} ${-34 * UM}l${14 * UM} ${34 * UM}`); }
+  P(`M-40 ${baseY}H${W + 40}`, 3);
+  orderLines(lines); return { g, lines, wins };
+}
+function cityMap(color) {
+  const g = grp(); const lines = [], route = [], pins = []; const P = mkP(g, lines, color);
+  for (let i = 0; i < 8; i++) { const y = H * (.06 + .125 * i); P(`M-40 ${y}C${W * .3} ${y + 40 * UM * Math.sin(i * 1.7)} ${W * .6} ${y - 50 * UM * Math.cos(i)} ${W + 40} ${y + 20 * UM}`, 3); }
+  const nx = VERT ? 6 : 9; for (let i = 0; i < nx; i++) { const x = W * (.06 + (.9 / (nx - 1)) * i); P(`M${x} -40C${x + 60 * UM} ${H * .3} ${x - 50 * UM} ${H * .6} ${x + 30 * UM} ${H + 40}`, 3); }
+  P(`M-40 ${H * .84}C${W * .25} ${H * .78} ${W * .5} ${H * .92} ${W + 40} ${H * .8}`, 14, { opacity: .5 });
+  orderLines(lines);
+  const pts = (VERT ? [[.14, .2], [.34, .27], [.5, .16], [.74, .3], [.6, .64], [.84, .74]] : [[.1, .22], [.28, .3], [.44, .16], [.66, .28], [.6, .72], [.88, .66]]).map(([a, b]) => [W * a, H * b]);
+  let d = `M${pts[0][0]} ${pts[0][1]}`; for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; d += `Q${(x0 + x1) / 2 + 40 * UM} ${(y0 + y1) / 2 - 60 * UM} ${x1} ${y1}`; }
+  route.push(sv('path', { d, fill: 'none', stroke: '#E8501A', 'stroke-width': 11 * UM, 'stroke-linecap': 'round', pathLength: 1 }, g));
+  for (const [x, y] of pts) { const pg = sv('g', { opacity: 0 }, g); sv('path', { d: `M${x} ${y}c-14 -16 -22 -26 -22 -38a22 22 0 1 1 44 0c0 12 -8 22 -22 38z`, fill: '#E8501A', transform: `translate(0 0)` }, pg); sv('circle', { cx: x, cy: y - 38, r: 7, fill: '#111' }, pg); pins.push(pg); }
+  return { g, lines, route, pins };
+}
+function lonely(color) {
+  const g = grp(); const lines = []; const s = VERT ? 1.5 : 1.3, fy = VERT ? H * .75 : H * .84;
+  person(g, lines, W / 2 - 110 * s, fy, s, color);
+  const gd = grp(g); const dl = []; person(gd, dl, W / 2 + 110 * s, fy, s, '#E8501A', 5);
+  dl.forEach((p) => { p.setAttribute('stroke-dasharray', '0.035 0.03'); p.removeAttribute('pathLength'); p.setAttribute('pathLength', 1); });
+  const qm = sv('text', { x: W / 2 + 205 * s, y: fy - 118 * s, 'text-anchor': 'middle', 'font-family': 'SG,MR,sans-serif', 'font-weight': 700, 'font-size': 110 * s, fill: '#E8501A' }, g); qm.textContent = '?';
+  orderLines(lines); return { g, lines, gd, qm };
+}
+function square(color, gy, s) {
+  const g = grp(); const lines = [], pops = []; const P = mkP(g, lines, color);
+  P(`M-40 ${gy}H${W + 40}`, 3);
+  const trees = VERT ? [.08, .3, .7, .93] : [.06, .2, .8, .94];
+  for (const tx of trees) { const x = W * tx, r = 52 * s; P(`M${x} ${gy}V${gy - 95 * s}`, 5); P(`M${x - r} ${gy - 95 * s - r}a${r} ${r} 0 1 1 ${2 * r} 0a${r} ${r} 0 1 1 ${-2 * r} 0`, 5); }
+  for (const lx of (VERT ? [.19, .81] : [.13, .87])) { const x = W * lx; P(`M${x} ${gy}V${gy - 175 * s}q0 -22 26 -22`, 4); pops.push(sv('circle', { cx: x + 26 * s, cy: gy - 190 * s, r: 9 * s, fill: '#E8501A', opacity: 0 }, g)); }
+  const bx = W * (VERT ? .19 : .28); P(`M${bx - 70 * s} ${gy - 38 * s}h${140 * s}M${bx - 70 * s} ${gy - 60 * s}h${140 * s}M${bx - 56 * s} ${gy}v${-38 * s}M${bx + 56 * s} ${gy}v${-38 * s}`, 4);
+  // cafe awning
+  const cx = W * (VERT ? .5 : .62), cw = 150 * s;
+  P(`M${cx - cw} ${gy}V${gy - 130 * s}M${cx + cw} ${gy}V${gy - 130 * s}M${cx - cw - 14 * s} ${gy - 130 * s}H${cx + cw + 14 * s}l${-20 * s} ${-50 * s}H${cx - cw + 6 * s}z`, 4);
+  let sc = `M${cx - cw - 14 * s} ${gy - 130 * s}`; for (let i = 0; i < 6; i++) sc += `q${(cw * 2 + 28 * s) / 12} ${24 * s} ${(cw * 2 + 28 * s) / 6} 0`; P(sc, 4, { stroke: '#E8501A' });
+  const ps = s * .62;
+  person(g, lines, W * (VERT ? .4 : .44), gy, ps, color, 5); person(g, lines, W * (VERT ? .6 : .5), gy, ps, '#E8501A', 5);
+  person(g, lines, W * (VERT ? .76 : .72), gy, ps * .8, color, 4); person(g, lines, W * (VERT ? .86 : .76), gy, ps * .8, color, 4);
+  orderLines(lines); return { g, lines, pops };
+}
+
+const SKY1 = skyline('#F5F2EC', VERT ? H * .97 : H * .97, VERT ? H * .21 : H * .25, 11);
+const MAP1 = cityMap('#F5F2EC');
+const LON = lonely('#F5F2EC');
+const SKY2 = skyline('#111111', VERT ? H * .95 : H * .97, VERT ? H * .14 : H * .2, 23);
+const SQ = square('#111111', VERT ? H * .75 : H * .87, VERT ? 1.3 : .85);
+const SKYE = skyline('#F5F2EC', VERT ? H * .98 : H * .985, VERT ? H * .12 : H * .13, 37);
+
+function sceneRender(t) {
+  const v2 = V[1], v6 = V[5]; const [a1, a2, a3] = TL.p1;
+  const drift = (g, k) => { g.style.transform = `translate(${-t * 10 * k}px,0)`; };
+  // "Yangi shahar." skyline; dims while the map plays, stays behind the figures
+  const sk = lin(t, a1 - .2, a1 + 1.0);
+  SKY1.g.style.opacity = inOut(t, a1 - .25, v2.s - .15, .3, .35) * (1 - .45 * eo(lin(t, a2 - .15, a2 + .25))) * .95;
+  drawSet(SKY1.lines, sk); popSet(SKY1.wins, sk, .55, .98); drift(SKY1.g, .6);
+  // "Rejangiz bor." city map + route drawing + pins
+  const mv = inOut(t, a2 - .2, a3 + .1, .3, .3); MAP1.g.style.opacity = mv * .75;
+  drawSet(MAP1.lines, lin(t, a2 - .2, a2 + .7), .7);
+  const rk = lin(t, a2, a2 + 1.0); MAP1.route.forEach((p) => { p.style.strokeDasharray = 1; p.style.strokeDashoffset = 1 - eio(rk); });
+  popSet(MAP1.pins, rk, .05, 1);
+  // "Hamroh-chi?" one person + an empty dashed silhouette with a question mark
+  const lv = inOut(t, a3 - .15, v2.s - .1, .3, .3); LON.g.style.opacity = lv;
+  drawSet(LON.lines, lin(t, a3 - .15, a3 + .45), .9);
+  LON.gd.style.opacity = eo(lin(t, a3 + .15, a3 + .55)) * (.75 + .25 * Math.sin(t * 6));
+  const qk = lin(t, a3 + .3, a3 + .7); LON.qm.style.opacity = qk; LON.qm.setAttribute('transform', `translate(0 ${-20 * Math.sin(t * 3)})`);
+  // "Shaharni ko'rmoqchiman…" faint ink skyline behind the wandering lines
+  const s2k = lin(t, v2.s - .1, v2.s + 1.4); SKY2.g.style.opacity = inOut(t, v2.s - .1, L + .1, .4, .3) * .22;
+  drawSet(SKY2.lines, s2k); popSet(SKY2.wins, s2k, .6, 1); drift(SKY2.g, .8);
+  // "Faqat jamoat joylarida" public square under the pin
+  const s6 = inOut(t, v6.s - .15, TL.p6[1] - .05, .45, .35); SQ.g.style.opacity = s6;
+  const qd = lin(t, v6.s - .1, v6.s + 1.0); drawSet(SQ.lines, qd, .6); popSet(SQ.pops, qd, .7, .9);
+  // end: evening city on ink, windows light up
+  const ek = lin(t, E + .4, E + 1.8); SKYE.g.style.opacity = t > E ? eo(lin(t, E + .3, E + .9)) * .7 : 0;
+  drawSet(SKYE.lines, ek); popSet(SKYE.wins, lin(t, E + 1.2, E + 3.2), 0, 1); drift(SKYE.g, .4);
+}
 
 function centerX(el) { return (W - el.offsetWidth) / 2; }
 
@@ -384,6 +499,7 @@ function render(t) {
   css(e2, { x: centerX(e2), y: (VERT ? H * .36 + LH + 290 : H * .3 + LH + 230), s: t >= TL.p7[2] - .05 ? back(k2) : 0, o: k2 > 0 ? 1 : 0 });
   css(e3, { x: centerX(e3), y: VERT ? H - 300 : H - 110, o: eo(lin(t, TL.p7[2] + .2, TL.p7[2] + .7)) * .9 });
 
+  sceneRender(t);
   /* --- subtitles --- */
   let st = '', sk = 0;
   V.forEach((v, i) => { if (i < 6 && t >= v.s - .1 && t < v.e + .25) { st = TX.sub[i]; sk = inOut(t, v.s - .1, v.e + .25, .2, .2); } });

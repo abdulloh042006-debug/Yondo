@@ -52,3 +52,9 @@ the theme beat shows day ↔ night (`yondo-tun`). No "DEMO" labels on screen (ow
 - Draft mode: if `voice/<lang>-0N.wav` is missing, `build_timeline.py` estimates the line length from the text (~13 chars/s) and
   `audio.py` mixes music + SFX only. Drop the 14 voicelab.uz files into `$AD/voice/` and re-run steps 2–6 for the final cut.
 - All scripts read the working folder from the `AD` environment variable.
+
+## Illustrations (S16, owner request 2026-10-22: "show the words as pictures")
+`page.tpl.html` has a `#scene` SVG layer with line-art drawn on per line (brand palette only): line 1 Tashkent skyline
+(TV tower, domed building, minarets, windows light up) → city map with a carrot route and pins → one person and an empty
+dashed silhouette with "?"; line 2 faint ink skyline; line 6 public square (trees, bench, lamps, café awning, people);
+end card evening skyline. Chips carry icons (cup, steps, speech bubbles, globe, book, compass, tag, calendar, shield).
