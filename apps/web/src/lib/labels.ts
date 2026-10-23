@@ -22,13 +22,15 @@ export const serviceLabel = (code: string): string => SERVICE_LABELS[code] ?? co
 
 export const APPLICATION_STATUS = statusMap('status.application', { draft: '', submitted: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '' });
 export const CONTENT_STATUS = statusMap('status.content', { draft: '', pending: 'warn', approved: 'ok', rejected: 'bad' });
-export const ACCOUNT_STATUS = statusMap('status.account', { active: 'ok', verification_pending: 'warn', restricted: 'warn', suspended: 'bad', banned: 'bad' });
+export const ACCOUNT_STATUS = statusMap('status.account', { active: 'ok', verification_pending: 'warn', restricted: 'warn', suspended: 'bad', banned: 'bad', deleted: '' });
 export const BOOKING_STATUS = statusMap('status.booking', {
   pending: 'warn', accepted: 'ok', confirmed: 'ok', active: 'ok', completed: 'ok', cancelled: 'bad', 'no-show': 'bad', disputed: 'bad',
 });
 export const IDENTITY_STATUS = lazyMap('status.identity', ['verified', 'pending', 'rejected', 'unknown']);
 export const BLOCKERS = lazyMap('blocker', ['application_not_approved', 'content_not_approved', 'account_not_active', 'companion_role_required', 'identity_not_verified']);
 export const REPORT_CATEGORY = lazyMap('report', ['harassment', 'inappropriate_request', 'fake_profile', 'fraud', 'unsafe_behavior', 'no_show', 'payment_issue', 'other']);
+export const SUPPORT_STATUS = statusMap('help.support.status', { open: 'warn', answered: 'ok', closed: '' });
+export const DELETION_STATUS = statusMap('deletion.status', { pending: 'warn', cancelled: '', completed: 'ok' });
 /** Status of a report as its author sees it (`SafetyReport.status`: open → in_review). */
 export const REPORT_STATUS = statusMap('help.status', { open: 'warn', in_review: 'ok' });
 /** Role code → label; unknown codes fall back to the code itself. */

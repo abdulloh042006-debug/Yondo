@@ -7,6 +7,9 @@ import redis.asyncio as redis
 from anyio import CapacityLimiter
 from fastapi import FastAPI
 
+from yondo_api.account.admin import router as account_admin_router
+from yondo_api.account.router import legal_router
+from yondo_api.account.router import router as account_router
 from yondo_api.admin.router import router as admin_router
 from yondo_api.api.errors import install_exception_handlers
 from yondo_api.api.health import DatabaseHealthCheck, RedisHealthCheck, public_router
@@ -128,6 +131,9 @@ def create_application(
         admin_router,
         safety_router,
         safety_admin_router,
+        account_router,
+        account_admin_router,
+        legal_router,
         reviews_router,
         meetings_router,
     ):

@@ -828,6 +828,61 @@ textarea.input {
   }
 }
 
+/* ---------- consent, legal documents, account deletion ---------- */
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.consent input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--c-fg);
+}
+.consent-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-left: 34px;
+}
+.consent-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.legal-doc h1 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+.legal-doc h2 {
+  margin-top: 28px;
+  font-size: 1.25rem;
+}
+.legal-doc ul {
+  padding-left: 1.2em;
+  display: grid;
+  gap: 6px;
+}
+.legal-doc p,
+.legal-doc li {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.legal-doc h1 {
+  margin: 0 0 14px;
+}
+.legal-doc p,
+.legal-doc ul {
+  margin: 0 0 12px;
+}
+.danger-zone {
+  border-left: 4px solid var(--bad);
+  scroll-margin-top: 96px;
+}
+
 /* ---------- admin ---------- */
 .admin-layout {
   display: grid;

@@ -63,7 +63,7 @@ export function Users() {
                     <td>{u.city ?? '—'}</td>
                     <td>{formatInstant(u.created_at)}</td>
                     <td>
-                      {isAdmin || self ? <span className="hint">{self ? t('users.you') : t('users.adminAccount')}</span> : <button className="btn sm ghost" onClick={() => setTarget(u)}>{t('users.change')}</button>}
+                      {u.account_status === 'deleted' ? <span className="hint">{t('users.deletedAccount')}</span> : isAdmin || self ? <span className="hint">{self ? t('users.you') : t('users.adminAccount')}</span> : <button className="btn sm ghost" onClick={() => setTarget(u)}>{t('users.change')}</button>}
                     </td>
                   </tr>
                 );
@@ -106,7 +106,7 @@ function StatusDialog({ user, onClose, onDone }: { user: UserRow; onClose: () =>
       <div className="stack">
         <p>{t('users.userPrefix')}<b className="mono">{short}</b> · {user.phone_masked}{t('users.currentStatus')}<StatusTag map={ACCOUNT_STATUS} value={user.account_status} /></p>
         <Select label={t('users.newStatus')} value={next} onChange={(e) => setNext(e.target.value as Status)}>
-          {Object.entries(ACCOUNT_STATUS).map(([k, v]) => <option key={k} value={k} disabled={k === user.account_status}>{v.label}</option>)}
+          {Object.entries(ACCOUNT_STATUS).filter(([k]) => k !== 'deleted').map(([k, v]) => <option key={k} value={k} disabled={k === user.account_status}>{v.label}</option>)}
         </Select>
         <TextArea label={t('users.reason')} value={reason} maxLength={2000} onChange={(e) => setReason(e.target.value)} hint={t('users.reasonHint')} />
         <Field label={t('users.typeId', { id: short })} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />

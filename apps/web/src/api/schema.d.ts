@@ -4,6 +4,80 @@
  */
 
 export interface paths {
+    "/api/v1/account/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consent State */
+        get: operations["consent_state_api_v1_account_consents_get"];
+        put?: never;
+        /** Accept Document */
+        post: operations["accept_document_api_v1_account_consents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deletion State */
+        get: operations["deletion_state_api_v1_account_deletion_get"];
+        put?: never;
+        /** Request Deletion */
+        post: operations["request_deletion_api_v1_account_deletion_post"];
+        /** Cancel Deletion */
+        delete: operations["cancel_deletion_api_v1_account_deletion_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account-deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Deletions */
+        get: operations["list_deletions_api_v1_admin_account_deletions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account-deletions/process-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Process Due
+         * @description Run the erasure job now (normally daily: `python -m yondo_api.account.jobs`).
+         */
+        post: operations["process_due_api_v1_admin_account_deletions_process_due_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/audit-events": {
         parameters: {
             query?: never;
@@ -185,6 +259,40 @@ export interface paths {
         get: operations["summary_api_v1_admin_summary_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/support/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Support Requests */
+        get: operations["list_support_requests_api_v1_admin_support_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/support/requests/{request_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply Support Request */
+        post: operations["reply_support_request_api_v1_admin_support_requests__request_id__reply_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1437,6 +1545,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/legal/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Legal Versions */
+        get: operations["legal_versions_api_v1_legal_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meetings/bookings/{booking_id}": {
         parameters: {
             query?: never;
@@ -1731,6 +1856,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/support/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Own Support Requests */
+        get: operations["own_support_requests_api_v1_support_requests_get"];
+        put?: never;
+        /** Create Support Request */
+        post: operations["create_support_request_api_v1_support_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vendor/earnings": {
         parameters: {
             query?: never;
@@ -1841,7 +1984,7 @@ export interface components {
          * AccountStatus
          * @enum {string}
          */
-        AccountStatus: "active" | "verification_pending" | "restricted" | "suspended" | "banned";
+        AccountStatus: "active" | "verification_pending" | "restricted" | "suspended" | "banned" | "deleted";
         /** AcknowledgeWrite */
         AcknowledgeWrite: {
             /** Note */
@@ -1990,6 +2133,36 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** AdminDeletionRead */
+        AdminDeletionRead: {
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "cancelled" | "completed";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** AdminReportRead */
         AdminReportRead: {
             /** Acknowledged */
@@ -2033,6 +2206,40 @@ export interface components {
             payments: number;
             /** Users */
             users: number;
+        };
+        /** AdminSupportRead */
+        AdminSupportRead: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "account" | "booking" | "payment" | "safety" | "technical" | "other";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Message */
+            message: string;
+            /** Replied At */
+            replied_at: string | null;
+            /** Reply */
+            reply: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "answered" | "closed";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /**
          * AdminUserListItem
@@ -2382,6 +2589,41 @@ export interface components {
             /** Publicly Active */
             publicly_active: boolean;
         };
+        /** ConsentRead */
+        ConsentRead: {
+            /**
+             * Accepted At
+             * Format: date-time
+             */
+            accepted_at: string;
+            /**
+             * Document
+             * @enum {string}
+             */
+            document: "terms" | "privacy";
+            /** Version */
+            version: string;
+        };
+        /** ConsentState */
+        ConsentState: {
+            /** Accepted */
+            accepted: components["schemas"]["ConsentRead"][];
+            /**
+             * Required
+             * @description Current document versions this user has not accepted yet.
+             */
+            required: components["schemas"]["ConsentWrite"][];
+        };
+        /** ConsentWrite */
+        ConsentWrite: {
+            /**
+             * Document
+             * @enum {string}
+             */
+            document: "terms" | "privacy";
+            /** Version */
+            version: string;
+        };
         /** ContactRead */
         ContactRead: {
             /**
@@ -2414,6 +2656,38 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending" | "approved" | "rejected";
+        /** DeletionRequestWrite */
+        DeletionRequestWrite: {
+            /**
+             * Confirm
+             * @description Must be true: the user confirmed in the app.
+             */
+            confirm: boolean;
+        };
+        /** DeletionRun */
+        DeletionRun: {
+            /** Erased */
+            erased: string[];
+            /** Skipped Open Bookings */
+            skipped_open_bookings: string[];
+        };
+        /** DeletionState */
+        DeletionState: {
+            /**
+             * Due At
+             * @description The erasure job processes the request from this instant.
+             */
+            due_at?: string | null;
+            /** Pending */
+            pending: boolean;
+            /** Requested At */
+            requested_at?: string | null;
+            /**
+             * Window Days
+             * @description Personal data is erased within this many days.
+             */
+            window_days: number;
+        };
         /** DiscoveryPage */
         DiscoveryPage: {
             /** Has More */
@@ -2538,6 +2812,13 @@ export interface components {
          * @enum {string}
          */
         IdentityStatus: "unknown" | "pending" | "verified" | "rejected";
+        /** LegalVersions */
+        LegalVersions: {
+            /** Privacy */
+            privacy: string;
+            /** Terms */
+            terms: string;
+        };
         /** LivenessResponse */
         LivenessResponse: {
             /** Service */
@@ -2952,6 +3233,55 @@ export interface components {
             /** Result */
             result: string;
         };
+        /** SupportRead */
+        SupportRead: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "account" | "booking" | "payment" | "safety" | "technical" | "other";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Message */
+            message: string;
+            /** Replied At */
+            replied_at: string | null;
+            /** Reply */
+            reply: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "answered" | "closed";
+        };
+        /** SupportReply */
+        SupportReply: {
+            /**
+             * Close
+             * @default false
+             */
+            close: boolean;
+            /** Reply */
+            reply: string;
+        };
+        /** SupportWrite */
+        SupportWrite: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "account" | "booking" | "payment" | "safety" | "technical" | "other";
+            /** Message */
+            message: string;
+        };
         /** TestOrderItemRead */
         TestOrderItemRead: {
             /** Line Total Minor */
@@ -3108,6 +3438,170 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    consent_state_api_v1_account_consents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentState"];
+                };
+            };
+        };
+    };
+    accept_document_api_v1_account_consents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deletion_state_api_v1_account_deletion_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionState"];
+                };
+            };
+        };
+    };
+    request_deletion_api_v1_account_deletion_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeletionRequestWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_deletion_api_v1_account_deletion_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_deletions_api_v1_admin_account_deletions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDeletionRead"][];
+                };
+            };
+        };
+    };
+    process_due_api_v1_admin_account_deletions_process_due_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionRun"];
+                };
+            };
+        };
+    };
     audit_events_api_v1_admin_audit_events_get: {
         parameters: {
             query?: {
@@ -3443,6 +3937,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminSummary"];
+                };
+            };
+        };
+    };
+    list_support_requests_api_v1_admin_support_requests_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "answered" | "closed") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSupportRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_support_request_api_v1_admin_support_requests__request_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportReply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSupportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5999,6 +6559,26 @@ export interface operations {
             };
         };
     };
+    legal_versions_api_v1_legal_versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalVersions"];
+                };
+            };
+        };
+    };
     get_meeting_api_v1_meetings_bookings__booking_id__get: {
         parameters: {
             query?: never;
@@ -6609,6 +7189,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    own_support_requests_api_v1_support_requests_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportRead"][];
+                };
+            };
+        };
+    };
+    create_support_request_api_v1_support_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportRead"];
+                };
             };
             /** @description Validation Error */
             422: {

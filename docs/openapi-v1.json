@@ -7,7 +7,8 @@
           "verification_pending",
           "restricted",
           "suspended",
-          "banned"
+          "banned",
+          "deleted"
         ],
         "title": "AccountStatus",
         "type": "string"
@@ -351,6 +352,61 @@
         "title": "AdminBookingRead",
         "type": "object"
       },
+      "AdminDeletionRead": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "cancelled",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "status",
+          "requested_at",
+          "due_at",
+          "completed_at"
+        ],
+        "title": "AdminDeletionRead",
+        "type": "object"
+      },
       "AdminReportRead": {
         "properties": {
           "acknowledged": {
@@ -442,6 +498,85 @@
           "open_reports"
         ],
         "title": "AdminSummary",
+        "type": "object"
+      },
+      "AdminSupportRead": {
+        "properties": {
+          "category": {
+            "enum": [
+              "account",
+              "booking",
+              "payment",
+              "safety",
+              "technical",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "replied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replied At"
+          },
+          "reply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "answered",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "category",
+          "message",
+          "status",
+          "reply",
+          "created_at",
+          "replied_at"
+        ],
+        "title": "AdminSupportRead",
         "type": "object"
       },
       "AdminUserListItem": {
@@ -1223,6 +1358,84 @@
         "title": "CompanionStatus",
         "type": "object"
       },
+      "ConsentRead": {
+        "properties": {
+          "accepted_at": {
+            "format": "date-time",
+            "title": "Accepted At",
+            "type": "string"
+          },
+          "document": {
+            "enum": [
+              "terms",
+              "privacy"
+            ],
+            "title": "Document",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "version",
+          "accepted_at"
+        ],
+        "title": "ConsentRead",
+        "type": "object"
+      },
+      "ConsentState": {
+        "properties": {
+          "accepted": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentRead"
+            },
+            "title": "Accepted",
+            "type": "array"
+          },
+          "required": {
+            "description": "Current document versions this user has not accepted yet.",
+            "items": {
+              "$ref": "#/components/schemas/ConsentWrite"
+            },
+            "title": "Required",
+            "type": "array"
+          }
+        },
+        "required": [
+          "required",
+          "accepted"
+        ],
+        "title": "ConsentState",
+        "type": "object"
+      },
+      "ConsentWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "enum": [
+              "terms",
+              "privacy"
+            ],
+            "title": "Document",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "version"
+        ],
+        "title": "ConsentWrite",
+        "type": "object"
+      },
       "ContactRead": {
         "additionalProperties": false,
         "properties": {
@@ -1310,6 +1523,91 @@
         ],
         "title": "ContentStatus",
         "type": "string"
+      },
+      "DeletionRequestWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true: the user confirmed in the app.",
+            "title": "Confirm",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "title": "DeletionRequestWrite",
+        "type": "object"
+      },
+      "DeletionRun": {
+        "properties": {
+          "erased": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Erased",
+            "type": "array"
+          },
+          "skipped_open_bookings": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Skipped Open Bookings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "erased",
+          "skipped_open_bookings"
+        ],
+        "title": "DeletionRun",
+        "type": "object"
+      },
+      "DeletionState": {
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The erasure job processes the request from this instant.",
+            "title": "Due At"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "boolean"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          },
+          "window_days": {
+            "description": "Personal data is erased within this many days.",
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending",
+          "window_days"
+        ],
+        "title": "DeletionState",
+        "type": "object"
       },
       "DiscoveryPage": {
         "properties": {
@@ -1590,6 +1888,24 @@
         ],
         "title": "IdentityStatus",
         "type": "string"
+      },
+      "LegalVersions": {
+        "properties": {
+          "privacy": {
+            "title": "Privacy",
+            "type": "string"
+          },
+          "terms": {
+            "title": "Terms",
+            "type": "string"
+          }
+        },
+        "required": [
+          "terms",
+          "privacy"
+        ],
+        "title": "LegalVersions",
+        "type": "object"
       },
       "LivenessResponse": {
         "properties": {
@@ -2682,6 +2998,129 @@
         "title": "SimulateWrite",
         "type": "object"
       },
+      "SupportRead": {
+        "properties": {
+          "category": {
+            "enum": [
+              "account",
+              "booking",
+              "payment",
+              "safety",
+              "technical",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "replied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replied At"
+          },
+          "reply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "answered",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "message",
+          "status",
+          "reply",
+          "created_at",
+          "replied_at"
+        ],
+        "title": "SupportRead",
+        "type": "object"
+      },
+      "SupportReply": {
+        "additionalProperties": false,
+        "properties": {
+          "close": {
+            "default": false,
+            "title": "Close",
+            "type": "boolean"
+          },
+          "reply": {
+            "maxLength": 4000,
+            "minLength": 2,
+            "title": "Reply",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reply"
+        ],
+        "title": "SupportReply",
+        "type": "object"
+      },
+      "SupportWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "account",
+              "booking",
+              "payment",
+              "safety",
+              "technical",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 4000,
+            "minLength": 10,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "message"
+        ],
+        "title": "SupportWrite",
+        "type": "object"
+      },
       "TestOrderItemRead": {
         "properties": {
           "line_total_minor": {
@@ -3084,6 +3523,220 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/account/consents": {
+      "get": {
+        "operationId": "consent_state_api_v1_account_consents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Consent State",
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "accept_document_api_v1_account_consents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accept Document",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/account/deletion": {
+      "delete": {
+        "operationId": "cancel_deletion_api_v1_account_deletion_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel Deletion",
+        "tags": [
+          "account"
+        ]
+      },
+      "get": {
+        "operationId": "deletion_state_api_v1_account_deletion_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Deletion State",
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "request_deletion_api_v1_account_deletion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionRequestWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Request Deletion",
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/api/v1/admin/account-deletions": {
+      "get": {
+        "operationId": "list_deletions_api_v1_admin_account_deletions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminDeletionRead"
+                  },
+                  "title": "Response List Deletions Api V1 Admin Account Deletions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Deletions",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/account-deletions/process-due": {
+      "post": {
+        "description": "Run the erasure job now (normally daily: `python -m yondo_api.account.jobs`).",
+        "operationId": "process_due_api_v1_admin_account_deletions_process_due_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Process Due",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/audit-events": {
       "get": {
         "operationId": "audit_events_api_v1_admin_audit_events_get",
@@ -3730,6 +4383,127 @@
           }
         ],
         "summary": "Summary",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/support/requests": {
+      "get": {
+        "operationId": "list_support_requests_api_v1_admin_support_requests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "answered",
+                    "closed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminSupportRead"
+                  },
+                  "title": "Response List Support Requests Api V1 Admin Support Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Support Requests",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/support/requests/{request_id}/reply": {
+      "post": {
+        "operationId": "reply_support_request_api_v1_admin_support_requests__request_id__reply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportReply"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSupportRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reply Support Request",
         "tags": [
           "admin"
         ]
@@ -7884,6 +8658,27 @@
         ]
       }
     },
+    "/api/v1/legal/versions": {
+      "get": {
+        "operationId": "legal_versions_api_v1_legal_versions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalVersions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Legal Versions",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
     "/api/v1/meetings/bookings/{booking_id}": {
       "get": {
         "operationId": "get_meeting_api_v1_meetings_bookings__booking_id__get",
@@ -8831,6 +9626,80 @@
         "summary": "Delete Contact",
         "tags": [
           "safety"
+        ]
+      }
+    },
+    "/api/v1/support/requests": {
+      "get": {
+        "operationId": "own_support_requests_api_v1_support_requests_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SupportRead"
+                  },
+                  "title": "Response Own Support Requests Api V1 Support Requests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Own Support Requests",
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "create_support_request_api_v1_support_requests_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Support Request",
+        "tags": [
+          "account"
         ]
       }
     },

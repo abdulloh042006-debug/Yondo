@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiError, onSessionExpired, tokens, type Schemas } from '../api/client';
 import { applyLocaleTag, getLocaleTag, onLocaleChange } from '../i18n';
+import { acceptLegal } from '../legal/consent';
 
 export type User = Schemas['UserResponse'];
 type State = { status: 'loading' } | { status: 'anon' } | { status: 'authed'; user: User };
@@ -12,7 +13,8 @@ interface AuthApi {
   isAdmin: boolean;
   isCompanion: boolean;
   requestCode: (phone: string) => Promise<Schemas['OtpRequestResponse']>;
-  verify: (phone: string, code: string) => Promise<void>;
+  /** `acceptLegal`: the user ticked the consent box; it is recorded right after the session starts. */
+  verify: (phone: string, code: string, opts?: { acceptLegal?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
 }
@@ -85,13 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isCompanion: !!user?.roles.includes('companion'),
       requestCode: (phone) =>
         api.post<Schemas['OtpRequestResponse']>('/auth/otp/request', { phone_number: phone }, { anonymous: true }),
-      verify: async (phone, code) => {
+      verify: async (phone, code, opts) => {
         const pair = await api.post<Schemas['TokenResponse']>(
           '/auth/otp/verify',
           { phone_number: phone, code },
           { anonymous: true },
         );
         tokens.set(pair);
+        if (opts?.acceptLegal) {
+          await acceptLegal().catch(() => {
+            /* the consent gate asks again if this did not land */
+          });
+        }
         await reload();
       },
       logout: async () => {

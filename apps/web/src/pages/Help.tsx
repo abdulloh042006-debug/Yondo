@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t, type Key } from '../i18n';
-import { REPORT_CATEGORY, REPORT_STATUS } from '../lib/labels';
+import { REPORT_CATEGORY, REPORT_STATUS, SUPPORT_STATUS } from '../lib/labels';
 import { useResource } from '../lib/useResource';
 import { ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Field, Select, TextArea } from '../ui/form';
@@ -12,8 +12,11 @@ import { Reveal } from '../ui/motion';
 type Report = Schemas['ReportRead'];
 type Contact = Schemas['ContactRead'];
 type FeedbackCategory = Schemas['FeedbackWrite']['category'];
+type SupportCategory = Schemas['SupportWrite']['category'];
+type Ticket = Schemas['SupportRead'];
 
-const FAQ = ['what', 'book', 'pay', 'cancel', 'verified', 'companion', 'privacy', 'delete'] as const;
+const FAQ = ['what', 'book', 'pay', 'cancel', 'verified', 'companion', 'privacy', 'data', 'delete'] as const;
+const SUPPORT_CATEGORIES: SupportCategory[] = ['account', 'booking', 'payment', 'safety', 'technical', 'other'];
 const FEEDBACK_CATEGORIES: FeedbackCategory[] = ['bug', 'usability', 'safety', 'pricing', 'other'];
 const PHONE = /^\+?[0-9]{7,15}$/;
 
@@ -75,7 +78,8 @@ export function Help() {
       <Reveal delay={0.08}>
         <section className="glass pad stack" aria-labelledby="sup-h">
           <h2 id="sup-h">{t('help.contact.title')}</h2>
-          <p className="muted">{t('help.contact.none')}</p>
+          <p className="muted">{t('help.support.body')}</p>
+          {user ? <SupportRequests /> : <Link className="btn ghost" to="/login" style={{ width: 'fit-content' }}>{t('help.support.login')}</Link>}
         </section>
       </Reveal>
     </div>
@@ -247,5 +251,65 @@ function BetaFeedback() {
         <div><button className="btn" disabled={busy}>{busy && <span className="spinner" aria-hidden="true" />}{t('help.feedback.send')}</button></div>
       </form>
     </Reveal>
+  );
+}
+
+/** The in-app support channel (owner decision: no e-mail, no phone). Replies show up here. */
+function SupportRequests() {
+  const res = useResource((signal) => api.get<Ticket[]>('/support/requests', { signal }), []);
+  const toast = useToast();
+  const [category, setCategory] = useState<SupportCategory>('account');
+  const [message, setMessage] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const short = message.trim().length < 10;
+
+  const send = async (e: FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (short) return;
+    setBusy(true);
+    try {
+      await api.post<Ticket>('/support/requests', { category, message: message.trim() });
+      toast.push('ok', t('help.support.sent'));
+      setMessage('');
+      setTouched(false);
+      res.reload();
+    } catch (error) {
+      toast.push('bad', error instanceof ApiError ? error.message : t('common.actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <form className="stack" onSubmit={send} noValidate>
+        <Select label={t('help.support.category')} value={category} onChange={(e) => setCategory(e.target.value as SupportCategory)}>
+          {SUPPORT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{t(`help.support.cat.${c}` as Key)}</option>
+          ))}
+        </Select>
+        <TextArea label={t('help.support.message')} rows={4} maxLength={4000} value={message} onChange={(e) => setMessage(e.target.value)} error={touched && short ? t('help.feedback.min') : undefined} />
+        <div><button className="btn" disabled={busy}>{busy && <span className="spinner" aria-hidden="true" />}{t('help.support.send')}</button></div>
+      </form>
+      {!!res.data?.length && (
+        <div className="stack" style={{ gap: 8 }}>
+          <h3>{t('help.support.mine')}</h3>
+          <ul className="plain-list">
+            {res.data.map((r) => (
+              <li key={r.id} className="stack" style={{ gap: 4 }}>
+                <span className="spread">
+                  <b>{t(`help.support.cat.${r.category}` as Key)}</b>
+                  <StatusTag map={SUPPORT_STATUS} value={r.status} />
+                </span>
+                <span className="hint clamp">{r.message}</span>
+                {r.reply && <span className="banner" style={{ whiteSpace: 'pre-wrap' }}><b>{t('help.support.reply')}:</b> {r.reply}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
   );
 }

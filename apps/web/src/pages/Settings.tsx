@@ -36,7 +36,10 @@ export function Settings() {
         <section className="glass pad stack" aria-labelledby="acc-h">
           <h2 id="acc-h">{t('settings.account')}</h2>
           {user ? (
-            <Link className="btn" to="/account" style={{ width: 'fit-content' }}>{t('settings.accountLink')}</Link>
+            <div className="row">
+              <Link className="btn" to="/account">{t('settings.accountLink')}</Link>
+              <Link className="btn ghost" to="/account#delete">{t('account.delete.title')}</Link>
+            </div>
           ) : (
             <Link className="btn" to="/login" style={{ width: 'fit-content' }}>{t('nav.login')}</Link>
           )}
@@ -56,7 +59,11 @@ export function Settings() {
           <dl className="kv">
             <dt>{t('settings.version')}</dt><dd>{__APP_VERSION__}</dd>
           </dl>
-          <p className="hint">{t('settings.aboutBody')}</p>
+          <div className="row">
+            <Link className="btn ghost sm" to="/terms">{t('legal.terms')}</Link>
+            <Link className="btn ghost sm" to="/privacy">{t('legal.privacy')}</Link>
+          </div>
+          <p className="hint">{t('legal.draftBanner')}</p>
         </section>
       </Reveal>
     </div>

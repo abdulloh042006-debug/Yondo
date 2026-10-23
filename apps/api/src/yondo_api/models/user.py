@@ -23,6 +23,8 @@ class AccountStatus(StrEnum):
     RESTRICTED = 'restricted'
     SUSPENDED = 'suspended'
     BANNED = 'banned'
+    # Erased on the user's request (account/deletion.py); never set by an admin, never reversed.
+    DELETED = 'deleted'
 
 
 class User(TimestampMixin, Base):
@@ -30,7 +32,7 @@ class User(TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint(
             '''account_status IN ('active', 'verification_pending', 'restricted',
-            'suspended', 'banned')''',
+            'suspended', 'banned', 'deleted')''',
             name='ck_users_account_status',
         ),
         CheckConstraint(

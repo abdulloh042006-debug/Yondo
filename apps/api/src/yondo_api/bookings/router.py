@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query, Request
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 
+from yondo_api.account.deletion import pending_request
 from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.bookings.schemas import BookingCancel, BookingCreate, BookingResponse
@@ -36,6 +37,10 @@ async def _active_customer(principal: Principal, session: Session) -> User:
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
     if await session.get(UserRole, (user.id, UserRoleType.CUSTOMER)) is None:
         raise ApplicationError('customer_role_required', 'Customer role is required', 403)
+    if await pending_request(session, user.id) is not None:
+        raise ApplicationError(
+            'account_deletion_pending', 'Cancel the deletion request to book again', 409
+        )
     return user
 
 
@@ -85,6 +90,8 @@ async def _public_profile(session: Session, profile_id: UUID, request):
     if row is None:
         raise ApplicationError('companion_not_found', 'Companion not found', 404)
     profile, user = row
+    if await pending_request(session, user.id) is not None:
+        raise ApplicationError('companion_not_found', 'Companion not found', 404)
     status = await companion_service.companion_status(
         session, user, profile, request.app.state.identity_eligibility
     )

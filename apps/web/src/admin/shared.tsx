@@ -12,6 +12,8 @@ export function AdminLayout() {
     ['/admin/applications', 'admin.nav.applications', false],
     ['/admin/safety', 'admin.nav.safety', false],
     ['/admin/users', 'admin.nav.users', false],
+    ['/admin/support', 'admin.nav.support', false],
+    ['/admin/deletions', 'admin.nav.deletions', false],
     ['/admin/bookings', 'nav.bookings', false],
     ['/admin/audit', 'admin.nav.audit', false],
   ] as const satisfies ReadonlyArray<readonly [string, Key, boolean]>;

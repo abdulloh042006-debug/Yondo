@@ -8,6 +8,7 @@ import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
 import { Field } from '../ui/form';
 import { Reveal } from '../ui/motion';
+import { DeleteAccount } from './DeleteAccount';
 
 type Role = Schemas['UserRoleType'];
 
@@ -143,6 +144,9 @@ function AccountView({ user }: { user: User }) {
         </div>
       </Reveal>
       <div><button className="btn ghost" onClick={() => void logout()}>{t('account.logout')}</button></div>
+      <Reveal delay={0.12}>
+        <DeleteAccount />
+      </Reveal>
     </div>
   );
 }

@@ -68,8 +68,14 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
   closed-beta feedback (only if `GET /beta/me` succeeds).
 * **Report a problem** on each booking (`ReportDialog`) sends only `booking_id`; the server derives the other
   participant, so a customer never needs a companion's user id.
-* Not available yet (honestly stated in the FAQ): account deletion, a support contact channel, reporting a profile
-  without a booking, SOS from the web app, blocking by booking.
+* **Support** (in Help): in-app request form + "my requests" with replies; admins answer in `/admin/support`
+  (audited). No e-mail or phone by owner decision.
+* **Account deletion** (Profile → "Hisobni o‘chirish", linked from Settings): request with explicit confirmation →
+  profile hidden, new bookings refused, cancellable → erased/de-identified by the daily job within 30 days
+  (`/admin/deletions` shows requests and can run the job). Refused while bookings are open.
+* **Legal**: `/terms` and `/privacy` render `src/legal/*.md` (owner drafts); an unticked consent box on login and a
+  consent gate record the accepted version (`src/legal/versions.ts` = `account/legal.py`).
+* Not available yet: reporting a profile without a booking, SOS from the web app, blocking by booking (next stage).
 
 ## Security notes
 

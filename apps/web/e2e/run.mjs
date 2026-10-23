@@ -49,6 +49,7 @@ const assert = (cond, msg) => {
 async function otpLogin(page, phone) {
   await page.goto(`${WEB}/login`);
   await page.getByLabel('Telefon raqami').fill(phone);
+  await page.locator('.consent input').check(); // explicit consent to the terms + privacy policy
   await page.getByRole('button', { name: 'Kod yuboriş' }).click();
   const code = (await page.locator('b.mono').first().innerText()).trim();
   await page.getByLabel('Tasdiqlaş kodi').fill(code);
@@ -158,6 +159,9 @@ try {
   await step('login validation: bad phone + wrong code are shown in Uzbek, from error codes', async () => {
     await page.goto(`${WEB}/login`);
     await page.getByLabel('Telefon raqami').fill('+99');
+    await page.getByRole('button', { name: 'Kod yuboriş' }).click();
+    await page.getByText('Davom etiş uçun rozilik belgisini qöying.').waitFor(); // consent first, unticked by default
+    await page.getByLabel(/Foydalaniş şartlari va maxfiylik siyosati bilan tanişdim/).check();
     await page.getByRole('button', { name: 'Kod yuboriş' }).click();
     await page.getByText('Telefon raqami notöğri').waitFor();
     await page.getByLabel('Telefon raqami').fill('+998901110099');
@@ -457,6 +461,81 @@ try {
   });
 
   /* ------------------------------------------------------ responsive/themes */
+  await step('legal pages: terms + privacy render as separate pages with version and draft notice', async () => {
+    await page.goto(`${WEB}/terms`);
+    await page.getByRole('heading', { name: 'Yondo — Foydalanish shartlari', level: 1 }).waitFor();
+    await page.getByText(/Versiya: 2026-10-23-draft/).waitFor();
+    await page.getByText(/Loyiha: hujjat hali kuçga kirmagan/).waitFor();
+    await page.locator('.site-foot').getByRole('link', { name: 'Maxfiylik siyosati' }).click();
+    await page.getByRole('heading', { name: 'Yondo — Maxfiylik siyosati', level: 1 }).waitFor();
+    assert((await page.locator('.legal-doc').innerText()).includes('30 kun ichida'), '30-day deletion window stated');
+  });
+  await step('consent gate: an account without the current consent must accept before using the app', async () => {
+    const g = await ctx();
+    const gp = await g.newPage();
+    watch(gp, 'consent-gate');
+    try {
+      await gp.route('**/api/v1/account/consents', (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()));
+      await otpLogin(gp, '+998907770077'); // the consent POST is lost on purpose
+      await gp.getByRole('heading', { name: 'Hujjatlarni qabul qiling', level: 1 }).waitFor();
+      await gp.unroute('**/api/v1/account/consents');
+      await gp.getByRole('button', { name: 'Qabul qilaman' }).click();
+      await gp.getByText('Davom etiş uçun rozilik belgisini qöying.').waitFor();
+      await gp.locator('.consent input').check();
+      await gp.getByRole('button', { name: 'Qabul qilaman' }).click();
+      await gp.getByRole('heading', { name: 'Hujjatlarni qabul qiling' }).waitFor({ state: 'detached' });
+      const state = await gp.evaluate(async () => (await fetch('/api/v1/account/consents', { headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` } })).json());
+      assert(state.required.length === 0 && state.accepted.length === 2, `consents recorded: ${JSON.stringify(state).slice(0, 120)}`);
+    } finally {
+      await g.close();
+    }
+  });
+  await step('support: customer sends a request in Help, admin replies, customer sees the reply', async () => {
+    await cp.goto(`${WEB}/help`);
+    await cp.getByLabel('Mavzu').selectOption('account');
+    await cp.getByLabel('Murojaat matni').fill('E2E: shahar maydoni saqlanmayapti');
+    await cp.getByRole('button', { name: 'Murojaat yuboriş' }).click();
+    await cp.getByText('Murojaat yuborildi. Javob şu yerda körinadi.').waitFor();
+    await ap.goto(`${WEB}/admin/support`);
+    const card = ap.locator('article', { hasText: 'E2E: shahar maydoni saqlanmayapti' });
+    await card.getByLabel('Javob matni').fill('E2E: tuzatildi, qayta urinib köring.');
+    await card.getByRole('button', { name: 'Javob yuboriş' }).click();
+    await ap.getByText('Javob yuborildi.').waitFor();
+    await cp.reload();
+    await cp.getByText('E2E: tuzatildi, qayta urinib köring.').waitFor();
+    await cp.getByText('Javob berildi').first().waitFor();
+  });
+  await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
+    await cp.goto(`${WEB}/account#delete`);
+    await cp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
+    await cp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
+    await cp.getByRole('button', { name: 'Öçirişni tasdiqlaş' }).click();
+    await cp.getByText('Avval oçiq bronlarni yakunlang yoki bekor qiling.').waitFor(); // cp has a pending booking
+    await cp.getByRole('button', { name: 'Bekor qiliş', exact: true }).last().click();
+    const d = await ctx();
+    const dp = await d.newPage();
+    watch(dp, 'deletion');
+    try {
+      await otpLogin(dp, '+998907770088');
+      await dp.goto(`${WEB}/settings`);
+      await dp.getByRole('link', { name: 'Hisobni öçiriş' }).click();
+      await dp.getByRole('heading', { name: 'Hisobni öçiriş', level: 2 }).waitFor();
+      await dp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
+      const confirm = dp.getByRole('button', { name: 'Öçirişni tasdiqlaş' });
+      assert(await confirm.isDisabled(), 'confirm stays disabled until the box is ticked');
+      await dp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
+      await confirm.click();
+      await dp.getByText('Öçiriş sörovi qabul qilindi.').waitFor();
+      await dp.getByText(/Öçiriş söralgan: hisob .* dan keyin öçiriladi\./).waitFor();
+      await ap.goto(`${WEB}/admin/deletions`);
+      await ap.getByText('Kutilmoqda').first().waitFor();
+      await dp.getByRole('button', { name: 'Sörovni bekor qiliş' }).click();
+      await dp.getByText('Öçiriş sörovi bekor qilindi.').waitFor();
+      await dp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).waitFor();
+    } finally {
+      await d.close();
+    }
+  });
   const mobile = await ctx({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const mp = await mobile.newPage();
   watch(mp, 'mobile');
@@ -533,6 +612,7 @@ try {
       assert(!ru.includes('Şaxsi tasdiqlangan') && !ru.includes('Hammasi'), 'no Uzbek leftovers in Russian UI');
       await page.goto(`${WEB}/login`);
       await page.getByLabel('Номер телефона').fill('+998');
+      await page.locator('.consent input').check();
       await page.getByRole('button', { name: 'Отправить код' }).click();
       await page.getByText('Неверный номер телефона').first().waitFor(); // chosen from the error code, in Russian
       await page.goto(`${WEB}/settings`);
@@ -604,7 +684,7 @@ try {
   }
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
-      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [cp, '/account'], [cp, '/help'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
+      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);
         await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
         await pg.waitForTimeout(1700);

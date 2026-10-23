@@ -34,6 +34,8 @@ const ACTIONS = [
   ['companion_content', 'studio.status.content'],
   ['safety_report', 'admin.audit.safety_report'],
   ['safety_sos', 'admin.audit.safety_sos'],
+  ['support_reply', 'admin.audit.support_reply'],
+  ['account_erased', 'admin.audit.account_erased'],
 ] as const satisfies ReadonlyArray<readonly [string, Key]>;
 
 export function AuditLog() {

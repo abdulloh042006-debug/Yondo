@@ -181,6 +181,11 @@ async def set_account_status(
         raise ApplicationError(
             'admin_target_forbidden', 'Admin accounts require separate review', 403
         )
+    # "deleted" is reached only through the user's own deletion request and is irreversible.
+    if AccountStatus.DELETED in (payload.status, user.account_status):
+        raise ApplicationError(
+            'account_deleted_status_locked', 'Deleted status is set only by account deletion', 409
+        )
     user.account_status = payload.status
     session.add(
         AdminAuditEvent(

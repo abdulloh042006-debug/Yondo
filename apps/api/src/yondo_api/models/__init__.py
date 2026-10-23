@@ -1,3 +1,4 @@
+from yondo_api.account import models as account_models
 from yondo_api.admin import models as admin_models
 from yondo_api.beta import models as beta_models
 from yondo_api.bookings import models as booking_models
@@ -15,6 +16,7 @@ from yondo_api.reviews import models as reviews_models
 from yondo_api.safety import models as safety_models
 
 __all__ = [
+    'account_models',
     'gifts_models',
     'gift_order_models',
     'beta_models',

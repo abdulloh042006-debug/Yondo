@@ -26,7 +26,8 @@ describe('Help & safety', () => {
     expect(screen.getByText(/özi çaqirmaydi/)).toBeInTheDocument(); // never claims anyone is notified
     expect(screen.getByText('Yondo nima?')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Işonçli kontaktlar' })).toBeNull();
-    expect(screen.getByText(/hisobingizga kiring/)).toBeInTheDocument();
+    expect(screen.getByText(/Şikoyatlaringiz va işonçli kontaktlaringizni/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Murojaat yuboriş uçun hisobingizga kiring.' })).toHaveAttribute('href', '/login');
   });
 
   it('report dialog sends only booking_id (the server derives who is reported)', async () => {

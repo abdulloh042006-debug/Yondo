@@ -11,6 +11,7 @@ def test_required_account_status_values_are_stable():
         'restricted',
         'suspended',
         'banned',
+        'deleted',  # migration 20261023_0016: set only by the account erasure job
     }
 
 

@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { ConsentCheck } from '../ui/Consent';
 import { Field } from '../ui/form';
 
 type Step = { kind: 'phone' } | { kind: 'code'; phone: string; resendIn: number; devOtp?: string | null };
@@ -18,6 +19,8 @@ export function Login() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError>();
+  const [agree, setAgree] = useState(false);
+  const [agreeErr, setAgreeErr] = useState(false);
 
   useEffect(() => {
     if (step.kind !== 'code' || step.resendIn <= 0) return;
@@ -29,6 +32,10 @@ export function Login() {
 
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
+    if (!agree) {
+      setAgreeErr(true);
+      return;
+    }
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 9) {
       setError(new ApiError(422, 'invalid_phone_number'));
@@ -53,7 +60,7 @@ export function Login() {
     setBusy(true);
     setError(undefined);
     try {
-      await verify(step.phone, code.trim());
+      await verify(step.phone, code.trim(), { acceptLegal: agree });
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));
@@ -82,6 +89,7 @@ export function Login() {
               hint={t('login.phoneHint')}
               error={error?.code === 'invalid_phone_number' ? error.message : undefined}
             />
+            <ConsentCheck checked={agree} onChange={(v) => { setAgree(v); setAgreeErr(false); }} error={agreeErr ? t('legal.agreeRequired') : undefined} />
             {error && error.code !== 'invalid_phone_number' && (
               <p className="err" role="alert">
                 {error.message}

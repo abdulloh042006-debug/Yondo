@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request, Response
 from sqlalchemy import exists, func, or_, select
 
+from yondo_api.account.deletion import pending_deletion_exists
 from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.companions import service as companion_service
@@ -47,6 +48,7 @@ def _public_candidates():
             CompanionProfile.activation_requested.is_(True),
             User.account_status == AccountStatus.ACTIVE,
             UserRole.role == UserRoleType.COMPANION,
+            ~pending_deletion_exists(User.id),  # hidden as soon as deletion is requested
         )
     )
 
