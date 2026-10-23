@@ -8,13 +8,24 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 
 ## Next steps (priority order)
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
-2. **Backend owner decisions needed:** delivery-fee configuration schema; profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
+2. **Backend owner decisions needed:** account deletion + data-retention rules; support contact channel; terms/privacy texts; delivery-fee configuration schema; blocking by booking (reports by booking done in S23); profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
 3. **Staging:** none documented. Obtain URL, test-login method (staging has no dev OTP; no SMS provider), payment sandbox, approved fee policy (`docs/04-staging-readiness.md`). Then add a read-only real-API contract check and an adapter that swaps the mock for the real client.
 4. **Real clients:** web + admin exist in `apps/web` (S14); `apps/mobile` is a stub. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
 5. **Quality gaps:** native Uzbek copy review (and native ru/en review of `apps/web/src/i18n`, S21); real iOS Safari/Android, Firefox/WebKit and screen-reader testing; logo symbol outlining, kerning, similarity/legal check; merch + presentation (P1/P2) not started.
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S23 — Two Uzbek alphabets (web + API), Help & safety, Profile/Settings rework (2026-10-23)
+Done: owner: "ikki variant bo'lsin, backendni ham mosla; shikoyat/yordam bo'limi; profil va sozlamalarni o'xshash ilovalardek tuzat".
+- i18n: 1995 spelling derived from the 2026 `uz.ts` (`toUz1995`, round-trip = old dictionary, 0 diffs); default by date (1995 until 2027-04-22); Settings alphabet picker; Uzbek dates formatted by hand ("23-oktyabr 2026, 05:51"; Chromium printed "2026 M10 23").
+- API: migration 0015 `users.ui_locale` (`uz-Latn-1995|uz-Latn-2026|ru|en`, partial `PUT /auth/profile`, in `/auth/me`); client syncs it across devices. Discovery `q`/`city` fold both alphabets + apostrophe shapes (`discovery/textfold.py`).
+- Reports: `POST /safety/reports` with `booking_id` only derives the counterparty (option C, reports only; `report_target_required`). Web: "Report a problem" on each booking.
+- `/help` (112, how to report, my reports, trusted contacts, FAQ, support status, beta feedback if enrolled); Profile hub menu; Settings groups (language+alphabet, look, account, privacy & safety, about+version); footer links.
+- Fixed: `PageTransition` left `filter: blur(0px)` → fixed booking bar was positioned relative to the page (now portal + `transitionEnd`).
+Not done / NOT IMPLEMENTED (stated in the FAQ): account deletion (needs owner retention rules), support channel, SOS + meeting flow in web, block by booking, terms/privacy docs. Competitor research run BLOCKED (research usage limit); IA based on common app patterns.
+Evidence (PASS): API SQLite 206 passed + 8 skipped; PostgreSQL 16: 214/214, decision tests 50/50; migration up/down/up on SQLite + PG; ruff clean; `export_openapi.py --check`. Web: tsc, eslint, build; vitest 31/31; real-backend e2e 51/51 (new: help/report/contacts, locale follows account to a 2nd device, alphabet default + switch + cross-alphabet search; axe on /help, /account).
+Commit: this entry's commit.
+
 ## S22 — Top-bar language switch, no-remount fix, Uzbek in the 2026 alphabet (2026-10-23)
 Done: (1) owner: "o'zbek tili yangilandi, qaytadan yozib chiq" — law of 2026-10-21 (in force 2027-04-22): sh→ş, ch→ç, o‘→ö, g‘→ğ, ng = n+g, tutuq ʼ. Converted all 304 `uz.ts` values with a placeholder/plural-safe script, plus UI label `Özbekça`, `index.html`, test/e2e expectations. (2) Added `i18n/LanguageSwitch.tsx` (UZ|RU|EN, 44px targets) in the top bar; Settings picker stays. (3) Removed `LanguageBoundary` remount (it wiped typed form text): `App` calls `useLang()`, `ApiError.message` is lazy.
 Not done / OUT OF SCOPE: `design-prototype/`, `marketing/ad-video` and docs still use the old spelling; Intl month names come from CLDR (no sh/ch in uz months, so no visible effect); backend/user content is not converted.

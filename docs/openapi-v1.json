@@ -2454,13 +2454,20 @@
             "type": "string"
           },
           "reported_user_id": {
-            "format": "uuid",
-            "title": "Reported User Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "User id (never a companion profile id) of the reported account. Optional when booking_id is given: the server then reports the other participant of that booking, so a customer can report a companion without knowing their user id. At least one of the two is required.",
+            "title": "Reported User Id"
           }
         },
         "required": [
-          "reported_user_id",
           "category",
           "description"
         ],
@@ -2868,6 +2875,7 @@
         "type": "object"
       },
       "UserProfileUpdate": {
+        "description": "Partial update: only fields present in the request body are changed.",
         "properties": {
           "age": {
             "anyOf": [
@@ -2904,6 +2912,23 @@
               }
             ],
             "title": "Gender"
+          },
+          "ui_locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "uz-Latn-1995",
+                  "uz-Latn-2026",
+                  "ru",
+                  "en"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ui Locale"
           }
         },
         "title": "UserProfileUpdate",
@@ -2964,6 +2989,23 @@
             },
             "title": "Roles",
             "type": "array"
+          },
+          "ui_locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "uz-Latn-1995",
+                  "uz-Latn-2026",
+                  "ru",
+                  "en"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ui Locale"
           }
         },
         "required": [

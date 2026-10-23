@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoney, prettyPhone, toMinor } from './format';
+import { formatInstant, formatMoney, prettyPhone, toMinor } from './format';
 
 describe('money is integer tiyin', () => {
+  it('formats Uzbek dates by hand in Tashkent time (browsers lack Uzbek month names)', () => {
+    expect(formatInstant('2026-10-23T00:51:00Z')).toBe('23-oktyabr 2026, 05:51');
+    expect(formatInstant('2026-12-31T19:00:00Z')).toBe('1-yanvar 2027, 00:00');
+  });
   it('formats whole söm with grouping', () => {
     expect(formatMoney(15000000, 'UZS')).toBe('150 000 söm');
     expect(formatMoney(0, 'UZS')).toBe('0 söm');

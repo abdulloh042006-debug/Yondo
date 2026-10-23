@@ -36,7 +36,9 @@ Fee rule implemented by the backend: `fee = (subtotal_minor × bps + 5000) // 10
 3. Public responses expose the companion **profile** id only. `CompanionCard` and `BookingResponse` carry no companion user id (verified: no `user_id` in card; owner user id absent from booking). No documented profile→user mapping exists.
 4. Incidental leaks (not a mapping, not relied on): `ChatMessageResponse.sender_id` and `ReviewRead.reviewee_id` contain user ids. Privacy note for the backend owner.
 **Prototype behaviour (changed).** It no longer sends a profile id. Customers cannot report/block a companion until a mapping exists (an explanatory dialog replaces the buttons). Companions can report/block a booking's customer using `booking.customer_id` (a real user id) with `booking_id`.
-**Options for the backend owner (not implemented):** (A) accept a profile id field and resolve it server-side, (B) expose the counterparty user id to booking participants, (C) allow report/block by `booking_id` and derive the counterparty. Pick one and name the id types distinctly in `openapi-v1.json`.
+**Update 2026-10-23 (S23): option C implemented for reports only** — `POST /safety/reports` accepts `booking_id` without `reported_user_id` and derives the other participant (`report_target_required` if both are missing); `apps/web` uses it from Bookings. Blocking by booking is still not implemented. Note: the reporter's own `GET /safety/reports` returns `reported_user_id` (the same id is already visible via chat `sender_id`).
+
+**Options for the backend owner (originally not implemented):** (A) accept a profile id field and resolve it server-side, (B) expose the counterparty user id to booking participants, (C) allow report/block by `booking_id` and derive the counterparty. Pick one and name the id types distinctly in `openapi-v1.json`.
 **Proposed contract text:** `contract/openapi-v1.decisions.overlay.json` (description-only; 20 targets validated against `docs/openapi-v1.json` by `tests/run.js`). It is **not applied to the backend**.
 
 ## Mocked vs real

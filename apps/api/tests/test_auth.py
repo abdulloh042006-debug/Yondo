@@ -272,6 +272,25 @@ async def test_profile_and_role_selection_require_authentication(auth_client):
     assert profile.status_code == 200
     assert profile.json()['age'] == 30
     assert profile.json()['city'] == 'Tashkent'
+    assert profile.json()['ui_locale'] is None
+
+    # Partial update: only ui_locale changes; the Uzbek alphabet variant is part of the locale.
+    locale = await client.put(
+        '/api/v1/auth/profile', json={'ui_locale': 'uz-Latn-2026'}, headers=headers
+    )
+    assert locale.status_code == 200
+    assert locale.json()['ui_locale'] == 'uz-Latn-2026'
+    assert locale.json()['age'] == 30
+    me = await client.get('/api/v1/auth/me', headers=headers)
+    assert me.json()['ui_locale'] == 'uz-Latn-2026'
+    invalid = await client.put(
+        '/api/v1/auth/profile', json={'ui_locale': 'uz'}, headers=headers
+    )
+    assert invalid.status_code == 422
+    cleared = await client.put(
+        '/api/v1/auth/profile', json={'ui_locale': None}, headers=headers
+    )
+    assert cleared.json()['ui_locale'] is None
 
     roles = await client.put(
         '/api/v1/auth/roles',

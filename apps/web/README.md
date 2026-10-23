@@ -47,10 +47,29 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
 * Changing language re-renders in place (`App` calls `useLang()`; no remount), so typed form text, dialogs and
   the OTP step survive; `ApiError.message` is a lazy getter. The switch is `UZ | RU | EN` in the top bar
   (`i18n/LanguageSwitch.tsx`) plus the full-name picker in Settings.
-* Uzbek text follows the **2026 alphabet** (law signed 2026-10-21, in force 2027-04-22): `sh→ş ch→ç o‘→ö g‘→ğ`,
-  `ng` is plain n+g, tutuq is `ʼ` (U+02BC). Write new `uz.ts` text that way. `lib/format.ts` formats money/dates per language
+* Uzbek has **two alphabets**: `uz.ts` is written in the **2026 alphabet** (law signed 2026-10-21, in force
+  2027-04-22: `sh→ş ch→ç o‘→ö g‘→ğ`, `ng` = n+g, tutuq `ʼ` U+02BC) — write new `uz.ts` text that way. The
+  **1995 alphabet** (o‘ g‘ sh ch) is derived from it by `toUz1995()` (one-to-one; verified to reproduce the old
+  dictionary exactly). Settings → “Özbek alifbosi” chooses (`localStorage['yondo.uzAlphabet']`); the default is
+  1995 before 2027-04-22 and 2026 from that day (`defaultUzAlphabet`). Unit tests pin 2026 in `test-setup.ts`.
+* Signed in, the choice is also saved on the account (`PUT /auth/profile {ui_locale}`: `uz-Latn-1995`,
+  `uz-Latn-2026`, `ru`, `en`) and applied on the user's other devices (`AuthContext`).
+* Discovery search and the city filter match both alphabets on the server (`discovery/textfold.py`). `lib/format.ts` formats money/dates per language
   (dates stay in Asia/Tashkent).
 * User-written text (bios, interests, notes) and backend messages are not translated.
+
+## Profile, settings, help
+
+* **Profile** (`/account`): header card, a menu (Bookings, Favorites, Companion studio, Help and safety, Settings),
+  personal data, roles, sign out.
+* **Settings** (`/settings`): language + Uzbek alphabet, appearance, account, privacy & safety, about (version).
+* **Help and safety** (`/help`, also signed out; linked from the page footer): call 112, how to report, *my
+  reports* (`GET /safety/reports`), trusted contacts (stored only — the app notifies nobody), FAQ, support status,
+  closed-beta feedback (only if `GET /beta/me` succeeds).
+* **Report a problem** on each booking (`ReportDialog`) sends only `booking_id`; the server derives the other
+  participant, so a customer never needs a companion's user id.
+* Not available yet (honestly stated in the FAQ): account deletion, a support contact channel, reporting a profile
+  without a booking, SOS from the web app, blocking by booking.
 
 ## Security notes
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth, type User } from '../auth/AuthContext';
 import { t } from '../i18n';
-import { prettyPhone } from '../lib/format';
+import { formatInstant, prettyPhone } from '../lib/format';
 import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
 import { Field } from '../ui/form';
@@ -16,6 +16,20 @@ export function Account() {
   if (!user) return null;
   // Remount when the server-side profile changes so the form always starts from saved values.
   return <AccountView key={`${user.age}|${user.gender}|${user.city}`} user={user} />;
+}
+
+function MenuLink({ to, title, hint }: { to: string; title: string; hint: string }) {
+  return (
+    <li>
+      <Link to={to} className="menu-item">
+        <span className="stack" style={{ gap: 2 }}>
+          <b>{title}</b>
+          <span className="hint">{hint}</span>
+        </span>
+        <span aria-hidden="true" className="menu-chevron">›</span>
+      </Link>
+    </li>
+  );
 }
 
 function AccountView({ user }: { user: User }) {
@@ -70,18 +84,37 @@ function AccountView({ user }: { user: User }) {
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
       <h1>{t('account.title')}</h1>
-      <p className="hint"><Link to="/settings">{t('settings.link')}</Link>: {t('settings.linkHint')}</p>
       <Reveal>
         <div className="glass pad stack">
-          <h2>{t('account.loginInfo')}</h2>
+          <div className="profile-head">
+            <span className="avatar" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 9a8 8 0 0 1 16 0" />
+              </svg>
+            </span>
+            <div className="stack" style={{ gap: 2 }}>
+              <h2 style={{ margin: 0 }}>{prettyPhone(user.phone_number)}</h2>
+              <span className="muted">{user.roles.map(roleLabel).join(', ') || '—'}</span>
+            </div>
+          </div>
           <dl className="kv">
-            <dt>{t('account.phone')}</dt><dd>{prettyPhone(user.phone_number)}</dd>
-            <dt>{t('account.roles')}</dt><dd>{user.roles.map(roleLabel).join(', ') || '—'}</dd>
+            <dt>{t('account.memberSince')}</dt><dd>{formatInstant(user.created_at)}</dd>
           </dl>
           {!user.roles.includes('admin') && (
             <p className="hint">{t('account.statusNote')}</p>
           )}
         </div>
+      </Reveal>
+      <Reveal delay={0.03}>
+        <nav className="glass pad" aria-label={t('account.menu')}>
+          <ul className="menu-list">
+            <MenuLink to="/bookings" title={t('nav.bookings')} hint={t('account.menu.bookingsHint')} />
+            <MenuLink to="/favorites" title={t('nav.favorites')} hint={t('account.menu.favoritesHint')} />
+            {user.roles.includes('companion') && <MenuLink to="/studio" title={t('account.studio')} hint={t('account.menu.studioHint')} />}
+            <MenuLink to="/help" title={t('help.title')} hint={t('account.menu.helpHint')} />
+            <MenuLink to="/settings" title={t('settings.title')} hint={t('account.menu.settingsHint')} />
+          </ul>
+        </nav>
       </Reveal>
       <Reveal delay={0.05}>
         <form className="glass pad stack" onSubmit={save} noValidate>

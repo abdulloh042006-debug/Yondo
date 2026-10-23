@@ -33,6 +33,10 @@ class User(TimestampMixin, Base):
             'suspended', 'banned')''',
             name='ck_users_account_status',
         ),
+        CheckConstraint(
+            "ui_locale IS NULL OR ui_locale IN ('uz-Latn-1995', 'uz-Latn-2026', 'ru', 'en')",
+            name='ck_users_ui_locale',
+        ),
         Index('ix_users_account_status', 'account_status'),
     )
 
@@ -41,6 +45,8 @@ class User(TimestampMixin, Base):
     age: Mapped[int | None] = mapped_column()
     gender: Mapped[str | None] = mapped_column(String(64))
     city: Mapped[str | None] = mapped_column(String(128))
+    # Interface language chosen by the user (NULL = not chosen; clients use their own default).
+    ui_locale: Mapped[str | None] = mapped_column(String(16))
     account_status: Mapped[AccountStatus] = mapped_column(
         Enum(
             AccountStatus,

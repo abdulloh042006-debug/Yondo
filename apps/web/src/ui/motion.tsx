@@ -33,7 +33,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, y: 14, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      // transitionEnd clears the filter/transform afterwards: left in place they would turn this wrapper into the
+      // containing block of every `position: fixed` descendant.
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none', transform: 'none' } }}
       transition={{ duration: 0.5, ease }}
     >
       {children}

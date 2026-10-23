@@ -8,6 +8,7 @@ import { BOOKING_STATUS, roleLabel, serviceLabel } from '../lib/labels';
 import { useResource } from '../lib/useResource';
 import { ConfirmDialog, Empty, ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Item } from '../ui/motion';
+import { ReportDialog } from '../ui/ReportDialog';
 
 type Booking = Schemas['BookingResponse'];
 type Action = { booking: Booking; kind: 'accept' | 'decline' | 'cancel' };
@@ -22,6 +23,7 @@ export function Bookings() {
   const { user } = useAuth();
   const res = useResource((signal) => api.get<Booking[]>('/bookings', { query: { limit: 50 }, signal }), []);
   const [action, setAction] = useState<Action>();
+  const [reporting, setReporting] = useState<{ id: string; aboutCompanion: boolean }>();
   const toast = useToast();
   const isCompanion = !!user?.roles.includes('companion');
 
@@ -70,6 +72,7 @@ export function Bookings() {
                     {['pending', 'accepted', 'confirmed'].includes(b.status) && (
                       <button className="btn sm ghost" onClick={() => setAction({ booking: b, kind: 'cancel' })}>{t('bookings.cancel.confirm')}</button>
                     )}
+                    <button className="btn sm ghost" onClick={() => setReporting({ id: b.id, aboutCompanion: mine })}>{t('reportForm.action')}</button>
                   </div>
                 </article>
               </Item>
@@ -77,6 +80,7 @@ export function Bookings() {
           })}
         </div>
       )}
+      {reporting && <ReportDialog bookingId={reporting.id} aboutCompanion={reporting.aboutCompanion} onClose={() => setReporting(undefined)} />}
       {action && (
         <ConfirmDialog
           open

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiError, onSessionExpired, tokens, type Schemas } from '../api/client';
+import { applyLocaleTag, getLocaleTag, onLocaleChange } from '../i18n';
 
 export type User = Schemas['UserResponse'];
 type State = { status: 'loading' } | { status: 'anon' } | { status: 'authed'; user: User };
@@ -49,6 +50,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       off();
     };
   }, [resolve]);
+
+  // Interface language follows the account across devices (users.ui_locale), without overriding the device
+  // when the account has none yet: then the device's choice is saved to the account.
+  const authedUser = state.status === 'authed' ? state.user : null;
+  useEffect(() => {
+    if (!authedUser) return;
+    const save = () => {
+      const tag = getLocaleTag();
+      if (tag === authedUser.ui_locale) return;
+      api
+        .put<User>('/auth/profile', { ui_locale: tag })
+        .then((user) => setState((s) => (s.status === 'authed' && s.user.id === user.id ? { status: 'authed', user } : s)))
+        .catch(() => {
+          /* not critical: the choice is still stored on this device */
+        });
+    };
+    if (authedUser.ui_locale && authedUser.ui_locale !== getLocaleTag()) {
+      applyLocaleTag(authedUser.ui_locale).catch(() => {
+        /* language chunk unavailable: keep the current language */
+      });
+    } else if (!authedUser.ui_locale) {
+      save();
+    }
+    return onLocaleChange(save);
+  }, [authedUser]);
 
   const value = useMemo<AuthApi>(() => {
     const user = state.status === 'authed' ? state.user : null;

@@ -3,6 +3,7 @@ from uuid import UUID
 import pytest
 
 from yondo_api.companions.integrations import IdentityStatus
+from yondo_api.companions.models import CompanionProfile
 from yondo_api.models.user import User
 
 from .conftest import approve
@@ -67,6 +68,35 @@ async def test_discovery_filters_and_public_profile_hide_private_fields(prepared
     detail = await client.get(f'/api/v1/discovery/companions/{e["profile"]["id"]}')
     assert detail.status_code == 200
     assert detail.json()['display_name'] == 'Test companion'
+
+
+@pytest.mark.asyncio
+async def test_discovery_search_matches_both_uzbek_alphabets(prepared):
+    e, client = prepared, prepared['client']
+    await approve(e)
+    e['identity'].status = IdentityStatus.VERIFIED
+    activated = await client.post('/api/v1/companions/me/activate', headers=e['owner'])
+    assert activated.status_code == 200
+    async with e['app'].state.db_session_factory() as session:
+        user = await session.get(User, UUID(e['owner_id']))
+        user.city = 'Toshkent'
+        profile = await session.get(CompanionProfile, UUID(e['profile']['id']))
+        profile.display_name = 'Shahzoda G‘ulomova'
+        await session.commit()
+
+    async def ids(**params):
+        response = await client.get('/api/v1/discovery/companions', params=params)
+        assert response.status_code == 200, response.text
+        return [item['id'] for item in response.json()['items']]
+
+    found = [e['profile']['id']]
+    # 1995 spelling stored; 2026 spelling, other apostrophe shapes and upper case all match.
+    for city in ('Toshkent', 'Toşkent', 'TOSHKENT', 'toşkent'):
+        assert await ids(city=city) == found, city
+    for query in ('şahzoda', 'SHAHZODA', 'ğulom', 'gʻulom', "g'ulom", 'G’ULOM'):
+        assert await ids(q=query) == found, query
+    assert await ids(city='Samarqand') == []
+    assert await ids(q='çiroyli') == []
 
 
 @pytest.mark.asyncio

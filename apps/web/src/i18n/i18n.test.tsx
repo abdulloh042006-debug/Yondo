@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { en } from './en';
 import { LanguagePicker } from './LanguagePicker';
 import { LanguageSwitch } from './LanguageSwitch';
-import { getLang, setLang, t, useLang, type Key } from './index';
+import { defaultUzAlphabet, getLang, LANGS, setLang, setUzAlphabet, t, toUz1995, useLang, type Key } from './index';
 import { ru } from './ru';
 import { uz } from './uz';
 import { formatInstant, formatMoney } from '../lib/format';
@@ -131,5 +131,19 @@ describe('language switching', () => {
     expect(screen.getByLabelText('Вход')).toHaveValue('+998901');
     expect(screen.getByRole('button', { name: /^RU/ })).toHaveAttribute('aria-pressed', 'true');
     await setLang('uz');
+  });
+  it('Uzbek alphabets: 1995 text is derived from the 2026 source; default follows the law date', async () => {
+    expect(toUz1995('Toşkent, özgaradi, ğalaba, Çiqiş, ŞAHAR, maʼlumot')).toBe('Toshkent, o‘zgaradi, g‘alaba, Chiqish, SHAHAR, ma’lumot');
+    expect(defaultUzAlphabet(Date.parse('2026-10-23T12:00:00+05:00'))).toBe('1995');
+    expect(defaultUzAlphabet(Date.parse('2027-04-21T23:59:00+05:00'))).toBe('1995');
+    expect(defaultUzAlphabet(Date.parse('2027-04-22T00:00:00+05:00'))).toBe('2026');
+    await setLang('uz');
+    setUzAlphabet('1995');
+    expect(t('nav.login')).toBe('Kirish');
+    expect(t('profile.reviews', { count: 3 })).toBe('3 ta sharh');
+    expect(LANGS[0].label).toBe('O‘zbekcha');
+    setUzAlphabet('2026');
+    expect(t('nav.login')).toBe('Kiriş');
+    expect(LANGS[0].label).toBe('Özbekça');
   });
 });

@@ -28,6 +28,7 @@ from yondo_api.discovery.schemas import (
     DiscoveryService,
     FavoriteResponse,
 )
+from yondo_api.discovery.textfold import fold_uz, fold_uz_sql
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 from yondo_api.reviews.models import BookingReview
 
@@ -146,12 +147,16 @@ async def search_companions(
         available_until = available_until.astimezone(UTC)
     statement = _public_candidates()
     if q:
-        needle = f'%{q.strip()}%'
+        # Both Uzbek Latin alphabets (1995 and 2026) match each other; see discovery/textfold.py.
+        needle = f'%{fold_uz(q.strip())}%'
         statement = statement.where(
-            or_(CompanionProfile.display_name.ilike(needle), CompanionProfile.bio.ilike(needle))
+            or_(
+                fold_uz_sql(CompanionProfile.display_name).like(needle),
+                fold_uz_sql(CompanionProfile.bio).like(needle),
+            )
         )
     if city:
-        statement = statement.where(func.lower(User.city) == city.strip().casefold())
+        statement = statement.where(fold_uz_sql(User.city) == fold_uz(city.strip()))
     if rating_min is not None:
         real_rating = (
             select(func.avg(BookingReview.stars))

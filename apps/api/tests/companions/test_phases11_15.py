@@ -160,6 +160,45 @@ async def test_booking_report_target_must_be_the_counterparty(prepared):
 
 
 @pytest.mark.asyncio
+async def test_booking_report_derives_the_counterparty_when_no_user_id_is_given(prepared):
+    e, client = prepared, prepared['client']
+    service = await setup_bookable_companion(e)
+    booking = await client.post(
+        '/api/v1/bookings', headers=e['customer'], json=booking_payload(service['id'])
+    )
+    assert booking.status_code == 201
+    body = {'category': 'no_show', 'description': 'Companion did not come'}
+    missing = await client.post('/api/v1/safety/reports', headers=e['customer'], json=body)
+    assert missing.status_code == 422
+    assert missing.json()['code'] == 'report_target_required'
+    # Customer side: the companion's user id is never needed (booking_id only).
+    by_customer = await client.post(
+        '/api/v1/safety/reports',
+        headers=e['customer'],
+        json={**body, 'booking_id': booking.json()['id']},
+    )
+    assert by_customer.status_code == 201, by_customer.text
+    assert by_customer.json()['reported_user_id'] == e['owner_id']
+    # Companion side: derives the customer.
+    by_companion = await client.post(
+        '/api/v1/safety/reports',
+        headers=e['owner'],
+        json={**body, 'booking_id': booking.json()['id']},
+    )
+    assert by_companion.status_code == 201, by_companion.text
+    assert by_companion.json()['reported_user_id'] == booking.json()['customer_id']
+    # A non-participant cannot use someone else's booking.
+    outsider = await client.post(
+        '/api/v1/safety/reports',
+        headers=e['other'],
+        json={**body, 'booking_id': booking.json()['id']},
+    )
+    assert outsider.status_code in {403, 404}
+    own = await client.get('/api/v1/safety/reports', headers=e['customer'])
+    assert [r['category'] for r in own.json()] == ['no_show']
+
+
+@pytest.mark.asyncio
 async def test_admin_reporting_and_audited_moderation(prepared):
     e, client = prepared, prepared['client']
     assert (await client.get('/api/v1/admin/summary', headers=e['other'])).status_code == 403

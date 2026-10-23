@@ -20,19 +20,26 @@ export function toMinor(input: string): number | null {
 
 const dtfCache = new Map<string, Intl.DateTimeFormat>();
 /** Date formatter for the current UI language; times are always shown in Tashkent time. */
-function dtf(): Intl.DateTimeFormat {
-  const locale = getLocale();
-  let f = dtfCache.get(locale);
+function dtf(locale: string, month: 'short' | 'numeric'): Intl.DateTimeFormat {
+  const id = `${locale}|${month}`;
+  let f = dtfCache.get(id);
   if (!f) {
-    f = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' });
-    dtfCache.set(locale, f);
+    f = new Intl.DateTimeFormat(locale, { day: 'numeric', month, year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Tashkent' });
+    dtfCache.set(id, f);
   }
   return f;
 }
+/** Browsers ship little Uzbek CLDR data (Chromium prints "2026 M10 23"), so Uzbek dates are assembled here.
+ *  The month names are the same in the 1995 and 2026 alphabets. */
+const UZ_MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
 export function formatInstant(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : dtf().format(d);
+  if (Number.isNaN(d.getTime())) return '—';
+  const locale = getLocale();
+  if (!locale.startsWith('uz')) return dtf(locale, 'short').format(d);
+  const p = Object.fromEntries(dtf('en-GB', 'numeric').formatToParts(d).map((x) => [x.type, x.value]));
+  return `${Number(p.day)}-${UZ_MONTHS[Number(p.month) - 1]} ${p.year}, ${p.hour}:${p.minute}`;
 }
 
 export function shortId(id: string): string {

@@ -2852,9 +2852,9 @@ export interface components {
             description: string;
             /**
              * Reported User Id
-             * Format: uuid
+             * @description User id (never a companion profile id) of the reported account. Optional when booking_id is given: the server then reports the other participant of that booking, so a customer can report a companion without knowing their user id. At least one of the two is required.
              */
-            reported_user_id: string;
+            reported_user_id?: string | null;
         };
         /** ReviewRead */
         ReviewRead: {
@@ -3042,7 +3042,10 @@ export interface components {
              */
             token_type: string;
         };
-        /** UserProfileUpdate */
+        /**
+         * UserProfileUpdate
+         * @description Partial update: only fields present in the request body are changed.
+         */
         UserProfileUpdate: {
             /** Age */
             age?: number | null;
@@ -3050,6 +3053,8 @@ export interface components {
             city?: string | null;
             /** Gender */
             gender?: string | null;
+            /** Ui Locale */
+            ui_locale?: ("uz-Latn-1995" | "uz-Latn-2026" | "ru" | "en") | null;
         };
         /** UserResponse */
         UserResponse: {
@@ -3073,6 +3078,8 @@ export interface components {
             phone_number: string;
             /** Roles */
             roles: components["schemas"]["UserRoleType"][];
+            /** Ui Locale */
+            ui_locale?: ("uz-Latn-1995" | "uz-Latn-2026" | "ru" | "en") | null;
         };
         /**
          * UserRoleType

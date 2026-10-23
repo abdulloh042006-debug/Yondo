@@ -81,7 +81,21 @@ try {
       if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)|ERR_NAME_NOT_RESOLVED|ERR_CONNECTION|Failed to load resource/.test(m.text() + m.location().url)) problems.push(`${tag} console: ${m.text()}`);
     });
   };
-  const ctx = (opts = {}) => browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
+  // The assertions below use the 2026 Uzbek alphabet (the source spelling of uz.ts). Until 2027-04-22 the app's
+  // default is the 1995 alphabet, so every context starts on 2026 unless a step chose otherwise; the default
+  // itself is covered by the "Uzbek alphabet" step, which uses a context without this script.
+  const NEW_ALPHABET_DEFAULT = Date.now() >= Date.parse('2027-04-22T00:00:00+05:00');
+  const ctx = async (opts = {}) => {
+    const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
+    await c.addInitScript(() => {
+      try {
+        if (!localStorage.getItem('yondo.uzAlphabet')) localStorage.setItem('yondo.uzAlphabet', '2026');
+      } catch {
+        /* storage unavailable */
+      }
+    });
+    return c;
+  };
 
   /* ----------------------------------------------------- anonymous discovery */
   const anon = await ctx();
@@ -226,6 +240,50 @@ try {
     await cp.getByLabel('Yoş').fill('29');
     await cp.getByRole('button', { name: 'Saqlaş' }).click();
     await cp.getByText('Profil saqlandi.').waitFor();
+  });
+  await step('profile hub → help: trusted contact add/remove, report a booking (server derives the companion), my reports', async () => {
+    await cp.goto(`${WEB}/account`);
+    await cp.getByRole('navigation', { name: 'Bölimlar' }).getByRole('link', { name: /Yordam va xavfsizlik/ }).click();
+    await cp.getByRole('heading', { name: 'Yordam va xavfsizlik', level: 1 }).waitFor();
+    assert((await cp.getByRole('link', { name: /112/ }).getAttribute('href')) === 'tel:112', 'emergency number link');
+    await cp.getByLabel('Ism', { exact: true }).fill('E2E Ona');
+    await cp.getByLabel('Kontakt telefoni').fill('+998 90 123 45 67');
+    await cp.getByRole('button', { name: 'Qöşiş' }).click();
+    await cp.getByText('Kontakt saqlandi.').waitFor();
+    await cp.getByText('+998901234567').waitFor();
+    await cp.getByRole('button', { name: 'E2E Ona kontaktini öçiriş' }).click();
+    await cp.getByText('Kontakt öçirildi.').waitFor();
+    await cp.goto(`${WEB}/bookings`);
+    await cp.getByRole('button', { name: 'Muammo haqida xabar beriş' }).first().click();
+    await cp.getByText('Şikoyat şu brondagi hamroh haqida yuboriladi.').waitFor();
+    await cp.getByRole('button', { name: 'Şikoyatni yuboriş' }).click();
+    await cp.getByText('Qisqaça tavsif yozing.').waitFor();
+    await cp.getByLabel('Sabab').selectOption('no_show');
+    await cp.getByLabel('Nima bölganini yozing').fill('E2E: hamroh kelmadi');
+    await cp.getByRole('button', { name: 'Şikoyatni yuboriş' }).click();
+    await cp.getByText(/Şikoyat qabul qilindi/).waitFor();
+    await cp.goto(`${WEB}/help`);
+    await cp.getByText('E2E: hamroh kelmadi').waitFor();
+    await cp.getByText('Yuborildi, navbatda').first().waitFor();
+  });
+  await step('interface language is saved to the account and follows the user to another device', async () => {
+    const other = await ctx();
+    const op = await other.newPage();
+    watch(op, 'second-device');
+    try {
+      await cp.goto(`${WEB}/account`);
+      const saved = cp.waitForResponse((r) => r.url().endsWith('/api/v1/auth/profile') && r.request().method() === 'PUT');
+      await cp.locator('.lang-switch').getByRole('button', { name: /^RU/ }).click();
+      assert((await (await saved).json()).ui_locale === 'ru', 'PUT /auth/profile should store ru');
+      await otpLogin(op, '+998901110003'); // fresh device, Uzbek by default
+      await op.getByRole('link', { name: 'Профиль' }).first().waitFor();
+      assert((await op.evaluate(() => document.documentElement.lang)) === 'ru', 'second device should switch to ru');
+    } finally {
+      await cp.locator('.lang-switch').getByRole('button', { name: /^UZ/ }).click();
+      await cp.getByRole('heading', { name: 'Hisobim', level: 1 }).waitFor();
+      await cp.waitForTimeout(500); // let the PUT back to uz-Latn-2026 land
+      await other.close();
+    }
   });
 
   /* ------------------------------------------------ new companion, full path */
@@ -501,12 +559,39 @@ try {
       await page.evaluate(() => localStorage.removeItem('yondo.lang'));
     }
   });
+  await step('Uzbek alphabet: date-based default, Settings switch, and search matches both spellings', async () => {
+    const fresh = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ' });
+    const fp = await fresh.newPage();
+    watch(fp, 'alphabet');
+    try {
+      await fp.goto(WEB);
+      await fp.getByText('DEMO Madina').first().waitFor();
+      const first = await fp.locator('main').innerText();
+      const want = NEW_ALPHABET_DEFAULT ? 'Şaxsi tasdiqlangan' : 'Shaxsi tasdiqlangan';
+      assert(first.includes(want), `default alphabet should show “${want}”`);
+      await fp.goto(`${WEB}/settings`);
+      await fp.locator('.alphabet-picker').getByRole('button', { name: /Özbekça/ }).click();
+      await fp.getByRole('heading', { name: 'Köriniş', level: 2 }).waitFor();
+      await fp.goto(WEB);
+      await fp.getByText('DEMO Madina').first().waitFor();
+      assert((await fp.locator('main').innerText()).includes('Şaxsi tasdiqlangan'), '2026 spelling after the switch');
+      // Seed bio is written in the 1995 alphabet ("shahar bo‘ylab"); a 2026-spelled query must still find it.
+      await fp.getByLabel('Ism yoki tavsif böyiça qidiriş').fill('ŞAHAR BÖYLAB');
+      await fp.getByRole('button', { name: 'Qidiriş' }).first().click();
+      await fp.waitForFunction(() => { const t = document.body.innerText; return t.includes('DEMO Madina') && !t.includes('DEMO Jasur'); });
+      await fp.goto(`${WEB}/settings`);
+      await fp.locator('.alphabet-picker').getByRole('button', { name: /O‘zbekcha/ }).click();
+      await fp.getByRole('heading', { name: 'Ko‘rinish', level: 2 }).waitFor();
+    } finally {
+      await fresh.close();
+    }
+  });
   for (const lang of ['ru', 'en']) {
     await step(`axe (WCAG2 A/AA serious+critical) with the UI in ${lang}: public pages`, async () => {
       try {
         await page.goto(`${WEB}/settings`);
         await page.evaluate((l) => localStorage.setItem('yondo.lang', l), lang);
-        for (const path of ['/', '/login', '/settings']) {
+        for (const path of ['/', '/login', '/settings', '/help']) {
           await page.goto(`${WEB}${path}`);
           await page.waitForTimeout(1700);
           assert((await page.evaluate(() => document.documentElement.lang)) === lang, `<html lang> on ${path}`);
@@ -519,7 +604,7 @@ try {
   }
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
-      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
+      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [cp, '/account'], [cp, '/help'], [ap, '/admin'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);
         await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
         await pg.waitForTimeout(1700);

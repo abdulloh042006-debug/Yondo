@@ -93,6 +93,10 @@ export function Layout() {
             <Outlet />
           </PageTransition>
           {state.status === 'loading' && <span className="sr-only">{t('nav.sessionChecking')}</span>}
+          <footer className="site-foot">
+            <NavLink to="/help">{t('help.title')}</NavLink>
+            <NavLink to="/settings">{t('settings.title')}</NavLink>
+          </footer>
         </main>
       </div>
       <nav className="glass-bar dock" aria-label={t('nav.mobile')}>

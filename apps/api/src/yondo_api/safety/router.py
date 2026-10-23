@@ -18,7 +18,15 @@ router = APIRouter(prefix='/safety', tags=['safety'])
 
 class ReportWrite(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    reported_user_id: UUID
+    reported_user_id: UUID | None = Field(
+        default=None,
+        description=(
+            'User id (never a companion profile id) of the reported account. Optional when '
+            'booking_id is given: the server then reports the other participant of that '
+            'booking, so a customer can report a companion without knowing their user id. '
+            'At least one of the two is required.'
+        ),
+    )
     booking_id: UUID | None = None
     category: Literal[
         'harassment',
@@ -36,6 +44,7 @@ class ReportWrite(BaseModel):
 class ReportRead(ReportWrite):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
+    reported_user_id: UUID
     status: str
 
 
@@ -52,10 +61,16 @@ class ContactRead(ContactWrite):
 
 @router.post('/reports', response_model=ReportRead, status_code=201)
 async def report_user(payload: ReportWrite, principal: Principal, session: Session):
-    if payload.reported_user_id == principal.user.id:
-        raise ApplicationError('invalid_report', 'Cannot report own account', 422)
-    if await session.get(User, payload.reported_user_id) is None:
-        raise ApplicationError('reported_user_not_found', 'Account not found', 404)
+    if payload.reported_user_id is None and payload.booking_id is None:
+        raise ApplicationError(
+            'report_target_required', 'Give reported_user_id or booking_id', 422
+        )
+    target = payload.reported_user_id
+    if target is not None:
+        if target == principal.user.id:
+            raise ApplicationError('invalid_report', 'Cannot report own account', 422)
+        if await session.get(User, target) is None:
+            raise ApplicationError('reported_user_not_found', 'Account not found', 404)
     if payload.booking_id is not None:
         booking = await session.get(Booking, payload.booking_id)
         if booking is None:
@@ -69,11 +84,16 @@ async def report_user(payload: ReportWrite, principal: Principal, session: Sessi
             .where(CompanionProfile.id == booking.profile_id)
         )
         other_id = companion_id if principal.user.id == booking.customer_id else booking.customer_id
-        if payload.reported_user_id != other_id:
+        if target is None:
+            # Derived server-side (option C in design-prototype/docs/03-decisions-and-contract.md).
+            if other_id is None:
+                raise ApplicationError('reported_user_not_found', 'Account not found', 404)
+            target = other_id
+        elif target != other_id:
             raise ApplicationError('invalid_report_target', 'Report target is not participant', 422)
     report = SafetyReport(
         reporter_id=principal.user.id,
-        reported_user_id=payload.reported_user_id,
+        reported_user_id=target,
         booking_id=payload.booking_id,
         category=payload.category,
         description=payload.description.strip(),

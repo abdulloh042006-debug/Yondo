@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -107,21 +108,26 @@ export function Profile() {
         </div>
       </div>
 
-      <div className="book-bar glass-bar">
-        <div>
-          <b>{c.display_name}</b>
-          <p className="hint">{c.services.length ? t('profile.bookNote') : t('profile.noServicesShort')}</p>
-        </div>
-        <motion.div whileTap={{ scale: 0.96 }}>
-          {!user ? (
-            <button className="btn" onClick={() => navigate('/login', { state: { from: `/c/${c.id}` } })}>{t('profile.book')}</button>
-          ) : isCustomer ? (
-            <button className="btn" disabled={!c.services.length} onClick={() => setBooking(true)}>{t('profile.book')}</button>
-          ) : (
-            <Link className="btn ghost" to="/account">{t('profile.chooseCustomer')}</Link>
-          )}
-        </motion.div>
-      </div>
+      {/* Portal: the page transition leaves a CSS filter on its wrapper, which would make `position: fixed`
+          relative to the page instead of the viewport (the bar would scroll away or sit behind the dock). */}
+      {createPortal(
+        <div className="book-bar glass-bar">
+          <div>
+            <b>{c.display_name}</b>
+            <p className="hint">{c.services.length ? t('profile.bookNote') : t('profile.noServicesShort')}</p>
+          </div>
+          <motion.div whileTap={{ scale: 0.96 }}>
+            {!user ? (
+              <button className="btn" onClick={() => navigate('/login', { state: { from: `/c/${c.id}` } })}>{t('profile.book')}</button>
+            ) : isCustomer ? (
+              <button className="btn" disabled={!c.services.length} onClick={() => setBooking(true)}>{t('profile.book')}</button>
+            ) : (
+              <Link className="btn ghost" to="/account">{t('profile.chooseCustomer')}</Link>
+            )}
+          </motion.div>
+        </div>,
+        document.body,
+      )}
       <BookingDialog card={c} open={booking} onClose={() => setBooking(false)} />
     </div>
   );
