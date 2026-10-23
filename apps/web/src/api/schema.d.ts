@@ -69,7 +69,7 @@ export interface paths {
         put?: never;
         /**
          * Process Due
-         * @description Run the erasure job now (normally daily: `python -m yondo_api.account.jobs`).
+         * @description Run the erasure now (normally hourly via `python -m yondo_api.jobs`, infra/jobs).
          */
         post: operations["process_due_api_v1_admin_account_deletions_process_due_post"];
         delete?: never;
@@ -1751,6 +1751,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/safety/blocked-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Blocked Bookings
+         * @description Ids of your bookings whose other participant you have blocked (for the bookings list UI).
+         */
+        get: operations["blocked_bookings_api_v1_safety_blocked_bookings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/safety/blocks": {
         parameters: {
             query?: never;
@@ -1781,6 +1801,29 @@ export interface paths {
         post?: never;
         /** Unblock User */
         delete: operations["unblock_user_api_v1_safety_blocks__user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/safety/bookings/{booking_id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Block Booking Counterparty
+         * @description Block the other participant of one of your bookings without knowing their user id.
+         *
+         *     New bookings between the two are refused (`booking_blocked`); existing ones stay as they are.
+         */
+        put: operations["block_booking_counterparty_api_v1_safety_bookings__booking_id__block_put"];
+        post?: never;
+        /** Unblock Booking Counterparty */
+        delete: operations["unblock_booking_counterparty_api_v1_safety_bookings__booking_id__block_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2451,7 +2494,7 @@ export interface components {
          * BookingStatus
          * @enum {string}
          */
-        BookingStatus: "pending" | "accepted" | "confirmed" | "active" | "completed" | "cancelled" | "no-show" | "disputed";
+        BookingStatus: "pending" | "accepted" | "confirmed" | "active" | "completed" | "cancelled" | "no-show" | "disputed" | "expired";
         /** CartRead */
         CartRead: {
             /**
@@ -6955,6 +6998,26 @@ export interface operations {
             };
         };
     };
+    blocked_bookings_api_v1_safety_blocked_bookings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     list_blocks_api_v1_safety_blocks_get: {
         parameters: {
             query?: never;
@@ -7010,6 +7073,64 @@ export interface operations {
             header?: never;
             path: {
                 user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_booking_counterparty_api_v1_safety_bookings__booking_id__block_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unblock_booking_counterparty_api_v1_safety_bookings__booking_id__block_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
             };
             cookie?: never;
         };

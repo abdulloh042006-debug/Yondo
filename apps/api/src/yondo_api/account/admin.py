@@ -103,7 +103,7 @@ async def list_deletions(admin: Admin, session: Session):
 
 @router.post('/account-deletions/process-due', response_model=DeletionRun)
 async def process_due(request: Request, admin: Admin, session: Session):
-    """Run the erasure job now (normally daily: `python -m yondo_api.account.jobs`)."""
+    """Run the erasure now (normally hourly via `python -m yondo_api.jobs`, infra/jobs)."""
     erased, skipped = await deletion.process_due_deletions(
         session, request.app.state.object_storage
     )

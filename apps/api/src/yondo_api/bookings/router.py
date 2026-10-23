@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from yondo_api.account.deletion import pending_request
 from yondo_api.api.errors import ApplicationError
+from yondo_api.bookings.expiry import refuse_if_expired
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.bookings.schemas import BookingCancel, BookingCreate, BookingResponse
 from yondo_api.chat.service import append_system_message, publish
@@ -262,6 +263,7 @@ async def accept_booking(
         raise ApplicationError(
             'invalid_booking_transition', 'Only pending bookings can be accepted', 409
         )
+    await refuse_if_expired(session, booking)
     booking.status = BookingStatus.ACCEPTED
     booking.companion_contract_accepted_at = datetime.now(UTC)
     system_message = append_system_message(

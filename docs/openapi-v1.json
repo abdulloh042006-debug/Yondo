@@ -998,7 +998,8 @@
           "completed",
           "cancelled",
           "no-show",
-          "disputed"
+          "disputed",
+          "expired"
         ],
         "title": "BookingStatus",
         "type": "string"
@@ -3712,7 +3713,7 @@
     },
     "/api/v1/admin/account-deletions/process-due": {
       "post": {
-        "description": "Run the erasure job now (normally daily: `python -m yondo_api.account.jobs`).",
+        "description": "Run the erasure now (normally hourly via `python -m yondo_api.jobs`, infra/jobs).",
         "operationId": "process_due_api_v1_admin_account_deletions_process_due_post",
         "responses": {
           "200": {
@@ -9274,6 +9275,38 @@
         ]
       }
     },
+    "/api/v1/safety/blocked-bookings": {
+      "get": {
+        "description": "Ids of your bookings whose other participant you have blocked (for the bookings list UI).",
+        "operationId": "blocked_bookings_api_v1_safety_blocked_bookings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": "Response Blocked Bookings Api V1 Safety Blocked Bookings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Blocked Bookings",
+        "tags": [
+          "safety"
+        ]
+      }
+    },
     "/api/v1/safety/blocks": {
       "get": {
         "operationId": "list_blocks_api_v1_safety_blocks_get",
@@ -9380,6 +9413,87 @@
           }
         ],
         "summary": "Block User",
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/api/v1/safety/bookings/{booking_id}/block": {
+      "delete": {
+        "operationId": "unblock_booking_counterparty_api_v1_safety_bookings__booking_id__block_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unblock Booking Counterparty",
+        "tags": [
+          "safety"
+        ]
+      },
+      "put": {
+        "description": "Block the other participant of one of your bookings without knowing their user id.\n\nNew bookings between the two are refused (`booking_blocked`); existing ones stay as they are.",
+        "operationId": "block_booking_counterparty_api_v1_safety_bookings__booking_id__block_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Block Booking Counterparty",
         "tags": [
           "safety"
         ]

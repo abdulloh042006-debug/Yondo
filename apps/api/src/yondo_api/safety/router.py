@@ -144,6 +144,66 @@ async def unblock_user(user_id: UUID, principal: Principal, session: Session):
         await session.commit()
 
 
+async def _counterparty(session: Session, booking_id: UUID, user_id: UUID) -> UUID:
+    booking = await session.get(Booking, booking_id)
+    if booking is None:
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    await _participant(session, booking, user_id)
+    from yondo_api.companions.models import CompanionApplication, CompanionProfile
+
+    companion_id = await session.scalar(
+        select(CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.application_id == CompanionApplication.id)
+        .where(CompanionProfile.id == booking.profile_id)
+    )
+    other = companion_id if user_id == booking.customer_id else booking.customer_id
+    if other is None:
+        raise ApplicationError('user_not_found', 'Account not found', 404)
+    return other
+
+
+@router.put('/bookings/{booking_id}/block', status_code=204)
+async def block_booking_counterparty(booking_id: UUID, principal: Principal, session: Session):
+    """Block the other participant of one of your bookings without knowing their user id.
+
+    New bookings between the two are refused (`booking_blocked`); existing ones stay as they are.
+    """
+    other = await _counterparty(session, booking_id, principal.user.id)
+    return await block_user(other, principal, session)
+
+
+@router.delete('/bookings/{booking_id}/block', status_code=204)
+async def unblock_booking_counterparty(booking_id: UUID, principal: Principal, session: Session):
+    other = await _counterparty(session, booking_id, principal.user.id)
+    return await unblock_user(other, principal, session)
+
+
+@router.get('/blocked-bookings', response_model=list[UUID])
+async def blocked_bookings(principal: Principal, session: Session):
+    """Ids of your bookings whose other participant you have blocked (for the bookings list UI)."""
+    from yondo_api.companions.models import CompanionApplication, CompanionProfile
+
+    me = principal.user.id
+    blocked = set(
+        await session.scalars(select(UserBlock.blocked_id).where(UserBlock.blocker_id == me))
+    )
+    if not blocked:
+        return []
+    rows = await session.execute(
+        select(Booking.id, Booking.customer_id, CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.id == Booking.profile_id)
+        .join(CompanionApplication, CompanionApplication.id == CompanionProfile.application_id)
+        .where(or_(Booking.customer_id == me, CompanionApplication.user_id == me))
+        .order_by(Booking.created_at.desc())
+        .limit(500)
+    )
+    return [
+        booking_id
+        for booking_id, customer_id, companion_id in rows
+        if (companion_id if customer_id == me else customer_id) in blocked
+    ]
+
+
 @router.get('/blocks', response_model=list[UUID])
 async def list_blocks(principal: Principal, session: Session):
     return list(

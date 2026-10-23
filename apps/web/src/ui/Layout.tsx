@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { ConsentGate } from './Consent';
+import { SosButton } from './Sos';
 import { PageTransition } from './motion';
 
 const Icon = ({ d }: { d: string }) => (
@@ -87,6 +88,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
+          {user && <SosButton />}
           <LanguageSwitch />
         </header>
         <main id="main" className="page" tabIndex={-1}>

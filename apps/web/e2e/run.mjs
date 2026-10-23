@@ -505,6 +505,37 @@ try {
     await cp.getByText('E2E: tuzatildi, qayta urinib köring.').waitFor();
     await cp.getByText('Javob berildi').first().waitFor();
   });
+  await step('SOS: header button opens a confirmation window; 112 + trusted contact via own phone; location only on tap', async () => {
+    await cp.goto(`${WEB}/help`);
+    await cp.getByLabel('Ism', { exact: true }).fill('E2E Opa');
+    await cp.getByLabel('Kontakt telefoni').fill('+998901234500');
+    await cp.getByRole('button', { name: 'Qöşiş' }).click();
+    await cp.getByText('Kontakt saqlandi.').waitFor();
+    await cust.grantPermissions(['geolocation'], { origin: WEB });
+    await cust.setGeolocation({ latitude: 41.31108, longitude: 69.24056, accuracy: 20 });
+    await cp.locator('header').getByRole('button', { name: /SOS: favqulodda/ }).click();
+    const dlg = cp.getByRole('dialog', { name: 'SOS — favqulodda holat' });
+    await dlg.waitFor();
+    assert((await dlg.getByRole('link', { name: '112 ga qönğiroq qiliş' }).getAttribute('href')) === 'tel:112', 'tel:112');
+    await dlg.getByText('Hozir davom etayotgan uçraşuv yöq.').waitFor(); // no fake moderator signal
+    await dlg.getByRole('button', { name: 'Joylaşuvimni xabarga qöşiş' }).click();
+    await dlg.getByText(/Joylaşuv qöşildi: 41\.31108, 69\.24056/).waitFor();
+    const href = await dlg.getByRole('link', { name: 'E2E Opa: SMS yoziş' }).getAttribute('href');
+    assert(href.startsWith('sms:+998901234500?&body=') && decodeURIComponent(href).includes('41.31108, 69.24056'), `sms link ${href}`);
+    await dlg.getByRole('button', { name: 'Yopiş' }).click();
+    await cp.getByRole('button', { name: 'E2E Opa kontaktini öçiriş' }).click();
+    await cp.getByText('Kontakt öçirildi.').waitFor();
+  });
+  await step('block the other participant via a booking, then unblock (no user id in the UI)', async () => {
+    await cp.goto(`${WEB}/bookings`);
+    await cp.getByRole('button', { name: 'Bloklaş', exact: true }).first().click();
+    await cp.getByText(/Mavjud bronlar özgarmaydi/).waitFor();
+    await cp.getByRole('dialog').getByRole('button', { name: 'Bloklaş', exact: true }).click();
+    await cp.getByText('Foydalanuvçi bloklandi.').waitFor();
+    await cp.getByText('Bloklangan', { exact: true }).first().waitFor();
+    await cp.getByRole('button', { name: 'Blokdan çiqariş' }).first().click();
+    await cp.getByText('Blokdan çiqarildi.').waitFor();
+  });
   await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
     await cp.goto(`${WEB}/account#delete`);
     await cp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();

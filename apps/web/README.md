@@ -71,11 +71,19 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
 * **Support** (in Help): in-app request form + "my requests" with replies; admins answer in `/admin/support`
   (audited). No e-mail or phone by owner decision.
 * **Account deletion** (Profile → "Hisobni o‘chirish", linked from Settings): request with explicit confirmation →
-  profile hidden, new bookings refused, cancellable → erased/de-identified by the daily job within 30 days
+  profile hidden, new bookings refused, cancellable → erased/de-identified by the scheduled job (`python -m yondo_api.jobs`, `infra/jobs/`) within 30 days
   (`/admin/deletions` shows requests and can run the job). Refused while bookings are open.
 * **Legal**: `/terms` and `/privacy` render `src/legal/*.md` (owner drafts); an unticked consent box on login and a
   consent gate record the accepted version (`src/legal/versions.ts` = `account/legal.py`).
-* Not available yet: reporting a profile without a booking, SOS from the web app, blocking by booking (next stage).
+* **SOS** (`ui/Sos.tsx`): header button for signed-in users, also in Help and on confirmed/active bookings. The dialog
+  is the confirmation step; 112 and trusted contacts are reached through the phone's own `tel:`/`sms:` links;
+  location is read only after a tap and only goes into the SMS text; the moderator signal
+  (`POST /safety/bookings/{id}/sos`) is offered only for an active meeting and never claims help was sent.
+* **Block via booking**: "Bloklash" on each booking (`PUT/DELETE /safety/bookings/{id}/block`, state from
+  `GET /safety/blocked-bookings`); new bookings between the two are refused, existing ones stay.
+* Bookings that were never confirmed and whose start passed show as **expired** (slot released).
+* Dialogs render through a portal (the glass top bar's `backdrop-filter` would otherwise clip them).
+* Not available yet: reporting a profile without a booking; meeting check-in/start/end in the web app.
 
 ## Security notes
 

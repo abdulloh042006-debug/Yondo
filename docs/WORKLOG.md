@@ -8,13 +8,24 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 
 ## Next steps (priority order)
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
-2. **Owner/ops before publication** (`docs/legal/pre-publication-checklist.md`): operator name in Terms/Privacy; backup retention; schedule `python -m yondo_api.account.jobs` daily; then bump the document versions. **Next stage (owner):** SOS in web, block by booking. **Backend decisions still open:** delivery-fee configuration schema; blocking by booking (reports by booking done in S23); profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
+2. **Owner/ops before publication** (`docs/legal/pre-publication-checklist.md`): operator name in Terms/Privacy; backup retention; schedule `python -m yondo_api.account.jobs` daily; then bump the document versions. Install `infra/jobs/` timer on the production host. **Next:** meeting check-in/start/end UI in web (makes SOS moderator signal reachable). **Backend decisions still open:** delivery-fee configuration schema; blocking by booking (reports by booking done in S23); profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
 3. **Staging:** none documented. Obtain URL, test-login method (staging has no dev OTP; no SMS provider), payment sandbox, approved fee policy (`docs/04-staging-readiness.md`). Then add a read-only real-API contract check and an adapter that swaps the mock for the real client.
 4. **Real clients:** web + admin exist in `apps/web` (S14); `apps/mobile` is a stub. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
 5. **Quality gaps:** native Uzbek copy review (and native ru/en review of `apps/web/src/i18n`, S21); real iOS Safari/Android, Firefox/WebKit and screen-reader testing; logo symbol outlining, kerning, similarity/legal check; merch + presentation (P1/P2) not started.
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S25 — SOS in web, booking slot expiry, block via booking, job scheduling (2026-10-23)
+Done: owner approved "all" of the next stage.
+- SOS (`apps/web/src/ui/Sos.tsx`): header button (signed in), Help, confirmed/active bookings. Dialog = confirmation; `tel:112`; trusted contacts via `sms:`/`tel:` of the user's phone; geolocation only after a tap and only into the SMS text; moderator signal (existing API) only for an active meeting; honest wording everywhere.
+- Booking slots (owner text): overlap already guarded (app check + PG GiST exclusion) — PASS. New status `expired` (migration 0017): pending/accepted bookings past their start can no longer be accepted (`booking_expired`) or paid; sweep `bookings/expiry.py`; slot released.
+- Block via booking: `PUT/DELETE /safety/bookings/{id}/block`, `GET /safety/blocked-bookings`; Bookings page Block/Unblock with confirmation.
+- `python -m yondo_api.jobs` = booking expiry + account erasure (old `account.jobs` kept as alias); `infra/jobs/` systemd timer + cron + README (hourly).
+- Fixed: every Dialog now portals to `body` (header `backdrop-filter` clipped the SOS dialog off-screen).
+Not done: meeting check-in/start/end UI in web (so "active" meetings only arise via API); a production host to install the timer (OPEN, ops).
+Evidence (PASS): API SQLite 212 passed + 8 skipped; PostgreSQL 16: 220/220, decision tests 50/50; migration 0017 up/down/up on SQLite + PG; ruff; OpenAPI export. Web: tsc, eslint, build, vitest 36/36; real-backend e2e 57/57 (new: SOS dialog with mocked geolocation + contact SMS link, block/unblock via booking).
+Commit: this entry's commit.
+
 ## S24 — Account deletion (30 days), in-app support, Terms/Privacy pages + consent (2026-10-23)
 Done: owner decisions of 2026-10-23 (attachment: privacy + terms drafts, decision table).
 - API (migration 0016): `account_deletion_requests` (request/cancel, one pending per user, due after 29 days), erasure job `account/deletion.py` (de-identify user + clear personal data, keep bookings/payments/reviews/chats/safety/audit/consents; photo objects deleted when storage is configured), `python -m yondo_api.account.jobs` + `POST /admin/account-deletions/process-due` (audited); new status `deleted` (auth blocked, admin cannot set/revert). Pending accounts hidden from discovery and cannot book.

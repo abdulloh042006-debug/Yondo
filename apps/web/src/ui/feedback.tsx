@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   createContext,
@@ -113,7 +114,9 @@ export function Dialog({
       previous?.focus?.();
     };
   }, [open, onClose]);
-  return (
+  // Portal: an ancestor with a filter/backdrop-filter/transform (glass top bar, page transition) would
+  // otherwise become the containing block of this `position: fixed` overlay and clip the dialog.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -140,7 +143,8 @@ export function Dialog({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

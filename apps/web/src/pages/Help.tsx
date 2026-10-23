@@ -8,6 +8,7 @@ import { useResource } from '../lib/useResource';
 import { ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Field, Select, TextArea } from '../ui/form';
 import { Reveal } from '../ui/motion';
+import { SosButton } from '../ui/Sos';
 
 type Report = Schemas['ReportRead'];
 type Contact = Schemas['ContactRead'];
@@ -34,7 +35,10 @@ export function Help() {
         <section className="glass pad stack emergency" aria-labelledby="sos-h">
           <h2 id="sos-h">{t('help.emergency.title')}</h2>
           <p>{t('help.emergency.body')}</p>
-          <a className="btn" href="tel:112" style={{ width: 'fit-content' }}>{t('help.emergency.call')}</a>
+          <div className="row">
+            <a className="btn" href="tel:112">{t('help.emergency.call')}</a>
+            <SosButton className="btn ghost" />
+          </div>
         </section>
       </Reveal>
 

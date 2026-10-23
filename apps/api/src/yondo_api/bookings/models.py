@@ -31,6 +31,8 @@ class BookingStatus(StrEnum):
     CANCELLED = 'cancelled'
     NO_SHOW = 'no-show'
     DISPUTED = 'disputed'
+    # Start passed while pending/accepted (never confirmed): slot released (bookings/expiry.py).
+    EXPIRED = 'expired'
 
 
 class Booking(TimestampMixin, Base):
@@ -38,7 +40,7 @@ class Booking(TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending', 'accepted', 'confirmed', 'active', 'completed', "
-            "'cancelled', 'no-show', 'disputed')",
+            "'cancelled', 'no-show', 'disputed', 'expired')",
             name='ck_booking_status',
         ),
         CheckConstraint('ends_at > starts_at', name='ck_booking_interval'),

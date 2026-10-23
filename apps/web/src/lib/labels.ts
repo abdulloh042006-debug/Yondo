@@ -24,7 +24,7 @@ export const APPLICATION_STATUS = statusMap('status.application', { draft: '', s
 export const CONTENT_STATUS = statusMap('status.content', { draft: '', pending: 'warn', approved: 'ok', rejected: 'bad' });
 export const ACCOUNT_STATUS = statusMap('status.account', { active: 'ok', verification_pending: 'warn', restricted: 'warn', suspended: 'bad', banned: 'bad', deleted: '' });
 export const BOOKING_STATUS = statusMap('status.booking', {
-  pending: 'warn', accepted: 'ok', confirmed: 'ok', active: 'ok', completed: 'ok', cancelled: 'bad', 'no-show': 'bad', disputed: 'bad',
+  pending: 'warn', accepted: 'ok', confirmed: 'ok', active: 'ok', completed: 'ok', cancelled: 'bad', 'no-show': 'bad', disputed: 'bad', expired: '',
 });
 export const IDENTITY_STATUS = lazyMap('status.identity', ['verified', 'pending', 'rejected', 'unknown']);
 export const BLOCKERS = lazyMap('blocker', ['application_not_approved', 'content_not_approved', 'account_not_active', 'companion_role_required', 'identity_not_verified']);

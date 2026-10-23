@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from yondo_api.api.errors import ApplicationError
+from yondo_api.bookings.expiry import refuse_if_expired
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.bookings.router import _participant
 from yondo_api.chat.service import append_system_message, publish
@@ -60,6 +61,7 @@ async def create_checkout(
             raise ApplicationError(
                 'booking_not_payable', 'Only an accepted booking can be paid', 409
             )
+        await refuse_if_expired(session, booking)
         settings = request.app.state.settings
         fee_bps = settings.platform_fee_bps
         if fee_bps is None:

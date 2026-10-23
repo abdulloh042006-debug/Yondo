@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, type Schemas } from '../api/client';
+import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { formatInstant, formatMoney } from '../lib/format';
@@ -9,6 +9,7 @@ import { useResource } from '../lib/useResource';
 import { ConfirmDialog, Empty, ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Item } from '../ui/motion';
 import { ReportDialog } from '../ui/ReportDialog';
+import { SosButton } from '../ui/Sos';
 
 type Booking = Schemas['BookingResponse'];
 type Action = { booking: Booking; kind: 'accept' | 'decline' | 'cancel' };
@@ -24,6 +25,22 @@ export function Bookings() {
   const res = useResource((signal) => api.get<Booking[]>('/bookings', { query: { limit: 50 }, signal }), []);
   const [action, setAction] = useState<Action>();
   const [reporting, setReporting] = useState<{ id: string; aboutCompanion: boolean }>();
+  const [blocking, setBlocking] = useState<string>();
+  const blocked = useResource((signal) => api.get<string[]>('/safety/blocked-bookings', { signal }), []);
+  const isBlocked = (id: string) => !!blocked.data?.includes(id);
+  const toggleBlock = async (id: string) => {
+    if (isBlocked(id)) {
+      try {
+        await api.del(`/safety/bookings/${id}/block`);
+        toast.push('ok', t('block.undone'));
+        blocked.reload();
+      } catch (error) {
+        toast.push('bad', error instanceof ApiError ? error.message : t('common.actionFailed'));
+      }
+    } else {
+      setBlocking(id);
+    }
+  };
   const toast = useToast();
   const isCompanion = !!user?.roles.includes('companion');
 
@@ -54,7 +71,10 @@ export function Bookings() {
                 <article className="glass pad stack">
                   <div className="spread">
                     <h3>{serviceLabel(b.service_code)}</h3>
-                    <StatusTag map={BOOKING_STATUS} value={b.status} />
+                    <span className="row">
+                      {isBlocked(b.id) && <span className="tag">{t('block.blockedTag')}</span>}
+                      <StatusTag map={BOOKING_STATUS} value={b.status} />
+                    </span>
                   </div>
                   <dl className="kv">
                     <dt>{t('common.time')}</dt><dd>{formatInstant(b.starts_at)} — {formatInstant(b.ends_at)} ({t('common.minutesShort', { n: b.duration_minutes })})</dd>
@@ -73,6 +93,8 @@ export function Bookings() {
                       <button className="btn sm ghost" onClick={() => setAction({ booking: b, kind: 'cancel' })}>{t('bookings.cancel.confirm')}</button>
                     )}
                     <button className="btn sm ghost" onClick={() => setReporting({ id: b.id, aboutCompanion: mine })}>{t('reportForm.action')}</button>
+                    <button className="btn sm ghost" onClick={() => void toggleBlock(b.id)}>{isBlocked(b.id) ? t('block.undo') : t('block.action')}</button>
+                    {(b.status === 'confirmed' || b.status === 'active') && <SosButton className="btn sm danger" />}
                   </div>
                 </article>
               </Item>
@@ -81,6 +103,20 @@ export function Bookings() {
         </div>
       )}
       {reporting && <ReportDialog bookingId={reporting.id} aboutCompanion={reporting.aboutCompanion} onClose={() => setReporting(undefined)} />}
+      <ConfirmDialog
+        open={!!blocking}
+        danger
+        title={t('block.title')}
+        body={t('block.body')}
+        confirmLabel={t('block.action')}
+        onConfirm={async () => {
+          await api.put(`/safety/bookings/${blocking}/block`);
+          toast.push('ok', t('block.done'));
+          setBlocking(undefined);
+          blocked.reload();
+        }}
+        onClose={() => setBlocking(undefined)}
+      />
       {action && (
         <ConfirmDialog
           open
