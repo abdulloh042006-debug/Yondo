@@ -9,7 +9,9 @@ import { Favorites } from './pages/Favorites';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
+import { BookingDetail } from './pages/BookingDetail';
 import { Help } from './pages/Help';
+import { Notifications } from './pages/Notifications';
 import { LegalPage } from './legal/LegalPage';
 import { Empty, Loading } from './ui/feedback';
 import { Layout } from './ui/Layout';
@@ -34,6 +36,8 @@ export function App() {
           <Route path="privacy" element={<LegalPage doc="privacy" />} />
           <Route path="favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
           <Route path="bookings" element={<RequireAuth><Bookings /></RequireAuth>} />
+          <Route path="bookings/:id" element={<RequireAuth><BookingDetail /></RequireAuth>} />
+          <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
           <Route path="account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="studio" element={<RequireAuth role="companion"><Studio /></RequireAuth>} />
           <Route path="admin/*" element={<RequireAuth role="admin"><AdminRoutes /></RequireAuth>} />

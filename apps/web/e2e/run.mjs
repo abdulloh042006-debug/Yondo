@@ -536,6 +536,76 @@ try {
     await cp.getByRole('button', { name: 'Blokdan çiqariş' }).first().click();
     await cp.getByText('Blokdan çiqarildi.').waitFor();
   });
+  await step('booking detail: accept → payment shown honestly as unavailable (503) → notification', async () => {
+    const m = await ctx();
+    const mp2 = await m.newPage();
+    watch(mp2, 'madina');
+    try {
+      await otpLogin(mp2, '+998901110011');
+      await mp2.goto(`${WEB}/bookings`);
+      const card = mp2.locator('article', { hasText: 'DEMO: Magic City kafesi' });
+      await card.getByRole('button', { name: 'Qabul qiliş' }).click();
+      await mp2.getByRole('dialog').getByRole('button', { name: 'Qabul qiliş' }).click();
+      await mp2.getByText('Bron qabul qilindi.').waitFor();
+    } finally {
+      await m.close();
+    }
+    await cp.goto(`${WEB}/account`);
+    await cp.getByRole('link', { name: /Bildirişnomalar/ }).click();
+    await cp.getByText('Bron qabul qilindi').first().waitFor();
+    await cp.goto(`${WEB}/bookings`);
+    await cp.locator('article', { hasText: 'DEMO: Magic City kafesi' }).getByRole('link', { name: 'Batafsil' }).click();
+    await cp.getByRole('heading', { name: 'Tölov', level: 2 }).waitFor();
+    await cp.getByRole('button', { name: 'Tölovga ötiş' }).click();
+    await cp.getByText('Xizmat haqi sozlanmagan: tölov hozirça mumkin emas.').waitFor(); // 503 config, not "declined"
+    assert(!(await cp.locator('main').innerText()).includes('Tölangan'), 'never shown as paid');
+  });
+  await step('meeting flow: chat, both check in, start, SOS moderator signal, both finish, review', async () => {
+    await cp.goto(`${WEB}/bookings`);
+    await cp.locator('article', { hasText: 'DEMO: Yunusobod bog‘i (tasdiqlangan)' }).getByRole('link', { name: 'Batafsil' }).click();
+    await cp.getByRole('heading', { name: 'Uçraşuv', level: 2 }).waitFor();
+    const url = cp.url();
+    await cp.getByLabel('Xabar', { exact: true }).fill('E2E: men yöldaman');
+    await cp.getByRole('button', { name: 'Yuboriş', exact: true }).click();
+    await cp.locator('.chat-msg.me', { hasText: 'E2E: men yöldaman' }).waitFor();
+    await cp.getByRole('button', { name: 'Keldim' }).click();
+    await cp.getByText('Kelganlar: 1 / 2').waitFor();
+    const m = await ctx();
+    const mp2 = await m.newPage();
+    watch(mp2, 'madina-meeting');
+    try {
+      await otpLogin(mp2, '+998901110011');
+      await mp2.goto(url);
+      await mp2.locator('.chat-msg.them', { hasText: 'E2E: men yöldaman' }).waitFor();
+      await mp2.getByRole('button', { name: 'Keldim' }).click();
+      await mp2.getByText('Kelganlar: 2 / 2').waitFor();
+      await mp2.getByRole('button', { name: 'Uçraşuvni boşlaş' }).click();
+      await mp2.getByText('Davom etmoqda').first().waitFor();
+      await cp.reload();
+      await cp.getByText('Davom etmoqda').first().waitFor();
+      await cp.locator('header').getByRole('button', { name: /SOS: favqulodda/ }).click();
+      const dlg = cp.getByRole('dialog', { name: 'SOS — favqulodda holat' });
+      await dlg.getByRole('button', { name: /«Sayr» uçraşuvi böyiça signal yuboriş/ }).click();
+      await dlg.getByText(/Signal qayd etildi\. Moderator uni qölda körib çiqadi/).waitFor();
+      await dlg.getByRole('button', { name: 'Yopiş' }).click();
+      await cp.getByRole('button', { name: 'Tugatdim' }).click();
+      await cp.getByText('Siz tugaganini tasdiqladingiz; ikkinçi tomon kutilmoqda.').waitFor();
+      await mp2.reload();
+      await mp2.getByRole('button', { name: 'Tugatdim' }).click();
+      await mp2.getByText('Yakunlangan').first().waitFor();
+    } finally {
+      await m.close();
+    }
+    await cp.reload();
+    await cp.getByRole('heading', { name: 'Şarh', level: 2 }).waitFor();
+    await cp.getByRole('button', { name: 'Şarhni yuboriş' }).click();
+    await cp.getByText('Bahoni tanlang.').waitFor();
+    await cp.getByRole('radio', { name: '5 / 5' }).click();
+    await cp.getByLabel('Izoh (ixtiyoriy)').fill('E2E: vaqtida keldi, yoqimli suhbat.');
+    await cp.getByRole('button', { name: 'Şarhni yuboriş' }).click();
+    await cp.getByText('Sizning bahoyingiz: 5/5').waitFor();
+    await cp.getByText('Bron yopilgan: çat faqat öqiş uçun.').waitFor();
+  });
   await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
     await cp.goto(`${WEB}/account#delete`);
     await cp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
@@ -715,7 +785,7 @@ try {
   }
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
-      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
+      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [cp, '/notifications'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);
         await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
         await pg.waitForTimeout(1700);

@@ -7,6 +7,7 @@ import { formatInstant, prettyPhone } from '../lib/format';
 import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
 import { Field } from '../ui/form';
+import { useResource } from '../lib/useResource';
 import { Reveal } from '../ui/motion';
 import { DeleteAccount } from './DeleteAccount';
 
@@ -19,12 +20,12 @@ export function Account() {
   return <AccountView key={`${user.age}|${user.gender}|${user.city}`} user={user} />;
 }
 
-function MenuLink({ to, title, hint }: { to: string; title: string; hint: string }) {
+function MenuLink({ to, title, hint, badge }: { to: string; title: string; hint: string; badge?: string }) {
   return (
     <li>
       <Link to={to} className="menu-item">
         <span className="stack" style={{ gap: 2 }}>
-          <b>{title}</b>
+          <b>{title} {badge && <span className="tag warn">{badge}</span>}</b>
           <span className="hint">{hint}</span>
         </span>
         <span aria-hidden="true" className="menu-chevron">›</span>
@@ -42,6 +43,7 @@ function AccountView({ user }: { user: User }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<ApiError>();
   const [rolesBusy, setRolesBusy] = useState(false);
+  const unread = useResource((signal) => api.get<{ unread_count: number }>('/notifications/unread-count', { signal }), []);
 
   const ageNum = age.trim() === '' ? null : Number(age);
   const ageError = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 18 || ageNum > 120) ? t('account.ageRange') : err?.fields.age;
@@ -110,6 +112,7 @@ function AccountView({ user }: { user: User }) {
         <nav className="glass pad" aria-label={t('account.menu')}>
           <ul className="menu-list">
             <MenuLink to="/bookings" title={t('nav.bookings')} hint={t('account.menu.bookingsHint')} />
+            <MenuLink to="/notifications" title={t('nav.notifications')} hint={t('account.menu.notificationsHint')} badge={unread.data?.unread_count ? t('notif.unread', { n: unread.data.unread_count }) : undefined} />
             <MenuLink to="/favorites" title={t('nav.favorites')} hint={t('account.menu.favoritesHint')} />
             {user.roles.includes('companion') && <MenuLink to="/studio" title={t('account.studio')} hint={t('account.menu.studioHint')} />}
             <MenuLink to="/help" title={t('help.title')} hint={t('account.menu.helpHint')} />

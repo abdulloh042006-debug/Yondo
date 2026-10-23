@@ -15,6 +15,15 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S26 — Web: booking detail (payment, meeting, chat, review) + notifications (2026-10-23)
+Done: owner: "server at the end, do the rest". `apps/web` now covers the whole booking lifecycle on top of the existing API (no backend change):
+- `/bookings/:id`: payment only when `accepted` (stable `Idempotency-Key` per booking; 503 shown as unavailable, never "declined"/paid), meeting check-in → start → finish (server rules), chat with polling + labelled system events + read cursor, review after `completed` (1–5 stars + comment), report + SOS. Bookings list links "Batafsil".
+- `/notifications` (kind labels, open booking, mark all read) + unread badge in the Profile menu.
+- e2e seed: one DEMO confirmed booking written directly to the DB (no payment provider exists) so the meeting/SOS/review path is testable.
+Not done: realtime chat socket (polling used); payment provider, production host (owner: server/deploy last).
+Evidence (PASS): tsc, eslint, build, vitest 37/37; real-backend e2e 59/59 (new: accept → 503 payment shown honestly → notification; chat both ways, both check in, start, SOS moderator signal recorded, both finish, review 5/5, chat read-only).
+Commit: this entry's commit.
+
 ## S25 — SOS in web, booking slot expiry, block via booking, job scheduling (2026-10-23)
 Done: owner approved "all" of the next stage.
 - SOS (`apps/web/src/ui/Sos.tsx`): header button (signed in), Help, confirmed/active bookings. Dialog = confirmation; `tel:112`; trusted contacts via `sms:`/`tel:` of the user's phone; geolocation only after a tap and only into the SMS text; moderator signal (existing API) only for an active meeting; honest wording everywhere.

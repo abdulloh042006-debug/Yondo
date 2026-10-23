@@ -140,6 +140,21 @@ async def seed(app):
             'description': 'DEMO shikoyat: ko‘rib chiqish uchun namunaviy yozuv.'})
         _ = madina_user
 
+        # DEMO: a confirmed (paid) booking that started 2 minutes ago, so the meeting flow (check-in, start,
+        # SOS signal, end, review) can be exercised without a payment provider. Written straight to the DB:
+        # the API never confirms without a provider-verified payment.
+        from yondo_api.bookings.models import Booking, BookingStatus
+
+        now = datetime.now(UTC).replace(microsecond=0)
+        async with app.state.db_session_factory() as session:
+            session.add(Booking(
+                customer_id=UUID(customer_id), profile_id=UUID(madina_profile), service_id=UUID(services[1]['id']),
+                status=BookingStatus.CONFIRMED, service_code=services[1]['service_code'], service_description='',
+                starts_at=now - timedelta(minutes=2), ends_at=now + timedelta(minutes=58), timezone='Asia/Tashkent',
+                duration_minutes=60, meeting_place='DEMO: Yunusobod bog‘i (tasdiqlangan)', price_minor=services[1]['price_minor'] * 2,
+                currency='UZS', customer_contract_accepted_at=now, companion_contract_accepted_at=now))
+            await session.commit()
+
 
 async def _user_of_profile(app, profile_id):
     from yondo_api.companions.models import CompanionApplication, CompanionProfile

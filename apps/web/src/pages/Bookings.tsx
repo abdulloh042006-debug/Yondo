@@ -92,6 +92,7 @@ export function Bookings() {
                     {['pending', 'accepted', 'confirmed'].includes(b.status) && (
                       <button className="btn sm ghost" onClick={() => setAction({ booking: b, kind: 'cancel' })}>{t('bookings.cancel.confirm')}</button>
                     )}
+                    <Link className="btn sm" to={`/bookings/${b.id}`}>{t('bd.open')}</Link>
                     <button className="btn sm ghost" onClick={() => setReporting({ id: b.id, aboutCompanion: mine })}>{t('reportForm.action')}</button>
                     <button className="btn sm ghost" onClick={() => void toggleBlock(b.id)}>{isBlocked(b.id) ? t('block.undo') : t('block.action')}</button>
                     {(b.status === 'confirmed' || b.status === 'active') && <SosButton className="btn sm danger" />}

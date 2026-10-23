@@ -83,7 +83,12 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
   `GET /safety/blocked-bookings`); new bookings between the two are refused, existing ones stay.
 * Bookings that were never confirmed and whose start passed show as **expired** (slot released).
 * Dialogs render through a portal (the glass top bar's `backdrop-filter` would otherwise clip them).
-* Not available yet: reporting a profile without a booking; meeting check-in/start/end in the web app.
+* **Booking detail** (`/bookings/:id`): payment (only when `accepted`; stable `Idempotency-Key` per booking;
+  503 shown as "unavailable", never "declined"; never shown as paid unless the server says so), meeting
+  (check-in → start → finish, server-enforced), chat (light polling, system events labelled), review (after
+  `completed`), report and SOS.
+* **Notifications** (`/notifications`, badge in the Profile menu): list, open booking, mark all read.
+* Not available yet: reporting a profile without a booking; realtime chat socket (polling is used).
 
 ## Security notes
 

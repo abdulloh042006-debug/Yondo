@@ -828,6 +828,56 @@ textarea.input {
   }
 }
 
+/* ---------- booking detail: chat, stars ---------- */
+.chat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.chat-msg {
+  display: grid;
+  gap: 2px;
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: color-mix(in oklab, var(--c-fg) 6%, transparent);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.chat-msg.me {
+  justify-self: end;
+  background: color-mix(in oklab, var(--c-fg) 12%, transparent);
+}
+.chat-msg.system {
+  justify-self: center;
+  max-width: 100%;
+  background: transparent;
+  border: 1px dashed var(--c-line);
+  text-align: center;
+}
+.stars {
+  display: flex;
+  gap: 4px;
+}
+.star {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.6rem;
+  line-height: 1;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: color-mix(in oklab, var(--c-fg) 30%, transparent);
+  cursor: pointer;
+}
+.star.on {
+  color: var(--c-fg);
+}
+
 /* ---------- SOS ---------- */
 .sos-btn {
   margin-left: auto; /* mobile: sits right after the brand, before the language switch */
