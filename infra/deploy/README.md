@@ -13,8 +13,16 @@ This is a **demo**, not production. It runs `apps/web/e2e/server.py`, which uses
 | web app, admin console, i18n | photos: in-memory (not stored, not served) |
 | | identity check: always "verified" |
 | | database: throw-away SQLite in `/tmp`, **re-seeded with DEMO data at every start** |
+| | payment: `apps/web/e2e/demo_payment.py`, a stand-in for CLICK/Payme (see below) |
 
-Payments stay unconfigured: "To‘lovga o‘tish" answers 503 / "sozlanmagan", exactly as locally.
+### DEMO payment (until real CLICK/Payme keys exist)
+When `YONDO_DEMO_PUBLIC_URL` (or Render's `RENDER_EXTERNAL_URL`) is set, "To‘lovga o‘tish" creates a checkout whose link opens a
+**DEMO page on this same server**: "To‘lovni tasdiqlash" sends a signed event to the real `/payments/webhook` route and the booking
+becomes "Tasdiqlangan"; "Rad etish" fails the payment. **No money moves.** The platform fee is the labelled DEMO value 0 — the real fee,
+cancellation and refund rules are still the owner's decision. Without the URL the API answers 503 "sozlanmagan" as before.
+Real CLICK/Payme later = a new provider class behind the same `PaymentProvider` interface (`apps/api/src/yondo_api/payments/provider.py`)
+plus the owner's merchant keys in the host's environment variables (never in git).
+Check it against a running harness: `python apps/web/e2e/demo_payment_check.py <port>` (start `server.py` with `YONDO_DEMO_PUBLIC_URL=https://demo.test`).
 
 ### Risks you accept by publishing it
 - Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (it replaces the well-known `+998901110001`; nobody else knows which number is the admin). If it is **not** set, the public image fails closed: the admin gets a random unknown number, so nobody can open the admin console (set the variable when you need it). Check after every deploy that `+998901110001` gets 403 on `/api/v1/admin/summary`.

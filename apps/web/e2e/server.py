@@ -16,6 +16,8 @@ Optional environment (used by the public demo image, see infra/deploy/README.md)
                           the server is bound to a public address and this is unset, a random unknown number
                           is used (nobody can sign in as admin; the OTP is shown on screen to every visitor)
   YONDO_WEB_DIST          folder of the built web app; when set, it is served at "/" next to the API
+  YONDO_DEMO_PUBLIC_URL   https URL of this server (Render's RENDER_EXTERNAL_URL is used if unset); turns on the
+                          DEMO payment provider (demo_payment.py): no money moves, fee = DEMO 0. Unset = payment 503
 """
 
 import asyncio
@@ -30,6 +32,7 @@ from sqlalchemy import select
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
+from demo_payment import DemoPaymentProvider, install_demo_payment_routes
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -41,6 +44,7 @@ DB = sys.argv[2] if len(sys.argv) > 2 else 'e2e.db'
 
 HOST = os.environ.get('YONDO_DEMO_HOST', '127.0.0.1')
 WEB_DIST = os.environ.get('YONDO_WEB_DIST')
+PUBLIC_URL = os.environ.get('YONDO_DEMO_PUBLIC_URL') or os.environ.get('RENDER_EXTERNAL_URL')
 
 # Fail closed: the well-known admin number is only ever used on loopback. On a public bind (the demo image) a missing
 # or empty YONDO_DEMO_ADMIN_PHONE must not hand the admin console to every visitor.
@@ -201,8 +205,14 @@ class SpaFiles(StaticFiles):
 
 
 async def main():
-    settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}')
-    app = create_application(settings, object_storage=MemoryStorage(), identity_eligibility=AlwaysVerified())
+    # DEMO payments (no money moves) only when a public https URL is known; otherwise the honest 503 stays.
+    demo_pay = DemoPaymentProvider(PUBLIC_URL) if PUBLIC_URL else None
+    settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}',
+                        **({'platform_fee_bps': 0} if demo_pay else {}))  # labelled DEMO fee, the real policy is the owner's
+    app = create_application(settings, object_storage=MemoryStorage(), identity_eligibility=AlwaysVerified(),
+                             payment_provider=demo_pay)
+    if demo_pay:
+        install_demo_payment_routes(app, demo_pay)
     if WEB_DIST:
         app.mount('/', SpaFiles(directory=WEB_DIST, html=True), name='web')
     async with app.router.lifespan_context(app):

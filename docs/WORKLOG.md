@@ -15,6 +15,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S29 — DEMO payment provider: the demo can complete a booking (2026-10-28)
+Done: owner: "use test tokens for now, real CLICK/other keys later; free servers/DB are fine to start, plan by user count later". `apps/web/e2e/demo_payment.py`: `DemoPaymentProvider` (HMAC-signed events into the REAL `/payments/webhook`), DEMO pay page `/demo-pay/{ref}` (confirm / reject), labelled DEMO fee 0; on only when an https `YONDO_DEMO_PUBLIC_URL` / Render's `RENDER_EXTERNAL_URL` exists, otherwise the honest 503 stays. API code untouched (provider injected by the harness). Dockerfile copies the module; README explains how real CLICK/Payme plugs in (new `PaymentProvider` class + the owner's keys in host env vars).
+Not done: real CLICK/Payme adapter (needs the owner's merchant keys), fee/cancellation/refund policy (owner), S3/MinIO adapter (only the `ObjectStorage` protocol exists → photo upload says unavailable), persistent PostgreSQL mode for the demo (needs a free DB, e.g. Neon, created by the owner).
+Evidence: `e2e/demo_payment_check.py` 10/10 PASS on a local harness (checkout → page → confirm → booking confirmed; confirm twice idempotent; forged webhook 401; reject keeps booking accepted); full e2e 59/59 PASS with the default (payment-off) config.
+Commit: this entry's commit.
+
 ## S28 — Handoff verification on Windows, 5 fixes, self-hosted fonts, free-hosting demo image (2026-10-27)
 Done: local `design/prototype` was 29 commits behind; fast-forwarded to `c7f9b87`. Ran the whole check list and a manual tour (built-in browser, localhost only). Findings → fixes:
 - FAIL→fixed: `/terms` and `/privacy` rendered as one `<h1>` on Windows (`core.autocrlf` makes the `.md` files CRLF; `Markdown` split on `\n\n`). `LegalPage.tsx` normalises line endings; test added.

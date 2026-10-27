@@ -15,7 +15,7 @@ WORKDIR /app
 COPY apps/api/ /app/api/
 # server.py (the e2e demo harness) imports httpx and uses the aiosqlite driver; both are dev-only extras of apps/api.
 RUN pip install --no-cache-dir /app/api 'httpx>=0.28,<1' 'aiosqlite>=0.20,<1'
-COPY apps/web/e2e/server.py /app/server.py
+COPY apps/web/e2e/server.py apps/web/e2e/demo_payment.py /app/
 COPY --from=web /web/dist /app/dist
 
 ENV YONDO_DEMO_HOST=0.0.0.0 \
