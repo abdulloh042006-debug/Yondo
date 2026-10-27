@@ -12,6 +12,7 @@ Usage: python server.py <port> <sqlite-file>
 """
 
 import asyncio
+import os
 import sys
 from uuid import UUID
 
@@ -101,6 +102,14 @@ async def seed(app):
             )).json()
             await client.post(f'{base}/me/services', headers=headers, json={'service_code': 'coffee', 'price_minor': price, 'currency': 'UZS', 'unit_minutes': 60, 'description': 'Kafe yoki parkda suhbat'})
             await client.post(f'{base}/me/services', headers=headers, json={'service_code': 'walking', 'price_minor': price // 2, 'currency': 'UZS', 'unit_minutes': 30, 'description': ''})
+            # illustrated profile pictures (PHOTOS_DIR/<name>-N.jpg), uploaded through the real photo endpoint
+            pdir = os.environ.get('PHOTOS_DIR')
+            if pdir:
+                for f in sorted(os.listdir(pdir)):
+                    if f.startswith(name.lower() + '-') and f.endswith('.jpg'):
+                        with open(os.path.join(pdir, f), 'rb') as fh:
+                            up = await client.post(f'{base}/me/photos', headers={**headers, 'content-type': 'image/jpeg'}, content=fh.read())
+                        print('PHOTO', name, f, up.status_code, flush=True)
             await client.post(f'{base}/me/application/submit', headers=headers)
             if approve_all:
                 rev = (await client.get(f'{base}/me/application', headers=headers)).json()['revision']
@@ -153,7 +162,18 @@ async def _user_of_profile(app, profile_id):
 
 async def main():
     settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}')
-    app = create_application(settings, object_storage=MemoryStorage(), identity_eligibility=AlwaysVerified())
+    store = MemoryStorage()
+    app = create_application(settings, object_storage=store, identity_eligibility=AlwaysVerified())
+
+    # serve the in-memory objects at the URLs create_download_url() hands out (test double only)
+    from fastapi import Response as _Resp
+
+    @app.get('/__test_storage/{key:path}', include_in_schema=False)
+    async def _test_storage(key: str):
+        if key not in store.objects:
+            return _Resp(status_code=404)
+        body, ctype = store.objects[key]
+        return _Resp(content=body, media_type=ctype or 'image/jpeg', headers={'Cache-Control': 'max-age=3600'})
     async with app.router.lifespan_context(app):
         async with app.state.db_engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)

@@ -82,16 +82,37 @@ async function undoRu(page) {
   await page.evaluate(() => { for (const [n, k, v] of (window.__undoRu || []).reverse()) { if (k === 'text') n.nodeValue = v; else n.setAttribute('placeholder', v); } window.__undoRu = []; });
 }
 async function shot(page, name, opts = {}) {
+  const keepY = await page.evaluate(() => window.scrollY);
   await page.waitForTimeout(1600);
+  await page.evaluate((y) => { document.documentElement.style.scrollBehavior = 'auto'; if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, behavior: 'instant' }); }, keepY);
   await hideVerified(page);
-  if (RU) { await toRu(page, name); await page.waitForTimeout(150); }
+  // S22+: apps/web has its own RU locale; switch it with the top-bar language button (no remount), then translate only
+  // the seed data (names, bios, city, interests) from ru-dict.json; switch back so the next clicks find the Uzbek labels.
+  const setLang = (id) => page.evaluate((x) => { const b = [...document.querySelectorAll('.lang-switch button')].find((e) => (e.getAttribute('aria-label') || '').toUpperCase().startsWith(x)); if (b) b.click(); return !!b; }, id);
+  if (RU) { await setLang('RU'); await page.waitForTimeout(900); await toRu(page, name); await page.waitForTimeout(150); }
   await page.screenshot({ path: `${OUT}/${name}.png`, ...opts });
-  if (RU) { await undoRu(page); writeFileSync(`${OUT}/untranslated.json`, JSON.stringify(MISSING, null, 1)); }
+  // remember where the main profile photo sits (fractions of the viewport) so the video can animate it in place
+  if (/-profile$/.test(name)) {
+    const box = await page.evaluate(() => {
+      const imgs = [...document.querySelectorAll('img')].filter((i) => /__test_storage/.test(i.currentSrc || i.src));
+      const r0 = imgs.map((i) => [i, i.getBoundingClientRect()]).filter(([, r]) => r.width > 80).sort((a, b) => b[1].width * b[1].height - a[1].width * a[1].height)[0];
+      if (!r0) return null;
+      const [img, r] = r0; const cs = getComputedStyle(img); const hdr = document.querySelector('header');
+      const top = hdr ? Math.max(0, hdr.getBoundingClientRect().bottom - r.top) : 0;
+      return { x: r.left / innerWidth, y: r.top / innerHeight, w: r.width / innerWidth, h: r.height / innerHeight,
+        clipTop: top / r.height, radius: parseFloat(cs.borderTopLeftRadius) / r.width, fit: cs.objectFit, src: (img.currentSrc || img.src).split('/').pop() };
+    });
+    writeFileSync(`${OUT}/${name}.json`, JSON.stringify(box));
+  }
+  if (RU) { await undoRu(page); await setLang('UZ'); await page.waitForTimeout(500); writeFileSync(`${OUT}/untranslated.json`, JSON.stringify(MISSING, null, 1)); }
   console.log('shot', name);
 }
 async function login(page, phone) {
   await page.goto(`${WEB}/login`);
   await page.getByLabel('Telefon raqami').fill(phone);
+  // S24+: terms/privacy consent must be ticked before a code is sent
+  const consent = page.getByRole('checkbox').first();
+  if (await consent.count()) await consent.check();
   await page.getByRole('button', { name: 'Kod yuborish' }).click();
   const code = (await page.locator('b.mono').first().innerText()).trim();
   await page.getByLabel('Tasdiqlash kodi').fill(code);
@@ -128,6 +149,14 @@ try {
     // profile
     await pg.goto(WEB); await pg.getByRole('link', { name: /Madina profilini ochish/ }).click();
     await pg.getByRole('heading', { name: 'Madina', level: 1 }).waitFor();
+    // bring the main photo right under the sticky header (instant scroll, so the screenshot and the recorded box agree)
+    await pg.waitForFunction(() => [...document.querySelectorAll('img')].some((i) => /__test_storage/.test(i.currentSrc || i.src) && i.complete && i.naturalWidth), null, { timeout: 15000 }).catch(() => {});
+    await pg.evaluate(() => {
+      document.documentElement.style.scrollBehavior = 'auto';
+      const img = [...document.querySelectorAll('img')].filter((i) => /__test_storage/.test(i.currentSrc || i.src)).sort((a, b) => b.width * b.height - a.width * a.height)[0];
+      const hdr = document.querySelector('header'); const hb = hdr ? hdr.getBoundingClientRect().bottom : 0;
+      if (img) window.scrollTo({ top: img.getBoundingClientRect().top + window.scrollY - hb - 12, behavior: 'instant' });
+    });
     await shot(pg, `${p}-profile`);
     await pg.getByText('Xizmatlar va narxlar').first().scrollIntoViewIfNeeded(); await pg.evaluate(() => window.scrollBy(0, -90));
     await shot(pg, `${p}-profile-services`);
