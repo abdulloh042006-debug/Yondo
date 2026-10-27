@@ -73,3 +73,4 @@ Keep this list current: when the owner states a preference or decision, add one 
 - Server/deploy last (owner, 2026-10-23, S26): "Serverni oxirida qilamiz" — finish product features first; production host, timer install and storage adapter come at the end.
 - Push (2026-10-22, S16–S18): works from a cloud session once the repo is attached via the session's GitHub connection (no pasted token); the bundle from the blocked session was merged into `design/prototype` (merge commit, no force-push).
 - Promo video (owner, 2026-10-23): **no subtitles**; the RU cut must show the app **fully in Russian** (capture-time translation via `marketing/ad-video/ru-dict.json` until `apps/web` gets a RU locale).
+- Promo video (owner, 2026-10-27): profiles must have pictures (illustrated, brand palette, seeded via the photo API) and the profile photo comes alive in the video (friendly wave hello); no romantic gestures.
