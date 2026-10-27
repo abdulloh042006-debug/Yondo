@@ -12,12 +12,15 @@ Usage: python server.py <port> <sqlite-file>
 
 Optional environment (used by the public demo image, see infra/deploy/README.md):
   YONDO_DEMO_HOST         bind address (default 127.0.0.1)
-  YONDO_DEMO_ADMIN_PHONE  phone of the seeded admin (default is the well-known test number)
+  YONDO_DEMO_ADMIN_PHONE  phone of the seeded admin. Default: the well-known test number on loopback only; when
+                          the server is bound to a public address and this is unset, a random unknown number
+                          is used (nobody can sign in as admin; the OTP is shown on screen to every visitor)
   YONDO_WEB_DIST          folder of the built web app; when set, it is served at "/" next to the API
 """
 
 import asyncio
 import os
+import secrets
 import sys
 from uuid import UUID
 
@@ -39,7 +42,12 @@ DB = sys.argv[2] if len(sys.argv) > 2 else 'e2e.db'
 HOST = os.environ.get('YONDO_DEMO_HOST', '127.0.0.1')
 WEB_DIST = os.environ.get('YONDO_WEB_DIST')
 
-ADMIN = os.environ.get('YONDO_DEMO_ADMIN_PHONE', '+998901110001')
+# Fail closed: the well-known admin number is only ever used on loopback. On a public bind (the demo image) a missing
+# or empty YONDO_DEMO_ADMIN_PHONE must not hand the admin console to every visitor.
+LOOPBACK = HOST in ('127.0.0.1', 'localhost', '::1')
+ADMIN = os.environ.get('YONDO_DEMO_ADMIN_PHONE', '').strip() or (
+    '+998901110001' if LOOPBACK else f'+998{secrets.randbelow(10**9):09d}'
+)
 CUSTOMER = '+998901110003'
 PENDING_USER = '+998901110004'
 OTHER_ADMIN_TARGET = '+998901110005'

@@ -17,7 +17,7 @@ This is a **demo**, not production. It runs `apps/web/e2e/server.py`, which uses
 Payments stay unconfigured: "To‘lovga o‘tish" answers 503 / "sozlanmagan", exactly as locally.
 
 ### Risks you accept by publishing it
-- Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (it replaces the well-known `+998901110001`; nobody else knows which number is the admin).
+- Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (it replaces the well-known `+998901110001`; nobody else knows which number is the admin). If it is **not** set, the public image fails closed: the admin gets a random unknown number, so nobody can open the admin console (set the variable when you need it). Check after every deploy that `+998901110001` gets 403 on `/api/v1/admin/summary`.
 - Do not enter real phone numbers or personal data; everything is deleted at restart, but treat the site as public.
 - The legal pages are still drafts (operator name "hali ko‘rsatilmagan"); see `docs/legal/pre-publication-checklist.md`.
 - Not included: the hourly job (`infra/jobs/`, booking expiry + account erasure), realtime chat (the socket needs Redis; the web app polls every 8 s instead).
