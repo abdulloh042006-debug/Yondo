@@ -1,6 +1,6 @@
 """Drives the DEMO payment flow against a running harness (server.py with YONDO_DEMO_PUBLIC_URL=https://...).
 
-Usage: python demo_payment_check.py <port>
+Usage: python demo_payment_check.py <port | https://origin>
 Checks (exit code 1 on any failure): checkout link -> DEMO page -> succeed => booking confirmed (twice = idempotent);
 second booking: fail => payment failed, booking stays accepted. No money moves; the provider is a stand-in.
 """
@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 
 import httpx
 
-PORT = sys.argv[1] if len(sys.argv) > 1 else '8000'
-ORIGIN = f'http://127.0.0.1:{PORT}'
+TARGET = sys.argv[1] if len(sys.argv) > 1 else '8000'  # a port, or a full origin such as https://yondo-demo.onrender.com
+ORIGIN = TARGET.rstrip('/') if TARGET.startswith('http') else f'http://127.0.0.1:{TARGET}'
 API = f'{ORIGIN}/api/v1'
 failures = []
 
