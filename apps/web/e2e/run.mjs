@@ -464,7 +464,8 @@ try {
   /* ------------------------------------------------------ responsive/themes */
   await step('legal pages: terms + privacy render as separate pages with version and draft notice', async () => {
     await page.goto(`${WEB}/terms`);
-    await page.getByRole('heading', { name: 'Yondo — Foydalanish shartlari', level: 1 }).waitFor();
+    await page.getByRole('heading', { name: 'Yondo — Foydalanish shartlari', level: 1, exact: true }).waitFor();
+    assert((await page.locator('.legal-doc h2').count()) >= 5, 'sections must render as headings (CRLF sources once collapsed into the title)');
     await page.getByText(/Versiya: 2026-10-23-draft/).waitFor();
     await page.getByText(/Loyiha: hujjat hali kuçga kirmagan/).waitFor();
     await page.locator('.site-foot').getByRole('link', { name: 'Maxfiylik siyosati' }).click();
