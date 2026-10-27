@@ -15,6 +15,19 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S28 — Handoff verification on Windows, 5 fixes, self-hosted fonts, free-hosting demo image (2026-10-27)
+Done: local `design/prototype` was 29 commits behind; fast-forwarded to `c7f9b87`. Ran the whole check list and a manual tour (built-in browser, localhost only). Findings → fixes:
+- FAIL→fixed: `/terms` and `/privacy` rendered as one `<h1>` on Windows (`core.autocrlf` makes the `.md` files CRLF; `Markdown` split on `\n\n`). `LegalPage.tsx` normalises line endings; test added.
+- FAIL→fixed: booking error `availability_not_found` (409) had no i18n key and showed "data changed". Added `err.availability_not_found` (uz/ru/en). 39 other backend codes still lack a key (gifts/beta/vendor not in web, 404/422 fall back sensibly).
+- FAIL→fixed: login field is prefilled `+998`; a pasted/typed full number became `+998+998…` and was rejected. `dedupePhonePrefix` in `lib/format.ts` (+ test).
+- FAIL→fixed: `e2e/run.mjs` spawned `npx` (breaks on Windows/Node 24); now runs vite through `node`.
+- Google Fonts → self-hosted `@fontsource-variable/*` (5 families, OFL). No request leaves the app (checked in the browser). **OPEN (owner):** `privacy.md` §10 "Shriftlar" bullet is now untrue; edit it with the next legal version.
+- `infra/deploy/` + `render.yaml`: one image = API + web on one port for a free host (uses the e2e test doubles; `e2e/server.py` got 3 env hooks: host, private admin phone, web dist). Tested natively on :8100; Docker image NOT built (Docker Desktop not running). **Not deployed**: needs the owner to sign in to a host (README).
+Not done: realtime chat (socket needs Redis; no Redis in the demo) = NOT IMPLEMENTED; owner items (operator name, SMS/identity provider, payment/fee, backups); native-speaker review; real-device tests; old spelling in `design-prototype/` + `marketing/`; `ruff format`; `apps/mobile`.
+Evidence: API SQLite 212 passed + 8 skipped (PG-only), ruff, OpenAPI check PASS; web tsc, eslint, build, vitest 39/39 PASS; real-backend e2e 59/59 PASS (Edge via `CHROME`); one run under heavy load had 2 `goto /help` timeouts, not reproducible. Manual PASS: search "Toşkent"/"Toshkent", booking, companion accept, payment 503 text, SOS dialog (no request sent), settings alphabet+theme.
+Env note: C: was full (npm global install of `omniroute` died with ENOSPC; partial dir removed). A 2 GB `.omniroute-*` leftover from 2026-10-26 in `%APPDATA%\npm\node_modules` is not ours and was left alone.
+Commit: this entry's commit.
+
 ## S27 — Promo video: profile pictures + live waving portrait; RU via the app's own locale (2026-10-27)
 Done: owner: "add pictures where there are none (it's an ad)" + "bring the frame to life (a gesture)". Illustrated portraits (brand palette, not photos of real people) for Madina/Jasur/Sevara + 2 gallery scenes, uploaded by the seed through the real photo endpoint; test storage served by `server_video.py`. In the video the in-app profile photo comes alive (arm rises, waves hello, head sways) in both formats. Air-kiss not done (product rule: no romantic imagery). Fast-forwarded to S22–S26 first (6 remote commits); capture adapted (consent checkbox; RU through the app's top-bar locale switch, `ru-dict.json` only for seed data; deterministic profile scroll + photo box).
 Evidence (PASS): 4 × 20 shots, 0 errors; RU leftovers only Yondo/UZ/RU/EN/SOS/Magic City/IDs; stills + rendered frames checked (overlay aligned on phone and browser); 4 files: uz 44.93 s I=-14.7 LUFS, ru 40.50 s I=-14.3 LUFS, 1080×1920 + 1920×1080; delivered in chat (not committed).

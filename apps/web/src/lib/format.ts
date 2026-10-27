@@ -50,6 +50,12 @@ export function initial(name: string): string {
   return (name.trim()[0] ?? '·').toUpperCase();
 }
 
+/** The login field starts as "+998": a full number typed or pasted after it gives "+998+998…"; drop the doubled prefix. */
+export function dedupePhonePrefix(raw: string): string {
+  const m = /^\+998\+?998(\d{9})$/.exec(raw.replace(/[\s()-]/g, ''));
+  return m ? `+998${m[1]}` : raw.trim();
+}
+
 /** +998901234567 -> +998 90 123 45 67 (display only). */
 export function prettyPhone(phone: string): string {
   const m = /^\+?998(\d{2})(\d{3})(\d{2})(\d{2})$/.exec(phone.replace(/\s/g, ''));

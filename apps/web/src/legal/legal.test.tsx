@@ -18,6 +18,12 @@ describe('legal documents', () => {
     expect(screen.getByText('Holati:').tagName).toBe('B');
     expect(document.querySelector('p br')).not.toBeNull();
   });
+  it('renders CRLF sources (Windows checkout) exactly like LF ones', () => {
+    render(<Markdown source={'# Title\r\n\r\n## 1. Bo‘lim\r\n\r\n- bir\r\n- ikki'} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Title' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: '1. Bo‘lim' })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
   it('the drafts never print placeholder brackets or an e-mail address', () => {
     for (const name of ['terms.md', 'privacy.md']) {
       const text = readFileSync(resolve(process.cwd(), 'src/legal', name), 'utf8');

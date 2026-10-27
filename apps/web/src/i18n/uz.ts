@@ -70,6 +70,7 @@ export const uz = {
   'err.invalid_photo': 'Rasmni öqib bölmadi.',
   'err.storage_unavailable': 'Rasm saqlaş xizmati hozir mavjud emas. Keyinroq urinib köring.',
   'err.booking_time_unavailable': 'Tanlangan vaqt band yoki hamroh böş emas.',
+  'err.availability_not_found': 'Hamroh tanlangan vaqtda böş emas. Boşqa vaqtni tanlang.',
   'err.booking_start_in_past': 'Boşlaniş vaqti ötib ketgan.',
   'err.invalid_booking_duration': 'Davomiylik xizmat birligiga mos kelişi kerak.',
   'err.self_booking_forbidden': 'Özingizga bron qila olmaysiz.',

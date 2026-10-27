@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { dedupePhonePrefix } from '../lib/format';
 import { ConsentCheck } from '../ui/Consent';
 import { Field } from '../ui/form';
 
@@ -36,7 +37,8 @@ export function Login() {
       setAgreeErr(true);
       return;
     }
-    const digits = phone.replace(/\D/g, '');
+    const number = dedupePhonePrefix(phone);
+    const digits = number.replace(/\D/g, '');
     if (digits.length < 9) {
       setError(new ApiError(422, 'invalid_phone_number'));
       return;
@@ -44,8 +46,8 @@ export function Login() {
     setBusy(true);
     setError(undefined);
     try {
-      const res = await requestCode(phone.trim());
-      setStep({ kind: 'code', phone: phone.trim(), resendIn: res.resend_after_seconds, devOtp: res.development_otp });
+      const res = await requestCode(number);
+      setStep({ kind: 'code', phone: number, resendIn: res.resend_after_seconds, devOtp: res.development_otp });
       setCode('');
     } catch (err) {
       setError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));

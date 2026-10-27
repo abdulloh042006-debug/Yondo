@@ -9,15 +9,23 @@ Everything else (authz, state machines, audit trail, discovery rules) is the pro
 Seed data is labelled "DEMO". This verifies behaviour on SQLite, NOT on PostgreSQL.
 
 Usage: python server.py <port> <sqlite-file>
+
+Optional environment (used by the public demo image, see infra/deploy/README.md):
+  YONDO_DEMO_HOST         bind address (default 127.0.0.1)
+  YONDO_DEMO_ADMIN_PHONE  phone of the seeded admin (default is the well-known test number)
+  YONDO_WEB_DIST          folder of the built web app; when set, it is served at "/" next to the API
 """
 
 import asyncio
+import os
 import sys
 from uuid import UUID
 
 import httpx
 import uvicorn
 from sqlalchemy import select
+from starlette.exceptions import HTTPException
+from starlette.staticfiles import StaticFiles
 
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
@@ -28,7 +36,10 @@ from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 DB = sys.argv[2] if len(sys.argv) > 2 else 'e2e.db'
 
-ADMIN = '+998901110001'
+HOST = os.environ.get('YONDO_DEMO_HOST', '127.0.0.1')
+WEB_DIST = os.environ.get('YONDO_WEB_DIST')
+
+ADMIN = os.environ.get('YONDO_DEMO_ADMIN_PHONE', '+998901110001')
 CUSTOMER = '+998901110003'
 PENDING_USER = '+998901110004'
 OTHER_ADMIN_TARGET = '+998901110005'
@@ -165,15 +176,33 @@ async def _user_of_profile(app, profile_id):
         return str(application.user_id)
 
 
+class SpaFiles(StaticFiles):
+    """The built web app: unknown paths fall back to index.html (client-side routes).
+
+    Not for /api paths or for names with a file extension (a missing asset must stay a 404).
+    """
+
+    async def get_response(self, path, scope):
+        try:
+            return await super().get_response(path, scope)
+        except HTTPException as exc:
+            rel = path.replace('\\', '/')  # StaticFiles hands over OS-specific separators
+            if exc.status_code != 404 or rel.startswith('api/') or '.' in rel.rsplit('/', 1)[-1]:
+                raise
+            return await super().get_response('index.html', scope)
+
+
 async def main():
     settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}')
     app = create_application(settings, object_storage=MemoryStorage(), identity_eligibility=AlwaysVerified())
+    if WEB_DIST:
+        app.mount('/', SpaFiles(directory=WEB_DIST, html=True), name='web')
     async with app.router.lifespan_context(app):
         async with app.state.db_engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
         await seed(app)
         print('SEED_DONE', flush=True)
-        server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=PORT, lifespan='off', log_level='warning'))
+        server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=PORT, lifespan='off', log_level='warning'))
         await server.serve()
 
 

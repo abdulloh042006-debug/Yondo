@@ -1,0 +1,17 @@
+# Render Blueprint for the public DEMO (see infra/deploy/README.md before using it).
+# Free instances sleep after ~15 minutes without traffic and start again (~1 minute); demo data is re-seeded
+# on every start. Set YONDO_DEMO_ADMIN_PHONE in the Render dashboard (it is not stored in this file).
+services:
+  - type: web
+    name: yondo-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/deploy/Dockerfile
+    dockerContext: .
+    branch: design/prototype
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: '10000'
+      - key: YONDO_DEMO_ADMIN_PHONE
+        sync: false

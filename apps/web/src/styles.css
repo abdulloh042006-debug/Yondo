@@ -14,8 +14,8 @@
   --c-chip: #efe4d4;
   --c-scrim: #2a1c16;
   --c-on-media: #fff8f1;
-  --f-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --f-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --f-sans: 'Outfit Variable', 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 [data-theme='rausch'] {
   --c-bg: #ffffff;
@@ -28,8 +28,8 @@
   --c-chip: #f2f2f2;
   --c-scrim: #1c1412;
   --c-on-media: #fff8f6;
-  --f-display: 'Newsreader', Georgia, serif;
-  --f-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Newsreader Variable', 'Newsreader', Georgia, serif;
+  --f-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 [data-theme='stone'] {
   --c-bg: #f3f5f8;
@@ -42,8 +42,8 @@
   --c-chip: #e7edf5;
   --c-scrim: #10192c;
   --c-on-media: #f4f7fb;
-  --f-display: 'Outfit', system-ui, sans-serif;
-  --f-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Outfit Variable', 'Outfit', system-ui, sans-serif;
+  --f-sans: 'Outfit Variable', 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 :root {
@@ -1220,8 +1220,8 @@ table.data td {
 [data-theme='yondo'],
 [data-theme='yondo-tun'] {
   --c-glow: #e8501a;
-  --f-display: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
-  --f-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Space Grotesk Variable', 'Space Grotesk', 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --f-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ok: var(--c-fg);
   --warn: var(--c-fg);
   --bad: var(--c-fg);

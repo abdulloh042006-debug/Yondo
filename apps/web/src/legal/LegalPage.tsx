@@ -20,6 +20,7 @@ export function Markdown({ source }: { source: string }) {
   return (
     <>
       {source
+        .replace(/\r\n?/g, '\n') // Windows checkouts (core.autocrlf) turn the .md files into CRLF
         .trim()
         .split(/\n{2,}/)
         .map((block, i) => {

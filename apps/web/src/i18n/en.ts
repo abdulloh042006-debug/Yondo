@@ -71,6 +71,7 @@ export const en: Record<Key, string> = {
   'err.invalid_photo': 'The photo could not be read.',
   'err.storage_unavailable': 'Photo storage is unavailable right now. Please try again later.',
   'err.booking_time_unavailable': 'The chosen time is taken or the companion is not available.',
+  'err.availability_not_found': 'The companion is not available at the chosen time. Choose another time.',
   'err.booking_start_in_past': 'The start time is in the past.',
   'err.invalid_booking_duration': 'The duration must match the service unit.',
   'err.self_booking_forbidden': 'You cannot book yourself.',

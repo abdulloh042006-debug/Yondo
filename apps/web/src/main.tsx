@@ -7,6 +7,12 @@ import { AuthProvider } from './auth/AuthContext';
 import { applySavedLang } from './i18n';
 import { ToastProvider } from './ui/feedback';
 import { applySavedTheme } from './ui/theme';
+// Self-hosted fonts (no request to Google): bundled by Vite from npm.
+import '@fontsource-variable/fraunces/opsz.css';
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/outfit';
+import '@fontsource-variable/space-grotesk';
 import './styles.css';
 
 applySavedTheme();

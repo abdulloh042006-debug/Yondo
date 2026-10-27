@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatInstant, formatMoney, prettyPhone, toMinor } from './format';
+import { dedupePhonePrefix, formatInstant, formatMoney, prettyPhone, toMinor } from './format';
 
 describe('money is integer tiyin', () => {
   it('formats Uzbek dates by hand in Tashkent time (browsers lack Uzbek month names)', () => {
@@ -21,6 +21,12 @@ describe('money is integer tiyin', () => {
     expect(toMinor('abc')).toBeNull();
     expect(toMinor('-5')).toBeNull();
     expect(toMinor('1.234')).toBeNull();
+  });
+  it('drops the doubled +998 prefix of a pasted number but keeps numbers that merely contain 998', () => {
+    expect(dedupePhonePrefix('+998+998901110003')).toBe('+998901110003');
+    expect(dedupePhonePrefix('+998998901110003')).toBe('+998901110003');
+    expect(dedupePhonePrefix(' +998 90 111 00 03 ')).toBe('+998 90 111 00 03');
+    expect(dedupePhonePrefix('+998998123456')).toBe('+998998123456');
   });
   it('prettifies Uzbek phones for display only', () => {
     expect(prettyPhone('+998901110003')).toBe('+998 90 111 00 03');

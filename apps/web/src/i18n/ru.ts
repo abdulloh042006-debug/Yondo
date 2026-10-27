@@ -71,6 +71,7 @@ export const ru: Record<Key, string> = {
   'err.invalid_photo': 'Не удалось прочитать фотографию.',
   'err.storage_unavailable': 'Сервис хранения фотографий сейчас недоступен. Повторите позже.',
   'err.booking_time_unavailable': 'Выбранное время занято или компаньон недоступен.',
+  'err.availability_not_found': 'Компаньон недоступен в выбранное время. Выберите другое время.',
   'err.booking_start_in_past': 'Время начала уже прошло.',
   'err.invalid_booking_duration': 'Длительность должна соответствовать единице услуги.',
   'err.self_booking_forbidden': 'Нельзя забронировать встречу с самим собой.',

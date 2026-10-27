@@ -71,7 +71,8 @@ try {
     mkdirSync('e2e/.tmp', { recursive: true });
     await start(PY, ['e2e/server.py', '8000', `e2e/.tmp/run-${Date.now()}.db`], 'SEED_DONE');
     await new Promise((r) => setTimeout(r, 1500));
-    await start('npx', ['vite', 'preview', '--port', '4173', '--host', '127.0.0.1'], '4173');
+    // Run vite through node itself: spawning `npx` fails on Windows (npx.cmd needs a shell).
+    await start(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', '4173', '--host', '127.0.0.1'], '4173');
   }
 
   const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
