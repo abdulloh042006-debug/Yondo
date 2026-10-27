@@ -13,7 +13,8 @@ RUN npm run build
 FROM python:3.12-slim
 WORKDIR /app
 COPY apps/api/ /app/api/
-RUN pip install --no-cache-dir /app/api
+# server.py (the e2e demo harness) imports httpx and uses the aiosqlite driver; both are dev-only extras of apps/api.
+RUN pip install --no-cache-dir /app/api 'httpx>=0.28,<1' 'aiosqlite>=0.20,<1'
 COPY apps/web/e2e/server.py /app/server.py
 COPY --from=web /web/dist /app/dist
 
