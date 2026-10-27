@@ -23,6 +23,7 @@ html,body{margin:0;background:var(--ink);overflow:hidden}
 .ru .kin{font-family:MR,sans-serif;font-weight:800;letter-spacing:-.03em}
 .phone{border-radius:76px;background:#0d0d0d;padding:16px;box-shadow:0 60px 120px -30px rgba(17,17,17,.35),0 0 0 2px #2a2a2a inset,0 0 0 1px rgba(255,255,255,.08)}
 .screen{position:relative;width:100%;height:100%;border-radius:60px;overflow:hidden;background:#F5F2EC}
+  .wrap{position:absolute;left:0;top:0;width:100%;height:100%}.live{position:absolute;overflow:hidden}.live svg{display:block;width:100%;height:100%}
 .screen img,.bscreen img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:top}
 .browser{border-radius:22px;background:rgba(255,255,255,.55);padding:0;box-shadow:0 50px 100px -30px rgba(17,17,17,.3),0 0 0 1px rgba(17,17,17,.08);backdrop-filter:blur(20px);overflow:hidden}
 .bbar{height:44px;display:flex;align-items:center;gap:9px;padding:0 18px;background:rgba(255,255,255,.6);border-bottom:1px solid rgba(17,17,17,.06)}
@@ -66,6 +67,8 @@ svg{overflow:visible}
 const TL_ALL = __TIMELINE__;
 const WORDMARK = `__WORDMARK__`;
 const SHOTS_ALL = __SHOTS__;
+const PHOTOBOX_ALL = __PHOTOBOX__;  // where the main profile photo sits on the captured profile screens
+const MADINA_SVG = `__MADINA__`;     // the same picture, split into animatable groups
 const q = new URLSearchParams(location.search);
 const FMT = q.get('fmt') || 'v', LANG = q.get('lang') || 'uz';
 const TL = TL_ALL[LANG], TX = TL.text, V = TL.V;
@@ -111,7 +114,16 @@ if (!VERT) { br.style.width = LY.browser.w + 'px'; $('bscreen').style.height = M
 else br.style.display = 'none';
 
 /* screens */
-function addImgs(host, names) { const m = {}; for (const n of names) { const i = new Image(); i.src = SHOTS + '/' + n + '.png'; i.style.opacity = 0; host.appendChild(i); m[n] = i; } return m; }
+const LIVE = [];  // profile photos that come alive (wave) in the video
+function addImgs(host, names) { const m = {}; for (const n of names) { const i = new Image(); i.src = SHOTS + '/' + n + '.png';
+  const box = /(^|\/)[md]-profile$/.test(n) ? ((PHOTOBOX_ALL[LANG] || {})[n[0]]) : null;
+  if (box && MADINA_SVG.length > 50) {
+    const w = document.createElement('div'); w.className = 'wrap'; w.style.opacity = 0; w.appendChild(i); host.appendChild(w);
+    const lv = document.createElement('div'); lv.className = 'live';
+    Object.assign(lv.style, { left: box.x * 100 + '%', top: box.y * 100 + '%', width: box.w * 100 + '%', height: box.h * 100 + '%' });
+    lv.innerHTML = MADINA_SVG.replace('<svg ', `<svg preserveAspectRatio="xMidYMid ${box.fit === 'contain' ? 'meet' : 'slice'}" `);
+    w.appendChild(lv); LIVE.push({ lv, box, host }); m[n] = w;
+  } else { i.style.opacity = 0; host.appendChild(i); m[n] = i; } } return m; }
 const MS = addImgs($('pscreen'), ['m-discovery', 'n/m-discovery', 'm-discovery-scrolled', 'm-profile-services', 'm-profile', 'm-booking-dialog', 'm-bookings', 'm-admin-detail', 'm-admin-confirm']);
 const DS = VERT ? {} : addImgs($('bscreen'), ['d-discovery', 'n/d-discovery', 'd-discovery-scrolled', 'd-profile', 'd-profile-services', 'd-booking-dialog', 'd-bookings', 'd-admin-detail', 'd-admin-confirm']);
 
@@ -506,6 +518,15 @@ function render(t) {
   css(e3, { x: centerX(e3), y: VERT ? H - 300 : H - 110, o: eo(lin(t, TL.p7[2] + .2, TL.p7[2] + .7)) * .9 });
 
   sceneRender(t);
+  /* --- the profile photo comes alive: arm rises, hand waves hello, head sways --- */
+  { const ts = TL.p4[3] - .1, k = eo(lin(t, ts + .3, ts + .85)), u = Math.max(0, t - ts);
+    for (const L of LIVE) {
+      const hw = L.host.offsetWidth; L.lv.style.borderRadius = (L.box.radius * L.box.w * hw) + 'px'; L.lv.style.clipPath = `inset(${(L.box.clipTop || 0) * 100}% 0 0 0)`;
+      const arm = L.lv.querySelector('#m-arm'), hand = L.lv.querySelector('#m-hand'), head = L.lv.querySelector('#m-head');
+      if (arm) arm.setAttribute('transform', `translate(0 ${520 * (1 - k)})`);
+      if (hand) hand.setAttribute('transform', `rotate(${k * 17 * Math.sin(u * Math.PI * 2 * 2.1)} 850 905)`);
+      if (head) head.setAttribute('transform', `rotate(${-3 * k * Math.sin(u * Math.PI * 2 * .9)} 540 900)`);
+    } }
   /* --- subtitles --- */
   let st = '', sk = 0;
   if (!SUBS) { sub.style.display = 'none'; return; }

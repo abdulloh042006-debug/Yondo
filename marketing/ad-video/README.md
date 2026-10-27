@@ -71,3 +71,12 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
   dates become `dd.mm.yyyy`, the browser runs with `--lang=ru-RU`. Leftovers are listed in `$OUT/untranslated.json`
   (expected: Yondo, Magic City, IDs). A real RU locale in `apps/web` is a separate task.
 - Long headlines auto-shrink to two lines.
+
+## Profile pictures + live portrait (S27, owner 2026-10-27)
+- `python3 make_photos.py && node render_photos.mjs` → `photos/*.jpg` (illustrated portraits in the brand palette, not photos of
+  real people) + `photos/madina-anim.svg.txt`. Capture with `PHOTOS_DIR=<repo>/marketing/ad-video/photos`: the seed uploads them
+  through `POST /companions/me/photos`; `server_video.py` serves the in-memory storage.
+- `capture.mjs` records the profile photo box (`m-profile.json`, `d-profile.json`); `build_page.py` embeds the boxes and the
+  animatable SVG, and the page lays a live copy over the photo: the arm rises and waves hello, the head sways (line 4).
+  No air-kiss or other romantic gesture (product rule).
+- RU cut: the app's own RU locale (top-bar switch before each shot); `ru-dict.json` only translates seed data.
