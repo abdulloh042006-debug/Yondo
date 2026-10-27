@@ -32,6 +32,30 @@ Check it against a running harness: `python apps/web/e2e/demo_payment_check.py <
 
 A real launch still needs the owner items in `docs/WORKLOG.md` → Next steps (operator name, SMS provider, payment provider and fee policy, backups, PostgreSQL, S3/MinIO storage).
 
+## Persistent mode: keep the data between restarts (free PostgreSQL, e.g. Neon)
+
+By default the demo forgets everything at each start. Set **`YONDO_DEMO_DATABASE_URL`** (a secret: only in the host's environment,
+never in git or chat) and the same image becomes persistent (`apps/web/e2e/demo_persist.py`):
+- the schema comes from the real Alembic migrations (`alembic upgrade head` at every start, a no-op when current);
+- the DEMO seed runs **only while the database has no users**; later starts keep accounts, bookings, chats, reviews;
+- every start and then daily, DEMO Madina and DEMO Jasur get 10:00–22:00 (Tashkent) availability for the next 14 days
+  (the seed window is a single evening, so without this the demo would stop taking bookings after two days);
+- a loop every 15 minutes does what `infra/jobs` does hourly in production (booking expiry, due account erasures);
+- **admin = exactly `YONDO_DEMO_ADMIN_PHONE`** (nobody if unset): the well-known test number, a changed number and the random
+  seed admin lose the admin role at every start, so a database first filled by a local run cannot leak an admin.
+
+Neon setup (about 5 minutes, you sign in yourself):
+1. neon.com → sign up → **Create project** (name `yondo-demo`, PostgreSQL 16 or 17). Pick the Neon region closest to your Render
+   service's region (Render → `yondo-demo` → Settings → Region; the default is Oregon = Neon "AWS US West 2").
+2. On the project page press **Connect**, turn **Connection pooling OFF** (use the *direct* string; the pooled `-pooler` host may
+   break prepared statements) and copy the `postgresql://…?sslmode=require` string. A `psql '…'` line is also accepted.
+3. Render → `yondo-demo` → **Environment** → **Add Environment Variable**: key `YONDO_DEMO_DATABASE_URL`, value = the string → **Save**
+   (Render redeploys). Optionally add `YONDO_DEMO_ADMIN_PHONE` (a private number) in the same place.
+4. Check: make a booking, then **Manual Deploy → Deploy latest commit**; the booking must still be there. The first start takes longer (migrations + seed).
+
+Free limits to know: Neon suspends the compute after ~5 idle minutes (the first query after that adds about a second) and the free
+project is small (0.5 GB); both are plenty for a demo. Photos are still in memory (no S3 adapter yet), the chat still polls.
+
 ## Try it locally first (Windows PowerShell)
 
 ```powershell

@@ -16,6 +16,7 @@ Optional environment (used by the public demo image, see infra/deploy/README.md)
                           the server is bound to a public address and this is unset, a random unknown number
                           is used (nobody can sign in as admin; the OTP is shown on screen to every visitor)
   YONDO_WEB_DIST          folder of the built web app; when set, it is served at "/" next to the API
+  YONDO_DEMO_DATABASE_URL a PostgreSQL connection string (Neon etc.): persistent mode, see demo_persist.py. A secret.
   YONDO_DEMO_PUBLIC_URL   https URL of this server (Render's RENDER_EXTERNAL_URL is used if unset); turns on the
                           DEMO payment provider (demo_payment.py): no money moves, fee = DEMO 0. Unset = payment 503
 """
@@ -33,6 +34,9 @@ from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
 from demo_payment import DemoPaymentProvider, install_demo_payment_routes
+from demo_persist import (
+    has_users, maintenance_loop, normalize_database_url, restrict_admins, run_migrations, top_up_availability,
+)
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -45,12 +49,16 @@ DB = sys.argv[2] if len(sys.argv) > 2 else 'e2e.db'
 HOST = os.environ.get('YONDO_DEMO_HOST', '127.0.0.1')
 WEB_DIST = os.environ.get('YONDO_WEB_DIST')
 PUBLIC_URL = os.environ.get('YONDO_DEMO_PUBLIC_URL') or os.environ.get('RENDER_EXTERNAL_URL')
+DATABASE_URL = os.environ.get('YONDO_DEMO_DATABASE_URL', '').strip() or None  # a secret: never print it
 
 # Fail closed: the well-known admin number is only ever used on loopback. On a public bind (the demo image) a missing
 # or empty YONDO_DEMO_ADMIN_PHONE must not hand the admin console to every visitor.
+WELL_KNOWN_ADMIN = '+998901110001'
 LOOPBACK = HOST in ('127.0.0.1', 'localhost', '::1')
-ADMIN = os.environ.get('YONDO_DEMO_ADMIN_PHONE', '').strip() or (
-    '+998901110001' if LOOPBACK else f'+998{secrets.randbelow(10**9):09d}'
+# A persistent database outlives this process (and may later be served publicly), so it never gets the well-known admin.
+ADMIN_ENV = os.environ.get('YONDO_DEMO_ADMIN_PHONE', '').strip()
+ADMIN = ADMIN_ENV or (
+    WELL_KNOWN_ADMIN if LOOPBACK and not DATABASE_URL else f'+998{secrets.randbelow(10**9):09d}'
 )
 CUSTOMER = '+998901110003'
 PENDING_USER = '+998901110004'
@@ -207,7 +215,12 @@ class SpaFiles(StaticFiles):
 async def main():
     # DEMO payments (no money moves) only when a public https URL is known; otherwise the honest 503 stays.
     demo_pay = DemoPaymentProvider(PUBLIC_URL) if PUBLIC_URL else None
-    settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}',
+    # Persistent mode (a free PostgreSQL) only when YONDO_DEMO_DATABASE_URL is set; default = throw-away SQLite.
+    db_url = normalize_database_url(DATABASE_URL) if DATABASE_URL else f'sqlite+aiosqlite:///{DB}'
+    use_migrations = db_url.startswith('postgresql')
+    if use_migrations:
+        await asyncio.to_thread(run_migrations, db_url)
+    settings = Settings(environment='test', database_url=db_url,
                         **({'platform_fee_bps': 0} if demo_pay else {}))  # labelled DEMO fee, the real policy is the owner's
     app = create_application(settings, object_storage=MemoryStorage(), identity_eligibility=AlwaysVerified(),
                              payment_provider=demo_pay)
@@ -216,12 +229,35 @@ async def main():
     if WEB_DIST:
         app.mount('/', SpaFiles(directory=WEB_DIST, html=True), name='web')
     async with app.router.lifespan_context(app):
-        async with app.state.db_engine.begin() as connection:
-            await connection.run_sync(Base.metadata.create_all)
-        await seed(app)
+        if not use_migrations:  # Alembic already built the schema of a PostgreSQL database
+            async with app.state.db_engine.begin() as connection:
+                await connection.run_sync(Base.metadata.create_all)
+        maintenance = None
+        if DATABASE_URL and await has_users(app):
+            print('SEED_SKIPPED: the database already has data (persistent mode)', flush=True)
+            if ADMIN_ENV:  # let the owner change the admin number later
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://seed') as client:
+                    _, admin_id = await login(client, ADMIN)
+                await set_user(app, admin_id, [UserRoleType.ADMIN], age=40)
+        else:
+            await seed(app)
+        if DATABASE_URL:
+            # Persistent mode: the admin is exactly YONDO_DEMO_ADMIN_PHONE (nobody when it is unset), so the well-known
+            # number, a changed number or the random seed admin never stay admin in a database that outlives this process.
+            await restrict_admins(app, ADMIN if ADMIN_ENV else None)
+            try:
+                await top_up_availability(app, login)
+            except Exception as exc:  # the demo still starts; the maintenance loop retries daily
+                print(f'availability top-up failed: {type(exc).__name__}', flush=True)
+            maintenance = asyncio.create_task(maintenance_loop(app, login))
         print('SEED_DONE', flush=True)
         server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=PORT, lifespan='off', log_level='warning'))
-        await server.serve()
+        try:
+            await server.serve()
+        finally:
+            if maintenance:
+                maintenance.cancel()
 
 
-asyncio.run(main())
+# psycopg's async mode cannot run on the Windows default (Proactor) loop; only matters for local runs on Windows.
+asyncio.run(main(), **({'loop_factory': asyncio.SelectorEventLoop} if sys.platform == 'win32' else {}))
