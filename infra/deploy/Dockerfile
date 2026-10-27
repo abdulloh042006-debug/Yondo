@@ -13,13 +13,14 @@ RUN npm run build
 FROM python:3.12-slim
 WORKDIR /app
 COPY apps/api/ /app/api/
-# server.py (the e2e demo harness) imports httpx and uses the aiosqlite driver; both are dev-only extras of apps/api.
+# demo_app.py imports httpx and uses the aiosqlite driver; both are dev-only extras of apps/api.
 RUN pip install --no-cache-dir /app/api 'httpx>=0.28,<1' 'aiosqlite>=0.20,<1'
-COPY apps/web/e2e/server.py apps/web/e2e/demo_payment.py apps/web/e2e/demo_persist.py /app/
+COPY infra/deploy/demo/demo_app.py infra/deploy/demo/demo_payment.py infra/deploy/demo/demo_persist.py /app/
 COPY --from=web /web/dist /app/dist
 
 ENV YONDO_DEMO_HOST=0.0.0.0 \
     YONDO_WEB_DIST=/app/dist \
     PORT=8000
-# The seed expects an empty database, so every start begins with a new file (data is not kept).
-CMD ["sh", "-c", "rm -f /tmp/demo.db && exec python /app/server.py \"${PORT}\" /tmp/demo.db"]
+# Default mode: a throw-away SQLite file, new at every start (the seed expects an empty database).
+# With YONDO_DEMO_DATABASE_URL set the same image keeps its data in that PostgreSQL (see README).
+CMD ["sh", "-c", "rm -f /tmp/demo.db && exec python /app/demo_app.py \"${PORT}\" /tmp/demo.db"]

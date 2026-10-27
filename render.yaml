@@ -1,6 +1,7 @@
 # Render Blueprint for the public DEMO (see infra/deploy/README.md before using it).
-# Free instances sleep after ~15 minutes without traffic and start again (~1 minute); demo data is re-seeded
-# on every start. Set YONDO_DEMO_ADMIN_PHONE in the Render dashboard (it is not stored in this file).
+# Free instances sleep after ~15 minutes without traffic and start again (~1 minute). Without YONDO_DEMO_DATABASE_URL the
+# demo data is re-seeded on every start; with it (a free PostgreSQL such as Neon) the data is kept.
+# Both variables below are secrets: their values are typed in the Render dashboard and are never stored in this file.
 services:
   - type: web
     name: yondo-demo
@@ -14,4 +15,6 @@ services:
       - key: PORT
         value: '10000'
       - key: YONDO_DEMO_ADMIN_PHONE
+        sync: false
+      - key: YONDO_DEMO_DATABASE_URL
         sync: false

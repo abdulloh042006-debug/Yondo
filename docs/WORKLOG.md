@@ -15,6 +15,20 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S31 — Review fixes for S28–S30 (13 findings, all fixed) (2026-10-28)
+Done: `/code-review xhigh` on the S28–S30 work reported 13 findings; every one is fixed. Paths below are the new ones (**the S28–S30 entries still say `apps/web/e2e/…`: the harness moved to `infra/deploy/demo/`**, `apps/web/e2e/server.py` is now a thin entry point to the same code).
+- Altitude: `demo_app.py` / `demo_payment.py` / `demo_persist.py` live in `infra/deploy/demo/`; the Dockerfile runs `demo_app.py`; e2e and the public demo share it.
+- Admin phone: `YONDO_DEMO_ADMIN_PHONE` is normalized with the API's own rule (`+998 90 …`, `909990001` … all work) and a bad value stops the start with a clear message; before, a spaced spelling locked the admin out.
+- Half-seeded database: seed is bracketed by a marker (table `demo_seed_state`); a start that died while seeding is wiped (`DROP SCHEMA public`) and seeded again, a complete or marker-less database is never wiped.
+- DEMO payment is now the web app's own page `/demo-pay/:reference` (`DemoPay.tsx`, i18n uz/ru/en); the server endpoints accept only the paying customer (companion/anonymous refused) — replaces the unauthenticated Python page.
+- Availability top-up runs in the background after the port is open and posts only the new day daily; unknown DEMO phones are skipped (no stray accounts); phones are shared constants.
+- `render.yaml` declares `YONDO_DEMO_DATABASE_URL` (sync: false); README: persistent mode keeps personal data (old "deleted at restart" claim fixed), local-run snippet creates `e2e\.tmp`.
+- Tests: `infra/deploy/demo/test_demo.py` (6, added to the CI `api` job) + `demo_payment_check.py` (re-runnable, shared with pytest, also usable against a live server). The edit of `docs/legal/pre-publication-checklist.md` was reverted (AGENTS.md: no policy-document edits unasked); the fonts note stays here in WORKLOG.
+Ultrareview: `/ultrareview` refused (diff vs `main` = 356 files / 54,783 lines; limits 500 / 8,000). Local branch `ultrareview-base` (= `57d81bc`, not pushed) gives a small diff: `/code-review ultra ultrareview-base`.
+Evidence: pytest demo 6 passed; vitest 42/42; tsc, eslint, build PASS; e2e 59/59. Real PostgreSQL 16.15 (same unsigned EDB zip, local only, deleted again): first start with a pasted `psql '…'` line and `+998 90 999 00 02` → admin only that number; DEMO payment CLI 14/14; restart keeps data and skips the seed (port open in 2 s); `running` marker → wipe + reseed (7 users, 2 bookings, marker complete); container layout (`/app/api`, clean venv) → 17 migrations, pages 200.
+Not done: real Neon database (owner), Docker image build (Docker Desktop off), Neon TLS/auto-suspend.
+Commit: this entry's commit.
+
 ## S30 — Persistent demo mode (free PostgreSQL such as Neon) (2026-10-28)
 Done: owner: "free DB/servers are fine to start; I create the Neon account and put the connection string into Render myself". `apps/web/e2e/demo_persist.py` + `server.py`: with `YONDO_DEMO_DATABASE_URL` the demo uses that database (accepts `postgresql://`, `postgres://` or a pasted `psql '…'` line), runs the real Alembic migrations at every start, seeds only while there are no users, tops up DEMO companions' availability for 14 days (at start and daily), and runs the hourly job logic every 15 min (no cron on a free web service). Admin in this mode = exactly `YONDO_DEMO_ADMIN_PHONE`, nobody if unset: found while testing that a database first seeded by a local (loopback) run kept the well-known admin number, so every start now strips the admin role from everyone else. The connection string is read from the environment only and never printed. Windows: server.py uses the selector event loop (psycopg async cannot use Proactor). README: Neon step-by-step.
 Not done: the real Neon database (the owner creates it); S3/MinIO adapter for photos; Redis (chat realtime). Neon-specific behaviour (TLS, auto-suspend) could not be tested locally.
