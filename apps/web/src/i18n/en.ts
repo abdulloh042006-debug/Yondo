@@ -38,7 +38,8 @@ export const en: Record<Key, string> = {
   'err.otp_rate_limited': 'Too many attempts. Please try again shortly.',
   'err.otp_resend_cooldown': 'Please wait a moment before requesting a new code.',
   'err.otp_temporarily_blocked': 'Attempts are temporarily limited. Please try again later.',
-  'err.otp_delivery_unavailable': 'The SMS service is not connected yet. Please try again later.',
+  'err.otp_delivery_unavailable': 'The code delivery service is not connected yet. Please try again later.',
+  'err.otp_telegram_unavailable': 'No Telegram account was found for this number, so we cannot send the code. Telegram must be linked to this number.',
   'err.validation_error': 'Please check the data you entered.',
   'err.account_unavailable': 'Your account cannot perform this action right now.',
   'err.account_role_required': 'This action requires a suitable role.',
@@ -218,7 +219,7 @@ export const en: Record<Key, string> = {
   'favorites.explore': 'Explore',
   // --- login, discovery
   'login.title': 'Sign in to Yondo',
-  'login.lead': 'Enter your phone number — we will send a one-time code by SMS.',
+  'login.lead': 'Enter your phone number — we will send a one-time code.',
   'login.phone': 'Phone number',
   'login.phoneHint': 'Example: +998 90 123 45 67',
   'login.sendCode': 'Send code',

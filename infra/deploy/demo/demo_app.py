@@ -43,6 +43,7 @@ from demo_persist import (
 )
 from yondo_api.api.errors import ApplicationError
 from yondo_api.auth.phone import normalize_uzbekistan_phone
+from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -233,8 +234,10 @@ class SpaFiles(StaticFiles):
 def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None):
     settings = Settings(environment='test', database_url=db_url,
                         **({'platform_fee_bps': 0} if demo_pay else {}))  # labelled DEMO fee, the real policy is the owner's
+    # The demo always shows the code on screen (the seed and the daily top-up log in through it), whatever
+    # login-delivery token the environment may carry.
     app = create_application(settings, object_storage=MemoryStorage(port), identity_eligibility=AlwaysVerified(),
-                             payment_provider=demo_pay)
+                             payment_provider=demo_pay, otp_provider=DevelopmentOtpProvider())
     if demo_pay:
         install_demo_payment_routes(app, demo_pay)
     if WEB_DIST:

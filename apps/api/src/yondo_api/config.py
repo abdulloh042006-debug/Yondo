@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     tezcheck_return_url: str = ''
     # Accept payments TezCheck marks as environment "test" (its test provider). Never in prod.
     tezcheck_accept_test_payments: bool = False
+    # Telegram Gateway (https://core.telegram.org/gateway): login codes arrive as Telegram messages.
+    # An empty token means not configured (development/test then show the code on screen).
+    telegram_gateway_token: SecretStr = SecretStr('')
+    telegram_gateway_api_url: str = 'https://gatewayapi.telegram.org'
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -114,6 +118,13 @@ class Settings(BaseSettings):
                     'TezCheck needs YONDO_TEZCHECK_WEBHOOK_SECRET (16+ characters): '
                     'without it payment events cannot be verified'
                 )
+        return self
+
+    @model_validator(mode='after')
+    def validate_telegram_gateway(self) -> Settings:
+        configured = bool(self.telegram_gateway_token.get_secret_value())
+        if configured and not self.telegram_gateway_api_url.startswith('https://'):
+            raise ValueError('YONDO_TELEGRAM_GATEWAY_API_URL must be an https URL')
         return self
 
     @property

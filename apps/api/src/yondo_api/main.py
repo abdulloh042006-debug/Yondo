@@ -23,6 +23,7 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.auth.telegram_gateway import TelegramGatewayOtpProvider
 from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
 from yondo_api.chat.router import router as chat_router
@@ -51,6 +52,15 @@ from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
 
 
+def default_otp_provider(settings: Settings) -> OtpDeliveryProvider:
+    """Telegram if its token is set; else the on-screen code locally and a 503 elsewhere."""
+    if settings.telegram_gateway_token.get_secret_value():
+        return TelegramGatewayOtpProvider.from_settings(settings)
+    if settings.environment in {'development', 'test'}:
+        return DevelopmentOtpProvider()
+    return UnconfiguredOtpProvider()
+
+
 def create_application(
     settings: Settings | None = None,
     *,
@@ -61,11 +71,7 @@ def create_application(
 ) -> FastAPI:
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level)
-    selected_otp_provider = otp_provider or (
-        DevelopmentOtpProvider()
-        if app_settings.environment in {'development', 'test'}
-        else UnconfiguredOtpProvider()
-    )
+    selected_otp_provider = otp_provider or default_otp_provider(app_settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

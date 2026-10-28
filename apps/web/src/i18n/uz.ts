@@ -37,7 +37,8 @@ export const uz = {
   'err.otp_rate_limited': 'Juda köp uriniş. Birozdan keyin qayta urinib köring.',
   'err.otp_resend_cooldown': 'Yangi kodni biroz kutib sörang.',
   'err.otp_temporarily_blocked': 'Urinişlar vaqtinça çeklangan. Keyinroq qayta urinib köring.',
-  'err.otp_delivery_unavailable': 'SMS xizmati hozirça ulanmagan. Keyinroq urinib köring.',
+  'err.otp_delivery_unavailable': 'Kod yuboriş xizmati hozirça ulanmagan. Keyinroq urinib köring.',
+  'err.otp_telegram_unavailable': 'Bu raqamda Telegram topilmadi, kodni yubora olmadik. Telegram şu raqamga ulangan bölişi kerak.',
   'err.validation_error': 'Kiritilgan maʼlumotlarni tekşiring.',
   'err.account_unavailable': 'Hisobingiz hozir bu amalni bajara olmaydi.',
   'err.account_role_required': 'Bu amal uçun mos rol kerak.',
@@ -217,7 +218,7 @@ export const uz = {
   'favorites.explore': 'Kaşf qiliş',
   // --- login, discovery
   'login.title': 'Yondoʼga kiriş',
-  'login.lead': 'Telefon raqamingizni kiriting — SMS orqali bir martalik kod yuboramiz.',
+  'login.lead': 'Telefon raqamingizni kiriting — bir martalik kod yuboramiz.',
   'login.phone': 'Telefon raqami',
   'login.phoneHint': 'Namuna: +998 90 123 45 67',
   'login.sendCode': 'Kod yuboriş',

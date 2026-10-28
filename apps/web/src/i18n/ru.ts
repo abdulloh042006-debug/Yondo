@@ -38,7 +38,8 @@ export const ru: Record<Key, string> = {
   'err.otp_rate_limited': 'Слишком много попыток. Повторите чуть позже.',
   'err.otp_resend_cooldown': 'Подождите немного, прежде чем запрашивать новый код.',
   'err.otp_temporarily_blocked': 'Попытки временно ограничены. Повторите позже.',
-  'err.otp_delivery_unavailable': 'SMS-сервис пока не подключён. Повторите позже.',
+  'err.otp_delivery_unavailable': 'Сервис отправки кодов пока не подключён. Повторите позже.',
+  'err.otp_telegram_unavailable': 'Для этого номера не найден Telegram, поэтому мы не можем отправить код. Telegram должен быть привязан к этому номеру.',
   'err.validation_error': 'Проверьте введённые данные.',
   'err.account_unavailable': 'Ваш аккаунт сейчас не может выполнить это действие.',
   'err.account_role_required': 'Для этого действия нужна подходящая роль.',
@@ -218,7 +219,7 @@ export const ru: Record<Key, string> = {
   'favorites.explore': 'Смотреть профили',
   // --- login, discovery
   'login.title': 'Вход в Yondo',
-  'login.lead': 'Введите номер телефона — мы отправим одноразовый код по SMS.',
+  'login.lead': 'Введите номер телефона — мы отправим одноразовый код.',
   'login.phone': 'Номер телефона',
   'login.phoneHint': 'Пример: +998 90 123 45 67',
   'login.sendCode': 'Отправить код',
