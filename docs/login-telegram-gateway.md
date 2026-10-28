@@ -17,6 +17,16 @@ The public demo shows the login code on screen, so anyone can sign in as any pho
 3. Copy the API token from the account's API settings (you can restrict it to the server's IP) and set `YONDO_TELEGRAM_GATEWAY_TOKEN` in the **production** host's environment (not in the demo).
 4. Try a login with your own number; tell the assistant what happened (error strings are logged as `tg_error`, never the phone or the code).
 
+## How to test (first live call, free)
+
+Use the Telegram number you logged in to the Gateway with (test messages to it are free). Leave "IP address restrictions" empty while testing from a laptop; set it to the production server IP later.
+
+```
+D:/Yondo/.venv/Scripts/python.exe D:/Yondo/apps/api/try_telegram_gateway.py +998XXXXXXXXX
+```
+
+The script asks for the token with hidden input (not stored), sends a random code through the real adapter, shows the gateway error string if it fails, and checks the code you type back. Exit 0 = OK.
+
 ## Price and limits (Telegram's pages, not verified in practice)
 About **$0.01 per delivered code** (marketing page: "up to 50× cheaper than SMS"); you pay for codes delivered within the time you set; `checkSendAbility` is free if the user cannot be reached, otherwise one message is charged in advance; revoked codes are not refunded; undelivered codes are refunded automatically per the marketing page (the terms are stricter: read them).
 
