@@ -12,7 +12,7 @@ import demo_app
 import demo_payment_check
 from demo_payment import DemoPaymentProvider
 from demo_persist import (
-    mark_seed, normalize_database_url, prepare_database, restrict_admins, seed_status, top_up_availability,
+    api_dir, mark_seed, normalize_database_url, prepare_database, restrict_admins, seed_status, top_up_availability,
 )
 from httpx import ASGITransport, AsyncClient
 from yondo_api.auth.providers import DevelopmentOtpProvider
@@ -68,6 +68,20 @@ def test_normalize_database_url():
         normalize_database_url('mysql://u:p@h/db')
     with pytest.raises(ValueError):
         normalize_database_url('')
+
+
+def test_api_dir_resolves_in_the_shallow_container_layout(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    monkeypatch.delenv('YONDO_API_DIR', raising=False)
+    # In the image the harness sits in /app: its only ancestor is the root. An eagerly built parents[2] used to raise
+    # IndexError there, which killed every persistent-mode start on Render (the repository layout hid it).
+    with pytest.raises(FileNotFoundError):
+        api_dir(Path('/app'))
+    (tmp_path / 'api').mkdir()
+    (tmp_path / 'api' / 'alembic.ini').write_text('')
+    assert api_dir(tmp_path) == tmp_path / 'api'  # image-like layout: <here>/api
+    assert (api_dir() / 'alembic.ini').exists()  # repository layout: apps/api
 
 
 def test_admin_phone_accepts_every_spelling_the_api_accepts():

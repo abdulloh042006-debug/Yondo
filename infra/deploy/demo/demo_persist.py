@@ -47,10 +47,13 @@ def normalize_database_url(raw: str) -> str:
     return re.sub(r'^postgres(?:ql)?(?:\+psycopg)?://', 'postgresql+psycopg://', url)
 
 
-def api_dir() -> Path:
-    here = Path(__file__).resolve().parent
-    # image: /app/api; repo: infra/deploy/demo -> apps/api
-    for candidate in (os.environ.get('YONDO_API_DIR'), here / 'api', here.parents[2] / 'apps' / 'api'):
+def api_dir(here: Path | None = None) -> Path:
+    """The folder with alembic.ini: $YONDO_API_DIR, /app/api in the image, apps/api in the repository."""
+    here = here or Path(__file__).resolve().parent
+    candidates = [os.environ.get('YONDO_API_DIR'), here / 'api']
+    if len(here.parents) > 2:  # in the image the harness lives in /app: there is no such ancestor
+        candidates.append(here.parents[2] / 'apps' / 'api')
+    for candidate in candidates:
         if candidate and (Path(candidate) / 'alembic.ini').exists():
             return Path(candidate)
     raise FileNotFoundError('apps/api (alembic.ini) not found; set YONDO_API_DIR')
