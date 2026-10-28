@@ -9,7 +9,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 
 ## Next steps (priority order)
 00. **Owner:** set `YONDO_DEMO_ADMIN_PHONE` (own phone) in Render → Environment to use `/admin`.
-00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. Open: owner decides whether CLAUDE.md should use a generic memory path (`~/.claude/projects/D--Yondo/memory/`) instead of the Windows username path, and rewords the "uncommitted S37 doc edits" line in section 7.
+00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, admin bootstrap command, Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then intro animation + onboarding + video.
@@ -25,7 +25,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Session log
 ## S38 — Verifier review of the S37 commits, S37 notes committed (2026-10-28)
 Done: new chat after a context reset re-read CLAUDE.md, AGENTS.md, memory and this WORKLOG, then ran the independent verifier agent (read-only) over `47e1bd7`, `814684f` and the uncommitted CLAUDE.md/WORKLOG edits: **APPROVE**, no required fixes. Evidence (verifier run, SQLite, `PYTHONPATH=D:/Yondo/apps/api/src`): backend 336 passed + 9 skipped; demo harness 8 passed (CI invocation from `apps/api`); `ruff check .` in `apps/api` PASS; `export_openapi.py --check` PASS; secrets scan clean; the regression test covers the shallow, image-like and repo layouts.
-Not run: the live Render/Neon claims (taken from S37), web vitest, e2e. Notes: the venv's editable `yondo_api` points to another worktree (`copilot-worktrees\...`): run `pip install -e apps/api` from `D:\Yondo` or set `PYTHONPATH`; `infra/deploy/demo` has 5 pre-existing ruff findings (I001, FURB162), CI does not lint that folder. CLAUDE.md was not changed in S38 (see Next step 00b).
+Not run: the live Render/Neon claims (taken from S37), web vitest, e2e. Notes: the venv's editable `yondo_api` points to another worktree (`copilot-worktrees\...`): run `pip install -e apps/api` from `D:\Yondo` or set `PYTHONPATH`; `infra/deploy/demo` has 5 pre-existing ruff findings (I001, FURB162), CI does not lint that folder. CLAUDE.md follow-up at the owner's word ("Ha, o'zgartir"): memory path made generic, the "uncommitted S37 doc edits" line rewritten; this two-line change was committed on the owner's explicit approval, without a second verifier run.
 Commit: this entry's commit.
 
 ## S37 — First persistent deploy on Render: api_dir bug fixed, Neon database created (2026-10-28)
