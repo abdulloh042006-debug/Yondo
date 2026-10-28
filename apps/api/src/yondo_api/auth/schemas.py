@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
@@ -40,10 +40,18 @@ class RoleSelection(BaseModel):
     roles: list[UserRoleType] = Field(min_length=1)
 
 
+# Interface language. Uzbek has two Latin spellings: the 1995 alphabet (o‘ g‘ sh ch) and the 2026
+# alphabet (ö ğ ş ç, in force from 2027-04-22); the year is a BCP 47 variant subtag.
+UiLocale = Literal['uz-Latn-1995', 'uz-Latn-2026', 'ru', 'en']
+
+
 class UserProfileUpdate(BaseModel):
+    """Partial update: only fields present in the request body are changed."""
+
     age: int | None = Field(default=None, ge=0)
     gender: str | None = Field(default=None, max_length=64)
     city: str | None = Field(default=None, max_length=128)
+    ui_locale: UiLocale | None = None
 
 
 class UserResponse(BaseModel):
@@ -54,5 +62,6 @@ class UserResponse(BaseModel):
     age: int | None
     gender: str | None
     city: str | None
+    ui_locale: UiLocale | None = None
     roles: list[UserRoleType]
     created_at: datetime

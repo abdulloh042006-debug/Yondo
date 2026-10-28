@@ -1,0 +1,5 @@
+# Iteration 2 — Identity optimisation
+**Critique:** the size-test sheet showed variant A reads as a tuning fork / stethoscope, not a Y (medical connotation risk). Wordmark was live text (font-dependent). `border` token failed 3:1 for input borders (light 1.36, dark 1.62).
+**Changes:** arms angled outward (real Y angle); mono variant uses hollow ring instead of accent; small variant (stroke 9, no bottom node) for ≤24 px; wordmark converted to outlined paths from Space Grotesk Bold 700 (fontTools); added `borderStrong` token (3.28/4.41 on bg). 4 themes × symbol/small/horizontal/stacked SVG, app icon, favicon, 39 transparent PNGs.
+**Re-test:** size sheet re-viewed after fix (reads as Y at 16–128 px; new risk: resembles a molecule/network icon). All SVGs parse as valid XML. Glyph coverage of oʻ gʻ ʼ ‘ ’ confirmed in both fonts via cmap (coverage only, not visual quality).
+**Not done:** symbol still strokes (not outlined), no kerning, no print/embroidery test, no real-device check, no trademark search.

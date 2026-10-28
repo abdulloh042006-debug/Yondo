@@ -1,12 +1,20 @@
+from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions import service
 from yondo_api.companions.dependencies import Admin, Session
-from yondo_api.companions.models import CompanionApplication, CompanionPhoto, CompanionService
+from yondo_api.companions.models import (
+    CompanionApplication,
+    CompanionPhoto,
+    CompanionProfile,
+    CompanionService,
+)
 from yondo_api.companions.photos import download_url, visible_photos
 from yondo_api.companions.schemas import (
     ApplicationResponse,
@@ -19,6 +27,69 @@ from yondo_api.companions.schemas import (
 )
 
 router = APIRouter(prefix='/companions/admin', tags=['companion approval'])
+
+
+class AdminApplicationSummary(BaseModel):
+    """Queue row: lifecycle state only, no private profile content."""
+
+    id: UUID
+    user_id: UUID
+    status: str
+    revision: int
+    submitted_at: datetime | None
+    reviewed_at: datetime | None
+    reviewed_by: UUID | None
+    review_note: str | None
+    created_at: datetime
+    profile_id: UUID | None
+    display_name: str | None
+    content_status: str | None
+    content_revision: int | None
+
+
+@router.get('/applications', response_model=list[AdminApplicationSummary])
+async def list_applications(
+    admin: Admin,
+    session: Session,
+    status: Literal['draft', 'submitted', 'approved', 'rejected', 'withdrawn'] | None = None,
+    content_status: Literal['draft', 'pending', 'approved', 'rejected'] | None = None,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    query = select(CompanionApplication, CompanionProfile).outerjoin(
+        CompanionProfile, CompanionProfile.application_id == CompanionApplication.id
+    )
+    if status is not None:
+        query = query.where(CompanionApplication.status == status)
+    if content_status is not None:
+        query = query.where(CompanionProfile.content_status == content_status)
+    rows = (
+        await session.execute(
+            query.order_by(
+                CompanionApplication.created_at.desc(), CompanionApplication.id.desc()
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+    ).all()
+    return [
+        AdminApplicationSummary(
+            id=application.id,
+            user_id=application.user_id,
+            status=application.status,
+            revision=application.revision,
+            submitted_at=application.submitted_at,
+            reviewed_at=application.reviewed_at,
+            reviewed_by=application.reviewed_by,
+            review_note=application.review_note,
+            created_at=application.created_at,
+            profile_id=profile.id if profile else None,
+            display_name=profile.display_name if profile else None,
+            content_status=profile.content_status if profile else None,
+            content_revision=profile.revision if profile else None,
+        )
+        for application, profile in rows
+    ]
 
 
 @router.get('/applications/{application_id}', response_model=ApplicationResponse)

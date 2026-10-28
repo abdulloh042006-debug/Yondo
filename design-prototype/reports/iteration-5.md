@@ -1,0 +1,6 @@
+# Iteration 5 — Final review & hardening (real browser)
+**Critique method:** headless Chromium (real layout, real fonts), 7 widths + dark, 20 views each; measured overflow, touch targets, clipping, contrast, obscured controls; axe-core; scripted keyboard, dialog, reduced-motion, offline and error-state flows; screenshots reviewed by eye.
+**Defects found (specific):** see `test-report.md` list of 11. The three most important: (1) payment order contradicted the backend contract, (2) mobile-emulated overflow checks were blind (my harness bug), (3) focus/skip-link/dialog behaviours.
+**Changes:** prototype rebuilt on the library (`components.css/js`), modules split (logic, mock API, components, app, roles), contract-faithful flows, companion + vendor flows, six standalone screens, gallery, tests.
+**Re-test:** all suites rerun after the last code change; counts in `test-report.md`. Before → after vs Iteration 1: from three unvalidated brand sketches to a tokenised system with 20 working views and 132 new automated assertions (plus the 200 existing backend tests).
+**Honest limits:** Chromium only; no screen reader; mock API instead of real server; logo symbol still not outlined; no merch; scores below.

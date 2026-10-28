@@ -1,0 +1,81 @@
+:root{
+  --c-bg:#F5F2EC;
+  --c-surface:#FFFFFF;
+  --c-surface-alt:#EDE9E1;
+  --c-border:#D6D1C7;
+  --c-border-strong:#8A857B;
+  --c-text:#111111;
+  --c-text-muted:#5A5750;
+  --c-accent:#E8501A;
+  --c-accent-text:#B53A0C;
+  --c-on-ink:#F5F2EC;
+  --c-ink:#111111;
+  --c-success:#1F7A4D;
+  --c-error:#B3261E;
+  --c-warning:#8A5A00;
+  --c-focus:#111111;
+  --font-display:'Space Grotesk','Inter',system-ui,sans-serif;--font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fs-display:32px;--lh-display:38px;
+  --fs-h1:26px;--lh-h1:32px;
+  --fs-h2:20px;--lh-h2:26px;
+  --fs-h3:17px;--lh-h3:24px;
+  --fs-body:16px;--lh-body:24px;
+  --fs-bodySm:14px;--lh-bodySm:20px;
+  --fs-caption:12px;--lh-caption:16px;
+  --sp-1:4px;
+  --sp-2:8px;
+  --sp-3:12px;
+  --sp-4:16px;
+  --sp-5:20px;
+  --sp-6:24px;
+  --sp-8:32px;
+  --sp-10:40px;
+  --sp-12:48px;
+  --sp-16:64px;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-xl:24px;
+  --r-pill:999px;
+  --sh-sm:0 1px 2px rgba(17,17,17,.08);
+  --sh-md:0 4px 12px rgba(17,17,17,.10);
+  --sh-sheet:0 -8px 24px rgba(17,17,17,.14);
+  --touch-min:44px;
+  --dur-fast:150ms;--dur-base:200ms;--dur-slow:300ms;--dur-page:400ms;--ease:cubic-bezier(0.22,1,0.36,1);--ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}}
+:root[data-theme="dark"]{
+  --c-bg:#111111;
+  --c-surface:#1C1B1A;
+  --c-surface-alt:#262523;
+  --c-border:#3A3835;
+  --c-border-strong:#7D7A74;
+  --c-text:#F5F2EC;
+  --c-text-muted:#A9A69F;
+  --c-accent:#E8501A;
+  --c-accent-text:#FF8A5C;
+  --c-on-ink:#111111;
+  --c-ink:#F5F2EC;
+  --c-success:#4CBF86;
+  --c-error:#FF8A80;
+  --c-warning:#E0A93B;
+  --c-focus:#F5F2EC;
+}
+@media (prefers-reduced-motion:reduce){:root{--dur-fast:0ms;--dur-base:0ms;--dur-slow:0ms;--dur-page:0ms}}
+/* breakpoints (use in @media): 360 390 430 768 1024 1440 */

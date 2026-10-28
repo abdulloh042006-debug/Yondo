@@ -33,6 +33,20 @@ class Settings(BaseSettings):
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
     auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Unset until the fee policy has been approved. Values are basis points.
+    platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
+    # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
+    click_test_enabled: bool = False
+    click_test_service_id: int | None = Field(default=None, gt=0)
+    click_test_secret: SecretStr = SecretStr('')
+    # TezCheck payment aggregator (https://tezcheck.uz/api-docs). Empty token = not configured.
+    tezcheck_api_url: str = 'https://api.tezcheck.uz/api/merchant/v1'
+    tezcheck_token: SecretStr = SecretStr('')
+    tezcheck_cash_desk_code: str = ''
+    tezcheck_webhook_secret: SecretStr = SecretStr('')
+    tezcheck_return_url: str = ''
+    # Accept payments TezCheck marks as environment "test" (its test provider). Never in prod.
+    tezcheck_accept_test_payments: bool = False
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -56,8 +70,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:
-        if (self.companion_price_max_minor is not None
-                and self.companion_price_max_minor < self.companion_price_min_minor):
+        if (
+            self.companion_price_max_minor is not None
+            and self.companion_price_max_minor < self.companion_price_min_minor
+        ):
             raise ValueError('Companion maximum price must not be below minimum price')
         if any(value <= 0 for value in self.companion_allowed_unit_minutes):
             raise ValueError('Companion pricing units must be positive minutes')
@@ -74,15 +90,39 @@ class Settings(BaseSettings):
             )
         return self
 
+    @model_validator(mode='after')
+    def validate_click_test_mode(self) -> Settings:
+        if self.click_test_enabled and (
+            self.environment not in {'test', 'development'}
+            or self.click_test_service_id is None
+            or len(self.click_test_secret.get_secret_value()) < 32
+        ):
+            raise ValueError(
+                'CLICK test mode requires a local environment, service ID and 32+ character key'
+            )
+        return self
+
+    @model_validator(mode='after')
+    def validate_tezcheck(self) -> Settings:
+        if self.tezcheck_accept_test_payments and self.environment == 'production':
+            raise ValueError('YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS is not allowed in production')
+        if self.tezcheck_token.get_secret_value():
+            if not self.tezcheck_api_url.startswith('https://'):
+                raise ValueError('YONDO_TEZCHECK_API_URL must be an https URL')
+            if len(self.tezcheck_webhook_secret.get_secret_value()) < 16:
+                raise ValueError(
+                    'TezCheck needs YONDO_TEZCHECK_WEBHOOK_SECRET (16+ characters): '
+                    'without it payment events cannot be verified'
+                )
+        return self
+
     @property
     def database_url_sync(self) -> str:
         return self.database_url.replace('postgresql+psycopg_async', 'postgresql+psycopg')
 
     @property
     def database_url_async(self) -> str:
-        return self.database_url.replace(
-            'postgresql+psycopg://', 'postgresql+psycopg_async://'
-        )
+        return self.database_url.replace('postgresql+psycopg://', 'postgresql+psycopg_async://')
 
 
 @lru_cache

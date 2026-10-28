@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'codex/**']
   pull_request:
 
 permissions:
@@ -26,7 +26,81 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Lint
         run: ruff check .
+      - name: Check frontend OpenAPI contract
+        run: python export_openapi.py --check
       - name: Run tests
         run: pytest
+      - name: Demo harness tests (DEMO payment, persistent-mode helpers, admin policy)
+        run: python -m pytest ../../infra/deploy/demo -c pyproject.toml --rootdir .
       - name: Build package
         run: python -m pip wheel --no-deps --wheel-dir dist .
+
+
+  postgres:
+    name: PostgreSQL migration and concurrency
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: yondo
+          POSTGRES_PASSWORD: yondo
+          POSTGRES_DB: yondo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yondo -d yondo_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      YONDO_DATABASE_URL: postgresql+psycopg://yondo:yondo@localhost:5432/yondo_test
+      YONDO_TEST_DATABASE_URL: postgresql+psycopg://yondo:yondo@localhost:5432/yondo_test
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+      - name: Install API
+        run: python -m pip install -e '.[dev]'
+      - name: Upgrade PostgreSQL schema
+        run: python -m alembic upgrade head
+      - name: Check schema consistency
+        run: python -m alembic check
+      - name: Exercise concurrency constraints
+        run: |
+          python -m pytest -q \
+            tests/companions/test_constraints.py::test_postgres_exclusion_constraint_enforces_direct_inserts \
+            tests/companions/test_constraints.py::test_postgres_concurrent_inserts_cannot_overlap \
+            tests/companions/test_manual_gifts_click_test.py::test_postgres_two_buyers_cannot_reserve_the_same_last_stock \
+            tests/companions/test_manual_gifts_click_test.py::test_postgres_repeated_same_customer_checkout_creates_only_one_order \
+            tests/companions/test_notification_integration.py::test_gift_order_notifies_admin_without_leaking_customer_details \
+            tests/companions/test_notification_integration.py::test_simulated_gift_fulfillment_inbox_read_all_and_pagination
+
+  web:
+    name: Web app quality checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - name: API types match the committed OpenAPI contract
+        run: |
+          npm run gen:api
+          git diff --exit-code src/api/schema.d.ts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

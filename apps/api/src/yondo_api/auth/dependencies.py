@@ -50,6 +50,10 @@ async def get_authenticated_user(
             'invalid_access_token', 'The access token is invalid or expired', 401
         )
     user = await session.get(User, auth_session.user_id)
-    if user is None or user.account_status in {AccountStatus.SUSPENDED, AccountStatus.BANNED}:
+    if user is None or user.account_status in {
+        AccountStatus.SUSPENDED,
+        AccountStatus.BANNED,
+        AccountStatus.DELETED,
+    }:
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
     return AuthenticatedUser(user=user, session=auth_session)
