@@ -16,6 +16,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S34 — Cloud branch merged, brief completed (2026-10-28)
+Done: owner said "Birlashtir": `origin/ccr-15294129-n60ucy` (S33 decision brief + `main`'s two docs) fast-forwarded into `design/prototype` (no conflicts). Cross-checked the brief against the 7 local research notes (`research_notes/`, git-excluded) and added what it lacked, each tagged **[Y]**: legal entity / bank account as a go-live blocker and new owner decision #11 (Payme Business needs a registered entity; same entity = data operator; TezCheck onboarding for individuals unknown), the open legal question whether phone numbers count as telecom-user data + the 29 Jul 2026 adequacy list, SMS sender-ID lead time (Ucell blocks unregistered names since 3 Aug 2026; Eskiz ~85 UZS/SMS), closed-beta length 6–8 weeks, and a Tashkent-VPS vs EU-VPS comparison (the two research notes disagree: law note favours Tashkent, hosting note favours EU; recommendation for beta = Tashkent, owner decides).
+Not done: all prices/lists are from search summaries, official texts (ZRU-1125, the 29 Jul resolution) unread; a lawyer must confirm. No code changed, so no test run.
+Commit: this entry's commit.
+
 ## S33 — Decision brief for the owner (2026-10-28)
 Done: merged `origin/design/prototype` (84c799c) into the cloud working branch `ccr-15294129-n60ucy` (it only had `main`'s two doc commits; clean merge). Wrote `docs/decision-brief-2026-10-28.md` (Uzbek, one table per topic): hosting (Render+Neon stays for demo; Toshkent VPS recommended for closed beta; Oracle Always Free only as staging; university PCs not recommended), data localization (2019 law + 26 Mar 2026 amendment, lawyer must confirm), one app with two modes + separate admin, screens must-have/optional, 10 owner decisions, intro/onboarding/video plan, demo-wording rule, go-live gate.
 Found: **ROADMAP Phase 20 lists "bir nechta vendor", but `apps/web` has no gifts/vendor screens** (API only) — reported as owner decision #10, ROADMAP not edited (AGENTS.md).
