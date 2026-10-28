@@ -34,7 +34,7 @@ The owner chose it (2026-10-28) as the payment gateway: one merchant API in fron
 `YONDO_TEZCHECK_TOKEN` (enables the adapter), `YONDO_TEZCHECK_CASH_DESK_CODE`, `YONDO_TEZCHECK_WEBHOOK_SECRET` (16+ chars, shown once when the webhook is created), optional `YONDO_TEZCHECK_RETURN_URL`, `YONDO_TEZCHECK_API_URL`, `YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS`. A token without a webhook secret refuses to start (unsigned events would otherwise be accepted). In the public demo image the real adapter replaces the DEMO payment page as soon as the token is set.
 
 ## Owner checklist
-1. Buy the domain (the cash-desk form asks for the website address and confirms it is yours). Ask TezCheck whether a subdomain such as `yondo-demo.onrender.com` is accepted for test mode.
+1. Buy the domain (the cash-desk form asks for the website address and confirms it is yours). Owner decision 2026-10-28: a real domain, bought later; no subdomain workaround. Until then the DEMO payment page stays.
 2. In tezcheck.uz: *Kassa ochish* → channel **Veb-sayt**, address = the domain, support phone/Telegram; webhook = **Bor**, URL `https://<domain>/api/v1/payments/webhook`, events `payment.succeeded` + `payment.failed`; save the webhook secret.
 3. Create an API key for the desk; put token, cash-desk code and webhook secret into Render → Environment (`render.yaml` declares the three names) plus `YONDO_PLATFORM_FEE_BPS` and, for test mode, `YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS=true`. Optionally also `YONDO_TEZCHECK_RETURN_URL` (must match the desk's allow-list).
 4. Make a test payment with TezCheck's test provider; confirm the booking becomes "Tasdiqlangan" and the cabinet shows the webhook as delivered.
