@@ -2,6 +2,7 @@ from yondo_api.account import models as account_models
 from yondo_api.admin import models as admin_models
 from yondo_api.beta import models as beta_models
 from yondo_api.bookings import models as booking_models
+from yondo_api.cancellations import models as cancellation_models
 from yondo_api.chat import models as chat_models
 from yondo_api.companions import models as companion_models
 from yondo_api.discovery import models as discovery_models
@@ -27,6 +28,7 @@ __all__ = [
     'meetings_models',
     'companion_models',
     'booking_models',
+    'cancellation_models',
     'chat_models',
     'discovery_models',
     'payment_models',

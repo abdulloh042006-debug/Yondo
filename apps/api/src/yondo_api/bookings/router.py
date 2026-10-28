@@ -9,7 +9,18 @@ from yondo_api.account.deletion import pending_request
 from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings.expiry import refuse_if_expired
 from yondo_api.bookings.models import Booking, BookingStatus
-from yondo_api.bookings.schemas import BookingCancel, BookingCreate, BookingResponse
+from yondo_api.bookings.schemas import (
+    BookingCancel,
+    BookingCancelRequest,
+    BookingCreate,
+    BookingResponse,
+)
+from yondo_api.cancellations.abuse import enforce_open_request_limits
+from yondo_api.cancellations.service import (
+    active_restriction,
+    assert_not_restricted,
+    record_cancellation,
+)
 from yondo_api.chat.service import append_system_message, publish
 from yondo_api.companions import service as companion_service
 from yondo_api.companions.dependencies import Principal, Session
@@ -106,6 +117,12 @@ async def create_booking(
     payload: BookingCreate, request: Request, principal: Principal, session: Session
 ):
     customer = await _active_customer(principal, session)
+    settings = request.app.state.settings
+    # Restricted customers and request floods are refused before any other work.
+    await assert_not_restricted(session, customer.id, 'customer')
+    await request.app.state.booking_rate_limiter.check(
+        session, customer.id, limit_per_hour=settings.booking_requests_per_hour_limit
+    )
     service_item = await session.get(CompanionService, payload.service_id)
     if service_item is None:
         raise ApplicationError('companion_service_not_found', 'Service not found', 404)
@@ -143,6 +160,7 @@ async def create_booking(
         ) from exc
     if payload.starts_at <= datetime.now(UTC):
         raise ApplicationError('booking_start_in_past', 'Booking must start in the future', 422)
+    await enforce_open_request_limits(session, settings, customer.id, profile.id)
     availability = select(CompanionAvailability.id).where(
         CompanionAvailability.profile_id == profile.id,
         CompanionAvailability.starts_at <= payload.starts_at,
@@ -170,6 +188,11 @@ async def create_booking(
     )
     if companion_id == customer.id:
         raise ApplicationError('self_booking_forbidden', 'Cannot book own service', 403)
+    if await active_restriction(session, companion_id, 'companion') is not None:
+        # No details: a customer must not learn why or until when another user is restricted.
+        raise ApplicationError(
+            'companion_not_accepting_requests', 'This companion is not accepting requests', 409
+        )
     if await blocked_between(session, customer.id, companion_id):
         raise ApplicationError('booking_blocked', 'Booking is unavailable', 403)
     booking = Booking(
@@ -263,6 +286,7 @@ async def accept_booking(
         raise ApplicationError(
             'invalid_booking_transition', 'Only pending bookings can be accepted', 409
         )
+    await assert_not_restricted(session, principal.user.id, 'companion')
     await refuse_if_expired(session, booking)
     booking.status = BookingStatus.ACCEPTED
     booking.companion_contract_accepted_at = datetime.now(UTC)
@@ -295,7 +319,13 @@ async def decline_booking(
         raise ApplicationError(
             'invalid_booking_transition', 'Only pending bookings can be declined', 409
         )
+    previous_status = booking.status
     booking.status = BookingStatus.CANCELLED
+    await record_cancellation(
+        session, request.app.state.settings, booking, actor_user_id=principal.user.id,
+        is_customer=False, previous_status=previous_status, reason=payload.reason,
+        emergency=False, declined=True,
+    )
     system_message = append_system_message(
         session, booking.id, 'booking_declined', {'status': booking.status}
     )
@@ -312,13 +342,13 @@ async def decline_booking(
 @router.post('/{booking_id}/cancel', response_model=BookingResponse)
 async def cancel_booking(
     booking_id: UUID,
-    payload: BookingCancel,
+    payload: BookingCancelRequest,
     request: Request,
     principal: Principal,
     session: Session,
 ):
     booking = await _booking(session, booking_id, lock=True)
-    await _participant(session, booking, principal.user.id)
+    is_customer, _ = await _participant(session, booking, principal.user.id)
     if booking.status not in {
         BookingStatus.PENDING,
         BookingStatus.ACCEPTED,
@@ -332,7 +362,13 @@ async def cancel_booking(
     )
     if payment is not None and payment.status == PaymentStatus.SUCCEEDED:
         payment.refund_required = True  # Manual reconciliation, not an automatic refund.
+    previous_status = booking.status
     booking.status = BookingStatus.CANCELLED
+    await record_cancellation(
+        session, request.app.state.settings, booking, actor_user_id=principal.user.id,
+        is_customer=is_customer, previous_status=previous_status, reason=payload.reason,
+        emergency=payload.emergency,
+    )
     system_message = append_system_message(
         session, booking.id, 'booking_cancelled', {'status': booking.status}
     )

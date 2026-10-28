@@ -21,6 +21,7 @@ from yondo_api.account.legal import DELETION_DUE_AFTER_DAYS
 from yondo_api.account.models import AccountDeletionRequest, SupportRequest
 from yondo_api.beta.models import BetaEnrollment
 from yondo_api.bookings.models import Booking, BookingStatus
+from yondo_api.cancellations.models import CancellationEvent
 from yondo_api.chat.models import ChatAccessTicket, ChatReadCursor
 from yondo_api.companions.models import (
     CompanionApplication,
@@ -139,6 +140,11 @@ async def erase_account(
         select(CompanionApplication).where(CompanionApplication.user_id == uid)
     ):
         application.statement = ''
+    # Cancellation records stay (de-identified, counts only); the user's own free text goes.
+    for item in await session.scalars(
+        select(CancellationEvent).where(CancellationEvent.subject_user_id == uid)
+    ):
+        item.reason, item.dispute_note = '', None
     for model, column in (
         (CompanionFavorite, CompanionFavorite.customer_id),
         (TrustedContact, TrustedContact.owner_id),

@@ -36,3 +36,25 @@ async def enqueue_booking_notice(
             details={'booking_id': str(booking.id)},
             created_at=datetime.now(UTC),
         ))
+
+
+async def enqueue_user_notice(
+    session: AsyncSession,
+    recipient_id: UUID,
+    kind: str,
+    source_id: UUID,
+    *,
+    booking_id: UUID | None = None,
+    actor_id: UUID | None = None,
+    details: dict | None = None,
+) -> None:
+    """One notice to one user (no booking participant lookup). Idempotent per (kind, source)."""
+    session.add(UserNotification(
+        recipient_id=recipient_id,
+        actor_id=actor_id,
+        booking_id=booking_id,
+        kind=kind,
+        source_key=f'{kind}:{source_id}',
+        details={**({'booking_id': str(booking_id)} if booking_id else {}), **(details or {})},
+        created_at=datetime.now(UTC),
+    ))

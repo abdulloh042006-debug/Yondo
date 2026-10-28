@@ -352,6 +352,121 @@
         "title": "AdminBookingRead",
         "type": "object"
       },
+      "AdminCaseRead": {
+        "properties": {
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "closed_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "opened_at": {
+            "format": "date-time",
+            "title": "Opened At",
+            "type": "string"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_action",
+                  "restricted"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          },
+          "role": {
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "title": "Snapshot",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "cancellations",
+              "last_minute",
+              "no_shows",
+              "emergency_claims"
+            ],
+            "title": "Trigger",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "role",
+          "trigger",
+          "status",
+          "snapshot",
+          "opened_at",
+          "closed_at",
+          "closed_by",
+          "resolution",
+          "note"
+        ],
+        "title": "AdminCaseRead",
+        "type": "object"
+      },
       "AdminDeletionRead": {
         "properties": {
           "completed_at": {
@@ -405,6 +520,206 @@
           "completed_at"
         ],
         "title": "AdminDeletionRead",
+        "type": "object"
+      },
+      "AdminEventRead": {
+        "properties": {
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "booking_starts_at": {
+            "format": "date-time",
+            "title": "Booking Starts At",
+            "type": "string"
+          },
+          "booking_status_before": {
+            "title": "Booking Status Before",
+            "type": "string"
+          },
+          "dispute_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dispute Note"
+          },
+          "disputed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disputed At"
+          },
+          "excuse_state": {
+            "enum": [
+              "none",
+              "claimed",
+              "granted",
+              "rejected"
+            ],
+            "title": "Excuse State",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "cancelled",
+              "declined",
+              "no_show",
+              "expired"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_minute": {
+            "title": "Last Minute",
+            "type": "boolean"
+          },
+          "lead_seconds": {
+            "title": "Lead Seconds",
+            "type": "integer"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "party": {
+            "enum": [
+              "customer",
+              "companion",
+              "admin",
+              "system"
+            ],
+            "title": "Party",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "review_state": {
+            "enum": [
+              "none",
+              "open",
+              "reviewed"
+            ],
+            "title": "Review State",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "subject_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "customer",
+                  "companion"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Role"
+          },
+          "subject_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject User Id"
+          }
+        },
+        "required": [
+          "id",
+          "booking_id",
+          "kind",
+          "party",
+          "actor_user_id",
+          "subject_user_id",
+          "subject_role",
+          "booking_status_before",
+          "booking_starts_at",
+          "occurred_at",
+          "lead_seconds",
+          "last_minute",
+          "reason",
+          "excuse_state",
+          "review_state",
+          "dispute_note",
+          "disputed_at",
+          "reviewed_by",
+          "reviewed_at",
+          "review_note"
+        ],
+        "title": "AdminEventRead",
         "type": "object"
       },
       "AdminReportRead": {
@@ -470,6 +785,114 @@
           "acknowledged"
         ],
         "title": "AdminReportRead",
+        "type": "object"
+      },
+      "AdminRestrictionRead": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "created_by": {
+            "format": "uuid",
+            "title": "Created By",
+            "type": "string"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lift_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lift Reason"
+          },
+          "lifted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lifted At"
+          },
+          "lifted_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lifted By"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "role",
+          "starts_at",
+          "ends_at",
+          "reason",
+          "case_id",
+          "created_by",
+          "lifted_at",
+          "lifted_by",
+          "lift_reason",
+          "active"
+        ],
+        "title": "AdminRestrictionRead",
         "type": "object"
       },
       "AdminSummary": {
@@ -839,6 +1262,25 @@
         "title": "BookingCancel",
         "type": "object"
       },
+      "BookingCancelRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "emergency": {
+            "default": false,
+            "description": "Claim an emergency: the cancellation is not counted until an admin decides.",
+            "title": "Emergency",
+            "type": "boolean"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "title": "BookingCancelRequest",
+        "type": "object"
+      },
       "BookingCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1004,6 +1446,152 @@
         "title": "BookingStatus",
         "type": "string"
       },
+      "CancellationAuditRead": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_kind": {
+            "title": "Actor Kind",
+            "type": "string"
+          },
+          "actor_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor User Id"
+          },
+          "booking_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "new_state": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New State"
+          },
+          "previous_state": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous State"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "restriction_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restriction Id"
+          },
+          "subject_user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject User Id"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actor_kind",
+          "actor_user_id",
+          "subject_user_id",
+          "booking_id",
+          "event_id",
+          "case_id",
+          "restriction_id",
+          "previous_state",
+          "new_state",
+          "reason",
+          "created_at"
+        ],
+        "title": "CancellationAuditRead",
+        "type": "object"
+      },
       "CartRead": {
         "additionalProperties": false,
         "properties": {
@@ -1040,6 +1628,22 @@
           "quantity"
         ],
         "title": "CartWrite",
+        "type": "object"
+      },
+      "CaseClose": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "CaseClose",
         "type": "object"
       },
       "ChatMessageResponse": {
@@ -1525,6 +2129,39 @@
         "title": "ContentStatus",
         "type": "string"
       },
+      "CountersRead": {
+        "properties": {
+          "cancellations": {
+            "title": "Cancellations",
+            "type": "integer"
+          },
+          "emergency_claims": {
+            "title": "Emergency Claims",
+            "type": "integer"
+          },
+          "excused": {
+            "title": "Excused",
+            "type": "integer"
+          },
+          "last_minute": {
+            "title": "Last Minute",
+            "type": "integer"
+          },
+          "no_shows": {
+            "title": "No Shows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cancellations",
+          "last_minute",
+          "no_shows",
+          "emergency_claims",
+          "excused"
+        ],
+        "title": "CountersRead",
+        "type": "object"
+      },
       "DeletionRequestWrite": {
         "additionalProperties": false,
         "properties": {
@@ -1720,6 +2357,28 @@
         "title": "DiscoveryService",
         "type": "object"
       },
+      "DisputeWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "emergency": {
+            "default": false,
+            "description": "Claim that this was an emergency.",
+            "title": "Emergency",
+            "type": "boolean"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "DisputeWrite",
+        "type": "object"
+      },
       "EnrollmentRead": {
         "properties": {
           "enabled": {
@@ -1751,6 +2410,31 @@
           "enabled"
         ],
         "title": "EnrollmentWrite",
+        "type": "object"
+      },
+      "EventReview": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "excuse",
+              "uphold"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "note"
+        ],
+        "title": "EventReview",
         "type": "object"
       },
       "FavoriteResponse": {
@@ -1967,6 +2651,176 @@
           "companion_arrived"
         ],
         "title": "MeetingState",
+        "type": "object"
+      },
+      "MyEventRead": {
+        "description": "A user's own event. No user ids at all: a customer never sees a companion's id.",
+        "properties": {
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "excuse_state": {
+            "enum": [
+              "none",
+              "claimed",
+              "granted",
+              "rejected"
+            ],
+            "title": "Excuse State",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "cancelled",
+              "declined",
+              "no_show",
+              "expired"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_minute": {
+            "title": "Last Minute",
+            "type": "boolean"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "review_state": {
+            "enum": [
+              "none",
+              "open",
+              "reviewed"
+            ],
+            "title": "Review State",
+            "type": "string"
+          },
+          "subject_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "customer",
+                  "companion"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Role"
+          }
+        },
+        "required": [
+          "id",
+          "booking_id",
+          "kind",
+          "subject_role",
+          "occurred_at",
+          "last_minute",
+          "reason",
+          "excuse_state",
+          "review_state"
+        ],
+        "title": "MyEventRead",
+        "type": "object"
+      },
+      "MyRestrictionRead": {
+        "description": "Own restriction: end time and role only; the admin's reason stays internal.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lifted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lifted At"
+          },
+          "role": {
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "starts_at",
+          "ends_at",
+          "active",
+          "lifted_at"
+        ],
+        "title": "MyRestrictionRead",
+        "type": "object"
+      },
+      "NoShowWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "excused": {
+            "default": false,
+            "title": "Excused",
+            "type": "boolean"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Note",
+            "type": "string"
+          },
+          "party": {
+            "description": "Who did not show up.",
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Party",
+            "type": "string"
+          }
+        },
+        "required": [
+          "party",
+          "note"
+        ],
+        "title": "NoShowWrite",
         "type": "object"
       },
       "NotificationRead": {
@@ -2806,6 +3660,79 @@
         "title": "ReportWrite",
         "type": "object"
       },
+      "RestrictionCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "duration_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omitted = the configured default.",
+            "title": "Duration Days"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Reason",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "role",
+          "reason"
+        ],
+        "title": "RestrictionCreate",
+        "type": "object"
+      },
+      "RestrictionLift": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RestrictionLift",
+        "type": "object"
+      },
       "ReviewRead": {
         "additionalProperties": false,
         "properties": {
@@ -2905,6 +3832,65 @@
           "roles"
         ],
         "title": "RoleSelection",
+        "type": "object"
+      },
+      "RoleSummary": {
+        "properties": {
+          "active_restriction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminRestrictionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counters": {
+            "$ref": "#/components/schemas/CountersRead"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "boolean"
+          },
+          "open_case_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Open Case Ids",
+            "type": "array"
+          },
+          "role": {
+            "enum": [
+              "customer",
+              "companion"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Thresholds",
+            "type": "object"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "role",
+          "window_days",
+          "counters",
+          "thresholds",
+          "needs_review",
+          "open_case_ids",
+          "active_restriction"
+        ],
+        "title": "RoleSummary",
         "type": "object"
       },
       "ServiceResponse": {
@@ -3327,6 +4313,28 @@
           "expires_in"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "UserCancellationSummary": {
+        "properties": {
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleSummary"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "roles"
+        ],
+        "title": "UserCancellationSummary",
         "type": "object"
       },
       "UserProfileUpdate": {
@@ -3915,6 +4923,985 @@
         "summary": "Bookings",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/audit": {
+      "get": {
+        "operationId": "list_audit_api_v1_admin_cancellations_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "subject_user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "booking_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Booking Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "restriction_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Restriction Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Case Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "pattern": "^[a-z_]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CancellationAuditRead"
+                  },
+                  "title": "Response List Audit Api V1 Admin Cancellations Audit Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Audit",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/bookings/{booking_id}/no-show": {
+      "post": {
+        "description": "Record that one participant did not show up (nothing sets 'no-show' elsewhere).",
+        "operationId": "record_no_show_api_v1_admin_cancellations_bookings__booking_id__no_show_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoShowWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Record No Show",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/cases": {
+      "get": {
+        "operationId": "list_cases_api_v1_admin_cancellations_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "open",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trigger",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cancellations",
+                    "last_minute",
+                    "no_shows",
+                    "emergency_claims"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminCaseRead"
+                  },
+                  "title": "Response List Cases Api V1 Admin Cancellations Cases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Cases",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/cases/{case_id}/close": {
+      "post": {
+        "description": "Review finished without a restriction. A closed case moves the counting baseline.",
+        "operationId": "close_case_api_v1_admin_cancellations_cases__case_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseClose"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCaseRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Close Case",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/events": {
+      "get": {
+        "operationId": "list_events_api_v1_admin_cancellations_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "subject_user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subject User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "booking_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Booking Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cancelled",
+                    "declined",
+                    "no_show",
+                    "expired"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "party",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "customer",
+                    "companion",
+                    "admin",
+                    "system"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Party"
+            }
+          },
+          {
+            "in": "query",
+            "name": "last_minute",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last Minute"
+            }
+          },
+          {
+            "in": "query",
+            "name": "excuse_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "none",
+                    "claimed",
+                    "granted",
+                    "rejected"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Excuse State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "review_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "none",
+                    "open",
+                    "reviewed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Until"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminEventRead"
+                  },
+                  "title": "Response List Events Api V1 Admin Cancellations Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Events",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/events/{event_id}/review": {
+      "post": {
+        "description": "Excuse an event (emergency accepted: it stops counting) or uphold it (it counts).",
+        "operationId": "review_event_api_v1_admin_cancellations_events__event_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventReview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Review Event",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/restrictions": {
+      "get": {
+        "operationId": "list_restrictions_api_v1_admin_cancellations_restrictions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "customer",
+                    "companion"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Active"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRestrictionRead"
+                  },
+                  "title": "Response List Restrictions Api V1 Admin Cancellations Restrictions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Restrictions",
+        "tags": [
+          "admin cancellations"
+        ]
+      },
+      "post": {
+        "description": "The only way a restriction starts: a temporary, reasoned, audited admin decision.",
+        "operationId": "create_restriction_api_v1_admin_cancellations_restrictions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestrictionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRestrictionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Restriction",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/restrictions/{restriction_id}/lift": {
+      "post": {
+        "operationId": "lift_restriction_api_v1_admin_cancellations_restrictions__restriction_id__lift_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "restriction_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Restriction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestrictionLift"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRestrictionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lift Restriction",
+        "tags": [
+          "admin cancellations"
+        ]
+      }
+    },
+    "/api/v1/admin/cancellations/users/{user_id}/summary": {
+      "get": {
+        "operationId": "user_summary_api_v1_admin_cancellations_users__user_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCancellationSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "User Summary",
+        "tags": [
+          "admin cancellations"
         ]
       }
     },
@@ -5433,7 +7420,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BookingCancel"
+                "$ref": "#/components/schemas/BookingCancelRequest"
               }
             }
           },
@@ -5527,6 +7514,196 @@
         "summary": "Decline Booking",
         "tags": [
           "bookings"
+        ]
+      }
+    },
+    "/api/v1/cancellations/me/events": {
+      "get": {
+        "description": "Events counted against the caller only; other people's events are never readable.",
+        "operationId": "my_events_api_v1_cancellations_me_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyEventRead"
+                  },
+                  "title": "Response My Events Api V1 Cancellations Me Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Events",
+        "tags": [
+          "cancellations"
+        ]
+      }
+    },
+    "/api/v1/cancellations/me/events/{event_id}/dispute": {
+      "post": {
+        "description": "Contest an event and/or claim an emergency. An admin decides; a claim does not count.",
+        "operationId": "dispute_event_api_v1_cancellations_me_events__event_id__dispute_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyEventRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Dispute Event",
+        "tags": [
+          "cancellations"
+        ]
+      }
+    },
+    "/api/v1/cancellations/me/restrictions": {
+      "get": {
+        "operationId": "my_restrictions_api_v1_cancellations_me_restrictions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active_only",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Active Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyRestrictionRead"
+                  },
+                  "title": "Response My Restrictions Api V1 Cancellations Me Restrictions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Restrictions",
+        "tags": [
+          "cancellations"
         ]
       }
     },

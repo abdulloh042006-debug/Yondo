@@ -7,10 +7,18 @@ from starlette.exceptions import HTTPException
 
 
 class ApplicationError(Exception):
-    def __init__(self, code: str, message: str, status_code: int = 400) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        status_code: int = 400,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         self.code = code
         self.message = message
         self.status_code = status_code
+        # Machine-readable extras (e.g. `ends_at`); never user-content or other users' data.
+        self.details = details
         super().__init__(message)
 
 
@@ -21,6 +29,7 @@ def problem_response(
     code: str,
     message: str,
     errors: list[dict[str, Any]] | None = None,
+    details: dict[str, Any] | None = None,
 ) -> JSONResponse:
     content: dict[str, Any] = {
         'code': code,
@@ -29,6 +38,8 @@ def problem_response(
     }
     if errors is not None:
         content['errors'] = errors
+    if details is not None:
+        content['details'] = details
     return JSONResponse(status_code=status_code, content=content)
 
 
@@ -36,7 +47,11 @@ def install_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApplicationError)
     async def application_error_handler(request: Request, exc: ApplicationError) -> JSONResponse:
         return problem_response(
-            request, status_code=exc.status_code, code=exc.code, message=exc.message
+            request,
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
         )
 
     @app.exception_handler(RequestValidationError)

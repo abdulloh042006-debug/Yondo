@@ -74,3 +74,10 @@ class BookingCancel(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
 
     reason: str = Field(default='', max_length=2000)
+
+
+class BookingCancelRequest(BookingCancel):
+    emergency: bool = Field(
+        default=False,
+        description='Claim an emergency: the cancellation is not counted until an admin decides.',
+    )

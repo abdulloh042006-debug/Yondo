@@ -73,6 +73,29 @@ class Settings(BaseSettings):
     companion_price_max_minor: int | None = Field(default=None, gt=0)
     companion_allowed_unit_minutes: tuple[int, ...] = ()
 
+    # Cancellation tracking and abuse prevention (docs/cancellation-policy.md). EVERY number
+    # below is a PLACEHOLDER awaiting the owner's approved policy, not an approved rule. Units
+    # are in the names. There is deliberately no automatic restriction and no money setting:
+    # restrictions are created only by an admin, and a threshold only opens a review case.
+    cancellation_tracking_enabled: bool = True
+    cancellation_last_minute_hours: int = Field(default=24, ge=1, le=720)
+    cancellation_window_days: int = Field(default=30, ge=1, le=365)
+    # Withdrawing a still-pending request (nobody accepted yet) is recorded but not counted.
+    cancellation_count_pending_requests: bool = False
+    # Thresholds are counts of counted events inside the window; 0 switches that check off.
+    cancellation_warning_threshold: int = Field(default=3, ge=0, le=1000)
+    cancellation_review_threshold: int = Field(default=5, ge=0, le=1000)
+    cancellation_last_minute_review_threshold: int = Field(default=3, ge=0, le=1000)
+    cancellation_no_show_review_threshold: int = Field(default=2, ge=0, le=1000)
+    cancellation_emergency_claim_review_threshold: int = Field(default=3, ge=0, le=1000)
+    booking_restriction_default_days: int = Field(default=7, ge=1, le=365)
+    booking_restriction_max_days: int = Field(default=30, ge=1, le=365)
+    # Booking spam guards (0 = off): created requests per rolling hour, and open requests
+    # (pending + accepted, not yet paid) overall and per companion, for one customer.
+    booking_requests_per_hour_limit: int = Field(default=20, ge=0, le=10_000)
+    booking_open_requests_limit: int = Field(default=10, ge=0, le=1000)
+    booking_open_requests_per_companion_limit: int = Field(default=3, ge=0, le=1000)
+
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:
         if (
@@ -82,6 +105,18 @@ class Settings(BaseSettings):
             raise ValueError('Companion maximum price must not be below minimum price')
         if any(value <= 0 for value in self.companion_allowed_unit_minutes):
             raise ValueError('Companion pricing units must be positive minutes')
+        return self
+
+    @model_validator(mode='after')
+    def validate_cancellation_settings(self) -> Settings:
+        if self.booking_restriction_default_days > self.booking_restriction_max_days:
+            raise ValueError('Default restriction days must not exceed the maximum')
+        if (
+            self.cancellation_warning_threshold
+            and self.cancellation_review_threshold
+            and self.cancellation_warning_threshold > self.cancellation_review_threshold
+        ):
+            raise ValueError('The warning threshold must not exceed the review threshold')
         return self
 
     @model_validator(mode='after')

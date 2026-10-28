@@ -14,13 +14,17 @@ class UserNotification(TimestampMixin, Base):
             "kind IN ('booking_requested','booking_accepted','booking_declined',"
             "'booking_cancelled','payment_confirmed','chat_message',"
             "'review_reminder','gift_order_created','gift_test_paid','gift_preparing',"
-            "'gift_out_for_delivery','gift_delivered','gift_cancelled')",
+            "'gift_out_for_delivery','gift_delivered','gift_cancelled',"
+            "'booking_no_show','cancellation_warning','booking_restricted',"
+            "'booking_restriction_lifted')",
             name='ck_user_notification_kind',
         ),
         UniqueConstraint('recipient_id', 'source_key', name='uq_notice_recipient_source'),
         CheckConstraint(
             '(booking_id IS NOT NULL AND gift_order_id IS NULL) OR '
-            '(booking_id IS NULL AND gift_order_id IS NOT NULL)',
+            '(booking_id IS NULL AND gift_order_id IS NOT NULL) OR '
+            "(booking_id IS NULL AND gift_order_id IS NULL AND "
+            "kind IN ('booking_restricted','booking_restriction_lifted'))",
             name='ck_notification_single_resource',
         ),
         Index('ix_user_notifications_recipient_created', 'recipient_id', 'created_at'),

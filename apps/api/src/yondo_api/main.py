@@ -26,6 +26,9 @@ from yondo_api.auth.router import router as auth_router
 from yondo_api.auth.telegram_gateway import TelegramGatewayOtpProvider
 from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
+from yondo_api.cancellations.abuse import BookingRateLimiter, DatabaseBookingRateLimiter
+from yondo_api.cancellations.admin import router as cancellations_admin_router
+from yondo_api.cancellations.router import router as cancellations_router
 from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
 from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
@@ -72,6 +75,7 @@ def create_application(
     object_storage: ObjectStorage | None = None,
     identity_eligibility: IdentityEligibility | None = None,
     payment_provider: PaymentProvider | None = None,
+    booking_rate_limiter: BookingRateLimiter | None = None,
 ) -> FastAPI:
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level)
@@ -122,6 +126,7 @@ def create_application(
         if app_settings.tezcheck_token.get_secret_value()
         else UnconfiguredPaymentProvider()
     )
+    app.state.booking_rate_limiter = booking_rate_limiter or DatabaseBookingRateLimiter()
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
@@ -134,6 +139,8 @@ def create_application(
         companion_admin_router,
         discovery_router,
         bookings_router,
+        cancellations_router,
+        cancellations_admin_router,
         payments_router,
         chat_router,
         gifts_router,
