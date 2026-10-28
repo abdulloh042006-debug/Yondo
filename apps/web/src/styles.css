@@ -1522,3 +1522,191 @@ table.data td {
     transform: none;
   }
 }
+
+/* ---- Opening animation (ui/Intro.tsx). Brand literals: ink/paper by theme, carrot as graphic only. ---- */
+.yi {
+  --yi-bg: #f5f2ec;
+  --yi-fg: #111111;
+  --yi-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--yi-bg);
+  color: var(--yi-fg);
+  transition: opacity 0.35s ease;
+  cursor: pointer;
+}
+[data-theme$='-tun'] .yi {
+  --yi-bg: #111111;
+  --yi-fg: #f5f2ec;
+}
+.yi.yi-fast {
+  transition-duration: 0.15s;
+}
+.yi.yi-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+.yi-stage {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px;
+}
+.yi-sym {
+  width: min(44vw, 168px);
+  height: auto;
+  overflow: visible;
+}
+.yi-wm {
+  width: min(56vw, 208px);
+  height: auto;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: yi-rise 0.5s var(--yi-ease) 1400ms forwards;
+}
+.yi-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(46vw, 150px);
+  opacity: 0;
+  transform: scaleX(0.2);
+  animation: yi-grow 0.45s var(--yi-ease) 1500ms forwards;
+}
+.yi-rule i {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--yi-fg) 60%, transparent));
+}
+.yi-rule i:last-child {
+  transform: scaleX(-1);
+}
+.yi-slogan {
+  margin: 0;
+  font: 500 clamp(0.95rem, 3.6vw, 1.1rem) 'Space Grotesk Variable', 'Manrope Variable', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  animation: yi-fade 0.45s ease 2000ms forwards;
+}
+.yi-draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.yi-draw.yi-l {
+  animation: yi-draw 0.8s var(--yi-ease) 250ms forwards;
+}
+.yi-draw.yi-r {
+  animation: yi-draw 0.45s var(--yi-ease) 600ms forwards;
+}
+.yi-foot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  transform: scaleY(0.2);
+  animation: yi-foot 0.26s ease-out 150ms forwards;
+}
+.yi-star {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.2) rotate(-45deg);
+  animation: yi-bloom 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+.yi-s1 {
+  animation-delay: 900ms;
+}
+.yi-s2 {
+  animation-delay: 1000ms;
+}
+.yi-ring {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: yi-ring 0.65s ease-out 1250ms forwards;
+}
+.yi-skip {
+  position: absolute;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--yi-fg) 35%, transparent);
+  background: transparent;
+  color: var(--yi-fg);
+  font: 500 0.9rem 'Manrope Variable', system-ui, sans-serif;
+  cursor: pointer;
+}
+.yi-skip:focus-visible {
+  outline: 3px solid var(--yi-fg);
+  outline-offset: 3px;
+}
+@keyframes yi-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes yi-foot {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes yi-bloom {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes yi-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+@keyframes yi-rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes yi-grow {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes yi-fade {
+  to {
+    opacity: 0.8;
+  }
+}
+/* Reduced motion: the final frame at once (class set from the OS setting in Intro.tsx), opacity-only exit. */
+.yi-rm .yi-draw,
+.yi-rm .yi-foot,
+.yi-rm .yi-star,
+.yi-rm .yi-wm,
+.yi-rm .yi-rule {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  stroke-dashoffset: 0;
+}
+.yi-rm .yi-slogan {
+  animation: none;
+  opacity: 0.8;
+}
+.yi-rm .yi-ring {
+  display: none;
+}
+.yi-rm {
+  transition-duration: 0.15s;
+}

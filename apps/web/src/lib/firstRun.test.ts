@@ -47,7 +47,8 @@ describe('firstRun', () => {
   it('uses the keys the app ships with', () => {
     expect(firstRun.keyOf('onboarding.customer')).toBe('yondo.onboarding.v1.customer');
     expect(firstRun.keyOf('onboarding.companion')).toBe('yondo.onboarding.v1.companion');
-    expect(Object.keys(FLOWS)).toEqual(['onboarding.customer', 'onboarding.companion']);
+    expect(firstRun.keyOf('intro')).toBe('yondo.intro.v1');
+    expect(Object.keys(FLOWS)).toEqual(['intro', 'onboarding.customer', 'onboarding.companion']);
   });
 
   it('a version bump shows the flow again and leaves the old flag untouched', () => {

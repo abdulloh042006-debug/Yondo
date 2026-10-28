@@ -7,6 +7,7 @@ import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { BrandMark } from './Brand';
 import { ConsentGate } from './Consent';
 import { Icon } from './Icon';
+import { IntroHost } from './Intro';
 import { OnboardingHost } from './Onboarding';
 import { SosButton } from './Sos';
 import { PageTransition } from './motion';
@@ -41,6 +42,7 @@ export function Layout() {
   ];
   return (
     <>
+      <IntroHost />
       <div className="aurora" aria-hidden="true">
         <i />
         <i />

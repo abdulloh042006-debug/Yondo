@@ -8,8 +8,8 @@
  *   may loop: a flow marked seen stays seen for the rest of the page's life even if it could not be persisted, and a
  *   flow whose `whenUnavailable` is `'skip'` is simply not shown when the device cannot remember it.
  *
- * Adding a flow (e.g. the opening animation) is one line in `FLOWS`; no other file needs to change:
- *   intro: { topic: 'intro', version: 1, whenUnavailable: 'skip' },
+ * Adding a flow is one line in `FLOWS`; no other file needs to change. The opening animation (`intro`) uses `'show'`:
+ * without storage it still plays at most once per page load (the in-memory flag), never on every navigation.
  */
 export interface FlowDef {
   topic: string;
@@ -67,6 +67,7 @@ export function createFirstRun<N extends string>(defs: Record<N, FlowDef>, stora
 }
 
 export const FLOWS = {
+  intro: { topic: 'intro', version: 1, whenUnavailable: 'show' },
   'onboarding.customer': { topic: 'onboarding', variant: 'customer', version: 1, whenUnavailable: 'show' },
   'onboarding.companion': { topic: 'onboarding', variant: 'companion', version: 1, whenUnavailable: 'show' },
 } as const satisfies Record<string, FlowDef>;

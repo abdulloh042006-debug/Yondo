@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { t, type Key } from '../i18n';
 import { firstRun, type FlowName } from '../lib/firstRun';
 import { Dialog } from './feedback';
+import { useIntroActive } from './Intro';
 import { ease } from './motion';
 import { OnboardingArt, type ArtKind } from './OnboardingArt';
 
@@ -129,6 +130,7 @@ export function OnboardingHost() {
   const { state } = useAuth();
   const { pathname } = useLocation();
   const { variant, canSwitch } = useAudience();
+  const introActive = useIntroActive(); // the opening animation goes first; the guide waits for it to close
   const [, rerender] = useReducer((x: number) => x + 1, 0);
   // `/studio` is companion-only, whatever else the user is.
   const trigger: GuideVariant | null = pathname === '/' ? variant : pathname === '/studio' ? 'companion' : null;
@@ -143,7 +145,7 @@ export function OnboardingHost() {
   );
   if (!trigger) return null;
   // Wait for the session check: a companion must not be shown the customer wording first.
-  const open = state.status !== 'loading' && !firstRun.isSeen(flowOf(trigger));
+  const open = !introActive && state.status !== 'loading' && !firstRun.isSeen(flowOf(trigger));
   return <GuideDialog open={open} variant={trigger} canSwitch={canSwitch && trigger === variant} onDone={onDone} />;
 }
 

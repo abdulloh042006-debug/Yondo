@@ -112,6 +112,7 @@ try {
         if (!localStorage.getItem('e2e.firstRunSeeded')) {
           localStorage.setItem('yondo.onboarding.v1.customer', '1');
           localStorage.setItem('yondo.onboarding.v1.companion', '1');
+          localStorage.setItem('yondo.intro.v1', '1');
           localStorage.setItem('e2e.firstRunSeeded', '1');
         }
       } catch {
@@ -126,10 +127,31 @@ try {
     await c.addInitScript(() => {
       try {
         if (!localStorage.getItem('yondo.uzAlphabet')) localStorage.setItem('yondo.uzAlphabet', '2026');
+        // The opening animation has its own steps (introVisit); here the visitor has already seen it.
+        if (!localStorage.getItem('e2e.introSeeded')) {
+          localStorage.setItem('yondo.intro.v1', '1');
+          localStorage.setItem('e2e.introSeeded', '1');
+        }
       } catch {
         /* storage unavailable */
       }
     });
+    return c;
+  };
+  /** A brand-new visitor who has not seen the opening animation (nothing seeded but the alphabet; optional theme). */
+  const introVisit = async (opts = {}, theme) => {
+    const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
+    await c.addInitScript((th) => {
+      try {
+        if (!localStorage.getItem('yondo.uzAlphabet')) localStorage.setItem('yondo.uzAlphabet', '2026');
+        if (th && !localStorage.getItem('e2e.themeSeeded')) {
+          localStorage.setItem('yondo.theme', th);
+          localStorage.setItem('e2e.themeSeeded', '1');
+        }
+      } catch {
+        /* storage unavailable */
+      }
+    }, theme);
     return c;
   };
 
@@ -842,6 +864,7 @@ try {
     await fresh.addInitScript(() => {
       try {
         localStorage.setItem('yondo.onboarding.v1.customer', '1');
+        localStorage.setItem('yondo.intro.v1', '1');
       } catch {
         /* storage unavailable */
       }
@@ -871,8 +894,130 @@ try {
       await fresh.close();
     }
   });
-  /* ------------------------------------------------ first-run guide (3 cards) */
   const guideTitle = 'Yondo qanday işlaydi';
+  /* ------------------------------------------------ opening animation (first opening only) */
+  const introSel = '[data-testid=intro]';
+  const introFlag = (pg) => pg.evaluate(() => localStorage.getItem('yondo.intro.v1'));
+  await step('intro: first visit shows the opening animation over the mounted app, auto-closes in ~3 s, then the guide; reload does not replay', async () => {
+    const c = await introVisit();
+    const p = await c.newPage();
+    watch(p, 'intro');
+    try {
+      const audio = [];
+      p.on('request', (r) => {
+        if (/\.(mp3|ogg|wav|m4a)(\?|$)/.test(r.url())) audio.push(r.url());
+      });
+      await p.goto(WEB);
+      const t0 = Date.now();
+      await p.locator(introSel).waitFor();
+      assert((await introFlag(p)) === '1', 'the flag must be written when the animation STARTS');
+      assert((await p.getByRole('dialog', { name: 'Yondo — ochiliş animatsiyasi' }).count()) === 1, 'labelled as a brand intro');
+      assert((await p.locator('#root[inert]').count()) === 1, 'the app underneath is inert while it runs');
+      assert((await p.locator('audio').count()) === 0 && audio.length === 0, 'no audio at all');
+      assert((await p.evaluate(() => document.activeElement?.textContent)) === 'Ötkazib yuboriş', 'focus starts on Skip');
+      assert((await p.getByRole('dialog', { name: guideTitle }).count()) === 0, 'the guide waits for the intro');
+      await p.locator(introSel).waitFor({ state: 'detached', timeout: 5000 });
+      const took = Date.now() - t0;
+      assert(took > 2000 && took < 3600, `the intro should take ~2.8 s, took ${took} ms`);
+      assert((await p.locator('#root[inert]').count()) === 0, 'inert is removed afterwards');
+      await p.getByRole('dialog', { name: guideTitle }).waitFor();
+      await p.getByRole('button', { name: 'Ötkazib yuboriş' }).click();
+      await p.getByRole('dialog').waitFor({ state: 'hidden' });
+      await p.reload();
+      await p.getByText('DEMO Madina').first().waitFor();
+      await p.waitForTimeout(700);
+      assert((await p.locator(introSel).count()) === 0, 'no replay after a reload');
+    } finally {
+      await c.close();
+    }
+  });
+  await step('intro: skip by click, Enter and Escape is instant and remembered; a refresh half-way does not replay', async () => {
+    for (const how of ['click', 'Enter', 'Escape', 'button']) {
+      const c = await introVisit();
+      const p = await c.newPage();
+      watch(p, `intro-${how}`);
+      try {
+        await p.goto(WEB);
+        await p.locator(introSel).waitFor();
+        await p.waitForTimeout(300);
+        if (how === 'click') await p.mouse.click(640, 300);
+        else if (how === 'button') await p.getByRole('button', { name: 'Ötkazib yuboriş' }).click();
+        else await p.keyboard.press(how);
+        await p.locator(introSel).waitFor({ state: 'detached', timeout: 1000 });
+        assert((await introFlag(p)) === '1', `${how}: remembered`);
+      } finally {
+        await c.close();
+      }
+    }
+    const c = await introVisit();
+    const p = await c.newPage();
+    try {
+      await p.goto(WEB);
+      await p.locator(introSel).waitFor();
+      await p.waitForTimeout(800);
+      await p.reload();
+      await p.getByText('DEMO Madina').first().waitFor();
+      await p.waitForTimeout(500);
+      assert((await p.locator(introSel).count()) === 0, 'a refresh in the middle must not replay it');
+    } finally {
+      await c.close();
+    }
+  });
+  await step('intro: never on deep links (/login, /terms, /privacy); reduced motion = short static frame, still skippable', async () => {
+    const c = await introVisit();
+    const p = await c.newPage();
+    watch(p, 'intro-deep');
+    try {
+      for (const path of ['/login', '/terms', '/privacy', '/help']) {
+        await p.goto(`${WEB}${path}`);
+        await p.waitForTimeout(500);
+        assert((await p.locator(introSel).count()) === 0, `${path}: no intro`);
+      }
+      assert((await introFlag(p)) === null, 'deep links do not use up the first opening');
+    } finally {
+      await c.close();
+    }
+    const r = await introVisit({ reducedMotion: 'reduce' });
+    const rp = await r.newPage();
+    watch(rp, 'intro-rm');
+    try {
+      await rp.goto(WEB);
+      await rp.locator(introSel).waitFor();
+      assert((await rp.locator('.yi-rm').count()) === 1, 'reduced-motion variant');
+      const t0 = Date.now();
+      await rp.locator(introSel).waitFor({ state: 'detached', timeout: 3000 });
+      assert(Date.now() - t0 < 1500, 'reduced variant is short');
+    } finally {
+      await r.close();
+    }
+  });
+  await step('intro: mid-animation screenshots (360 px day, 1440 px night) with no horizontal overflow', async () => {
+    const shots = [
+      [{ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true }, undefined, 'mobile-intro-day'],
+      [{ viewport: { width: 1440, height: 900 } }, 'yondo-tun', 'desktop-intro-night'],
+    ];
+    for (const [opts, theme, name] of shots) {
+      const c = await introVisit(opts, theme);
+      const p = await c.newPage();
+      watch(p, name);
+      try {
+        await p.goto(WEB);
+        await p.locator(introSel).waitFor();
+        await p.waitForTimeout(1750);
+        const m = await p.evaluate(() => {
+          const r = (q) => document.querySelector(q).getBoundingClientRect();
+          const w = window.__W ?? document.documentElement.clientWidth;
+          return { over: document.documentElement.scrollWidth - document.documentElement.clientWidth, wm: r('.yi-wm').width, w, bg: getComputedStyle(document.querySelector('.yi')).backgroundColor };
+        });
+        await p.screenshot({ path: `e2e/shots/${name}.png` }).catch(() => {});
+        assert(m.over <= 0, `${name}: horizontal overflow ${m.over}px`);
+        assert(m.bg === (theme ? 'rgb(17, 17, 17)' : 'rgb(245, 242, 236)'), `${name}: ground ${m.bg}`);
+      } finally {
+        await c.close();
+      }
+    }
+  });
+  /* ------------------------------------------------ first-run guide (3 cards) */
   const firstVisitCtx = await firstVisit();
   const gp = await firstVisitCtx.newPage();
   watch(gp, 'onboarding');
