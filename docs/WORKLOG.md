@@ -18,6 +18,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Session log
 ## S35 — Owner answers: DigitalOcean for now, TezCheck for individuals, own phone for now (2026-10-28)
 Done: recorded in CLAUDE.md §7, the decision brief (#11 resolved for payments, blocker reworded) and `docs/payments-tezcheck.md`. Checked: DigitalOcean is **not free** — GitHub Student Pack credit (official page says $100/year, forum posts say $200; unverified for 2026), a marketing line says $200 for the first 60 days; card or PayPal required, Uzbek card acceptance unverified. Eskiz: community packages use sender "4546"; 85 UZS/SMS from a Bitrix24 listing; whether OTP must use a service route rather than advertising and whether individuals can sign a contract: not confirmed (ask Eskiz, notify.eskiz.uz). No code changed.
+Later the same day: DigitalOcean confirmed (his Visa card works). Owner wants the code delivered by Telegram/WhatsApp instead of on screen, and asked about adding passwords; research: Telegram Gateway $0.01/code (Telegram's page; Uzbekistan availability and individual sign-up unconfirmed), `OtpDeliveryProvider` is the plug-in point, not built yet; passwords not recommended now.
 Next: owner answers the remaining closed questions (see the reply prompt in `reports/`); then CI Docker build check, DigitalOcean deploy how-to only after the owner confirms payment method and domain.
 Commit: this entry's commit.
 
