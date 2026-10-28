@@ -1,0 +1,86 @@
+# Yondo on ONE server (DigitalOcean Droplet or any Linux VPS with Docker). Read README.md in this folder first.
+# Run from this folder:  docker compose up -d --build
+# Nothing but Caddy (80/443) is reachable from the internet; PostgreSQL and Redis stay inside the Docker network.
+name: yondo
+
+services:
+  caddy:
+    build:
+      context: ../..
+      dockerfile: infra/deploy/digitalocean/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ../../apps/api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      YONDO_ENVIRONMENT: production
+      YONDO_DATABASE_URL: postgresql+psycopg://yondo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/yondo
+      YONDO_REDIS_URL: redis://redis:6379/0
+      YONDO_AUTH_OTP_PEPPER: ${YONDO_AUTH_OTP_PEPPER:?set YONDO_AUTH_OTP_PEPPER in .env (32+ characters)}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Booking expiry and due account erasures, once an hour (what infra/jobs does with a systemd timer).
+  jobs:
+    build:
+      context: ../../apps/api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      YONDO_ENVIRONMENT: production
+      YONDO_DATABASE_URL: postgresql+psycopg://yondo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/yondo
+      YONDO_REDIS_URL: redis://redis:6379/0
+      YONDO_AUTH_OTP_PEPPER: ${YONDO_AUTH_OTP_PEPPER:?set YONDO_AUTH_OTP_PEPPER in .env (32+ characters)}
+    command: ['sh', '-c', 'while true; do python -m yondo_api.jobs; sleep 3600; done']
+    depends_on:
+      api:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: yondo
+      POSTGRES_USER: yondo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U yondo -d yondo']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
