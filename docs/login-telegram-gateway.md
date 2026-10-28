@@ -1,6 +1,6 @@
 # Login codes through Telegram (Telegram Gateway)
 
-Status: **adapter implemented (S35), tested only against a mocked HTTP transport; never called the real gateway.** Reference: <https://core.telegram.org/gateway> and `/gateway/verification-tutorial` (read 2026-10-28). Code: `apps/api/src/yondo_api/auth/telegram_gateway.py`; plugs into `OtpDeliveryProvider` (`auth/providers.py`), chosen by `default_otp_provider` in `main.py`.
+Status: **adapter implemented (S35); live test PASS on 2026-10-28** with the owner's own Uzbek number (free test path): `checkSendAbility` + `sendVerificationMessage` with our code, `ttl` 300 and the `request_id`, JSON request bodies, the code arrived in Telegram and matched. Unit tests use a mocked transport. Reference: <https://core.telegram.org/gateway> and `/gateway/verification-tutorial` (read 2026-10-28). Code: `apps/api/src/yondo_api/auth/telegram_gateway.py`; plugs into `OtpDeliveryProvider` (`auth/providers.py`), chosen by `default_otp_provider` in `main.py`.
 
 ## Why
 The public demo shows the login code on screen, so anyone can sign in as any phone number: acceptable for a labelled demo, never for real users. Owner decision (2026-10-28): real users get the code via Telegram (WhatsApp later or never); SMS stays a possible fallback. No password system for now (phone + code, 30-day sessions).
@@ -31,7 +31,8 @@ The script asks for the token with hidden input (not stored), sends a random cod
 About **$0.01 per delivered code** (marketing page: "up to 50× cheaper than SMS"); you pay for codes delivered within the time you set; `checkSendAbility` is free if the user cannot be reached, otherwise one message is charged in advance; revoked codes are not refunded; undelivered codes are refunded automatically per the marketing page (the terms are stricter: read them).
 
 ## Not verified / follow-ups
-- Whether Uzbek numbers and individuals are served, the exact error strings and response shapes, the allowed `ttl` range, whether the API takes JSON bodies as assumed (the first live call will show it).
+- **Verified live (own number):** JSON bodies are accepted, `ttl` 300 is accepted, our own code is delivered, an Uzbek number works, the account was created by an individual.
+- **Not verified:** sending to OTHER users' numbers (needs a funded balance, Fragment/TON), the gateway's error strings (e.g. no Telegram, no balance: they are logged as `tg_error`; the mapping to 422 vs 503 is a guess until seen), the allowed `ttl` range, delivery speed and refunds in practice.
 - Telegram-only login excludes people without Telegram: keep an SMS fallback (Eskiz or similar) for the public launch; decide per user in the login screen.
 - `checkVerificationStatus` and the delivery-report callback are not used (Gateway statistics will be less accurate).
 - The login screen texts no longer say "SMS" (`login.lead`); no other login text mentions SMS (checked in uz.ts).
