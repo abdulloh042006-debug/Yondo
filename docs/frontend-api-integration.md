@@ -11,7 +11,7 @@ Base: codex/manual-gifts-click-test
 - CI checks freshness with python export_openapi.py --check.
 - Auth: Authorization: Bearer <access_token>, opaque token (not assumed JWT).
 - OTP endpoint: POST /api/v1/auth/otp/request; demo OTP only in development/test.
-- OTP response may carry `delivery_channel` ("telegram" | "sms"): where the real code was sent
+- OTP response may carry `delivery_channel` ("telegram" | "sms"; `sms` is reserved, no provider produces it yet): where the real code was sent
   (absent for the on-screen demo code; then `development_otp` is present instead). Real codes
   never appear in the response. New OTP request errors, branch on `code` (never message/status):
   `otp_channel_unavailable` (422, no Telegram on this number), `otp_delivery_failed` (502,

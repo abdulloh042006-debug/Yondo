@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.config import Settings
 from yondo_api.main import create_application
 
@@ -12,7 +13,9 @@ def app():
             environment='test',
             database_url='postgresql+psycopg://yondo:yondo@localhost:5432/yondo_test',
             redis_url='redis://localhost:6379/15',
-        )
+        ),
+        # Tests never send real codes, even if a Telegram Gateway token is set in the shell.
+        otp_provider=DevelopmentOtpProvider(),
     )
 
 
