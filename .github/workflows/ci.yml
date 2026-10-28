@@ -104,3 +104,42 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  docker-image:
+    name: Demo Docker image build and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the demo image (context = repository root)
+        run: docker build --progress=plain -f infra/deploy/Dockerfile -t yondo-demo:ci .
+      - name: Start the container
+        # Throw-away SQLite mode: no database, secrets or payment keys. The phone is a fake placeholder.
+        run: |
+          docker run -d --name yondo-demo -p 127.0.0.1:8000:8000 \
+            -e PORT=8000 \
+            -e YONDO_DEMO_ADMIN_PHONE=+998901234567 \
+            yondo-demo:ci
+      - name: Smoke test (/health, then the web app at /)
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8000/health; then
+              ok=1
+              break
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' yondo-demo)" != "true" ]; then
+              echo 'Container exited before /health answered'
+              exit 1
+            fi
+            sleep 2
+          done
+          [ "${ok:-}" = 1 ] || { echo 'No /health answer within 120 s'; exit 1; }
+          curl -fsS http://127.0.0.1:8000/health; echo
+          curl -fsS -o /tmp/index.html -w 'GET / -> %{http_code}\n' http://127.0.0.1:8000/
+          grep -q 'id="root"' /tmp/index.html
+      - name: Container logs
+        if: failure()
+        run: docker logs yondo-demo 2>&1 | tail -n 100
+      - name: Stop the container
+        if: always()
+        run: docker rm -f yondo-demo
