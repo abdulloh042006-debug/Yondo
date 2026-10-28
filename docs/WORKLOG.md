@@ -1,12 +1,18 @@
 # WORKLOG — read this first, update it last
 Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT IMPLEMENTED / OUT OF SCOPE.
 
-## Status snapshot
-- Branch `design/prototype` (base `origin/codex/notification-integration`), **pushed** (remote SHA verified equal to local at `88b410a`; later docs-only commits may follow). Includes `dbc9113` (decisions D1–D5, audit) and `c643b03` (CLAUDE.md, WORKLOG). CI read-out for the push: no runs yet.
-- Backend: PostgreSQL 16 200/200 PASS (SQLite 192 + 8 skipped); migrations 14 up/down/up PASS; 50 real-backend decision tests PASS on both DBs.
-- Prototype (mock-backed, NOT a real client): node 41/41 (S13), Chromium E2E 38/38 without REALFONTS (S13; 39/39 earlier with real fonts, difference not investigated), sweep 63 (+3) over 9 configs × 25 views, gallery 5/5.
+## Status snapshot (S37, 2026-10-28)
+- Branch `design/prototype` (other chats push to it too: `git fetch` first). This chat pushed `47e1bd7` (api_dir fix) and `814684f` (WORKLOG) before reading the S36 verifier rule; the independent verifier **APPROVED** them on 2026-10-28 (S38).
+- Live demo https://yondo-demo.onrender.com (Render free, Oregon) on persistent Neon (org `yondo`, project `yondo-demo`, US West 2, pooling off): `PERSISTENT_MODE=on` in the logs, DEMO payment check 14/14 on it, **persistence verified** (the DEMO customer kept 4 bookings across the 814684f redeploy), on-screen OTP, `YONDO_DEMO_ADMIN_PHONE` unset (nobody is admin).
+- Last full test runs (verifier, 2026-10-28, SQLite): backend 336 passed + 9 skipped, demo harness 8, ruff + OpenAPI PASS. Older, not re-run since the S36 changes: web vitest 42, e2e 59/59.
+- The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
+00. **Owner:** set `YONDO_DEMO_ADMIN_PHONE` (own phone) in Render → Environment to use `/admin`.
+00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. Open: owner decides whether CLAUDE.md should use a generic memory path (`~/.claude/projects/D--Yondo/memory/`) instead of the Windows username path, and rewords the "uncommitted S37 doc edits" line in section 7.
+00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
+00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, admin bootstrap command, Docker build check of the production package.
+00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then intro animation + onboarding + video.
 0a. **Owner (S36): Telegram Gateway** — open the account at gateway.telegram.org, top up (Fragment/TON; card route unverified), put the token ONLY into the host env `YONDO_TELEGRAM_GATEWAY_TOKEN` (checklist: `docs/otp-telegram-gateway.md` §12). First real test = a code to the owner's own number (free) — **done 2026-10-28 by the S35 chat: PASS** (`docs/login-telegram-gateway.md`); still to do: a +998 number with and without Telegram; report the error text, not the token. Also check the sender name shown to the user ("Verification Codes") — the login copy `login.tg.open`/`login.tg.noCode` names that chat and it is unverified. Before go-live set `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` (default 0 = off), name Telegram on the privacy page (phone + code go to Telegram), settle the cross-border question with a lawyer.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
@@ -17,6 +23,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S38 — Verifier review of the S37 commits, S37 notes committed (2026-10-28)
+Done: new chat after a context reset re-read CLAUDE.md, AGENTS.md, memory and this WORKLOG, then ran the independent verifier agent (read-only) over `47e1bd7`, `814684f` and the uncommitted CLAUDE.md/WORKLOG edits: **APPROVE**, no required fixes. Evidence (verifier run, SQLite, `PYTHONPATH=D:/Yondo/apps/api/src`): backend 336 passed + 9 skipped; demo harness 8 passed (CI invocation from `apps/api`); `ruff check .` in `apps/api` PASS; `export_openapi.py --check` PASS; secrets scan clean; the regression test covers the shallow, image-like and repo layouts.
+Not run: the live Render/Neon claims (taken from S37), web vitest, e2e. Notes: the venv's editable `yondo_api` points to another worktree (`copilot-worktrees\...`): run `pip install -e apps/api` from `D:\Yondo` or set `PYTHONPATH`; `infra/deploy/demo` has 5 pre-existing ruff findings (I001, FURB162), CI does not lint that folder. CLAUDE.md was not changed in S38 (see Next step 00b).
+Commit: this entry's commit.
+
 ## S37 — First persistent deploy on Render: api_dir bug fixed, Neon database created (2026-10-28)
 Done: owner has no money, so the free path: Neon org `yondo` (Free plan; the first org was Vercel-managed and could not create projects, the Vercel route needed an e-mail the owner cannot read) with project `yondo-demo` (AWS US West 2, pooling off), connection string pasted by the owner into Render `YONDO_DEMO_DATABASE_URL`. **The first persistent deploy failed on Render:** `demo_persist.api_dir()` built `here.parents[2]` eagerly; in the image the harness lives in `/app` (one ancestor) so every persistent start died with `IndexError: 2` before migrating (the repository layout and my clean-venv check hid it). Fixed (candidates built lazily) + regression test `test_api_dir_resolves_in_the_shallow_container_layout`; the CI Docker smoke test runs SQLite mode and cannot catch this class.
 Result: redeploy of `47e1bd7` is **Live** and the logs show `PERSISTENT_MODE=on DEMO_PAYMENT=on TEZCHECK=off` (the previous deploy: `PERSISTENT_MODE=off`); the availability top-up ran in the background; live `demo_payment_check.py` 14/14 PASS on the Neon-backed demo; the DEMO customer had 4 bookings (2 seeded + 2 from the check). Persistence across a restart is verified by the next deploy (this commit): the count must stay 4 and the log must say `SEED_SKIPPED`.
