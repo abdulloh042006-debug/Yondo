@@ -13,8 +13,8 @@ RUN npm run build
 FROM python:3.12-slim
 WORKDIR /app
 COPY apps/api/ /app/api/
-# demo_app.py imports httpx and uses the aiosqlite driver; both are dev-only extras of apps/api.
-RUN pip install --no-cache-dir /app/api 'httpx>=0.28,<1' 'aiosqlite>=0.20,<1'
+# demo_app.py uses the aiosqlite driver, a dev-only extra of apps/api (httpx is a main dependency since the TezCheck adapter).
+RUN pip install --no-cache-dir /app/api 'aiosqlite>=0.20,<1'
 COPY infra/deploy/demo/demo_app.py infra/deploy/demo/demo_payment.py infra/deploy/demo/demo_persist.py /app/
 COPY --from=web /web/dist /app/dist
 

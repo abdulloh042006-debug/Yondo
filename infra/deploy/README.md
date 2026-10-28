@@ -28,6 +28,11 @@ plus the owner's merchant keys in the host's environment variables (never in git
 Checks: `demo/test_demo.py` (in CI) and, against a running server started with the DEMO payment provider and the web app,
 `python infra/deploy/demo/demo_payment_check.py <port | https://origin>` (re-runnable).
 
+### Real payments: TezCheck
+With `YONDO_TEZCHECK_TOKEN`, `YONDO_TEZCHECK_CASH_DESK_CODE` and `YONDO_TEZCHECK_WEBHOOK_SECRET` set (Render → Environment), the image uses the real
+TezCheck adapter (`apps/api/src/yondo_api/payments/tezcheck.py`) instead of the DEMO page; the fee still comes from `YONDO_PLATFORM_FEE_BPS`
+(owner decision; unset = 503). Setup, API facts and the owner checklist: [`docs/payments-tezcheck.md`](../../docs/payments-tezcheck.md). A domain is needed first.
+
 ### Risks you accept by publishing it
 - Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (any spelling the API accepts; it replaces the well-known `+998901110001`; nobody else knows which number is the admin). If it is **not** set, the public image fails closed: the admin gets a random unknown number, so nobody can open the admin console (set the variable when you need it). A malformed value stops the start with a clear message. Check after every deploy that `+998901110001` gets 403 on `/api/v1/admin/summary`.
 - **Do not enter real phone numbers or personal data.** With the default throw-away SQLite everything disappears at the next start, but in **persistent mode every phone number, booking and chat stays in the database** until an account-deletion request is processed (the 15-minute loop does that after the 30-day window). Treat the site as public either way.

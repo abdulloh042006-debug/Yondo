@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     click_test_enabled: bool = False
     click_test_service_id: int | None = Field(default=None, gt=0)
     click_test_secret: SecretStr = SecretStr('')
+    # TezCheck payment aggregator (https://tezcheck.uz/api-docs). Empty token = not configured.
+    tezcheck_api_url: str = 'https://api.tezcheck.uz/api/merchant/v1'
+    tezcheck_token: SecretStr = SecretStr('')
+    tezcheck_cash_desk_code: str = ''
+    tezcheck_webhook_secret: SecretStr = SecretStr('')
+    tezcheck_return_url: str = ''
+    # Accept payments TezCheck marks as environment "test" (its test provider). Never in prod.
+    tezcheck_accept_test_payments: bool = False
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -92,6 +100,20 @@ class Settings(BaseSettings):
             raise ValueError(
                 'CLICK test mode requires a local environment, service ID and 32+ character key'
             )
+        return self
+
+    @model_validator(mode='after')
+    def validate_tezcheck(self) -> Settings:
+        if self.tezcheck_accept_test_payments and self.environment == 'production':
+            raise ValueError('YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS is not allowed in production')
+        if self.tezcheck_token.get_secret_value():
+            if not self.tezcheck_api_url.startswith('https://'):
+                raise ValueError('YONDO_TEZCHECK_API_URL must be an https URL')
+            if len(self.tezcheck_webhook_secret.get_secret_value()) < 16:
+                raise ValueError(
+                    'TezCheck needs YONDO_TEZCHECK_WEBHOOK_SECRET (16+ characters): '
+                    'without it payment events cannot be verified'
+                )
         return self
 
     @property

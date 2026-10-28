@@ -45,6 +45,7 @@ from yondo_api.meetings.router import router as meetings_router
 from yondo_api.notifications.router import router as notifications_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
+from yondo_api.payments.tezcheck import TezCheckPaymentProvider
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
@@ -106,7 +107,11 @@ def create_application(
     app.state.settings = app_settings
     app.state.object_storage = object_storage
     app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
-    app.state.payment_provider = payment_provider or UnconfiguredPaymentProvider()
+    app.state.payment_provider = payment_provider or (
+        TezCheckPaymentProvider.from_settings(app_settings)
+        if app_settings.tezcheck_token.get_secret_value()
+        else UnconfiguredPaymentProvider()
+    )
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)

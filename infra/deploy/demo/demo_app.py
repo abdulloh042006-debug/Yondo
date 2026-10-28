@@ -244,7 +244,8 @@ def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None):
 
 async def main(port: int, db_file: str):
     # DEMO payments (no money moves) only when a public https URL is known; otherwise the honest 503 stays.
-    demo_pay = DemoPaymentProvider(PUBLIC_URL) if PUBLIC_URL else None
+    tezcheck_on = bool(os.environ.get('YONDO_TEZCHECK_TOKEN', '').strip())  # the real adapter replaces the DEMO provider
+    demo_pay = DemoPaymentProvider(PUBLIC_URL) if PUBLIC_URL and not tezcheck_on else None
     # Persistent mode (a free PostgreSQL) only when YONDO_DEMO_DATABASE_URL is set; default = throw-away SQLite.
     db_url = normalize_database_url(DATABASE_URL) if DATABASE_URL else f'sqlite+aiosqlite:///{db_file}'
     use_migrations = db_url.startswith('postgresql')
@@ -253,7 +254,8 @@ async def main(port: int, db_file: str):
     if use_migrations:
         await asyncio.to_thread(run_migrations, db_url)
     app = build_app(db_url, port, demo_pay)
-    print(f'PERSISTENT_MODE={"on" if DATABASE_URL else "off"} DEMO_PAYMENT={"on" if demo_pay else "off"}', flush=True)
+    print(f'PERSISTENT_MODE={"on" if DATABASE_URL else "off"} DEMO_PAYMENT={"on" if demo_pay else "off"} '
+          f'TEZCHECK={"on" if tezcheck_on else "off"}', flush=True)
     async with app.router.lifespan_context(app):
         if not use_migrations:  # Alembic already built the schema of a PostgreSQL database
             async with app.state.db_engine.begin() as connection:

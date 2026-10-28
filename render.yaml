@@ -18,3 +18,10 @@ services:
         sync: false
       - key: YONDO_DEMO_DATABASE_URL
         sync: false
+      # TezCheck payments (docs/payments-tezcheck.md). Leave empty to keep the DEMO payment page.
+      - key: YONDO_TEZCHECK_TOKEN
+        sync: false
+      - key: YONDO_TEZCHECK_CASH_DESK_CODE
+        sync: false
+      - key: YONDO_TEZCHECK_WEBHOOK_SECRET
+        sync: false
