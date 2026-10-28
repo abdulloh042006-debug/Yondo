@@ -227,7 +227,10 @@ async def test_explicit_provider_argument_beats_configured_token():
         assert app.state.otp_provider is provider
 
 
-def test_telegram_gateway_settings_defaults_and_secrecy():
+def test_telegram_gateway_settings_defaults_and_secrecy(monkeypatch):
+    # The defaults, not whatever the shell exports (make_settings only pins the token).
+    for name in ('TOKEN', 'BASE_URL', 'TIMEOUT_SECONDS'):
+        monkeypatch.delenv(f'YONDO_TELEGRAM_GATEWAY_{name}', raising=False)
     settings = make_settings(telegram_gateway_token='123:very-secret')
     assert settings.telegram_gateway_base_url == 'https://gatewayapi.telegram.org'
     assert settings.telegram_gateway_timeout_seconds == 10.0

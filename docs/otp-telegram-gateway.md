@@ -2,6 +2,8 @@
 
 Researched 2026-10-28 (research only; nothing was called against the live API; no secrets here).
 
+> **Update 2026-10-28 (later the same day):** the adapter was built and then **live-tested with the owner's own number**. The results are in the box "Live findings" in §14; the merged implementation (two calls: `checkSendAbility`, then `sendVerificationMessage`) is described in §14 and in `docs/login-telegram-gateway.md`. Where the research below says otherwise (§7 "call send directly", §11, §13), the original text is kept and annotated.
+
 **Source access.** This sandbox blocks `core.telegram.org`, `gateway.telegram.org`, `gatewayapi.telegram.org`, `telegram.org` (proxy 403 / ENOTFOUND). **No Telegram page could be read directly, so nothing below is tagged `[official]`.** Tags used:
 - `[tg-search]` = excerpt/summary of a Telegram page (`core.telegram.org/gateway`, `/gateway/api`, `/gateway/verification-tutorial`, `telegram.org/tos/gateway`, Telegram blog) returned by the search tool. Near-official but second-hand.
 - `[sdk]` = source/docs of third-party clients downloaded from PyPI/npm/pkg.go.dev/JSR (`tgateway`, `PyTGGateway`, `telegram-gateway-api`, `telegramgateway-js`, `apifonica/tg-gateway-go`, `@roj/gateway-api`). Their docstrings copy the official text and cite `core.telegram.org/gateway/api#…`.
@@ -60,7 +62,7 @@ Researched 2026-10-28 (research only; nothing was called against the live API; n
 - Sends only to numbers registered on Telegram; the user must have opted in by sharing the number with your service and agreeing to receive messages there. `[tg-search]`
 - No country list found. ToS: Gateway "may not be available" to certain individuals, apps or regions because of regulation `[tg-search]`. **+998 support: `[unverified]`** → first real test with several +998 numbers/operators (Telegram user, non-user).
 - Number without Telegram: documented as **not charged**. The exact error string/HTTP code is `[unverified]`; candidates in the SDK lists: `PHONE_NUMBER_NOT_FOUND` (most likely), `PHONE_NUMBER_NOT_AVAILABLE`. Adapter: map every `PHONE_NUMBER_*` error to one internal reason "channel unavailable" (→ SMS fallback or "use another method").
-- Pre-check via `checkSendAbility` saves nothing (charged if OK, free if error, then the send is free): call `sendVerificationMessage` directly. *(recommendation)*
+- Pre-check via `checkSendAbility` saves nothing (charged if OK, free if error, then the send is free): call `sendVerificationMessage` directly. *(recommendation)* **Superseded 2026-10-28:** the merged adapter calls `checkSendAbility` first (live-verified, §14): a number without Telegram is caught before any code is sent, and the check's `request_id` is passed to the send so it is billed once.
 - Do not tell API clients whether a number is on Telegram (account enumeration): return the same neutral response as for any delivery failure. *(recommendation)*
 
 ## 8. Account, limits
@@ -82,7 +84,7 @@ All from third-party BSP docs `[search]`; Meta pages were unreachable. Nothing v
 - Compared with Telegram Gateway: heavier onboarding (business verification, template approval, BSP), unknown price; Telegram: $0.01 and a simple token, but unverified for +998 and for individuals.
 
 ## 11. Adapter checklist (summary)
-`POST https://gatewayapi.telegram.org/sendVerificationMessage`, header `Authorization: Bearer $YONDO_TELEGRAM_GATEWAY_TOKEN`, JSON `{"phone_number":"+998…","code":"<our digits>","ttl":300,"payload":"<opaque id>"}` (+ `callback_url` only if we implement the receiver). Timeout ~10 s; do not auto-retry a send; map `ok:false` strings (§3/§7) to internal reasons; `FLOOD_WAIT_n` → 429-style; `BALANCE_NOT_ENOUGH`/`ACCESS_TOKEN_*` → 503 "provider unavailable" + alert (never show as "wrong code").
+`POST https://gatewayapi.telegram.org/sendVerificationMessage`, header `Authorization: Bearer $YONDO_TELEGRAM_GATEWAY_TOKEN`, JSON `{"phone_number":"+998…","code":"<our digits>","ttl":300,"payload":"<opaque id>"}` (+ `callback_url` only if we implement the receiver). Timeout ~10 s; do not auto-retry a send; map `ok:false` strings (§3/§7) to internal reasons; `FLOOD_WAIT_n` → 429-style; `BALANCE_NOT_ENOUGH`/`ACCESS_TOKEN_*` → 503 "provider unavailable" + alert (never show as "wrong code"). **Update 2026-10-28:** the implemented flow is two-step: `checkSendAbility` first, then this send with the check's `request_id` (at most two requests, no retry); see §14.
 
 ## 12. Owner checklist (UZ)
 1. `gateway.telegram.org` ga o‘z Telegram raqamingiz bilan kiring va so‘ralgan ma‘lumotlarni (o‘zingiz/biznes haqida) to‘ldiring.
@@ -94,24 +96,24 @@ All from third-party BSP docs `[search]`; Meta pages were unreachable. Nothing v
 7. Token oshkor bo‘lib qolsa: akkauntda yangisini oling (imkon bo‘lsa) va Render dagi qiymatni almashtiring.
 
 ## 13. Open questions
-1. Does Gateway deliver to +998 numbers on all operators? Country list and per-country price?
+1. Does Gateway deliver to +998 numbers on all operators? Country list and per-country price? *(2026-10-28 live: an own +998 number works; other operators, other users' numbers and the price are still open.)*
 2. Exact error string and HTTP status for a number without Telegram; meaning of each error code; is `ok:false` ever sent with HTTP 4xx/5xx?
 3. Minimum top-up; can a Uzbekistan-issued Visa/Uzcard/Humo card fund it (directly or via TON purchase)? Receipts for an individual?
-4. May an individual (no company) open and use the account; what "business information" is required; can Telegram refuse?
+4. May an individual (no company) open and use the account; what "business information" is required; can Telegram refuse? *(2026-10-28 live: ANSWERED for opening the account: it was created by an individual; whether Telegram may refuse later is still open.)*
 5. Rate limits (requests/s, per-number cooldown) and `FLOOD_WAIT_n` semantics.
 6. Callback timing (which transitions), retry schedule, tolerance; does a report always arrive for `read`?
-7. Is the message text/sender/language customisable when `code` is ours? Does the user see "Verification Codes" sender?
+7. Is the message text/sender/language customisable when `code` is ours? Does the user see "Verification Codes" sender? *(Still open: the login copy `login.tg.open` / `login.tg.noCode` names that chat; the sender name seen on the owner's phone was not recorded.)*
 8. Does sending to your own number work with a zero balance? Unit of "credits" vs USD?
-9. `ttl` range: 30–3600 (changelog) vs 60–86400 (older SDK) — confirm on the live page.
+9. `ttl` range: 30–3600 (changelog) vs 60–86400 (older SDK) — confirm on the live page. *(2026-10-28 live: `ttl` 300 is accepted; the allowed range is still unconfirmed.)*
 10. Uzbek personal-data / cross-border transfer rules for sending phone numbers to Telegram.
 11. WhatsApp: Uzbekistan authentication price, individual eligibility, BSP options.
 
 ## 14. Implementation (2026-10-28, part 2)
 Code: `apps/api/src/yondo_api/auth/telegram_gateway.py` (adapter), selection in `main.select_otp_provider` (a configured token wins in every environment; the public demo harness pins the on-screen provider and ignores it), tests in `apps/api/tests/test_telegram_gateway.py` and `test_otp_delivery.py` (MockTransport only: **nothing was called against the live API**).
 
-**Request.** One `POST {base}/sendVerificationMessage`, `Authorization: Bearer <token>`, JSON `{phone_number: "+998…", code: <our 6 digits>, ttl: 300, payload: <random id, no PII>}`. No `callback_url`, no `request_id`/`checkSendAbility`. Timeout from settings; exactly one request per send, **never retried** (a blind retry can be billed twice); a failed send writes no challenge and starts no resend cooldown.
+**Request (two steps, JSON bodies, `Authorization: Bearer <token>`).** (1) `POST {base}/checkSendAbility` with `{phone_number}`. Only if that answers `ok:true`: (2) `POST {base}/sendVerificationMessage` with `{phone_number: "+998…", code: <our 6 digits>, ttl: 300, payload: <random id, no PII>, request_id: <from the check, when present and a plain identifier>}`. No `callback_url`. Timeout from settings; **at most two requests per delivery, neither ever retried** (a blind retry can be billed twice); if the check fails nothing is sent; a failed delivery writes no challenge and starts no resend cooldown.
 
-**Error mapping** (table `ERROR_RULES` / `DEFAULT_RULE` at the top of the module; the strings are the unverified ones from §3/§7):
+**Error mapping** (table `ERROR_RULES` / `DEFAULT_RULE` at the top of the module, applied to the answer of BOTH calls; the strings are the unverified ones from §3/§7):
 | Telegram answer | API result | Log |
 |---|---|---|
 | `ok:true`, HTTP 2xx | 202, `delivery_channel: "telegram"`, no `development_otp` | info |
@@ -126,11 +128,19 @@ On a 4xx the body is read first, so `4xx` + `ok:false` + `PHONE_NUMBER_*` still 
 
 **Concurrency.** On PostgreSQL `issue_otp` first takes `pg_advisory_xact_lock(hashtextextended(<phone>, 0))`, so two simultaneous first requests for one number cannot both send a paid code and then collide on the primary key; the second gets the 429 cooldown. Verified against a real PostgreSQL 16 (3 concurrent requests: 1 send, 202 + 2x429; with the lock removed the same test fails with `IntegrityError`).
 
-**Not done.** Delivery-report callback (and its HMAC check, §5); SMS or any other fallback when Telegram fails or the number has no Telegram; per-country/operator checks; `checkSendAbility`/`checkVerificationStatus`/`revokeVerificationMessage`; any customisation of the message text.
+**Not done.** Delivery-report callback (and its HMAC check, §5); SMS or any other fallback when Telegram fails or the number has no Telegram; per-country/operator checks; `checkVerificationStatus`/`revokeVerificationMessage`; any customisation of the message text.
 
-**Must be checked with the owner's real token (unverified):**
-1. The exact `error` string (and HTTP status) for a +998 number **without Telegram**: the adapter assumes `PHONE_NUMBER_*`; if it is something else the user sees a 502 "try again later" instead of the 422. The error is logged (`telegram_gateway_rejected`, field `telegram_error`), so one test reveals it; then add it to `ERROR_RULES`.
-2. That Gateway delivers to **+998** numbers on every operator, and what a code costs there (§6/§7).
-3. That `ttl: 300` and a caller-supplied 6-digit `code` are accepted (§2, §4, open question 9).
-4. That `ok:true` really arrives with HTTP 200 (a 2xx is required; anything else is treated as a failure).
-5. That a send to the owner's own number works with a zero balance (§6, open question 8).
+**Live findings (2026-10-28, owner's own number)** — first real calls, made with `apps/api/try_telegram_gateway.py` and the S35 adapter (same two-step flow as above); details in `docs/login-telegram-gateway.md`:
+- An **individual** can open the Gateway account (§8 / open question 4).
+- Our code reached the owner's own **Uzbek (+998)** number in Telegram and matched.
+- **JSON** request bodies are accepted; `ttl` **300** is accepted; a caller-supplied (**own**) code is accepted.
+- The **two-step flow works**: `checkSendAbility`, then `sendVerificationMessage` with the check's `request_id`.
+- Not covered by that run: the `payload` field (the S35 adapter did not send it; ours does, as documented), the exact error strings, the HTTP status of a rejection, the sender name shown to the user, other operators and other users' numbers.
+
+**Must be checked with the owner's real token (unverified):** *(items marked VERIFIED were answered by the live findings above; the originals are kept)*
+1. The exact `error` string (and HTTP status) for a +998 number **without Telegram** *(still open: the owner's own number has Telegram, so the check never failed)*: the adapter assumes `PHONE_NUMBER_*`; if it is something else the user sees a 502 "try again later" instead of the 422. The error is logged (`telegram_gateway_rejected`, field `telegram_error`), so one test reveals it; then add it to `ERROR_RULES`.
+2. That Gateway delivers to **+998** numbers on every operator, and what a code costs there (§6/§7). *(Partly VERIFIED: the owner's own +998 number works; other operators and the price are open.)*
+3. That `ttl: 300` and a caller-supplied 6-digit `code` are accepted (§2, §4, open question 9). *(VERIFIED 2026-10-28; the `ttl` range is still open.)*
+4. That `ok:true` really arrives with HTTP 200 (a 2xx is required; anything else is treated as a failure). *(Not recorded by the live run: the S35 adapter did not look at the status of a success, ours requires 2xx; the next live run will show it.)*
+5. That a send to the owner's own number works with a zero balance (§6, open question 8). *(The balance at the time of the live test was not recorded.)*
+6. That the `payload` field is accepted on `sendVerificationMessage` (documented, never sent live), and which sender name the user sees (the login copy says «Verification Codes»).

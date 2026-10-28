@@ -21,6 +21,8 @@ async def make_client(environment: str = 'test', otp_provider=None):
         database_url='sqlite+aiosqlite:///:memory:',
         redis_url='redis://localhost:6379/15',
         auth_otp_pepper='test-only-auth-pepper-0123456789abcdef',
+        # Pinned: a YONDO_TELEGRAM_GATEWAY_TOKEN in the shell must not make tests contact Telegram.
+        telegram_gateway_token=None,
     )
     app = create_application(settings, otp_provider=otp_provider)
     async with app.router.lifespan_context(app):
