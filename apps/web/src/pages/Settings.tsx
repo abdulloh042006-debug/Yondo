@@ -4,6 +4,7 @@ import { t } from '../i18n';
 import { AlphabetPicker, LanguagePicker } from '../i18n/LanguagePicker';
 import { Reveal } from '../ui/motion';
 import { GuideButton } from '../ui/Onboarding';
+import { AppIconPicker, SkinPicker } from '../ui/SkinPickers';
 import { ThemePicker } from '../ui/theme';
 
 /**
@@ -29,8 +30,20 @@ export function Settings() {
       <Reveal delay={0.03}>
         <section className="glass pad stack" aria-labelledby="look-h">
           <h2 id="look-h">{t('settings.look')}</h2>
+          <h3 id="skin-h">{t('skin.title')}</h3>
+          <p className="muted">{t('skin.hint')}</p>
+          <SkinPicker />
+          <h3 id="theme-h" style={{ marginTop: 8 }}>{t('settings.themeGroup')}</h3>
           <p className="muted">{t('settings.lookHint')}</p>
           <ThemePicker />
+        </section>
+      </Reveal>
+      <Reveal delay={0.04}>
+        <section className="glass pad stack" aria-labelledby="appicon-h">
+          <h2 id="appicon-h">{t('appicon.title')}</h2>
+          <p className="muted">{t('appicon.hint')}</p>
+          <AppIconPicker />
+          <p className="hint">{t('appicon.note')}</p>
         </section>
       </Reveal>
       <Reveal delay={0.05}>

@@ -1038,6 +1038,64 @@ try {
       }
     });
   }
+  await step('skin: warm skin switches icons, logo, theme-color; app icon changes head links; reload keeps both; Klassik restores', async () => {
+    const snap = () => page.evaluate(() => ({
+      theme: document.documentElement.dataset.theme,
+      set: document.querySelector('.dock svg[data-icon-set]')?.getAttribute('data-icon-set'),
+      lockup: document.querySelector('.topbar [data-lockup]')?.getAttribute('data-lockup'),
+      color: document.querySelector('meta[name="theme-color"]')?.getAttribute('content'),
+      icon: document.querySelector('link[rel="icon"][type="image/svg+xml"]')?.getAttribute('href'),
+      touch: document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href'),
+      manifest: document.querySelector('link[rel="manifest"]')?.getAttribute('href') ?? '',
+      font: getComputedStyle(document.querySelector('h1') ?? document.body).fontFamily,
+    }));
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(`${WEB}/settings`);
+    await page.waitForSelector('[data-tile="warm"]');
+    const before = await snap();
+    assert(before.set === 'classic' && before.lockup === 'classic', `default must stay classic: ${JSON.stringify(before)}`);
+    assert(before.icon === '/favicon.svg' && before.touch === '/apple-touch-icon.png', `default head icons: ${before.icon} ${before.touch}`);
+    await page.click('[data-tile="warm"]');
+    await page.waitForFunction(() => document.documentElement.dataset.theme === 'yondo-warm');
+    await page.waitForSelector('.dock svg[data-icon-set="warm"]', { state: 'attached' });
+    const warm = await snap();
+    assert(warm.lockup === 'warm', 'warm logo lockup');
+    assert(warm.color === '#f5f2ec' && warm.color !== before.color, `theme-color ${before.color} -> ${warm.color}`);
+    assert(warm.icon === '/icons/kartochka/favicon.svg' && warm.touch === '/icons/kartochka/180.png', `warm default app icon: ${warm.icon}`);
+    assert(/Manrope/.test(warm.font), `headings font: ${warm.font}`);
+    assert((await page.getAttribute('[data-tile="warm"]', 'aria-checked')) === 'true', 'warm tile checked');
+    await page.click('[data-tile="karrot"]');
+    const picked = await snap();
+    assert(picked.icon === '/icons/karrot/favicon.svg' && picked.touch === '/icons/karrot/180.png', `karrot head links: ${picked.icon} ${picked.touch}`);
+    assert(picked.manifest.startsWith('blob:'), `manifest link: ${picked.manifest}`);
+    await page.reload();
+    await page.waitForSelector('.dock svg[data-icon-set="warm"]', { state: 'attached' });
+    const again = await snap();
+    assert(again.theme === 'yondo-warm' && again.icon === '/icons/karrot/favicon.svg' && again.lockup === 'warm', `reload keeps skin + icon: ${JSON.stringify(again)}`);
+    await page.click('[data-tile="classic"]');
+    await page.waitForSelector('.dock svg[data-icon-set="classic"]', { state: 'attached' });
+    const back = await snap();
+    assert(back.lockup === 'classic' && back.color === before.color && back.theme === before.theme, `Klassik restores the original look: ${JSON.stringify(back)}`);
+    await page.click('[data-tile="joriy"]');
+    const orig = await snap();
+    assert(orig.icon === '/favicon.svg' && orig.touch === '/apple-touch-icon.png', `current icon restored: ${orig.icon}`);
+    await page.evaluate(() => localStorage.clear());
+  });
+  for (const theme of ['yondo-warm', 'yondo-warm-tun']) {
+    await step(`axe (WCAG2 A/AA serious+critical) in warm skin ${theme}: /login and /settings`, async () => {
+      for (const path of ['/login', '/settings']) {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        try {
+          await page.goto(`${WEB}${path}`);
+          await settleTheme(page, theme);
+          await page.waitForTimeout(1700);
+          await axeScan(page, `${path} [${theme}]`);
+        } finally {
+          await page.emulateMedia({ reducedMotion: null });
+        }
+      }
+    });
+  }
   await step('no uncaught page errors or console errors during the run', async () => {
     assert(problems.length === 0, problems.slice(0, 4).join(' | '));
   });

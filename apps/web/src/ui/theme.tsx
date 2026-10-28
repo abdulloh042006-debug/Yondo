@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { t } from '../i18n';
+import { applyAppIcon } from './appIcon';
+import { isNightTheme, safeStorage, SKINS, type SkinId, skinOfTheme, useSkin, useThemeAttr } from './skin';
 
 /**
  * `chrome` = the colour of the browser UI (address bar, status bar) for that theme: always the theme's `--c-bg`
@@ -8,6 +9,8 @@ import { t } from '../i18n';
 export const THEMES = [
   { id: 'yondo', get label() { return t('theme.yondo.label'); }, get hint() { return t('theme.yondo.hint'); }, swatch: 'linear-gradient(135deg, #f5f2ec 50%, #111111 50%)', chrome: '#f5f2ec' },
   { id: 'yondo-tun', get label() { return t('theme.yondo-tun.label'); }, get hint() { return t('theme.yondo-tun.hint'); }, swatch: 'linear-gradient(135deg, #111111 50%, #e8501a 50%)', chrome: '#111111' },
+  { id: 'yondo-warm', get label() { return t('theme.yondo-warm.label'); }, get hint() { return t('theme.yondo-warm.hint'); }, swatch: 'linear-gradient(135deg, #ffffff 50%, #f5f2ec 50%)', chrome: '#f5f2ec' },
+  { id: 'yondo-warm-tun', get label() { return t('theme.yondo-warm-tun.label'); }, get hint() { return t('theme.yondo-warm-tun.hint'); }, swatch: 'linear-gradient(135deg, #111111 50%, #f5f2ec 50%)', chrome: '#111111' },
   { id: 'gul', label: 'Gul', get hint() { return t('theme.gul.hint'); }, swatch: '#8e3140', chrome: '#f3ebdf' },
   { id: 'rausch', label: 'Jurnal', get hint() { return t('theme.rausch.hint'); }, swatch: '#de1b5a', chrome: '#ffffff' },
   { id: 'stone', label: 'Stone', get hint() { return t('theme.stone.hint'); }, swatch: '#1a2b49', chrome: '#f3f5f8' },
@@ -48,6 +51,7 @@ export function applyTheme(id: ThemeId) {
   void root.offsetWidth; // force the style recalculation while transitions are off
   delete root.dataset.themeSwitching;
   syncThemeColor(id);
+  applyAppIcon(); // the default app icon follows the skin; the manifest follows the chrome colour
 }
 
 /** Applied once at start-up (main.tsx), so the chosen look is active on every page, not only in Settings. */
@@ -57,19 +61,37 @@ export function applySavedTheme() {
 
 export function setTheme(id: ThemeId) {
   applyTheme(id);
-  try {
-    localStorage.setItem(KEY, id);
-  } catch {
-    /* ignore */
+  safeStorage.set(KEY, id);
+}
+
+const PREV_KEY = 'yondo.theme.prev';
+
+/**
+ * Switch skin. Day/night is kept (a night theme maps to the other skin's night theme). Leaving `warm` restores the
+ * theme the user had before entering it (e.g. the legacy default), else the classic day/night theme.
+ */
+export function setSkin(skin: SkinId) {
+  const current = (document.documentElement.dataset.theme as ThemeId | undefined) ?? saved();
+  if (skinOfTheme(current) === skin) return;
+  if (skin === 'warm') {
+    safeStorage.set(PREV_KEY, current);
+    setTheme(SKINS.warm.themes[isNightTheme(current) ? 'night' : 'day']);
+    return;
   }
+  const prev = safeStorage.get(PREV_KEY);
+  safeStorage.remove(PREV_KEY);
+  const restore = THEMES.find((th) => th.id === prev && skinOfTheme(th.id) === 'classic');
+  setTheme(restore ? restore.id : SKINS.classic.themes[isNightTheme(current) ? 'night' : 'day']);
 }
 
 /** Theme choice. Lives only on the Settings page. */
 export function ThemePicker() {
-  const [theme, set] = useState<ThemeId>(() => (document.documentElement.dataset.theme as ThemeId) || saved());
+  const theme = (useThemeAttr() as ThemeId | undefined) ?? saved();
+  const skin = useSkin();
+  const shown = THEMES.filter((th) => skinOfTheme(th.id) === skin); // day/night within the active skin
   return (
     <div role="group" aria-label={t('settings.themeGroup')} className="theme-picker">
-      {THEMES.map((th) => (
+      {shown.map((th) => (
         <button
           key={th.id}
           type="button"
@@ -78,7 +100,6 @@ export function ThemePicker() {
           aria-pressed={theme === th.id}
           onClick={() => {
             setTheme(th.id);
-            set(th.id);
           }}
         >
           <span className="theme-dot" style={{ background: th.swatch }} aria-hidden="true" />

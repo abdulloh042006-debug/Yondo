@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
+import { Icon } from './Icon';
 import {
   createContext,
   useCallback,
@@ -49,9 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <span className="row" style={{ gap: 10, flexWrap: 'nowrap' }}>
                 {t.tone === 'ok' && (
-                  <svg className="check-draw" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
+                  <Icon name="check" className="check-draw" color="var(--ok)" />
                 )}
                 {t.text}
               </span>

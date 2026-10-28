@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { formatMoney, initial } from '../lib/format';
 import { serviceLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
+import { Icon } from '../ui/Icon';
 
 export type Card = Schemas['CompanionCard'];
 export type Photo = Schemas['DiscoveryPhoto'];
@@ -109,9 +110,9 @@ export function HeartButton({ id, name, fav }: { id: string; name: string; fav: 
         void fav.toggle(id);
       }}
     >
-      <motion.svg animate={{ scale: on ? [1, 1.35, 1] : 1 }} transition={{ duration: 0.35 }} width="22" height="22" viewBox="0 0 24 24" fill={on ? 'var(--c-primary)' : 'none'} stroke={on ? 'var(--c-primary)' : 'currentColor'} strokeWidth="1.8" aria-hidden="true">
-        <path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6C19 16.6 12 21 12 21z" />
-      </motion.svg>
+      <motion.span style={{ display: 'grid' }} animate={{ scale: on ? [1, 1.35, 1] : 1 }} transition={{ duration: 0.35 }}>
+        <Icon name="heart" filled={on} />
+      </motion.span>
     </motion.button>
   );
 }

@@ -1332,39 +1332,193 @@ table.data td {
 [data-theme^='yondo'] .toast.bad {
   border-left-color: #e8501a;
 }
-[data-theme='yondo-tun'] .glass {
+[data-theme='yondo-tun'] .glass,
+[data-theme='yondo-warm-tun'] .glass {
   border-color: color-mix(in oklab, #f5f2ec 14%, transparent);
   box-shadow:
     0 1px 0 color-mix(in oklab, #f5f2ec 12%, transparent) inset,
     0 18px 44px -18px #000000;
 }
-[data-theme='yondo-tun'] .glass-bar {
+[data-theme='yondo-tun'] .glass-bar,
+[data-theme='yondo-warm-tun'] .glass-bar {
   border-color: color-mix(in oklab, #f5f2ec 12%, transparent);
 }
 /* Night: the glow stays carrot (not brown) by lowering opacity instead of mixing with ink. */
-[data-theme='yondo-tun'] .aurora i {
+[data-theme='yondo-tun'] .aurora i,
+[data-theme='yondo-warm-tun'] .aurora i {
   opacity: 0.22;
 }
 [data-theme='yondo-tun'] .aurora i:nth-child(1),
-[data-theme='yondo-tun'] .aurora i:nth-child(3) {
+[data-theme='yondo-warm-tun'] .aurora i:nth-child(1),
+[data-theme='yondo-tun'] .aurora i:nth-child(3),
+[data-theme='yondo-warm-tun'] .aurora i:nth-child(3) {
   background: #e8501a;
 }
-[data-theme='yondo-tun'] .aurora i:nth-child(2) {
+[data-theme='yondo-tun'] .aurora i:nth-child(2),
+[data-theme='yondo-warm-tun'] .aurora i:nth-child(2) {
   background: #f5f2ec;
   opacity: 0.06;
 }
 /* Day: a soft carrot glow on paper/white, kept faint so the page reads white-black-carrot, not peach. */
-[data-theme='yondo'] .aurora i {
+[data-theme='yondo'] .aurora i,
+[data-theme='yondo-warm'] .aurora i {
   opacity: 0.2;
 }
 [data-theme='yondo'] .aurora i:nth-child(1),
-[data-theme='yondo'] .aurora i:nth-child(3) {
+[data-theme='yondo-warm'] .aurora i:nth-child(1),
+[data-theme='yondo'] .aurora i:nth-child(3),
+[data-theme='yondo-warm'] .aurora i:nth-child(3) {
   background: #e8501a;
 }
-[data-theme='yondo'] .aurora i:nth-child(2) {
+[data-theme='yondo'] .aurora i:nth-child(2),
+[data-theme='yondo-warm'] .aurora i:nth-child(2) {
   background: #ffffff;
   opacity: 0.8;
 }
 [data-theme^='yondo'] .media {
   background: linear-gradient(160deg, color-mix(in oklab, var(--c-fg) 10%, var(--c-bg)), color-mix(in oklab, var(--c-fg) 22%, var(--c-bg)));
+}
+
+/* ---------- Skin "Yondo · iliq" (warm): same three colours as yondo, other typography/radii/icons/logo ----------
+   design-prototype/brand/skin-warm/SPEC.md. The aurora/glass rules above list the warm ids explicitly. */
+[data-theme='yondo-warm'],
+[data-theme='yondo-warm-tun'] {
+  --c-glow: #e8501a;
+  --ok: var(--c-fg);
+  --warn: var(--c-fg);
+  --bad: var(--c-fg);
+  --f-display: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --f-sans: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r-sm: 16px;
+  --r-md: 22px;
+  --r-lg: 30px;
+}
+[data-theme='yondo-warm'] {
+  --c-bg: #f5f2ec;
+  --c-fg: #111111;
+  --c-muted: color-mix(in oklab, #111111 70%, #f5f2ec);
+  --c-surface: #ffffff;
+  --c-primary: #111111;
+  --c-on-primary: #f5f2ec;
+  --c-line: color-mix(in oklab, #111111 14%, #f5f2ec);
+  --c-chip: color-mix(in oklab, #111111 6%, #f5f2ec);
+  --c-scrim: #111111;
+  --c-on-media: #f5f2ec;
+  color-scheme: light;
+}
+[data-theme='yondo-warm-tun'] {
+  --c-bg: #111111;
+  --c-fg: #f5f2ec;
+  --c-muted: color-mix(in oklab, #f5f2ec 70%, #111111);
+  --c-surface: color-mix(in oklab, #f5f2ec 7%, #111111);
+  --c-primary: #f5f2ec;
+  --c-on-primary: #111111;
+  --c-line: color-mix(in oklab, #f5f2ec 16%, #111111);
+  --c-chip: color-mix(in oklab, #f5f2ec 10%, #111111);
+  --c-scrim: #000000;
+  --c-on-media: #f5f2ec;
+  color-scheme: dark;
+}
+/* Field borders >= 3:1 (WCAG 1.4.11) in the warm skin only. */
+[data-theme^='yondo-warm'] .input,
+[data-theme^='yondo-warm'] select.input,
+[data-theme^='yondo-warm'] textarea.input {
+  border-color: color-mix(in oklab, var(--c-fg) 55%, var(--c-surface));
+}
+[data-theme^='yondo-warm'] .input[aria-invalid='true'] {
+  border-color: #e8501a;
+}
+/* Warm logo tile: light tile by day, dark tile by night. */
+.brand-tile {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+}
+.brand-tile img {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+.brand-tile .tile-dark,
+[data-theme$='-tun'] .brand-tile .tile-light {
+  display: none;
+}
+[data-theme$='-tun'] .brand-tile .tile-dark {
+  display: block;
+}
+
+/* Settings: skin + app-icon tiles (radio groups) */
+.tile-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.skin-tiles {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.tile-opt {
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in oklab, var(--c-fg) 22%, transparent);
+  background: color-mix(in oklab, var(--c-chip) 60%, transparent);
+  color: var(--c-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s;
+}
+.tile-opt:hover {
+  transform: translateY(-2px);
+}
+.tile-opt[aria-checked='true'] {
+  border: 2.5px solid var(--c-fg);
+  padding: 10.5px 12.5px;
+}
+.tile-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+.tile-preview img {
+  display: block;
+  border-radius: 12px;
+}
+.skin-preview {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  color: var(--c-fg);
+}
+.skin-preview-icons {
+  display: flex;
+  gap: 12px;
+}
+.skin-preview-btn {
+  padding: 6px 16px;
+  border-radius: 10px;
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.skin-preview-warm .skin-preview-btn {
+  border-radius: 999px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile-opt:hover {
+    transform: none;
+  }
 }

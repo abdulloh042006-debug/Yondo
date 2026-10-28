@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { formatInstant, prettyPhone } from '../lib/format';
 import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
+import { Icon } from '../ui/Icon';
 import { Field } from '../ui/form';
 import { useResource } from '../lib/useResource';
 import { Reveal } from '../ui/motion';
@@ -91,9 +92,7 @@ function AccountView({ user }: { user: User }) {
         <div className="glass pad stack">
           <div className="profile-head">
             <span className="avatar" aria-hidden="true">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 9a8 8 0 0 1 16 0" />
-              </svg>
+              <Icon name="user" size={26} />
             </span>
             <div className="stack" style={{ gap: 2 }}>
               <h2 style={{ margin: 0 }}>{prettyPhone(user.phone_number)}</h2>
