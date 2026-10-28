@@ -66,6 +66,21 @@ async function axeScan(page, label) {
   assert(out.length === 0, `axe ${label}: ${out.join(', ')}`);
 }
 
+/**
+ * Switch the theme and wait until the page has fully settled in it. Elements with CSS transitions (.btn, .lang-opt, ...)
+ * otherwise still show the PREVIOUS theme's colours when axe samples them (a light foreground on a dark ground showed up
+ * as a flaky colour-contrast failure in yondo-tun). Callers emulate prefers-reduced-motion first, so the transitions
+ * are 0.001 ms long; the wait below makes that deterministic instead of time-based.
+ */
+async function settleTheme(pg, theme) {
+  await pg.bringToFront();
+  await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+  await pg.waitForFunction(() => document.getAnimations().every((a) => !(a instanceof CSSTransition) || a.playState === 'finished'), null, { timeout: 15000 });
+  await pg.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const left = await pg.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSTransition && a.playState !== 'finished').length);
+  assert(left === 0, `theme ${theme}: ${left} CSS transitions still running`);
+}
+
 try {
   if (!reuse) {
     mkdirSync('e2e/.tmp', { recursive: true });
@@ -88,6 +103,25 @@ try {
   // itself is covered by the "Uzbek alphabet" step, which uses a context without this script.
   const NEW_ALPHABET_DEFAULT = Date.now() >= Date.parse('2027-04-22T00:00:00+05:00');
   const ctx = async (opts = {}) => {
+    const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
+    await c.addInitScript(() => {
+      try {
+        if (!localStorage.getItem('yondo.uzAlphabet')) localStorage.setItem('yondo.uzAlphabet', '2026');
+        // Every flow below starts as a returning user, so the first-run guide never covers it. Seeded once per
+        // context (the marker survives removal of the flags, so a step may deliberately un-see the guide).
+        if (!localStorage.getItem('e2e.firstRunSeeded')) {
+          localStorage.setItem('yondo.onboarding.v1.customer', '1');
+          localStorage.setItem('yondo.onboarding.v1.companion', '1');
+          localStorage.setItem('e2e.firstRunSeeded', '1');
+        }
+      } catch {
+        /* storage unavailable */
+      }
+    });
+    return c;
+  };
+  /** A brand-new visitor: nothing seeded, only the alphabet the assertions are written in. */
+  const firstVisit = async (opts = {}) => {
     const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
     await c.addInitScript(() => {
       try {
@@ -805,6 +839,13 @@ try {
   });
   await step('Uzbek alphabet: date-based default, Settings switch, and search matches both spellings', async () => {
     const fresh = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ' });
+    await fresh.addInitScript(() => {
+      try {
+        localStorage.setItem('yondo.onboarding.v1.customer', '1');
+      } catch {
+        /* storage unavailable */
+      }
+    });
     const fp = await fresh.newPage();
     watch(fp, 'alphabet');
     try {
@@ -830,6 +871,142 @@ try {
       await fresh.close();
     }
   });
+  /* ------------------------------------------------ first-run guide (3 cards) */
+  const guideTitle = 'Yondo qanday işlaydi';
+  const firstVisitCtx = await firstVisit();
+  const gp = await firstVisitCtx.newPage();
+  watch(gp, 'onboarding');
+  await step('onboarding: first visit opens the 3-card guide; Skip is remembered; it does not come back', async () => {
+    await gp.goto(WEB);
+    const dlg = gp.getByRole('dialog', { name: guideTitle });
+    await dlg.waitFor();
+    await gp.getByRole('heading', { name: 'Top', level: 3 }).waitFor();
+    assert((await gp.evaluate(() => document.activeElement?.textContent)) === 'Keyingi', 'focus should start on the primary button');
+    assert((await gp.locator('.guide-dots li').count()) === 3, 'three progress dots');
+    await gp.getByRole('button', { name: 'Keyingi' }).click();
+    await gp.getByRole('heading', { name: 'Bron qil', level: 3 }).waitFor();
+    await gp.waitForTimeout(500);
+    await gp.screenshot({ path: 'e2e/shots/desktop-onboarding-2.png' });
+    await axeScan(gp, 'onboarding dialog [gul]');
+    await gp.emulateMedia({ reducedMotion: 'reduce' });
+    try {
+      await settleTheme(gp, 'yondo-tun');
+      await axeScan(gp, 'onboarding dialog [yondo-tun]');
+      await settleTheme(gp, 'gul');
+    } finally {
+      await gp.emulateMedia({ reducedMotion: null });
+    }
+    assert((await gp.evaluate(() => localStorage.getItem('yondo.onboarding.v1.customer'))) === null, 'showing alone must not mark it seen');
+    await gp.getByRole('button', { name: 'Ötkazib yuboriş' }).click();
+    await dlg.waitFor({ state: 'hidden' });
+    assert((await gp.evaluate(() => localStorage.getItem('yondo.onboarding.v1.customer'))) === '1', 'Skip should be remembered');
+    await gp.reload();
+    await gp.getByText('DEMO Madina').first().waitFor();
+    await gp.waitForTimeout(600);
+    assert((await gp.getByRole('dialog').count()) === 0, 'the guide must not return after Skip');
+  });
+  await step('onboarding: never covers /login (incl. the code step), /terms, /privacy or a profile deep link', async () => {
+    const c = await firstVisit();
+    const p = await c.newPage();
+    watch(p, 'onboarding-deep');
+    try {
+      await p.goto(`${WEB}/login`);
+      await p.getByLabel('Telefon raqami').fill('+998901110077');
+      await p.waitForTimeout(600);
+      assert((await p.getByRole('dialog').count()) === 0, 'guide over the phone step');
+      await p.locator('.consent input').check();
+      await p.getByRole('button', { name: 'Kod yuboriş' }).click();
+      await p.getByLabel('Tasdiqlaş kodi').waitFor();
+      await p.waitForTimeout(600);
+      assert((await p.getByRole('dialog').count()) === 0, 'guide over the code step');
+      for (const path of ['/terms', '/privacy']) {
+        await p.goto(`${WEB}${path}`);
+        await p.getByRole('heading', { level: 1 }).first().waitFor();
+        await p.waitForTimeout(500);
+        assert((await p.getByRole('dialog').count()) === 0, `guide over ${path}`);
+      }
+      await p.goto(WEB);
+      await p.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).waitFor({ state: 'attached' });
+      await p.getByRole('dialog', { name: guideTitle }).waitFor(); // the home page does show it (first visit)
+      await p.keyboard.press('Escape');
+      await p.getByRole('dialog').waitFor({ state: 'hidden' });
+      const href = await p.getByRole('link', { name: /DEMO Madina profilini oçiş/ }).getAttribute('href');
+      const c2 = await firstVisit();
+      const p2 = await c2.newPage();
+      await p2.goto(`${WEB}${href}`);
+      await p2.getByRole('heading', { name: 'DEMO Madina', level: 1 }).waitFor();
+      await p2.waitForTimeout(500);
+      assert((await p2.getByRole('dialog').count()) === 0, 'guide over a profile deep link');
+      await c2.close();
+    } finally {
+      await c.close();
+    }
+  });
+  await step('onboarding: reopened from Help and from Settings (Enter / Escape), focus returns to the control', async () => {
+    await gp.goto(`${WEB}/help`);
+    await gp.getByRole('heading', { name: 'Qöllanma', level: 2 }).waitFor();
+    const open = gp.getByRole('button', { name: 'Qöllanmani körsatiş' });
+    await open.click();
+    const dlg = gp.getByRole('dialog', { name: guideTitle });
+    await dlg.waitFor();
+    await gp.keyboard.press('Enter'); // Keyingi
+    await gp.keyboard.press('Enter'); // Keyingi
+    await gp.getByRole('heading', { name: 'Xavfsiz uçraşuv', level: 3 }).waitFor();
+    const text = await dlg.innerText();
+    assert(text.includes('Yondo xavfsizlikni kafolatlamaydi va favqulodda xizmat emas'), 'honest safety note on card 3');
+    assert(!/kafolatlaydi|himoya/i.test(text), 'no safety promise');
+    assert((await gp.evaluate(() => document.activeElement?.textContent)) === 'Tayyor', 'last card: focus on Tayyor');
+    await gp.keyboard.press('Enter');
+    await dlg.waitFor({ state: 'hidden' });
+    assert((await gp.evaluate(() => document.activeElement?.textContent)) === 'Qöllanmani körsatiş', 'focus should return to the control');
+    await gp.goto(`${WEB}/settings`);
+    await gp.getByRole('button', { name: 'Qöllanmani körsatiş' }).click();
+    await dlg.waitFor();
+    await gp.keyboard.press('Escape');
+    await dlg.waitFor({ state: 'hidden' });
+    await axeScan(gp, '/help + /settings with the guide control');
+  });
+  await firstVisitCtx.close();
+  await step('onboarding: companion wording on /studio; mobile 360 px layout of the longest card', async () => {
+    await kp.evaluate(() => {
+      localStorage.removeItem('yondo.onboarding.v1.customer');
+      localStorage.removeItem('yondo.onboarding.v1.companion');
+    });
+    try {
+      await kp.goto(`${WEB}/studio`);
+      await kp.getByRole('dialog', { name: guideTitle }).waitFor();
+      await kp.getByRole('heading', { name: 'Topil', level: 3 }).waitFor();
+      await kp.getByRole('button', { name: 'Ötkazib yuboriş' }).click();
+      await kp.getByRole('dialog').waitFor({ state: 'hidden' });
+      assert((await kp.evaluate(() => localStorage.getItem('yondo.onboarding.v1.companion'))) === '1', 'companion flag');
+    } finally {
+      await kp.evaluate(() => localStorage.setItem('yondo.onboarding.v1.customer', '1'));
+    }
+    const m = await firstVisit({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+    const p = await m.newPage();
+    watch(p, 'onboarding-mobile');
+    try {
+      await p.goto(WEB);
+      await p.getByRole('dialog', { name: guideTitle }).waitFor();
+      await p.getByRole('button', { name: 'Keyingi' }).tap();
+      await p.getByRole('button', { name: 'Keyingi' }).tap();
+      await p.getByRole('heading', { name: 'Xavfsiz uçraşuv', level: 3 }).waitFor();
+      await p.waitForTimeout(700);
+      await p.screenshot({ path: 'e2e/shots/mobile-onboarding-3.png' });
+      const box = await p.getByRole('dialog').boundingBox();
+      const vw = await p.evaluate(() => document.documentElement.clientWidth);
+      assert(box.x >= 0 && box.x + box.width <= vw + 1, `dialog outside the ${vw}px viewport (x=${box.x}, w=${box.width})`);
+      assert(box.y >= 0 && box.y + box.height <= 741, `dialog taller than the screen (y=${box.y}, h=${box.height})`);
+      const small = await p.evaluate(() => [...document.querySelectorAll('[role=dialog] button')].filter((e) => e.getBoundingClientRect().height < 43.5).map((e) => e.textContent));
+      assert(small.length === 0, `targets < 44px: ${small.join(', ')}`);
+      const overflow = await p.evaluate(() => document.querySelector('[role=dialog]').scrollWidth - document.querySelector('[role=dialog]').clientWidth);
+      assert(overflow <= 1, `horizontal overflow inside the dialog: ${overflow}px`);
+      await p.getByRole('button', { name: 'Tayyor' }).tap();
+      await p.getByRole('dialog').waitFor({ state: 'hidden' });
+    } finally {
+      await m.close();
+    }
+  });
   for (const lang of ['ru', 'en']) {
     await step(`axe (WCAG2 A/AA serious+critical) with the UI in ${lang}: public pages`, async () => {
       try {
@@ -849,10 +1026,15 @@ try {
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
       for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [cp, '/notifications'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
-        await pg.goto(`${WEB}${path}`);
-        await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
-        await pg.waitForTimeout(1700);
-        await axeScan(pg, `${path} [${theme}]`);
+        await pg.emulateMedia({ reducedMotion: 'reduce' }); // CSS then forces transition-duration: .001ms
+        try {
+          await pg.goto(`${WEB}${path}`);
+          await settleTheme(pg, theme);
+          await pg.waitForTimeout(1700); // API data + page transition
+          await axeScan(pg, `${path} [${theme}]`);
+        } finally {
+          await pg.emulateMedia({ reducedMotion: null });
+        }
       }
     });
   }

@@ -8,6 +8,7 @@ import { useResource } from '../lib/useResource';
 import { ErrorState, Loading, StatusTag, useToast } from '../ui/feedback';
 import { Field, Select, TextArea } from '../ui/form';
 import { Reveal } from '../ui/motion';
+import { GuideButton } from '../ui/Onboarding';
 import { SosButton } from '../ui/Sos';
 
 type Report = Schemas['ReportRead'];
@@ -52,6 +53,14 @@ export function Help() {
           ) : (
             <Link className="btn ghost" to="/login" style={{ width: 'fit-content' }}>{t('nav.login')}</Link>
           )}
+        </section>
+      </Reveal>
+
+      <Reveal delay={0.035}>
+        <section className="glass pad stack" aria-labelledby="guide-h">
+          <h2 id="guide-h">{t('guide.section')}</h2>
+          <p className="muted">{t('guide.sectionHint')}</p>
+          <GuideButton className="btn ghost" />
         </section>
       </Reveal>
 

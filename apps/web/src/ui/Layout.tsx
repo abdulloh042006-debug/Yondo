@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { ConsentGate } from './Consent';
+import { OnboardingHost } from './Onboarding';
 import { SosButton } from './Sos';
 import { PageTransition } from './motion';
 
@@ -93,7 +94,7 @@ export function Layout() {
         </header>
         <main id="main" className="page" tabIndex={-1}>
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>
-            <ConsentGate>
+            <ConsentGate overlay={<OnboardingHost />}>
               <Outlet />
             </ConsentGate>
           </PageTransition>

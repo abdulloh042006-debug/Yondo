@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { AlphabetPicker, LanguagePicker } from '../i18n/LanguagePicker';
 import { Reveal } from '../ui/motion';
+import { GuideButton } from '../ui/Onboarding';
 import { ThemePicker } from '../ui/theme';
 
 /**
@@ -43,6 +44,13 @@ export function Settings() {
           ) : (
             <Link className="btn" to="/login" style={{ width: 'fit-content' }}>{t('nav.login')}</Link>
           )}
+        </section>
+      </Reveal>
+      <Reveal delay={0.06}>
+        <section className="glass pad stack" aria-labelledby="guide-h">
+          <h2 id="guide-h">{t('guide.section')}</h2>
+          <p className="muted">{t('guide.sectionHint')}</p>
+          <GuideButton className="btn ghost" />
         </section>
       </Reveal>
       <Reveal delay={0.07}>

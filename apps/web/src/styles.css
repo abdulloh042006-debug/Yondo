@@ -1024,6 +1024,64 @@ table.data td {
   flex-wrap: wrap;
 }
 
+/* ---------- first-run guide (ui/Onboarding.tsx): 3 cards in a dialog, brand colours only ---------- */
+.guide-top {
+  flex-wrap: nowrap;
+}
+.guide-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-dots li {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--c-fg) 24%, transparent);
+  transition: width 0.28s var(--ease), background 0.28s var(--ease);
+}
+.guide-dots li[aria-current='step'] {
+  width: 26px;
+  background: var(--c-fg);
+}
+.guide-stage {
+  overflow-x: clip;
+}
+.guide-card {
+  gap: 12px;
+}
+.guide-art {
+  width: min(190px, 60%);
+  height: auto;
+  justify-self: center;
+  color: var(--c-fg);
+}
+.guide-title {
+  font-size: 1.55rem;
+}
+.guide-note {
+  padding-left: 12px;
+  border-left: 3px solid var(--c-glow, #e8501a);
+  font-size: 0.92rem;
+}
+.guide-nav {
+  display: flex;
+  gap: 8px;
+}
+.guide-nav .btn:last-child {
+  flex: 1;
+}
+
+/* ---------- theme switch: styles are recomputed once without transitions (see applyTheme in ui/theme.tsx) ---------- */
+[data-theme-switching] *,
+[data-theme-switching] *::before,
+[data-theme-switching] *::after {
+  transition: none !important;
+}
+
 /* ---------- motion safety ---------- */
 @media (prefers-reduced-motion: reduce) {
   *,

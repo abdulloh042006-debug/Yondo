@@ -25,9 +25,10 @@ export function ConsentCheck({ checked, onChange, error }: { checked: boolean; o
 
 /**
  * Signed-in users must have accepted the current versions before using the app (e.g. after a document
- * update). The documents themselves stay readable.
+ * update). The documents themselves stay readable. `overlay` is rendered next to the page, but never while consent
+ * is still being checked or required.
  */
-export function ConsentGate({ children }: { children: ReactNode }) {
+export function ConsentGate({ children, overlay }: { children: ReactNode; overlay?: ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const res = useResource(
@@ -39,7 +40,10 @@ export function ConsentGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>();
   const required = res.data?.required ?? [];
-  if (!user || required.length === 0 || ['/terms', '/privacy'].includes(location.pathname)) return <>{children}</>;
+  if (!user || required.length === 0 || ['/terms', '/privacy'].includes(location.pathname)) {
+    // `overlay` (the first-run guide) comes only once the consent question is settled: legal first, then the guide.
+    return <>{children}{!res.loading && required.length === 0 ? overlay : null}</>;
+  }
 
   const accept = async () => {
     setTouched(true);

@@ -1,7 +1,7 @@
 import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from 'motion/react';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-const ease = [0.22, 1, 0.36, 1] as const;
+export const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Fade + rise when scrolled into view. Reduced-motion users get the final state immediately. */
 export function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
