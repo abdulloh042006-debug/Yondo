@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
     auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Telegram Gateway (https://core.telegram.org/gateway): delivers login codes to the user's
+    # Telegram account. Unset token = not configured. Never log or echo the token.
+    telegram_gateway_token: SecretStr | None = None
+    telegram_gateway_base_url: str = 'https://gatewayapi.telegram.org'
+    telegram_gateway_timeout_seconds: float = Field(default=10.0, gt=0)
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
     # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
@@ -88,6 +93,22 @@ class Settings(BaseSettings):
             raise ValueError(
                 'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
             )
+        return self
+
+    @field_validator('telegram_gateway_token')
+    @classmethod
+    def empty_telegram_gateway_token_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
+        # `YONDO_TELEGRAM_GATEWAY_TOKEN=` (empty) in an env file must mean "not configured".
+        if value is not None and not value.get_secret_value().strip():
+            return None
+        return value
+
+    @model_validator(mode='after')
+    def validate_telegram_gateway(self) -> Settings:
+        if self.telegram_gateway_token is None:
+            return self
+        if not self.telegram_gateway_base_url.startswith('https://'):
+            raise ValueError('YONDO_TELEGRAM_GATEWAY_BASE_URL must be an https URL')
         return self
 
     @model_validator(mode='after')

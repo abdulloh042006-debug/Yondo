@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from yondo_api.auth.providers import OtpChannel
 from yondo_api.models.user import UserRoleType
 
 OtpValue = Annotated[str, StringConstraints(pattern=r'^\d{6}$')]
@@ -18,6 +19,8 @@ class OtpRequestResponse(BaseModel):
     expires_in_seconds: int
     resend_after_seconds: int
     development_otp: str | None = None
+    # Where the code was sent; absent for the development/on-screen provider.
+    delivery_channel: OtpChannel | None = None
 
 
 class OtpVerification(BaseModel):

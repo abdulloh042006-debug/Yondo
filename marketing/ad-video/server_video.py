@@ -20,6 +20,7 @@ import httpx
 import uvicorn
 from sqlalchemy import select
 
+from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -163,7 +164,13 @@ async def _user_of_profile(app, profile_id):
 async def main():
     settings = Settings(environment='test', database_url=f'sqlite+aiosqlite:///{DB}')
     store = MemoryStorage()
-    app = create_application(settings, object_storage=store, identity_eligibility=AlwaysVerified())
+    # Pinned: the seeding below logs in with `development_otp`; a stray Telegram token must not change that.
+    app = create_application(
+        settings,
+        object_storage=store,
+        identity_eligibility=AlwaysVerified(),
+        otp_provider=DevelopmentOtpProvider(),
+    )
 
     # serve the in-memory objects at the URLs create_download_url() hands out (test double only)
     from fastapi import Response as _Resp

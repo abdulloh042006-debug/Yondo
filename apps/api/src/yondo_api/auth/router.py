@@ -70,6 +70,7 @@ async def request_otp(
         expires_in_seconds=300,
         resend_after_seconds=60,
         development_otp=development_otp,
+        delivery_channel=issued.channel,
     )
 
 

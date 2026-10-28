@@ -15,6 +15,7 @@ from demo_persist import (
     mark_seed, normalize_database_url, prepare_database, restrict_admins, seed_status, top_up_availability,
 )
 from httpx import ASGITransport, AsyncClient
+from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.db.base import Base
 from yondo_api.models.user import User, UserRole, UserRoleType
 
@@ -144,3 +145,14 @@ async def test_interrupted_seed_is_wiped_but_a_complete_one_never(tmp_path):
         await mark_seed(app, 'complete')
         assert await seed_status(app) == 'complete'
     assert await prepare_database(url) is False  # a complete seed is never wiped
+
+
+@loop
+async def test_demo_shows_the_code_on_screen_even_if_a_telegram_token_is_set(tmp_path, monkeypatch):
+    monkeypatch.setenv('YONDO_TELEGRAM_GATEWAY_TOKEN', '123:not-a-real-token')
+    app = demo_app.build_app(f'sqlite+aiosqlite:///{tmp_path / "otp.db"}', 0, None)
+    async with app.router.lifespan_context(app):
+        assert isinstance(app.state.otp_provider, DevelopmentOtpProvider)
+        await _tables(app)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://s') as client:
+            await demo_app.login(client, '+998909990005')  # logs in through `development_otp`

@@ -2076,6 +2076,21 @@
       },
       "OtpRequestResponse": {
         "properties": {
+          "delivery_channel": {
+            "anyOf": [
+              {
+                "enum": [
+                  "telegram",
+                  "sms"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Channel"
+          },
           "development_otp": {
             "anyOf": [
               {
