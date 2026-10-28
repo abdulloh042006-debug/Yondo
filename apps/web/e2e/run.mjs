@@ -173,6 +173,67 @@ try {
   });
   await axeScan(page, 'login').then(() => results.push({ name: 'axe login', ok: true }), (e) => results.push({ name: 'axe login', ok: false, error: e.message }));
 
+  /* Telegram delivery (stubbed: the e2e server only has the development provider, which shows the code on screen).
+     The dev path above is unchanged; these steps cover what appears when the API reports delivery_channel. */
+  const OTP_REQUEST = '**/api/v1/auth/otp/request';
+  const reply = (status, body) => (r) => r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+  const submitPhone = async (p) => {
+    await p.goto(`${WEB}/login`);
+    await p.getByLabel('Telefon raqami').fill('+998901110055');
+    await p.locator('.consent input').check();
+    await p.getByRole('button', { name: 'Kod yuboriş' }).click();
+  };
+  await step('login (Telegram channel): instructions instead of an on-screen code, digits only, no SMS promise', async () => {
+    await page.route(OTP_REQUEST, reply(200, { message: 'sent', expires_in_seconds: 300, resend_after_seconds: 60, delivery_channel: 'telegram' }));
+    try {
+      await submitPhone(page);
+      await page.getByRole('heading', { name: 'Kod Telegramʼga yuborildi' }).waitFor();
+      assert((await page.locator('b.mono').count()) === 0, 'no dev code may be shown for the Telegram channel');
+      const text = await page.locator('main').innerText();
+      assert(text.includes('Verification Codes') && text.includes('Kod 5 daqiqa amal qiladi'), 'Telegram instructions + validity expected');
+      assert(!/SMS/.test(text), 'the Telegram screen must not mention SMS');
+      const code = page.getByLabel('Tasdiqlaş kodi');
+      await code.waitFor();
+      assert(await code.evaluate((el) => el === document.activeElement), 'code field should be focused');
+      assert((await code.getAttribute('autocomplete')) === 'one-time-code' && (await code.getAttribute('inputmode')) === 'numeric', 'one-time-code + numeric');
+      await code.fill('123 456');
+      assert((await code.inputValue()) === '123456', 'a pasted "123 456" must keep all six digits');
+      await code.fill('12a34b5678');
+      assert((await code.inputValue()) === '123456', 'digits only, max 6');
+      const toggle = page.getByRole('button', { name: 'Telegramim yöq' });
+      assert((await toggle.getAttribute('aria-expanded')) === 'false', 'collapsed by default');
+      await toggle.click();
+      await page.getByText('Hozirça kod faqat Telegram orqali yuboriladi.').waitFor();
+      assert((await toggle.getAttribute('aria-expanded')) === 'true', 'expanded after click');
+      assert(!/SMS/.test(await page.locator('main').innerText()), 'the no-Telegram text must not promise SMS');
+      await page.waitForTimeout(800); // let the entrance animation finish before axe samples colours
+      await axeScan(page, 'login (telegram)');
+    } finally {
+      await page.unroute(OTP_REQUEST);
+    }
+  });
+  await step('login (Telegram channel): delivery errors come from the error code, shown on the phone step', async () => {
+    const cases = [
+      [422, 'otp_channel_unavailable', 'Telegram hisobi topilmadi'],
+      [502, 'otp_delivery_failed', 'Kodni yuborib bölmadi'],
+      [503, 'otp_delivery_unavailable', 'Kod yuboriş xizmati hozirça ulanmagan'],
+    ];
+    for (const [status, code, text] of cases) {
+      await page.route(OTP_REQUEST, reply(status, { code, message: 'x', request_id: 'req-otp' }));
+      try {
+        await submitPhone(page);
+        await page.getByText(text).first().waitFor();
+        assert(await page.getByRole('button', { name: 'Kod yuboriş' }).isEnabled(), `${code}: the form must stay usable`);
+        assert((await page.getByLabel('Tasdiqlaş kodi').count()) === 0, `${code}: must stay on the phone step`);
+        if (code === 'otp_channel_unavailable') {
+          assert((await page.getByLabel('Telefon raqami').getAttribute('aria-invalid')) === 'true', 'channel error belongs to the phone field');
+        }
+      } finally {
+        await page.unroute(OTP_REQUEST);
+      }
+    }
+  });
+
   /* --------------------------------------------------------------- customer */
   const cust = await ctx();
   const cp = await cust.newPage();

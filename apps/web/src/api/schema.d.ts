@@ -2928,6 +2928,8 @@ export interface components {
         };
         /** OtpRequestResponse */
         OtpRequestResponse: {
+            /** Delivery Channel */
+            delivery_channel?: ("telegram" | "sms") | null;
             /** Development Otp */
             development_otp?: string | null;
             /** Expires In Seconds */

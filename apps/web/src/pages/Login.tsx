@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -8,7 +8,23 @@ import { dedupePhonePrefix } from '../lib/format';
 import { ConsentCheck } from '../ui/Consent';
 import { Field } from '../ui/form';
 
-type Step = { kind: 'phone' } | { kind: 'code'; phone: string; resendIn: number; devOtp?: string | null };
+type CodeStep = {
+  kind: 'code';
+  phone: string;
+  resendIn: number;
+  devOtp?: string | null;
+  /** Only the literal 'telegram' changes the screen; absent/null/unknown keeps the generic (and dev) layout. */
+  channel: 'telegram' | null;
+  validMin: number;
+  /** Bumped to remount the code field, which re-runs autoFocus after a resend or an expired code. */
+  focusKey: number;
+  resent: boolean;
+};
+type Step = { kind: 'phone' } | CodeStep;
+
+const CODE_LENGTH = 6;
+/** Errors about the number itself are shown under the phone field. */
+const PHONE_FIELD_ERRORS = new Set(['invalid_phone_number', 'otp_channel_unavailable']);
 
 export function Login() {
   const { requestCode, verify, state } = useAuth();
@@ -22,6 +38,8 @@ export function Login() {
   const [error, setError] = useState<ApiError>();
   const [agree, setAgree] = useState(false);
   const [agreeErr, setAgreeErr] = useState(false);
+  const [noTelegram, setNoTelegram] = useState(false);
+  const noTelegramId = useId();
 
   useEffect(() => {
     if (step.kind !== 'code' || step.resendIn <= 0) return;
@@ -47,7 +65,18 @@ export function Login() {
     setError(undefined);
     try {
       const res = await requestCode(number);
-      setStep({ kind: 'code', phone: number, resendIn: res.resend_after_seconds, devOtp: res.development_otp });
+      const prev = step.kind === 'code' ? step : null;
+      setStep({
+        kind: 'code',
+        phone: number,
+        resendIn: res.resend_after_seconds,
+        devOtp: res.development_otp,
+        channel: res.delivery_channel === 'telegram' ? 'telegram' : null,
+        validMin: Math.max(1, Math.round(res.expires_in_seconds / 60)),
+        focusKey: (prev?.focusKey ?? 0) + 1,
+        resent: prev !== null,
+      });
+      setNoTelegram(false);
       setCode('');
     } catch (err) {
       setError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));
@@ -62,13 +91,23 @@ export function Login() {
     setBusy(true);
     setError(undefined);
     try {
-      await verify(step.phone, code.trim(), { acceptLegal: agree });
+      await verify(step.phone, code, { acceptLegal: agree });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));
+      const apiErr = err instanceof ApiError ? err : new ApiError(0, 'network_error');
+      setError(apiErr);
+      if (apiErr.code === 'otp_expired') {
+        setCode('');
+        setStep((cur) => (cur.kind === 'code' ? { ...cur, resendIn: 0, focusKey: cur.focusKey + 1 } : cur));
+      }
     } finally {
       setBusy(false);
     }
+  };
+
+  const changeNumber = () => {
+    setError(undefined);
+    setStep({ kind: 'phone' });
   };
 
   return (
@@ -89,10 +128,10 @@ export function Login() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               hint={t('login.phoneHint')}
-              error={error?.code === 'invalid_phone_number' ? error.message : undefined}
+              error={error && PHONE_FIELD_ERRORS.has(error.code) ? error.message : undefined}
             />
             <ConsentCheck checked={agree} onChange={(v) => { setAgree(v); setAgreeErr(false); }} error={agreeErr ? t('legal.agreeRequired') : undefined} />
-            {error && error.code !== 'invalid_phone_number' && (
+            {error && !PHONE_FIELD_ERRORS.has(error.code) && (
               <p className="err" role="alert">
                 {error.message}
               </p>
@@ -103,32 +142,81 @@ export function Login() {
           </form>
         ) : (
           <form className="stack" onSubmit={confirm} noValidate>
-            <p>
-              {t('login.codeSentBefore')}<b>{step.phone}</b>{t('login.codeSentAfter')}{' '}
-              <button type="button" className="chip" onClick={() => setStep({ kind: 'phone' })}>
-                {t('login.changeNumber')}
-              </button>
-            </p>
+            {step.channel === 'telegram' ? (
+              <motion.div className="stack" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+                <h2>{t('login.tg.title')}</h2>
+                <p>
+                  {t('login.tg.number', { phone: step.phone })}{' '}
+                  <button type="button" className="chip" onClick={changeNumber}>
+                    {t('login.changeNumber')}
+                  </button>
+                </p>
+                <p className="hint">{t('login.validFor', { n: step.validMin })}</p>
+              </motion.div>
+            ) : (
+              <p>
+                {t('login.codeSentBefore')}<b>{step.phone}</b>{t('login.codeSentAfter')}{' '}
+                <button type="button" className="chip" onClick={changeNumber}>
+                  {t('login.changeNumber')}
+                </button>
+              </p>
+            )}
             {step.devOtp && (
               <p className="banner" role="note">
                 {t('login.devBefore')}<b className="mono">{step.devOtp}</b>{t('login.devAfter')}
               </p>
             )}
+            {/* Always mounted so a screen reader announces the text when it appears; invisible while empty. */}
+            <p role="status" className={step.resent ? 'hint' : 'sr-only'}>
+              {step.resent ? t('login.resent') : ''}
+            </p>
             <Field
+              key={step.focusKey}
               label={t('login.code')}
               inputMode="numeric"
               autoComplete="one-time-code"
+              pattern="[0-9]*"
+              style={step.channel === 'telegram' ? { letterSpacing: '0.18em', fontVariantNumeric: 'tabular-nums' } : undefined}
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              // No native maxLength: it would cut a pasted "123 456" to "123 45" before we strip the space.
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+              hint={step.channel === 'telegram' ? t('login.tg.open') : undefined}
               error={error ? error.message : undefined}
               autoFocus
             />
-            <button className="btn" disabled={busy || code.trim().length < 4}>
+            <button className="btn" disabled={busy || code.length !== CODE_LENGTH}>
               {busy && <span className="spinner" aria-hidden="true" />}{t('login.submit')}
             </button>
             <button type="button" className="btn ghost" disabled={busy || step.resendIn > 0} onClick={() => void send()}>
               {step.resendIn > 0 ? t('login.resendIn', { n: step.resendIn }) : t('login.resend')}
             </button>
+            {step.channel === 'telegram' && (
+              <div className="stack">
+                <p className="hint">{t('login.tg.noCode')}</p>
+                <div>
+                  <button
+                    type="button"
+                    className="chip"
+                    aria-expanded={noTelegram}
+                    aria-controls={noTelegramId}
+                    onClick={() => setNoTelegram((v) => !v)}
+                  >
+                    {t('login.tg.noTelegram')}
+                  </button>
+                </div>
+                {noTelegram && (
+                  <motion.p
+                    id={noTelegramId}
+                    className="hint"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {t('login.tg.noTelegramBody')}
+                  </motion.p>
+                )}
+              </div>
+            )}
           </form>
         )}
       </motion.div>
