@@ -21,7 +21,7 @@ The owner chose it (2026-10-28) as the payment gateway: one merchant API in fron
 | Retries | up to 8 attempts (0, 5, 5, 8, 16, 32, 64, 128 s ±25 %); retried: 5xx, timeouts, 429; not retried: other 4xx, redirects; timeouts 5 s connect / 15 s total; then `dead_lettered`, manual resend in the cabinet |
 | Test mode | no separate sandbox; the cabinet's **test provider** makes payments with `environment:"test"`, `livemode:false` (no real money, cancelled after a day) |
 | Limits | 300 requests/min; optional signed requests and IP allow-list per desk |
-| Not stated | refund initiation endpoint, return-URL query parameters, default bill expiry, test/live key format, maximum amount, commissions, individual vs legal-entity onboarding, domain verification rules |
+| Not stated | refund initiation endpoint, return-URL query parameters, default bill expiry, test/live key format, maximum amount, commissions, individual vs legal-entity onboarding (owner, 2026-10-28: individuals are accepted — get it in writing), domain verification rules |
 
 ## How the adapter maps to Yondo (`apps/api/src/yondo_api/payments/tezcheck.py`)
 - `PaymentProvider.create_checkout` → `POST /bills`; `provider_reference` = **bill id** (the webhook carries it as `data.bill_id`; the router finds the payment by it); `Idempotency-Key` and `external_reference` = our payment id, so a retry after a timeout returns the same link.

@@ -16,6 +16,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S35 — Owner answers: DigitalOcean for now, TezCheck for individuals, own phone for now (2026-10-28)
+Done: recorded in CLAUDE.md §7, the decision brief (#11 resolved for payments, blocker reworded) and `docs/payments-tezcheck.md`. Checked: DigitalOcean is **not free** — GitHub Student Pack credit (official page says $100/year, forum posts say $200; unverified for 2026), a marketing line says $200 for the first 60 days; card or PayPal required, Uzbek card acceptance unverified. Eskiz: community packages use sender "4546"; 85 UZS/SMS from a Bitrix24 listing; whether OTP must use a service route rather than advertising and whether individuals can sign a contract: not confirmed (ask Eskiz, notify.eskiz.uz). No code changed.
+Next: owner answers the remaining closed questions (see the reply prompt in `reports/`); then CI Docker build check, DigitalOcean deploy how-to only after the owner confirms payment method and domain.
+Commit: this entry's commit.
+
 ## S34 — Cloud branch merged, brief completed (2026-10-28)
 Done: owner said "Birlashtir": `origin/ccr-15294129-n60ucy` (S33 decision brief + `main`'s two docs) fast-forwarded into `design/prototype` (no conflicts). Cross-checked the brief against the 7 local research notes (`research_notes/`, git-excluded) and added what it lacked, each tagged **[Y]**: legal entity / bank account as a go-live blocker and new owner decision #11 (Payme Business needs a registered entity; same entity = data operator; TezCheck onboarding for individuals unknown), the open legal question whether phone numbers count as telecom-user data + the 29 Jul 2026 adequacy list, SMS sender-ID lead time (Ucell blocks unregistered names since 3 Aug 2026; Eskiz ~85 UZS/SMS), closed-beta length 6–8 weeks, and a Tashkent-VPS vs EU-VPS comparison (the two research notes disagree: law note favours Tashkent, hosting note favours EU; recommendation for beta = Tashkent, owner decides).
 Not done: all prices/lists are from search summaries, official texts (ZRU-1125, the 29 Jul resolution) unread; a lawyer must confirm. No code changed, so no test run.
