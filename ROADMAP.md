@@ -269,6 +269,21 @@ Kuzatiladi:
 
 **Natija:** Real feedback.
 
+### Yopiq beta qamrovi (egasi qarori, 2026-10-28)
+
+Egasi sovg‘a va vendor funksiyalarini yopiq beta qamroviga **aniq kiritdi** (ROADMAP Phase 20 va tegishli hujjatlarni yangilashga ruxsat berdi). Holat belgilari: **Rejada** = hali qurilmagan; **Bor** = ishlaydi va tekshirilgan. Faqat tekshirilgandan keyin “Bor” qo‘yiladi.
+
+Qamrovga kiradi:
+- Telefon + Telegram kodi orqali kirish (Google keyinroq, TZ §42) — **Bor** (jonli sinov: egasining raqami; boshqa raqamlar sinalmagan);
+- hamroh shaxsini admin qo‘lda tasdiqlaydi (provayder keyin) — **Rejada** (admin oqimi tekshiriladi);
+- ochilish animatsiyasi (2,5–3 s) va 3 kartali onboarding — **Rejada**; video qo‘llanmalar — keyingi bosqich (video fayllar tayyor bo‘lgach);
+- sovg‘alar: katalog, tafsilot, buyurtma, buyurtmalar tarixi; vendor: ro‘yxatdan o‘tish va admin tasdig‘i, vitrina, mahsulotlar, buyurtmalar paneli; admin: vendor tasdig‘i, sovg‘a/buyurtma boshqaruvi — **Rejada** (backend API qisman mavjud, veb ekranlari yo‘q; to‘lov sozlanmaguncha buyurtma “sozlanmagan” holatida qoladi);
+- narx tafsiloti (checkout), platforma komissiyasi (5%, sozlanadigan; kim to‘lashi TZ §26 bilan kelishilishi kerak), hamroh daromadi va haftalik qo‘lda payout — **Rejada**;
+- bekor qilish/no-show kuzatuvi va suiiste’molga qarshi cheklovlar (pul jarimasiz) — **Rejada**; qo‘lda qaytarish (refund) oqimi TezCheck kabineti orqali — **Rejada**;
+- Xavfsizlik markazi va SOS signali holatlari (“Yuborildi”, “Ko‘rib chiqilmoqda”, “Ko‘rib chiqildi”, “Yuborib bo‘lmadi”), monitoring soatlari haqida ochiq ma’lumot — **Rejada**.
+
+Keyingi bosqichga qoldiriladi (alohida GitHub issue’lar): joylashuv roziligi, bron bo‘yicha 150 m yaqinlik aniqlash, o‘zaro jonli xarita, joylashuv saqlash qoidalari, SOS monitoring va audit oqimi, navbatchi operator.
+
 ## Phase 21 — MVP Launch
 
 Avval faqat **Toshkent** uchun ishga tushiriladi.
