@@ -17,6 +17,8 @@ This is a **demo**, not production. `demo/demo_app.py` runs the real API with th
 | | database: throw-away SQLite in `/tmp`, re-seeded with DEMO data at every start (**kept instead in persistent mode**, below) |
 | | payment: `demo/demo_payment.py`, a stand-in for CLICK/Payme (see below) |
 
+The public demo always shows the code on screen and never uses Telegram, even if `YONDO_TELEGRAM_GATEWAY_TOKEN` is set; the Telegram path is for the production app.
+
 ### DEMO payment (until real CLICK/Payme keys exist)
 When `YONDO_DEMO_PUBLIC_URL` (or Render's `RENDER_EXTERNAL_URL`) is set, "To‘lovga o‘tish" creates a checkout whose link opens the web
 app's own DEMO page (`/demo-pay/<reference>`, translated like the rest of the app). Only the **paying customer's** session can use it:

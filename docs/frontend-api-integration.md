@@ -11,6 +11,12 @@ Base: codex/manual-gifts-click-test
 - CI checks freshness with python export_openapi.py --check.
 - Auth: Authorization: Bearer <access_token>, opaque token (not assumed JWT).
 - OTP endpoint: POST /api/v1/auth/otp/request; demo OTP only in development/test.
+- OTP response may carry `delivery_channel` ("telegram" | "sms"): where the real code was sent
+  (absent for the on-screen demo code; then `development_otp` is present instead). Real codes
+  never appear in the response. New OTP request errors, branch on `code` (never message/status):
+  `otp_channel_unavailable` (422, no Telegram on this number), `otp_delivery_failed` (502,
+  provider error/timeout) - both start no resend cooldown, so the user may retry at once;
+  `otp_delivery_unavailable` (503) = delivery not configured.
 - Auth endpoints: /auth/otp/verify, /auth/refresh, /auth/logout, /auth/me.
 - Never show test CLICK transactions as real payments or collected money.
 - Offline gift test routes require a locally enabled test flag; hidden in production.

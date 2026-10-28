@@ -105,3 +105,32 @@ All from third-party BSP docs `[search]`; Meta pages were unreachable. Nothing v
 9. `ttl` range: 30–3600 (changelog) vs 60–86400 (older SDK) — confirm on the live page.
 10. Uzbek personal-data / cross-border transfer rules for sending phone numbers to Telegram.
 11. WhatsApp: Uzbekistan authentication price, individual eligibility, BSP options.
+
+## 14. Implementation (2026-10-28, part 2)
+Code: `apps/api/src/yondo_api/auth/telegram_gateway.py` (adapter), selection in `main.select_otp_provider` (a configured token wins in every environment; the public demo harness pins the on-screen provider and ignores it), tests in `apps/api/tests/test_telegram_gateway.py` and `test_otp_delivery.py` (MockTransport only: **nothing was called against the live API**).
+
+**Request.** One `POST {base}/sendVerificationMessage`, `Authorization: Bearer <token>`, JSON `{phone_number: "+998…", code: <our 6 digits>, ttl: 300, payload: <random id, no PII>}`. No `callback_url`, no `request_id`/`checkSendAbility`. Timeout from settings; exactly one request per send, **never retried** (a blind retry can be billed twice); a failed send writes no challenge and starts no resend cooldown.
+
+**Error mapping** (table `ERROR_RULES` / `DEFAULT_RULE` at the top of the module; the strings are the unverified ones from §3/§7):
+| Telegram answer | API result | Log |
+|---|---|---|
+| `ok:true`, HTTP 2xx | 202, `delivery_channel: "telegram"`, no `development_otp` | info |
+| `ok:false`, `PHONE_NUMBER_*` | 422 `otp_channel_unavailable` | info |
+| `ok:false`, `BALANCE_NOT_ENOUGH`, `ACCESS_TOKEN_*` | 502 `otp_delivery_failed` | **error** (owner must act: top up / new token) |
+| `ok:false`, `FLOOD_WAIT_*`, `REQUEST_*`, anything else | 502 `otp_delivery_failed` | warning |
+| non-JSON, no boolean `ok`, `ok:false` without an error string, `ok:true` on non-2xx, HTTP 5xx, timeout, connection error | 502 `otp_delivery_failed` | warning |
+
+On a 4xx the body is read first, so `4xx` + `ok:false` + `PHONE_NUMBER_*` still gives 422 (the real status for an unknown number is undocumented); a 5xx is never trusted. Logs hold only the Telegram error string (strict `[A-Z0-9_]` check, else `UNPARSEABLE`), Telegram's `request_id` as `telegram_request_id`, the HTTP status, or the exception class name. The token, phone and code are in no log line, exception message or exception chain.
+
+**Env vars.** `YONDO_TELEGRAM_GATEWAY_TOKEN` (secret, host environment only; empty = off), `YONDO_TELEGRAM_GATEWAY_BASE_URL` (default `https://gatewayapi.telegram.org`, must be https), `YONDO_TELEGRAM_GATEWAY_TIMEOUT_SECONDS` (default 10). Placeholders are in `.env.example`.
+
+**Concurrency.** On PostgreSQL `issue_otp` first takes `pg_advisory_xact_lock(hashtextextended(<phone>, 0))`, so two simultaneous first requests for one number cannot both send a paid code and then collide on the primary key; the second gets the 429 cooldown. Verified against a real PostgreSQL 16 (3 concurrent requests: 1 send, 202 + 2x429; with the lock removed the same test fails with `IntegrityError`).
+
+**Not done.** Delivery-report callback (and its HMAC check, §5); SMS or any other fallback when Telegram fails or the number has no Telegram; per-country/operator checks; `checkSendAbility`/`checkVerificationStatus`/`revokeVerificationMessage`; any customisation of the message text.
+
+**Must be checked with the owner's real token (unverified):**
+1. The exact `error` string (and HTTP status) for a +998 number **without Telegram**: the adapter assumes `PHONE_NUMBER_*`; if it is something else the user sees a 502 "try again later" instead of the 422. The error is logged (`telegram_gateway_rejected`, field `telegram_error`), so one test reveals it; then add it to `ERROR_RULES`.
+2. That Gateway delivers to **+998** numbers on every operator, and what a code costs there (§6/§7).
+3. That `ttl: 300` and a caller-supplied 6-digit `code` are accepted (§2, §4, open question 9).
+4. That `ok:true` really arrives with HTTP 200 (a 2xx is required; anything else is treated as a failure).
+5. That a send to the owner's own number works with a zero balance (§6, open question 8).
