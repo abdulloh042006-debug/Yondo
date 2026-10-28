@@ -1,0 +1,91 @@
+{
+ "sprite": "warm-icons.svg",
+ "idPrefix": "yw-",
+ "viewBox": "0 0 24 24",
+ "stroke": 1.75,
+ "audit": {
+  "source": "apps/web/src (ui/Layout.tsx, ui/feedback.tsx, pages/companionParts.tsx, pages/Account.tsx)",
+  "uniqueIcons": 6,
+  "totalUsages": 8,
+  "usages": {
+   "home": 1,
+   "heart": 2,
+   "cal": 1,
+   "user": 2,
+   "shield": 1,
+   "check": 1
+  }
+ },
+ "icons": [
+  {
+   "name": "home",
+   "id": "yw-home",
+   "inApp": true,
+   "usedFor": "nav Kashf",
+   "accent": false
+  },
+  {
+   "name": "heart",
+   "id": "yw-heart",
+   "inApp": true,
+   "usedFor": "nav Sevimlilar + companion card",
+   "accent": false
+  },
+  {
+   "name": "cal",
+   "id": "yw-cal",
+   "inApp": true,
+   "usedFor": "nav Bronlar",
+   "accent": true
+  },
+  {
+   "name": "user",
+   "id": "yw-user",
+   "inApp": true,
+   "usedFor": "nav Profil/Kirish + Account page",
+   "accent": false
+  },
+  {
+   "name": "shield",
+   "id": "yw-shield",
+   "inApp": true,
+   "usedFor": "nav Admin",
+   "accent": true
+  },
+  {
+   "name": "check",
+   "id": "yw-check",
+   "inApp": true,
+   "usedFor": "success tick (feedback.tsx)",
+   "accent": false
+  },
+  {
+   "name": "gift",
+   "id": "yw-gift",
+   "inApp": false,
+   "usedFor": "EXTRA: nav Sovg‘alar (in R proposal; app has no icon yet)",
+   "accent": true
+  },
+  {
+   "name": "star",
+   "id": "yw-star",
+   "inApp": false,
+   "usedFor": "EXTRA: replaces text glyph ★ (5 places)",
+   "accent": false
+  },
+  {
+   "name": "close",
+   "id": "yw-close",
+   "inApp": false,
+   "usedFor": "EXTRA: replaces text glyph ✕ (Discovery)",
+   "accent": false
+  },
+  {
+   "name": "arrow",
+   "id": "yw-arrow",
+   "inApp": false,
+   "usedFor": "EXTRA: replaces text glyph → (Onboarding, BookingDetail)",
+   "accent": false
+  }
+ ]
+}
