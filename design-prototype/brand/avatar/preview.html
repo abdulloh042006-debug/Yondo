@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yondo avatars and stories - brand preview</title>
+<style>
+:root{--ink:#111111;--paper:#F5F2EC;--carrot:#E8501A;--bg:var(--paper);--fg:var(--ink);
+ --mut:color-mix(in srgb,var(--ink) 70%,var(--paper));--line:color-mix(in srgb,var(--ink) 30%,var(--paper));color-scheme:light}
+html[data-night]{--bg:var(--ink);--fg:var(--paper);--mut:color-mix(in srgb,var(--paper) 70%,var(--ink));
+ --line:color-mix(in srgb,var(--paper) 30%,var(--ink));color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1,h2,h3{font-family:"Space Grotesk",Inter,system-ui,sans-serif;line-height:1.2;margin:0}
+h1{font-size:28px}h2{font-size:20px;margin:40px 0 4px}p{margin:4px 0 12px;max-width:68ch}
+.mut{color:var(--mut)}.bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+button{font:inherit;cursor:pointer}
+.tbtn{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--fg);background:transparent;color:var(--fg)}
+:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.demo{display:inline-block;font:600 11px/1 Inter,system-ui,sans-serif;letter-spacing:.08em;padding:4px 6px;border:1.5px solid currentColor;border-radius:4px}
+/* avatar */
+svg.av{display:block;border-radius:50%;overflow:hidden;background:var(--g);box-shadow:0 0 0 1px var(--line);flex:none}
+.way-ink{--g:#111111;--m:#F5F2EC;--a:#E8501A}.way-paper{--g:#F5F2EC;--m:#111111;--a:#E8501A}.way-carrot{--g:#E8501A;--m:#111111;--a:#F5F2EC}
+.m{fill:var(--m)}.a{fill:var(--a)}.g{fill:var(--g)}
+.ms{fill:none;stroke:var(--m);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.as{fill:none;stroke:var(--a);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.gs{stroke:var(--g);stroke-width:1.3;stroke-linecap:round}
+.fine{display:var(--fine,inline)}.s32{--fine:none}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:20px 16px;margin-top:12px}
+.sheet figure{margin:0}.sheet figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.sheet .tri{display:flex;gap:8px}
+code{font:13px ui-monospace,Consolas,monospace}
+input[type=text]{font:inherit;min-height:44px;padding:0 12px;border-radius:8px;border:1.5px solid var(--fg);background:transparent;color:var(--fg);width:min(420px,100%)}
+/* ring */
+.ringw{position:relative;display:grid;place-items:center;flex:none}
+.ringw>svg.rg{position:absolute;inset:0;overflow:visible}
+.rg path,.rg circle{fill:none}
+@media (prefers-reduced-motion:no-preference){.rg .un{stroke-dasharray:1;animation:draw .5s ease-out both}}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.rings{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.rings figure{margin:0;width:96px;text-align:center;font-size:12px;line-height:1.3}
+.rings figcaption{margin-top:6px}.chip{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;border:1.5px solid var(--fg);font-size:11px}
+.badge{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:currentColor;vertical-align:-3px}
+.badge svg{width:10px;height:10px}
+/* cards */
+.cards{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.card{position:relative;width:min(270px,100%);aspect-ratio:9/16;border-radius:20px;overflow:hidden;background:var(--ink);color:var(--paper);display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--line)}
+.card.nt{background:var(--carrot);color:var(--ink)}
+.card :focus-visible{outline-color:currentColor}
+.card .ph{position:absolute;inset:0;display:grid;place-items:center}
+.card .ph svg{width:380px;height:380px;flex:none;border-radius:0;box-shadow:none;filter:grayscale(1)}
+.card .sc{position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 78%,transparent)}
+.card>*:not(.ph):not(.sc):not(.demo){position:relative}
+.card{--bg:var(--ink)}.card.nt{--bg:var(--carrot)}
+.prog{display:flex;gap:3px;padding:10px 10px 0}.prog i{flex:1;height:3px;border-radius:2px;background:color-mix(in srgb,currentColor 45%,transparent)}.prog i.on{background:currentColor}
+.prog i.cur{background:linear-gradient(90deg,currentColor 40%,color-mix(in srgb,currentColor 45%,transparent) 40%)}
+.chd{display:flex;align-items:center;gap:8px;padding:6px 6px 0 10px;font-size:13px}
+.chd b{font-weight:600}.chd .sp{flex:1}
+.ib{width:44px;height:44px;border:0;background:transparent;color:inherit;display:grid;place-items:center;border-radius:50%}
+.ib svg{width:20px;height:20px}
+.cbody{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 18px;gap:8px}
+.kind{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.card h3{font-size:24px}.card p{margin:0;font-size:15px}
+.win{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.win li{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1.5px solid color-mix(in srgb,var(--paper) 60%,transparent);border-radius:12px;font-weight:600;font-size:15px}
+.win li:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--carrot)}
+.note-t{font:600 26px/1.2 "Space Grotesk",Inter,system-ui,sans-serif}
+.cft{padding:12px 14px 14px;display:grid;gap:4px}
+.cta{min-height:48px;border-radius:999px;border:0;background:var(--paper);color:var(--ink);font-weight:600}
+.flag{min-height:44px;background:transparent;border:0;color:inherit;display:flex;gap:8px;align-items:center;justify-content:center;font-size:13px}
+.flag svg{width:16px;height:16px}
+.card>.demo{position:absolute;right:14px;top:66px}
+.own{list-style:none;margin:0;padding:0;border:1.5px solid var(--line);border-radius:16px;overflow:hidden;width:min(380px,100%)}
+.own li{padding:12px 14px;display:grid;gap:4px;border-top:1.5px solid var(--line)}.own li:first-child{border-top:0}
+.own .t{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.st{padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1.5px solid var(--fg)}
+.st.act{background:var(--fg);color:var(--bg)}.st.exp{border-color:var(--line);color:var(--mut)}.st.rem{border:2px solid var(--carrot)}
+table{border-collapse:collapse;width:100%;max-width:760px;font-size:14px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+.sw{display:inline-block;width:56px;height:24px;border-radius:6px;vertical-align:middle;margin-right:8px;box-shadow:0 0 0 1px var(--line);font:600 12px/24px Inter,sans-serif;text-align:center}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" id="sprite"></svg>
+<main>
+<div class="bar"><h1>Avatars and stories</h1><button class="tbtn" id="theme" type="button" aria-pressed="false">Night view</button></div>
+<p class="mut">Brand preview for the customer avatar set and the companion story rings and cards. Ink, paper and carrot only. Spec: <code>docs/stories-avatars-design.md</code>. Sample names and texts are <span class="demo">DEMO</span>; button and label copy is English here, the real copy goes through <code>t('key')</code> in uz, ru and en. The avatar API (<code>users.avatar_code</code>) is planned, not built; the story endpoints already exist.</p>
+
+<h2>12 patterns, 3 grounds</h2>
+<p class="mut">Geometric ornament only: no faces, no figures. Each customer gets one of 36 base looks (69 distinct with the fold, see below). Carrot is a graphic fill, never text.</p>
+<div class="sheet" id="sheet"></div>
+
+<h2>Size ladder</h2>
+<p class="mut">64, 44 and 32 px (96 is the sheet above). Under 44 px the fine layer is dropped so the shapes stay at least 2 px wide.</p>
+<div id="ladder"></div>
+
+<h2>Fold (phase)</h2>
+<p class="mut">Fold 1 turns the motif by half of its own symmetry step (the single almond is mirrored instead; the pomegranate has no fold), so two accounts with the same pattern and ground still differ. Left of each pair is fold 0.</p>
+<div class="row" id="phase"></div>
+
+<h2>Derived from an id</h2>
+<p class="mut">Type any id. The same id always gives the same avatar: FNV-1a, then pattern = h mod 12, ground = floor(h/12) mod 3, fold = floor(h/36) mod 2.</p>
+<div class="row"><label for="aid" class="mut">Account id</label><input type="text" id="aid" value="7c1d6f0e-5b6a-4d0e-9b53-1a2f3c4d5e61" autocomplete="off" spellcheck="false"><button class="tbtn" id="rnd" type="button">Random id</button></div>
+<div class="row" id="derived" aria-live="polite"></div>
+<p><code id="pickout"></code></p>
+
+<h2>Story rings</h2>
+<p class="mut">Built from <code>StoryRing</code>: one arc per active card (count, at most 5 because the server keeps at most 5 active cards). Unseen = 3 px carrot arcs; seen = 1.5 px ink at 60 % (seen state is stored on the device only, the server records no viewers). The photo stand-ins below are ornaments: real rings hold the companion photo, and fall back to the ornament seeded by <code>profile_id</code> when <code>photo</code> is null.</p>
+<div class="rings" id="rings"></div>
+
+<h2>Story cards</h2>
+<p class="mut">Viewer (9:16) for the two kinds: <code>availability</code> and <code>note</code>, then the companion's own list (<code>OwnStory</code>). The photo stand-in sits under a 78 % ink scrim so paper text stays above 8:1 even over a white photo.</p>
+<div class="cards" id="cards"></div>
+
+<h2>Contrast (computed live)</h2>
+<table id="contrast"><thead><tr><th>Pair</th><th>Ratio</th><th>Use</th></tr></thead><tbody></tbody></table>
+</main>
+<script>
+// Reference generator (JS twin of the TS in the spec). Pure: id -> {pattern, way, phase}; pattern -> SVG layers.
+const IDS = ['star8', 'star10', 'bodom8', 'rhomb4', 'chain', 'strap8', 'lattice', 'bodom', 'quatrefoil', 'hex7', 'adras', 'anor'];
+const WAYS = ['ink', 'paper', 'carrot'];
+function pick(id) {                       // FNV-1a 32-bit
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619) >>> 0;
+  const n = Math.floor(h / 12);
+  return { pattern: h % 12, way: n % 3, phase: Math.floor(n / 3) % 2 };
+}
+const C = 24, rad = (d) => (d * Math.PI) / 180, f = (n) => +n.toFixed(2);
+const P = (r, d, cx = C, cy = C) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+const D = (pts) => 'M' + pts.map((p) => p.map(f).join(' ')).join('L') + 'Z';
+const poly = (n, r, d0 = -90, cx = C, cy = C) => D(Array.from({ length: n }, (_, i) => P(r, d0 + (i * 360) / n, cx, cy)));
+const star = (n, ro, ri, d0 = -90) => D(Array.from({ length: 2 * n }, (_, i) => P(i % 2 ? ri : ro, d0 + (i * 180) / n)));
+const dia = (cx, cy, r) => D([[cx, cy - r], [cx + r, cy], [cx, cy + r], [cx - r, cy]]);
+const el = (c, d, x = '') => `<path class="${c}" d="${d}"${x}/>`;
+const dot = (c, x, y, r) => `<circle class="${c}" cx="${f(x)}" cy="${f(y)}" r="${r}"/>`;
+const ring = (c, x, y, r) => `<circle class="${c}" fill="none" cx="${f(x)}" cy="${f(y)}" r="${r}"/>`;
+const spin = (n, fn, off = 0) => Array.from({ length: n }, (_, i) => `<g transform="rotate(${off + (i * 360) / n} 24 24)">${fn()}</g>`).join('');
+const ZIG = (y) => 'M' + Array.from({ length: 8 }, (_, i) => `${-4 + i * 8} ${y + (i % 2 ? -5 : 5)}`).join('L');
+const T = Math.tan(rad(36)), BODOM = 'M32 4C26 10 10 18 10 31A13 13 0 0 0 36 31C36 20 33 10 32 4Z';
+// each entry: [fold step in degrees applied when phase=1, bold layer (>=3 units), fine layer (>=44 px only)]
+const ART = {
+  star8: [22.5, () => el('m', poly(4, 20, 0) + poly(4, 20, 45)) + dot('a', 24, 24, 3.4), () => el('g', poly(4, 9, 0) + poly(4, 9, 45)) + dot('a', 24, 24, 3.4)],
+  star10: [18, () => el('m', star(10, 21, 13)) + dot('a', 24, 24, 3.4), () => el('g', poly(10, 8)) + dot('a', 24, 24, 3.4)],
+  bodom8: [22.5, () => spin(8, () => el('m', 'M24 25C15 17 17 8 24 3.5C31 8 33 17 24 25Z')) + dot('a', 24, 24, 3.6), () => spin(8, () => el('gs', 'M24 8V16')) + dot('a', 24, 24, 3.6)],
+  rhomb4: [45, () => spin(4, () => el('m', `M24 24L${24 + 10.5} ${24 - 10.5 * T}L45 24L${24 + 10.5} ${24 + 10.5 * T}Z`)) + spin(4, () => el('a', 'M35 24L39 21.1L43 24L39 26.9Z'), 45), () => spin(4, () => el('gs', 'M30 24H38'))],
+  chain: [45, () => [[24, 24], [44, 24], [4, 24], [24, 44], [24, 4]].map(([x, y]) => el('m', dia(x, y, 10.5))).join('') + [[10, 10], [38, 10], [10, 38], [38, 38]].map(([x, y]) => el('a', dia(x, y, 4.6))).join(''), () => el('g', dia(24, 24, 4.4))],
+  strap8: [22.5, () => el('ms', poly(4, 19, 0)) + el('ms', poly(4, 19, 45)) + Array.from({ length: 8 }, (_, k) => {
+      const th = 22.5 + 45 * k, [x, y] = P(14.54, th), al = k % 2 ? Math.round(th / 90) * 90 : 45 + 90 * Math.floor(th / 90), c = Math.cos(rad(al + 90)), s = Math.sin(rad(al + 90));
+      const seg = (L, cls, w) => `<path class="${cls}" d="M${f(x - c * L)} ${f(y - s * L)}L${f(x + c * L)} ${f(y + s * L)}" stroke-width="${w}"/>`;
+      return seg(3, 'gs', 5.6) + seg(4.6, 'ms', 3.2);
+    }).join('') + dot('a', 24, 24, 3.4), () => el('m', poly(4, 6.5, 0) + poly(4, 6.5, 45)) + dot('a', 24, 24, 3)],
+  lattice: [45, () => [-32, -16, 0, 16, 32].map((c) => el('ms', `M-10 ${-10 - c}L58 ${58 - c}`)).join('') + [16, 32, 48, 64, 80].map((s) => el('ms', `M-10 ${s + 10}L58 ${s - 58}`)).join('') + [[24, 24], [16, 16], [32, 32], [16, 32], [32, 16]].map(([x, y]) => dot('g', x, y, 5.4) + dot('a', x, y, 3.4)).join(''), () => [[32, 24], [16, 24], [24, 32], [24, 16]].map(([x, y]) => el('m', dia(x, y, 2.4))).join('')],
+  bodom: [0, () => el('m', BODOM) + el('a', BODOM, ' transform="translate(12 15.5) scale(.5)"'), () => el('gs', 'M23 22C25 16 28 11 31 8')],
+  quatrefoil: [45, () => [[8.5, 0], [-8.5, 0], [0, 8.5], [0, -8.5]].map(([x, y]) => dot('m', 24 + x, 24 + y, 11)).join('') + dot('a', 24, 24, 3.4), () => ring('gs', 24, 24, 6.2) + [[12, 12], [36, 12], [12, 36], [36, 36]].map(([x, y]) => dot('a', x, y, 2.2)).join('')],
+  hex7: [30, () => Array.from({ length: 6 }, (_, i) => { const [x, y] = P(14.4, i * 60); return el('m', poly(6, 7.4, -90, x, y)); }).join('') + el('a', poly(6, 7.4)), () => Array.from({ length: 6 }, (_, i) => { const [x, y] = P(14.4, i * 60); return el('g', poly(6, 3, -90, x, y)); }).join('')],
+  adras: [90, () => el('ms', ZIG(11)) + el('ms', ZIG(37)) + el('as', ZIG(24)), () => [11, 37].map((y) => el('gs', ZIG(y))).join('')],
+  anor: [0, () => dot('m', 24, 28, 14) + el('m', 'M16.5 17L18 9L21.5 13L24 7L26.5 13L30 9L31.5 17Z') + dot('a', 24, 28, 5.2), () => ring('gs', 24, 28, 9) + Array.from({ length: 8 }, (_, i) => { const [x, y] = P(11.6, i * 45, 24, 28); return dot('g', x, y, 1.4); }).join('')],
+};
+const STEP = IDS.map((id) => ART[id][0]);   // degrees the motif turns when phase = 1 (0 = special, see FOLD)
+// transform applied to the <use> when phase = 1: rotate by STEP; bodom is mirrored; anor is mirror-symmetric, so no fold
+const FOLD = IDS.map((id, i) => (id === 'bodom' ? 'translate(48 0) scale(-1 1)' : id === 'anor' ? '' : `rotate(${STEP[i]} 24 24)`));
+function symbol(i) {                       // bold layer always, fine layer only >= 44 px
+  const [, bold, fine] = ART[IDS[i]];
+  return `<symbol id="av-${IDS[i]}" viewBox="0 0 48 48"><g class="bold">${bold()}</g><g class="fine">${fine()}</g></symbol>`;
+}
+
+
+/* ---------- preview UI ---------- */
+const NAMES = {star8:'8-point star',star10:'10-point star',bodom8:'8 almonds (bodom flower)',rhomb4:'4-fold rhombus',chain:'diamond chain',strap8:'8-fold interlace (girih)',lattice:'diagonal lattice',bodom:'single almond (bodom)',quatrefoil:'quatrefoil',hex7:'7 hexagons',adras:'adras zigzag',anor:'pomegranate (anor)'};
+const el$ = (id) => document.getElementById(id);
+const AVEL = (i, way, size, ph) =>
+  `<svg class="av way-${way}${size < 44 ? ' s32' : ''}" width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true"><use href="#av-${IDS[i]}"${ph && FOLD[i] ? ` transform="${FOLD[i]}"` : ''}/></svg>`;
+const AVID = (id, size) => { const p = pick(id); return AVEL(p.pattern, WAYS[p.way], size, p.phase); };
+el$('sprite').innerHTML = IDS.map((_, i) => symbol(i)).join('');
+
+el$('sheet').innerHTML = IDS.map((id, i) => `<figure><div class="tri">${WAYS.map((w) => AVEL(i, w, 96, 0)).join('')}</div><figcaption><code>${id}</code> &middot; ${NAMES[id]}</figcaption></figure>`).join('');
+el$('ladder').innerHTML = [64, 44, 32].map((s) => `<div class="row">${IDS.map((_, i) => AVEL(i, WAYS[i % 3], s, 0)).join('')}</div>`).join('');
+el$('phase').innerHTML = IDS.map((_, i) => `<div class="row" style="gap:4px;margin:0 10px 10px 0">${AVEL(i, WAYS[(i + 1) % 3], 64, 0)}${AVEL(i, WAYS[(i + 1) % 3], 64, 1)}</div>`).join('');
+
+function showId() {
+  const id = el$('aid').value || '-';
+  const p = pick(id);
+  el$('derived').innerHTML = [96, 64, 44, 32].map((s) => AVID(id, s)).join('');
+  el$('pickout').textContent = `pick("${id}") = pattern ${p.pattern} (${IDS[p.pattern]}), ground ${WAYS[p.way]}, fold ${p.phase}`;
+}
+el$('aid').addEventListener('input', showId);
+el$('rnd').addEventListener('click', () => { el$('aid').value = crypto.randomUUID(); showId(); });
+showId();
+
+/* ring: arcs around an avatar; arcs carry the count, the stroke carries seen/unseen */
+function arcs(S, n, seen) {
+  const r = S / 2 - 2, c = S / 2, gap = n > 1 ? 14 : 0, step = 360 / n, out = [];
+  const pt = (d) => [c + r * Math.cos((d * Math.PI) / 180), c + r * Math.sin((d * Math.PI) / 180)];
+  const sw = seen ? 1.5 : 3, col = seen ? 'color-mix(in srgb,var(--fg) 60%,var(--bg))' : '#E8501A';
+  if (n === 1) return `<circle cx="${c}" cy="${c}" r="${r}" stroke="${col}" stroke-width="${sw}" class="${seen ? '' : 'un'}" pathLength="1"/>`;
+  for (let k = 0; k < n; k++) {
+    const a0 = -90 + k * step + gap / 2, a1 = -90 + (k + 1) * step - gap / 2, [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+    out.push(`<path d="M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}" stroke="${col}" stroke-width="${sw}" stroke-linecap="butt" class="${seen ? '' : 'un'}" pathLength="1"/>`);
+  }
+  return out.join('');
+}
+function storyRing(inner, n, seen, avail, avHtml) {
+  const S = inner + 12;
+  const mark = avail ? `<span style="position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--bg);display:grid;place-items:center" aria-hidden="true"><span style="width:10px;height:10px;border-radius:50%;background:#E8501A;box-shadow:0 0 0 1.5px var(--fg)"></span></span>` : '';
+  return `<div class="ringw" style="width:${S}px;height:${S}px"><svg class="rg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" aria-hidden="true">${arcs(S, n, seen)}</svg>${avHtml}${mark}</div>`;
+}
+const RINGS = [
+  ['1 card, unseen', 1, false, false, 'star8', 'paper'], ['3 cards, unseen', 3, false, false, 'bodom8', 'ink'],
+  ['5 cards, seen', 5, true, false, 'quatrefoil', 'paper'], ['2 cards, one is free time', 2, false, true, 'anor', 'carrot'],
+  ['No photo: ornament from profile_id', 1, false, true, null, null], ['Seen, free time', 4, true, true, 'hex7', 'ink'],
+];
+el$('rings').innerHTML = RINGS.map(([cap, n, seen, av, id, way]) => {
+  const inner = 64, avatar = id ? AVEL(IDS.indexOf(id), way, inner, 0) : AVID('profile-demo-0001', inner);
+  return `<figure>${storyRing(inner, n, seen, av, avatar)}<figcaption>${cap}${av ? '<br><span class="chip">Has free time</span>' : ''}</figcaption></figure>`;
+}).join('');
+
+const IC = {
+  x: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4L16 16M16 4L4 16"/></svg>',
+  pause: '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="3.4" height="12" rx="1"/><rect x="11.6" y="4" width="3.4" height="12" rx="1"/></svg>',
+  flag: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14V2M3 3h9l-2 3 2 3H3"/></svg>',
+  ok: '<svg viewBox="0 0 10 10" fill="none" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.2L4.2 7.4L8 3"/></svg>',
+};
+const head = (n, ago) => `<div class="prog" role="img" aria-label="Card ${ago} of ${n}">${Array.from({ length: n }, (_, k) => `<i class="${k < ago - 1 ? 'on' : k === ago - 1 ? 'cur' : ''}"></i>`).join('')}</div>
+ <div class="chd">${AVID('profile-demo-0007', 32)}<b>Madina</b><span class="badge" title="Verified" role="img" aria-label="Verified">${IC.ok}</span><span class="mut" style="color:inherit;opacity:.8">2 h</span><span class="sp"></span><button class="ib" type="button" aria-label="Pause">${IC.pause}</button><button class="ib" type="button" aria-label="Close">${IC.x}</button></div>`;
+const foot = (cta) => `<div class="cft">${cta ? `<button class="cta" type="button">${cta}</button>` : ''}<button class="flag" type="button">${IC.flag}Report this card</button></div>`;
+el$('cards').innerHTML = `
+<article class="card" aria-label="Availability card, sample"><div class="ph">${AVEL(6, 'paper', 380, 0)}</div><div class="sc"></div>${head(3, 1)}
+ <div class="cbody"><span class="kind">Free time</span><h3>Samarqand sayri</h3><p>Yangi xizmat: yurish va suhbat</p>
+  <ul class="win" aria-label="Free windows"><li>Bugun 18:00&ndash;20:00</li><li>Ertaga 11:00&ndash;13:00</li><li>Ertaga 16:00&ndash;17:30</li></ul></div>
+ ${foot('Book this time')}<span class="demo">DEMO</span></article>
+<article class="card nt" aria-label="Note card, sample">${head(3, 2)}
+ <div class="cbody"><span class="kind">Note</span><div class="note-t">Yangi xizmat: Samarqand sayri</div></div>
+ ${foot('')}<span class="demo">DEMO</span></article>
+<div><h3 style="font-size:16px;margin:0 0 8px">My cards <span class="demo">DEMO</span></h3><ul class="own" aria-label="My story cards">
+ <li><div class="t"><span class="st act">Active</span><span class="mut">Free time &middot; ends in 21 h</span></div><div>Samarqand sayri</div><button class="tbtn" type="button" style="min-height:44px;justify-self:start">Delete</button></li>
+ <li><div class="t"><span class="st exp">Expired</span><span class="mut">Note &middot; yesterday</span></div><div>Yangi xizmat</div></li>
+ <li><div class="t"><span class="st rem">Removed</span><span class="mut">Note &middot; by a moderator</span></div><div class="mut">Reason: link in the text (sample reason)</div></li></ul></div>`;
+
+/* contrast table, computed from the real tokens */
+const hx = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const lin = (c) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const mx = (a, b, t) => a.map((v, i) => Math.round(v * t + b[i] * (1 - t)));
+const INK = hx('#111111'), PAP = hx('#F5F2EC'), CAR = hx('#E8501A');
+const use = (r) => (r >= 7 ? 'text, AAA' : r >= 4.5 ? 'text, AA' : r >= 3 ? 'graphics and large text only' : 'decoration only');
+const sw = (c, t) => `<span class="sw" style="background:rgb(${c});color:rgb(${t})">Aa</span>`;
+const PAIRS = [
+  ['ink on paper', INK, PAP], ['paper on ink', PAP, INK], ['ink on carrot (note card text)', INK, CAR], ['carrot on ink (ring, dots)', CAR, INK],
+  ['carrot on paper (graphic only)', CAR, PAP], ['paper on carrot (never small text)', PAP, CAR],
+  ['paper on 78 % ink scrim over a white photo', PAP, mx(INK, [255, 255, 255], 0.78)],
+  ['seen ring: ink 60 % on paper', mx(INK, PAP, 0.6), PAP], ['seen ring: paper 60 % on ink', mx(PAP, INK, 0.6), INK],
+];
+document.querySelector('#contrast tbody').innerHTML = PAIRS.map(([n, a, b]) => { const r = cr(a, b); return `<tr><td>${sw(b, a)}${n}</td><td>${r.toFixed(2)} : 1</td><td>${use(r)}</td></tr>`; }).join('');
+
+/* theme */
+const root = document.documentElement, tb = el$('theme');
+function setNight(on) { root.toggleAttribute('data-night', on); tb.setAttribute('aria-pressed', String(on)); tb.textContent = on ? 'Day view' : 'Night view'; }
+setNight(matchMedia('(prefers-color-scheme: dark)').matches || /night/.test(location.search));
+tb.addEventListener('click', () => setNight(!root.hasAttribute('data-night')));
+</script>
+</body>
+</html>

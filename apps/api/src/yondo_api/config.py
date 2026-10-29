@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
     companion_photo_max_bytes: int = Field(default=10_485_760, gt=0)
     companion_photo_max_pixels: int = Field(default=25_000_000, gt=0)
+    # Stories: product defaults (not money rules), the owner may change them.
+    stories_ttl_hours: int = Field(default=24, gt=0, le=72)
+    stories_max_active: int = Field(default=5, gt=0, le=20)
+    stories_max_per_day: int = Field(default=10, gt=0, le=100)
     companion_service_codes: tuple[str, ...] = (
         'coffee',
         'walking',

@@ -5,6 +5,7 @@ import { api, ApiError, type Schemas } from '../api/client';
 import { t } from '../i18n';
 import { toMinor } from '../lib/format';
 import { SERVICE_LABELS } from '../lib/labels';
+import { StoryStrip } from '../components/stories/StoryRing';
 import { Empty, ErrorState } from '../ui/feedback';
 import { useResource } from '../lib/useResource';
 import { Select } from '../ui/form';
@@ -50,6 +51,8 @@ export function Discovery() {
           <button className="btn">{t('discovery.search')}</button>
         </form>
       </motion.section>
+
+      <StoryStrip />
 
       <section aria-label={t('discovery.filters')} className="glass pad stack">
         <div role="group" aria-label={t('discovery.serviceType')} className="row" style={{ gap: 6 }}>

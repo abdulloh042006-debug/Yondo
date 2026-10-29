@@ -36,6 +36,7 @@ from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
 from yondo_api.safety.models import TrustedContact, UserBlock
+from yondo_api.stories.models import CompanionStory
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +119,13 @@ async def erase_account(
             photo.deleted_at = photo.deleted_at or now
             photo.position = None
             photo.caption = ''
+        for story in await session.scalars(
+            select(CompanionStory).where(CompanionStory.profile_id.in_(profile_ids))
+        ):
+            story.removed_at = story.removed_at or now
+            story.caption = 'deleted'
+            story.photo_id = None
+            story.removal_note = None
         for profile in await session.scalars(
             select(CompanionProfile).where(CompanionProfile.id.in_(profile_ids))
         ):

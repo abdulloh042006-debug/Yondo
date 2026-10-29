@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useRef, useState, type FormEvent } from 'react';
 import { api, ApiError, type Schemas } from '../api/client';
+import { OwnStories } from '../components/stories/OwnStories';
 import { t, type Key } from '../i18n';
 import { formatInstant, formatMoney, toMinor } from '../lib/format';
 import { APPLICATION_STATUS, BLOCKERS, CONTENT_STATUS, IDENTITY_STATUS, ACCOUNT_STATUS, SERVICE_LABELS, serviceLabel } from '../lib/labels';
@@ -23,14 +24,15 @@ const TABS = [
   ['services', 'studio.tab.services'],
   ['photos', 'studio.tab.photos'],
   ['availability', 'studio.tab.availability'],
+  ['cards', 'studio.tab.cards'],
 ] as const satisfies ReadonlyArray<readonly [string, Key]>;
 type Tab = (typeof TABS)[number][0];
 
 const msg = (e: unknown) => (e instanceof ApiError ? e.message : t('common.unexpected'));
 const none = (e: ApiError | undefined) => e?.status === 404;
 
-export function Studio() {
-  const [tab, setTab] = useState<Tab>('status');
+export function Studio({ initialTab = 'status' }: { initialTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   return (
     <div className="stack" style={{ gap: 18 }}>
       <h1>{t('account.studio')}</h1>
@@ -56,6 +58,7 @@ export function Studio() {
         {tab === 'services' && <ServicesTab />}
         {tab === 'photos' && <PhotosTab />}
         {tab === 'availability' && <AvailabilityTab />}
+        {tab === 'cards' && <OwnStories />}
       </div>
     </div>
   );

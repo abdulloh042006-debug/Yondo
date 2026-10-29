@@ -42,6 +42,7 @@ export function App() {
           <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
           <Route path="account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="studio" element={<RequireAuth role="companion"><Studio /></RequireAuth>} />
+          <Route path="studio/cards" element={<RequireAuth role="companion"><Studio initialTab="cards" /></RequireAuth>} />
           <Route path="admin/*" element={<RequireAuth role="admin"><AdminRoutes /></RequireAuth>} />
           <Route path="*" element={<Empty title={t('app.notFound.title')} action={<Link className="btn" to="/">{t('app.notFound.home')}</Link>}>{t('app.notFound.body')}</Empty>} />
         </Route>

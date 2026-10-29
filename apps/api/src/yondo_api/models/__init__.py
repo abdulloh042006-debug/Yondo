@@ -15,6 +15,7 @@ from yondo_api.notifications import models as notifications_models
 from yondo_api.payments import models as payment_models
 from yondo_api.reviews import models as reviews_models
 from yondo_api.safety import models as safety_models
+from yondo_api.stories import models as stories_models
 
 __all__ = [
     'account_models',
@@ -24,6 +25,7 @@ __all__ = [
     'notifications_models',
     'admin_models',
     'safety_models',
+    'stories_models',
     'reviews_models',
     'meetings_models',
     'companion_models',

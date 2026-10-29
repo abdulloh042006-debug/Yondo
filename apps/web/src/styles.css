@@ -1710,3 +1710,141 @@ table.data td {
 .yi-rm {
   transition-duration: 0.15s;
 }
+
+/* ---------- Avatars (geometric ornaments) and companion cards (stories) ----------
+   docs/stories-avatars-design.md. Only ink #111111, paper #F5F2EC, carrot #E8501A; carrot is a graphic fill, never small text.
+   These colours are fixed on purpose (brand art), so every theme/skin shows the same ornaments. */
+.av {
+  display: block;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--g);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-fg) 30%, var(--c-bg));
+}
+.av-way-ink { --g: #111111; --m: #f5f2ec; --a: #e8501a; }
+.av-way-paper { --g: #f5f2ec; --m: #111111; --a: #e8501a; }
+.av-way-carrot { --g: #e8501a; --m: #111111; --a: #f5f2ec; }
+.av-m { fill: var(--m); }
+.av-a { fill: var(--a); }
+.av-g { fill: var(--g); }
+.av-ms { fill: none; stroke: var(--m); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.av-as { fill: none; stroke: var(--a); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.av-gs { stroke: var(--g); stroke-width: 1.3; stroke-linecap: round; }
+.av-fine { display: var(--fine, inline); }
+.av-s32 { --fine: none; }
+.media-avatar { width: min(56%, 220px); height: auto; aspect-ratio: 1; }
+
+.st-strip { min-width: 0; max-width: 100%; }
+.st-list {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 6px 2px 8px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+.st-item { flex: none; scroll-snap-align: start; }
+.st-ring {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 92px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.st-ring:focus-visible, .st-card :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.st-ringwrap { position: relative; display: grid; place-items: center; }
+.st-arcs { position: absolute; inset: 0; overflow: visible; }
+.st-arcs path { fill: none; }
+.st-arcs.unseen path { stroke: #e8501a; stroke-width: 3; }
+.st-arcs.seen path { stroke: color-mix(in srgb, var(--c-fg) 60%, var(--c-bg)); stroke-width: 1.5; }
+.st-photo { border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-fg) 30%, var(--c-bg)); }
+.st-dot { position: absolute; right: 4px; bottom: 4px; width: 14px; height: 14px; border-radius: 50%; background: #e8501a; border: 2px solid var(--c-bg); }
+.st-name { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; font-weight: 600; }
+.st-badge { display: inline-grid; place-items: center; width: 14px; height: 14px; margin-left: 4px; border-radius: 50%; background: var(--c-fg); color: var(--c-bg); vertical-align: -2px; }
+.st-chip { padding: 1px 8px; border-radius: 999px; border: 1.5px solid currentColor; font-size: 0.75rem; line-height: 1.4; }
+@media (prefers-reduced-motion: no-preference) {
+  .st-arcs.unseen path { stroke-dasharray: 1; animation: st-draw 0.5s ease-out both; }
+  .st-body { animation: st-in 0.35s var(--ease) both; }
+}
+@keyframes st-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes st-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.st-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, #111111 62%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.st-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #111111;
+  color: #f5f2ec;
+  touch-action: pan-x;
+}
+.st-card.nt { background: #e8501a; color: #111111; }
+@media (min-width: 640px) {
+  .st-card { width: 360px; height: min(640px, 92dvh); border-radius: 20px; box-shadow: 0 24px 60px -20px #000000; }
+}
+.st-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.st-scrim { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, #111111 78%, transparent); }
+.st-prog { position: relative; z-index: 3; display: flex; gap: 3px; padding: 10px 10px 0; }
+.st-prog i { flex: 1; height: 3px; overflow: hidden; border-radius: 2px; background: color-mix(in srgb, currentColor 45%, transparent); }
+.st-prog b { display: block; height: 100%; background: currentColor; transition: width 100ms linear; }
+.st-head { position: relative; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 6px 6px 0 10px; font-size: 0.85rem; }
+.st-hname { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0; }
+.st-hname b { font-weight: 600; }
+.st-age { font-size: 0.75rem; opacity: 0.85; }
+.st-vtag { padding: 1px 8px; font-size: 0.75rem; background: transparent; color: inherit; box-shadow: inset 0 0 0 1.5px currentColor; }
+.st-sp { flex: 1; }
+.st-ib { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.st-body { position: relative; z-index: 1; display: flex; flex: 1; flex-direction: column; justify-content: center; gap: 8px; padding: 0 18px; }
+.st-body p, .st-body h3 { margin: 0; }
+.st-body h3 { font-size: 1.5rem; }
+.st-kind { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+.st-note { font: 600 26px/1.2 var(--f-display); overflow-wrap: anywhere; }
+.st-win { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.st-win li { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1.5px solid color-mix(in srgb, #f5f2ec 60%, transparent); border-radius: 12px; font-weight: 600; }
+.st-win li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #e8501a; }
+.st-state { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 24px; text-align: center; }
+.st-zone { position: absolute; top: 110px; bottom: 130px; z-index: 2; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.st-zl { left: 0; width: 35%; }
+.st-zr { right: 0; width: 65%; }
+.st-foot { position: relative; z-index: 3; display: grid; gap: 4px; padding: 12px 14px 14px; }
+.st-cta { min-height: 48px; border: 0; border-radius: 999px; background: #f5f2ec; color: #111111; font: inherit; font-weight: 600; cursor: pointer; }
+.st-flag { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 0.85rem; cursor: pointer; }
+
+.st-own { margin: 0; padding: 0; list-style: none; overflow: hidden; border: 1.5px solid var(--c-line); border-radius: 16px; }
+.st-own li { display: grid; gap: 6px; padding: 12px 14px; border-top: 1.5px solid var(--c-line); }
+.st-own li:first-child { border-top: 0; }
+.st-own p { margin: 0; overflow-wrap: anywhere; }
+.st-ownrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.st-statechip { padding: 1px 10px; border: 1.5px solid var(--c-fg); border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.st-statechip.active { background: var(--c-fg); color: var(--c-bg); }
+.st-statechip.expired { border-color: color-mix(in srgb, var(--c-fg) 55%, transparent); color: var(--c-muted); }
+.st-statechip.removed { border: 2px solid #e8501a; }
+.st-thumb { width: 56px; height: 56px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 12px; background: var(--c-chip); color: inherit; cursor: pointer; }
+.st-thumb[aria-checked="true"] { border-color: var(--c-fg); outline: 2px solid #e8501a; outline-offset: 2px; }
+.st-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.st-preview { display: grid; gap: 4px; padding: 14px; border-radius: 16px; background: #111111; color: #f5f2ec; overflow-wrap: anywhere; }
+.st-preview.nt { background: #e8501a; color: #111111; }
+.st-prevhint { color: inherit; opacity: 0.85; }

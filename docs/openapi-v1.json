@@ -895,6 +895,95 @@
         "title": "AdminRestrictionRead",
         "type": "object"
       },
+      "AdminStory": {
+        "properties": {
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "availability",
+              "note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "profile_id": {
+            "format": "uuid",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "removal_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Removal Note"
+          },
+          "removed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Removed At"
+          },
+          "report_count": {
+            "title": "Report Count",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "active",
+              "expired",
+              "removed"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "profile_id",
+          "display_name",
+          "kind",
+          "caption",
+          "created_at",
+          "expires_at",
+          "state",
+          "report_count"
+        ],
+        "title": "AdminStory",
+        "type": "object"
+      },
       "AdminSummary": {
         "properties": {
           "bookings": {
@@ -2998,6 +3087,94 @@
         "title": "OtpVerification",
         "type": "object"
       },
+      "OwnStory": {
+        "properties": {
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "availability",
+              "note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryPhoto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "removal_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Removal Note"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryService"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "active",
+              "expired",
+              "removed"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/StoryWindow"
+            },
+            "title": "Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "caption",
+          "created_at",
+          "expires_at",
+          "state"
+        ],
+        "title": "OwnStory",
+        "type": "object"
+      },
       "PaymentResponse": {
         "properties": {
           "amount_minor": {
@@ -3998,6 +4175,254 @@
           "result"
         ],
         "title": "SimulateWrite",
+        "type": "object"
+      },
+      "StoryRemove": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "StoryRemove",
+        "type": "object"
+      },
+      "StoryReportResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "StoryReportResponse",
+        "type": "object"
+      },
+      "StoryReportWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "inappropriate_request",
+              "fake_profile",
+              "fraud",
+              "other"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "title": "StoryReportWrite",
+        "type": "object"
+      },
+      "StoryRing": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "has_availability": {
+            "title": "Has Availability",
+            "type": "boolean"
+          },
+          "latest_at": {
+            "format": "date-time",
+            "title": "Latest At",
+            "type": "string"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryPhoto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_id": {
+            "format": "uuid",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "verified": {
+            "default": true,
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "profile_id",
+          "display_name",
+          "count",
+          "latest_at",
+          "has_availability"
+        ],
+        "title": "StoryRing",
+        "type": "object"
+      },
+      "StorySlide": {
+        "properties": {
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "availability",
+              "note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryPhoto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscoveryService"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/StoryWindow"
+            },
+            "title": "Windows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "caption",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "StorySlide",
+        "type": "object"
+      },
+      "StoryWindow": {
+        "properties": {
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "StoryWindow",
+        "type": "object"
+      },
+      "StoryWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "caption": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Caption",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "availability",
+              "note"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "photo_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One of the owner's own photos.",
+            "title": "Photo Id"
+          },
+          "service_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "One of the owner's own services.",
+            "title": "Service Id"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "StoryWrite",
         "type": "object"
       },
       "SupportRead": {
@@ -9542,6 +9967,122 @@
         ]
       }
     },
+    "/api/v1/companions/me/stories": {
+      "get": {
+        "description": "Active cards plus the last three days, so the owner sees why a card disappeared.",
+        "operationId": "list_own_stories_api_v1_companions_me_stories_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OwnStory"
+                  },
+                  "title": "Response List Own Stories Api V1 Companions Me Stories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Own Stories",
+        "tags": [
+          "companion stories"
+        ]
+      },
+      "post": {
+        "operationId": "create_story_api_v1_companions_me_stories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnStory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Story",
+        "tags": [
+          "companion stories"
+        ]
+      }
+    },
+    "/api/v1/companions/me/stories/{story_id}": {
+      "delete": {
+        "operationId": "delete_own_story_api_v1_companions_me_stories__story_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "story_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Story Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Own Story",
+        "tags": [
+          "companion stories"
+        ]
+      }
+    },
     "/api/v1/discovery/companions": {
       "get": {
         "operationId": "search_companions_api_v1_discovery_companions_get",
@@ -9918,6 +10459,53 @@
         ]
       }
     },
+    "/api/v1/discovery/companions/{profile_id}/stories": {
+      "get": {
+        "operationId": "companion_stories_api_v1_discovery_companions__profile_id__stories_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StorySlide"
+                  },
+                  "title": "Response Companion Stories Api V1 Discovery Companions  Profile Id  Stories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Companion Stories",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
     "/api/v1/discovery/favorites": {
       "get": {
         "operationId": "list_favorites_api_v1_discovery_favorites_get",
@@ -10032,6 +10620,114 @@
         "summary": "Add Favorite",
         "tags": [
           "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/stories": {
+      "get": {
+        "description": "Companions with at least one card that still shows something true, newest first.",
+        "operationId": "story_rings_api_v1_discovery_stories_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoryRing"
+                  },
+                  "title": "Response Story Rings Api V1 Discovery Stories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Story Rings",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
+    "/api/v1/discovery/stories/{story_id}/report": {
+      "post": {
+        "operationId": "report_story_api_v1_discovery_stories__story_id__report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "story_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Story Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryReportWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Report Story",
+        "tags": [
+          "stories"
         ]
       }
     },
@@ -11932,6 +12628,133 @@
         "summary": "Delete Contact",
         "tags": [
           "safety"
+        ]
+      }
+    },
+    "/api/v1/stories/admin": {
+      "get": {
+        "operationId": "list_stories_api_v1_stories_admin_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "default": "active",
+              "enum": [
+                "active",
+                "removed",
+                "all"
+              ],
+              "title": "State",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminStory"
+                  },
+                  "title": "Response List Stories Api V1 Stories Admin Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Stories",
+        "tags": [
+          "stories admin"
+        ]
+      }
+    },
+    "/api/v1/stories/admin/{story_id}/remove": {
+      "post": {
+        "operationId": "remove_story_api_v1_stories_admin__story_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "story_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Story Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryRemove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Story",
+        "tags": [
+          "stories admin"
         ]
       }
     },

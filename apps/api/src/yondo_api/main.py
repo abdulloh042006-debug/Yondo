@@ -53,6 +53,9 @@ from yondo_api.payments.tezcheck import TezCheckPaymentProvider
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
+from yondo_api.stories.admin import router as stories_admin_router
+from yondo_api.stories.router import owner_router as stories_owner_router
+from yondo_api.stories.router import public_router as stories_public_router
 
 
 def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
@@ -153,6 +156,9 @@ def create_application(
         admin_router,
         safety_router,
         safety_admin_router,
+        stories_owner_router,
+        stories_public_router,
+        stories_admin_router,
         account_router,
         account_admin_router,
         legal_router,

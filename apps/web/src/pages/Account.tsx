@@ -6,7 +6,7 @@ import { t } from '../i18n';
 import { formatInstant, prettyPhone } from '../lib/format';
 import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
-import { Icon } from '../ui/Icon';
+import { Avatar } from '../components/avatar/Avatar';
 import { Field } from '../ui/form';
 import { useResource } from '../lib/useResource';
 import { Reveal } from '../ui/motion';
@@ -91,9 +91,7 @@ function AccountView({ user }: { user: User }) {
       <Reveal>
         <div className="glass pad stack">
           <div className="profile-head">
-            <span className="avatar" aria-hidden="true">
-              <Icon name="user" size={26} />
-            </span>
+            <Avatar seed={user.id} size={64} />
             <div className="stack" style={{ gap: 2 }}>
               <h2 style={{ margin: 0 }}>{prettyPhone(user.phone_number)}</h2>
               <span className="muted">{user.roles.map(roleLabel).join(', ') || '—'}</span>
@@ -114,6 +112,7 @@ function AccountView({ user }: { user: User }) {
             <MenuLink to="/notifications" title={t('nav.notifications')} hint={t('account.menu.notificationsHint')} badge={unread.data?.unread_count ? t('notif.unread', { n: unread.data.unread_count }) : undefined} />
             <MenuLink to="/favorites" title={t('nav.favorites')} hint={t('account.menu.favoritesHint')} />
             {user.roles.includes('companion') && <MenuLink to="/studio" title={t('account.studio')} hint={t('account.menu.studioHint')} />}
+            {user.roles.includes('companion') && <MenuLink to="/studio/cards" title={t('stories.mine')} hint={t('stories.menuHint')} />}
             <MenuLink to="/help" title={t('help.title')} hint={t('account.menu.helpHint')} />
             <MenuLink to="/settings" title={t('settings.title')} hint={t('account.menu.settingsHint')} />
           </ul>

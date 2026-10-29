@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { Avatar } from '../components/avatar/Avatar';
 import { t } from '../i18n';
 import { formatMoney, initial } from '../lib/format';
 import { serviceLabel } from '../lib/labels';
@@ -15,8 +16,8 @@ export type Photo = Schemas['DiscoveryPhoto'];
 const urlCache = new Map<string, string>();
 const NO_IDS: Set<string> = new Set();
 
-/** Fetches the short-lived signed URL for a public photo; falls back to a gradient + initial. */
-export function CompanionImage({ profileId, photo, name, rounded }: { profileId: string; photo?: Photo; name: string; rounded?: boolean }) {
+/** Short-lived signed URL of a public photo (cached per photo id); null while loading, absent or unavailable. */
+export function usePublicPhotoUrl(profileId: string, photo?: Photo | null): string | null {
   const [url, setUrl] = useState<string | null>(photo ? (urlCache.get(photo.id) ?? null) : null);
   useEffect(() => {
     if (!photo || urlCache.has(photo.id)) return;
@@ -34,9 +35,21 @@ export function CompanionImage({ profileId, photo, name, rounded }: { profileId:
       live = false;
     };
   }, [photo, profileId]);
+  return photo ? url : null;
+}
+
+/** Shows the photo; without one the geometric avatar (seeded by the profile id) stands in, with the initial while a photo loads. */
+export function CompanionImage({ profileId, photo, name, rounded }: { profileId: string; photo?: Photo; name: string; rounded?: boolean }) {
+  const url = usePublicPhotoUrl(profileId, photo);
   return (
     <div className="media" style={rounded ? { borderRadius: 'var(--r-md)' } : undefined}>
-      {url ? <img className="img-in" onLoad={(e) => e.currentTarget.classList.add('loaded')} src={url} alt={photo?.caption || t('card.photoAlt', { name })} loading="lazy" width={photo?.width} height={photo?.height} /> : <span className="initial" aria-hidden="true">{initial(name)}</span>}
+      {url ? (
+        <img className="img-in" onLoad={(e) => e.currentTarget.classList.add('loaded')} src={url} alt={photo?.caption || t('card.photoAlt', { name })} loading="lazy" width={photo?.width} height={photo?.height} />
+      ) : photo ? (
+        <span className="initial" aria-hidden="true">{initial(name)}</span>
+      ) : (
+        <Avatar seed={profileId} size={96} className="media-avatar" />
+      )}
     </div>
   );
 }

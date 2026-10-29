@@ -112,6 +112,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/cancellations/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Audit */
+        get: operations["list_audit_api_v1_admin_cancellations_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/bookings/{booking_id}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record No Show
+         * @description Record that one participant did not show up (nothing sets 'no-show' elsewhere).
+         */
+        post: operations["record_no_show_api_v1_admin_cancellations_bookings__booking_id__no_show_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cases */
+        get: operations["list_cases_api_v1_admin_cancellations_cases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/cases/{case_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Case
+         * @description Review finished without a restriction. A closed case moves the counting baseline.
+         */
+        post: operations["close_case_api_v1_admin_cancellations_cases__case_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["list_events_api_v1_admin_cancellations_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/events/{event_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Event
+         * @description Excuse an event (emergency accepted: it stops counting) or uphold it (it counts).
+         */
+        post: operations["review_event_api_v1_admin_cancellations_events__event_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/restrictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Restrictions */
+        get: operations["list_restrictions_api_v1_admin_cancellations_restrictions_get"];
+        put?: never;
+        /**
+         * Create Restriction
+         * @description The only way a restriction starts: a temporary, reasoned, audited admin decision.
+         */
+        post: operations["create_restriction_api_v1_admin_cancellations_restrictions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/restrictions/{restriction_id}/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift Restriction */
+        post: operations["lift_restriction_api_v1_admin_cancellations_restrictions__restriction_id__lift_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cancellations/users/{user_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User Summary */
+        get: operations["user_summary_api_v1_admin_cancellations_users__user_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/gifts/test-orders": {
         parameters: {
             query?: never;
@@ -634,6 +800,63 @@ export interface paths {
         put?: never;
         /** Decline Booking */
         post: operations["decline_booking_api_v1_bookings__booking_id__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cancellations/me/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Events
+         * @description Events counted against the caller only; other people's events are never readable.
+         */
+        get: operations["my_events_api_v1_cancellations_me_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cancellations/me/events/{event_id}/dispute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dispute Event
+         * @description Contest an event and/or claim an emergency. An admin decides; a claim does not count.
+         */
+        post: operations["dispute_event_api_v1_cancellations_me_events__event_id__dispute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cancellations/me/restrictions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Restrictions */
+        get: operations["my_restrictions_api_v1_cancellations_me_restrictions_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1164,6 +1387,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companions/me/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Own Stories
+         * @description Active cards plus the last three days, so the owner sees why a card disappeared.
+         */
+        get: operations["list_own_stories_api_v1_companions_me_stories_get"];
+        put?: never;
+        /** Create Story */
+        post: operations["create_story_api_v1_companions_me_stories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companions/me/stories/{story_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Own Story */
+        delete: operations["delete_own_story_api_v1_companions_me_stories__story_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discovery/companions": {
         parameters: {
             query?: never;
@@ -1215,6 +1476,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/discovery/companions/{profile_id}/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Companion Stories */
+        get: operations["companion_stories_api_v1_discovery_companions__profile_id__stories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discovery/favorites": {
         parameters: {
             query?: never;
@@ -1245,6 +1523,43 @@ export interface paths {
         post?: never;
         /** Remove Favorite */
         delete: operations["remove_favorite_api_v1_discovery_favorites__profile_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/discovery/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Story Rings
+         * @description Companions with at least one card that still shows something true, newest first.
+         */
+        get: operations["story_rings_api_v1_discovery_stories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/discovery/stories/{story_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report Story */
+        post: operations["report_story_api_v1_discovery_stories__story_id__report_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1899,6 +2214,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stories/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Stories */
+        get: operations["list_stories_api_v1_stories_admin_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stories/admin/{story_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Story */
+        post: operations["remove_story_api_v1_stories_admin__story_id__remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/support/requests": {
         parameters: {
             query?: never;
@@ -2176,6 +2525,51 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** AdminCaseRead */
+        AdminCaseRead: {
+            /** Closed At */
+            closed_at: string | null;
+            /** Closed By */
+            closed_by: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /**
+             * Opened At
+             * Format: date-time
+             */
+            opened_at: string;
+            /** Resolution */
+            resolution: ("no_action" | "restricted") | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "customer" | "companion";
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "closed";
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "cancellations" | "last_minute" | "no_shows" | "emergency_claims";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** AdminDeletionRead */
         AdminDeletionRead: {
             /** Completed At */
@@ -2205,6 +2599,73 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
+        };
+        /** AdminEventRead */
+        AdminEventRead: {
+            /** Actor User Id */
+            actor_user_id: string | null;
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /**
+             * Booking Starts At
+             * Format: date-time
+             */
+            booking_starts_at: string;
+            /** Booking Status Before */
+            booking_status_before: string;
+            /** Dispute Note */
+            dispute_note: string | null;
+            /** Disputed At */
+            disputed_at: string | null;
+            /**
+             * Excuse State
+             * @enum {string}
+             */
+            excuse_state: "none" | "claimed" | "granted" | "rejected";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "cancelled" | "declined" | "no_show" | "expired";
+            /** Last Minute */
+            last_minute: boolean;
+            /** Lead Seconds */
+            lead_seconds: number;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Party
+             * @enum {string}
+             */
+            party: "customer" | "companion" | "admin" | "system";
+            /** Reason */
+            reason: string;
+            /** Review Note */
+            review_note: string | null;
+            /**
+             * Review State
+             * @enum {string}
+             */
+            review_state: "none" | "open" | "reviewed";
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Subject Role */
+            subject_role: ("customer" | "companion") | null;
+            /** Subject User Id */
+            subject_user_id: string | null;
         };
         /** AdminReportRead */
         AdminReportRead: {
@@ -2238,6 +2699,94 @@ export interface components {
             reporter_id: string;
             /** Status */
             status: string;
+        };
+        /** AdminRestrictionRead */
+        AdminRestrictionRead: {
+            /** Active */
+            active: boolean;
+            /** Case Id */
+            case_id: string | null;
+            /**
+             * Created By
+             * Format: uuid
+             */
+            created_by: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lift Reason */
+            lift_reason: string | null;
+            /** Lifted At */
+            lifted_at: string | null;
+            /** Lifted By */
+            lifted_by: string | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "customer" | "companion";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** AdminStory */
+        AdminStory: {
+            /** Caption */
+            caption: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "availability" | "note";
+            /**
+             * Profile Id
+             * Format: uuid
+             */
+            profile_id: string;
+            /** Removal Note */
+            removal_note?: string | null;
+            /** Removed At */
+            removed_at?: string | null;
+            /** Report Count */
+            report_count: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "active" | "expired" | "removed";
         };
         /** AdminSummary */
         AdminSummary: {
@@ -2411,6 +2960,20 @@ export interface components {
              */
             reason: string;
         };
+        /** BookingCancelRequest */
+        BookingCancelRequest: {
+            /**
+             * Emergency
+             * @description Claim an emergency: the cancellation is not counted until an admin decides.
+             * @default false
+             */
+            emergency: boolean;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
         /** BookingCreate */
         BookingCreate: {
             /** Duration Minutes */
@@ -2495,6 +3058,45 @@ export interface components {
          * @enum {string}
          */
         BookingStatus: "pending" | "accepted" | "confirmed" | "active" | "completed" | "cancelled" | "no-show" | "disputed" | "expired";
+        /** CancellationAuditRead */
+        CancellationAuditRead: {
+            /** Action */
+            action: string;
+            /** Actor Kind */
+            actor_kind: string;
+            /** Actor User Id */
+            actor_user_id: string | null;
+            /** Booking Id */
+            booking_id: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Event Id */
+            event_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** New State */
+            new_state: {
+                [key: string]: unknown;
+            } | null;
+            /** Previous State */
+            previous_state: {
+                [key: string]: unknown;
+            } | null;
+            /** Reason */
+            reason: string | null;
+            /** Restriction Id */
+            restriction_id: string | null;
+            /** Subject User Id */
+            subject_user_id: string | null;
+        };
         /** CartRead */
         CartRead: {
             /**
@@ -2509,6 +3111,11 @@ export interface components {
         CartWrite: {
             /** Quantity */
             quantity: number;
+        };
+        /** CaseClose */
+        CaseClose: {
+            /** Note */
+            note: string;
         };
         /** ChatMessageResponse */
         ChatMessageResponse: {
@@ -2699,6 +3306,19 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending" | "approved" | "rejected";
+        /** CountersRead */
+        CountersRead: {
+            /** Cancellations */
+            cancellations: number;
+            /** Emergency Claims */
+            emergency_claims: number;
+            /** Excused */
+            excused: number;
+            /** Last Minute */
+            last_minute: number;
+            /** No Shows */
+            no_shows: number;
+        };
         /** DeletionRequestWrite */
         DeletionRequestWrite: {
             /**
@@ -2778,6 +3398,17 @@ export interface components {
             /** Unit Minutes */
             unit_minutes: number;
         };
+        /** DisputeWrite */
+        DisputeWrite: {
+            /**
+             * Emergency
+             * @description Claim that this was an emergency.
+             * @default false
+             */
+            emergency: boolean;
+            /** Note */
+            note: string;
+        };
         /** EnrollmentRead */
         EnrollmentRead: {
             /** Enabled */
@@ -2792,6 +3423,16 @@ export interface components {
         EnrollmentWrite: {
             /** Enabled */
             enabled: boolean;
+        };
+        /** EventReview */
+        EventReview: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "excuse" | "uphold";
+            /** Note */
+            note: string;
         };
         /** FavoriteResponse */
         FavoriteResponse: {
@@ -2888,6 +3529,94 @@ export interface components {
             /** Ended Count */
             ended_count: number;
         };
+        /**
+         * MyEventRead
+         * @description A user's own event. No user ids at all: a customer never sees a companion's id.
+         */
+        MyEventRead: {
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /**
+             * Excuse State
+             * @enum {string}
+             */
+            excuse_state: "none" | "claimed" | "granted" | "rejected";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "cancelled" | "declined" | "no_show" | "expired";
+            /** Last Minute */
+            last_minute: boolean;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Review State
+             * @enum {string}
+             */
+            review_state: "none" | "open" | "reviewed";
+            /** Subject Role */
+            subject_role: ("customer" | "companion") | null;
+        };
+        /**
+         * MyRestrictionRead
+         * @description Own restriction: end time and role only; the admin's reason stays internal.
+         */
+        MyRestrictionRead: {
+            /** Active */
+            active: boolean;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lifted At */
+            lifted_at: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "customer" | "companion";
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+        };
+        /** NoShowWrite */
+        NoShowWrite: {
+            /**
+             * Excused
+             * @default false
+             */
+            excused: boolean;
+            /** Note */
+            note: string;
+            /**
+             * Party
+             * @description Who did not show up.
+             * @enum {string}
+             */
+            party: "customer" | "companion";
+        };
         /** NotificationRead */
         NotificationRead: {
             /** Booking Id */
@@ -2945,6 +3674,42 @@ export interface components {
             code: string;
             /** Phone Number */
             phone_number: string;
+        };
+        /** OwnStory */
+        OwnStory: {
+            /** Caption */
+            caption: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "availability" | "note";
+            photo?: components["schemas"]["DiscoveryPhoto"] | null;
+            /** Removal Note */
+            removal_note?: string | null;
+            service?: components["schemas"]["DiscoveryService"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "active" | "expired" | "removed";
+            /** Windows */
+            windows?: components["schemas"]["StoryWindow"][];
         };
         /** PaymentResponse */
         PaymentResponse: {
@@ -3182,6 +3947,33 @@ export interface components {
              */
             reported_user_id?: string | null;
         };
+        /** RestrictionCreate */
+        RestrictionCreate: {
+            /** Case Id */
+            case_id?: string | null;
+            /**
+             * Duration Days
+             * @description Omitted = the configured default.
+             */
+            duration_days?: number | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "customer" | "companion";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** RestrictionLift */
+        RestrictionLift: {
+            /** Reason */
+            reason: string;
+        };
         /** ReviewRead */
         ReviewRead: {
             /**
@@ -3231,6 +4023,26 @@ export interface components {
             /** Roles */
             roles: components["schemas"]["UserRoleType"][];
         };
+        /** RoleSummary */
+        RoleSummary: {
+            active_restriction: components["schemas"]["AdminRestrictionRead"] | null;
+            counters: components["schemas"]["CountersRead"];
+            /** Needs Review */
+            needs_review: boolean;
+            /** Open Case Ids */
+            open_case_ids: string[];
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "customer" | "companion";
+            /** Thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
+            /** Window Days */
+            window_days: number;
+        };
         /** ServiceResponse */
         ServiceResponse: {
             /** Currency */
@@ -3277,6 +4089,124 @@ export interface components {
         SimulateWrite: {
             /** Result */
             result: string;
+        };
+        /** StoryRemove */
+        StoryRemove: {
+            /** Note */
+            note: string;
+        };
+        /** StoryReportResponse */
+        StoryReportResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+        };
+        /** StoryReportWrite */
+        StoryReportWrite: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "inappropriate_request" | "fake_profile" | "fraud" | "other";
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+        };
+        /** StoryRing */
+        StoryRing: {
+            /** Count */
+            count: number;
+            /** Display Name */
+            display_name: string;
+            /** Has Availability */
+            has_availability: boolean;
+            /**
+             * Latest At
+             * Format: date-time
+             */
+            latest_at: string;
+            photo?: components["schemas"]["DiscoveryPhoto"] | null;
+            /**
+             * Profile Id
+             * Format: uuid
+             */
+            profile_id: string;
+            /**
+             * Verified
+             * @default true
+             */
+            verified: boolean;
+        };
+        /** StorySlide */
+        StorySlide: {
+            /** Caption */
+            caption: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "availability" | "note";
+            photo?: components["schemas"]["DiscoveryPhoto"] | null;
+            service?: components["schemas"]["DiscoveryService"] | null;
+            /** Windows */
+            windows?: components["schemas"]["StoryWindow"][];
+        };
+        /** StoryWindow */
+        StoryWindow: {
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+        };
+        /** StoryWrite */
+        StoryWrite: {
+            /**
+             * Caption
+             * @default
+             */
+            caption: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "availability" | "note";
+            /**
+             * Photo Id
+             * @description One of the owner's own photos.
+             */
+            photo_id?: string | null;
+            /**
+             * Service Id
+             * @description One of the owner's own services.
+             */
+            service_id?: string | null;
         };
         /** SupportRead */
         SupportRead: {
@@ -3416,6 +4346,16 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+        };
+        /** UserCancellationSummary */
+        UserCancellationSummary: {
+            /** Roles */
+            roles: components["schemas"]["RoleSummary"][];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /**
          * UserProfileUpdate
@@ -3700,6 +4640,359 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminBookingRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_audit_api_v1_admin_cancellations_audit_get: {
+        parameters: {
+            query?: {
+                subject_user_id?: string | null;
+                booking_id?: string | null;
+                event_id?: string | null;
+                restriction_id?: string | null;
+                case_id?: string | null;
+                action?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CancellationAuditRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_no_show_api_v1_admin_cancellations_bookings__booking_id__no_show_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoShowWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cases_api_v1_admin_cancellations_cases_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "closed") | null;
+                trigger?: ("cancellations" | "last_minute" | "no_shows" | "emergency_claims") | null;
+                user_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCaseRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_case_api_v1_admin_cancellations_cases__case_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseClose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCaseRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_admin_cancellations_events_get: {
+        parameters: {
+            query?: {
+                subject_user_id?: string | null;
+                booking_id?: string | null;
+                kind?: ("cancelled" | "declined" | "no_show" | "expired") | null;
+                party?: ("customer" | "companion" | "admin" | "system") | null;
+                last_minute?: boolean | null;
+                excuse_state?: ("none" | "claimed" | "granted" | "rejected") | null;
+                review_state?: ("none" | "open" | "reviewed") | null;
+                since?: string | null;
+                until?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_event_api_v1_admin_cancellations_events__event_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_restrictions_api_v1_admin_cancellations_restrictions_get: {
+        parameters: {
+            query?: {
+                user_id?: string | null;
+                role?: ("customer" | "companion") | null;
+                active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRestrictionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_restriction_api_v1_admin_cancellations_restrictions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestrictionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRestrictionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lift_restriction_api_v1_admin_cancellations_restrictions__restriction_id__lift_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                restriction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestrictionLift"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRestrictionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_summary_api_v1_admin_cancellations_users__user_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserCancellationSummary"];
                 };
             };
             /** @description Validation Error */
@@ -4632,7 +5925,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BookingCancel"];
+                "application/json": components["schemas"]["BookingCancelRequest"];
             };
         };
         responses: {
@@ -4678,6 +5971,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_events_api_v1_cancellations_me_events_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyEventRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dispute_event_api_v1_cancellations_me_events__event_id__dispute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisputeWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyEventRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_restrictions_api_v1_cancellations_me_restrictions_get: {
+        parameters: {
+            query?: {
+                active_only?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyRestrictionRead"][];
                 };
             };
             /** @description Validation Error */
@@ -5862,6 +7254,88 @@ export interface operations {
             };
         };
     };
+    list_own_stories_api_v1_companions_me_stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnStory"][];
+                };
+            };
+        };
+    };
+    create_story_api_v1_companions_me_stories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnStory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_own_story_api_v1_companions_me_stories__story_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     search_companions_api_v1_discovery_companions_get: {
         parameters: {
             query?: {
@@ -5970,6 +7444,37 @@ export interface operations {
             };
         };
     };
+    companion_stories_api_v1_discovery_companions__profile_id__stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorySlide"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_favorites_api_v1_discovery_favorites_get: {
         parameters: {
             query?: never;
@@ -6038,6 +7543,72 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    story_rings_api_v1_discovery_stories_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryRing"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_story_api_v1_discovery_stories__story_id__report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryReportWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryReportResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -7312,6 +8883,73 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stories_api_v1_stories_admin_get: {
+        parameters: {
+            query?: {
+                state?: "active" | "removed" | "all";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStory"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_story_api_v1_stories_admin__story_id__remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryRemove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStory"];
+                };
             };
             /** @description Validation Error */
             422: {

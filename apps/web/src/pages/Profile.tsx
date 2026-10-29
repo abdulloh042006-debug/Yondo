@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
@@ -18,6 +18,8 @@ export function Profile() {
   const res = useResource((signal) => api.get<Card>(`/discovery/companions/${id}`, { anonymous: true, signal }), [id]);
   const fav = useFavorites();
   const [booking, setBooking] = useState(false);
+  // From a story card: ?service=<id> preselects that service in the booking dialog (nothing is booked by it).
+  const preselect = useSearchParams()[0].get('service') ?? undefined;
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -128,15 +130,15 @@ export function Profile() {
         </div>,
         document.body,
       )}
-      <BookingDialog card={c} open={booking} onClose={() => setBooking(false)} />
+      <BookingDialog card={c} open={booking} preselect={preselect} onClose={() => setBooking(false)} />
     </div>
   );
 }
 
-function BookingDialog({ card, open, onClose }: { card: Card; open: boolean; onClose: () => void }) {
+function BookingDialog({ card, open, preselect, onClose }: { card: Card; open: boolean; preselect?: string; onClose: () => void }) {
   const toast = useToast();
   const navigate = useNavigate();
-  const [serviceId, setServiceId] = useState(card.services[0]?.id ?? '');
+  const [serviceId, setServiceId] = useState(card.services.find((s) => s.id === preselect)?.id ?? card.services[0]?.id ?? '');
   const [when, setWhen] = useState('');
   const [units, setUnits] = useState(1);
   const [place, setPlace] = useState('');
