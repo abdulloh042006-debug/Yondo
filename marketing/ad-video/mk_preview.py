@@ -72,7 +72,7 @@ footer{{padding:28px 0 48px;color:var(--muted);font-size:14px;border-top:1px sol
 <header class="top"><nav class="nav glass" aria-label="Ko‘rinish">{LOGO('currentColor')}<div class="segs"><div class="seg" role="group" aria-label="Ko‘rinish"><button type="button" id="t-k" aria-pressed="true">Kunduzgi</button><button type="button" id="t-t" aria-pressed="false">Tungi</button></div><div class="seg" role="group" aria-label="Qurilma"><button type="button" id="b-m" aria-pressed="true">Mobil</button><button type="button" id="b-d" aria-pressed="false">Kompyuter</button></div></div></nav></header>
 <main class="wrap">
 <section class="hero">{LOGO('currentColor')}<h1>Doim yoningda.</h1>
-<p>Suhbat, sayr va til mashqi uchun hamroh topish platformasi. Quyida ilovaning yangi “Yondo” mavzusidagi ekranlari: mijoz, hamroh va administrator uchun.</p>
+<p>Suhbat va sayr uchun hamroh topish platformasi. Quyida ilovaning yangi “Yondo” mavzusidagi ekranlari: mijoz, hamroh va administrator uchun.</p>
 <div class="pills"><span class="pill glass">Ochiq narxlar</span><span class="pill glass">Jamoat joylarida uchrashuv</span><span class="pill glass">Arizalar moderatsiyasi</span></div></section>
 {secs}
 <section class="themes"><div class="gh"><h2>Kunduzgi va tungi</h2><p>Faqat logotip ranglari: oq, qora va sabzi rang</p></div><div class="rail">{th}</div></section>

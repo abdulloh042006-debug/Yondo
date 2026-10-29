@@ -124,7 +124,7 @@ async def seed(app):
             return headers, uid, profile['id']
 
         _, _, madina_profile = await companion('+998901110011', 'Madina', 'shahar bo‘ylab sayr va kofe suhbati.', 15000000, True)
-        await companion('+998901110012', 'Jasur', 'til mashqi va kitoblar.', 9000000, True, city='Samarqand')
+        await companion('+998901110012', 'Jasur', 'kitoblar va kino haqida suhbat.', 9000000, True, city='Samarqand')
         await companion('+998901110013', 'Sevara', 'tasdiq kutilmoqda.', 12000000, False)
 
         # A booking + a safety report so the admin safety queue has a real record to review.

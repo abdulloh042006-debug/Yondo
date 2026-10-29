@@ -164,7 +164,7 @@ async def seed(app):
             return headers, uid, profile['id']
 
         _, _, madina_profile = await companion(MADINA, 'DEMO Madina', 'DEMO profil: shahar bo‘ylab sayr va kofe suhbati.', 15000000, True)
-        await companion(JASUR, 'DEMO Jasur', 'DEMO profil: til mashqi va kitoblar.', 9000000, True, city='Samarqand')
+        await companion(JASUR, 'DEMO Jasur', 'DEMO profil: kitoblar va kino haqida suhbat.', 9000000, True, city='Samarqand')
         await companion(SEVARA, 'DEMO Sevara', 'DEMO profil: tasdiq kutilmoqda.', 12000000, False)
 
         # A booking + a safety report so the admin safety queue has a real record to review.

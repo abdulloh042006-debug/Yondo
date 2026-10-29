@@ -24,6 +24,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S39 — Removed "til mashqi" (language practice) from the whole project (2026-10-29)
+Done: owner decision 2026-10-29. Removed the phrase from `marketing/ad-video` (`build_timeline.py` UZ+RU lines and chips, `README.md`, `mk_preview.py`, `server_video.py` seed bio), `infra/deploy/demo/demo_app.py` seed bio, and the prototype mock service text `Ingliz tilida suhbat` -> `Erkin mavzuda suhbat` (`mockapi.js`; rebuilt with `node design-prototype/prototype/build.js`: only that string changed in `index.html` and `screens/0N-*.html`). Profile languages / `language` filter kept on purpose. CLAUDE.md §7 got the rule.
+Not done: native-speaker copy review; real `apps/web` i18n already had no such text (grep: 0 hits).
+Next: if the promo video is re-cut, the line is now "suhbat va sayr uchun" / chips Suhbat - Sayr - Kofe.
+Commit: this entry's commit.
+
 ## S38 — Verifier review of the S37 commits, S37 notes committed (2026-10-28)
 Done: new chat after a context reset re-read CLAUDE.md, AGENTS.md, memory and this WORKLOG, then ran the independent verifier agent (read-only) over `47e1bd7`, `814684f` and the uncommitted CLAUDE.md/WORKLOG edits: **APPROVE**, no required fixes. Evidence (verifier run, SQLite, `PYTHONPATH=D:/Yondo/apps/api/src`): backend 336 passed + 9 skipped; demo harness 8 passed (CI invocation from `apps/api`); `ruff check .` in `apps/api` PASS; `export_openapi.py --check` PASS; secrets scan clean; the regression test covers the shallow, image-like and repo layouts.
 Not run: the live Render/Neon claims (taken from S37), web vitest, e2e. Notes: the venv's editable `yondo_api` points to another worktree (`copilot-worktrees\...`): run `pip install -e apps/api` from `D:\Yondo` or set `PYTHONPATH`; `infra/deploy/demo` has 5 pre-existing ruff findings (I001, FURB162), CI does not lint that folder. CLAUDE.md follow-up at the owner's word ("Ha, o'zgartir"): memory path made generic, the "uncommitted S37 doc edits" line rewritten; this two-line change was committed on the owner's explicit approval, without a second verifier run.

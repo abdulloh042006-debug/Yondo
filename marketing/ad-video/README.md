@@ -18,7 +18,7 @@ Files: `voice/uz-01.wav … uz-07.wav`, `voice/ru-01.wav … ru-07.wav` (not com
 | --- | --- | --- |
 | 1 A | Yangi shahar. Rejangiz bor. [short pause] Hamroh-chi? [neutral] | Новый город. План есть. [short pause] А компания? [neutral] |
 | 2 B | Shaharni ko‘rmoqchiman… lekin kim bilan? [sad] | Хочу увидеть город… но с кем? [sad] |
-| 3 A | Yondo — suhbat, sayr va til mashqi uchun hamroh topish platformasi. [neutral] | Yondo — платформа, где можно найти компаньона для беседы, прогулки и языковой практики. [neutral] |
+| 3 A | Yondo — suhbat va sayr uchun hamroh topish platformasi. [neutral] | Yondo — платформа, где можно найти компаньона для беседы и прогулок. [neutral] |
 | 4 C | Men hamrohman. Tillarim, qiziqishlarim, xizmatlarim va narxlarim — profilimda ochiq. [excited] | Я гид-компаньон. Мои языки, интересы, услуги и цены — открыто в профиле. [excited] |
 | 5 B | Profilni ko‘rdim, narxni oldindan bildim va bron so‘rovini yubordim. [excited] | Посмотрел профиль, сразу узнал цену и отправил запрос на бронь. [excited] |
 | 6 C | Uchrashuvlar — faqat jamoat joylarida. Har bir ariza ko‘rib chiqiladi. [neutral] | Встречи — только в общественных местах. Каждая заявка проходит проверку. [neutral] |
