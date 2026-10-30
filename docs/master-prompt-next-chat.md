@@ -10,7 +10,7 @@ You are continuing work on **Yondo** (companion discovery and booking for Uzbeki
 ## 1. Read first (about 5 minutes; do not re-audit PASS items)
 1. `CLAUDE.md` (rules, product rules §4, owner decisions §7) and `AGENTS.md`.
 2. `docs/WORKLOG.md`: the **S39** entry (newest) and "Next steps".
-3. `docs/stories-avatars-design.md` (the S39 design) and, for the password-login work, `docs/password-login-plan.md` (**it was never on GitHub (an untracked local file of another chat) and as of 2026-10-30 it is gone from `D:\Yondo` and was not found on D: or in the Copilot worktrees**: ask the owner for a copy, otherwise rebuild the plan from the S38 decision in CLAUDE.md §7).
+3. `docs/stories-avatars-design.md` (the S39 design) and, for the password-login work, `docs/password-login-plan.md` (it was a local-only file; the owner wiped the drive on 2026-10-30, so it was **rebuilt from the chat transcript that wrote it** and is now on GitHub; the old local `reports/` and `research_notes/` are in `docs/archive/`, see `docs/archive/README.md`).
 
 ## 2. Where the code is (one local folder: `D:\Yondo`)
 - **Work in `D:\Yondo`.** As of 2026-10-30 it is a clean checkout of **`main`, which is stale** (4 migrations, no web app, no CLAUDE.md, no WORKLOG). An analysis that reads `main` wrongly concludes "Phase 6 done, 147 tests, next = Phase 7": do not trust it. Switch first: `git fetch origin; git switch ccr-15294129-n60ucy` (if `git status` shows modified tracked files, stop and ask the owner).
