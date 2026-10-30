@@ -1,4 +1,4 @@
-# MASTER PROMPT — paste this as the first message of a new chat (written 2026-10-29, end of S39)
+# MASTER PROMPT — paste this as the first message of a new chat (written 2026-10-29, end of S39; folder paths fixed 2026-10-30)
 
 You are continuing work on **Yondo** (companion discovery and booking for Uzbekistan; never a dating/escort service). Repo: `https://github.com/abdulloh042006-debug/Yondo`. Windows 10, PowerShell + Git Bash, Claude Code desktop. Everything here is the starting state; verify facts marked *(verify)* with one cheap command.
 
@@ -10,11 +10,11 @@ You are continuing work on **Yondo** (companion discovery and booking for Uzbeki
 ## 1. Read first (about 5 minutes; do not re-audit PASS items)
 1. `CLAUDE.md` (rules, product rules §4, owner decisions §7) and `AGENTS.md`.
 2. `docs/WORKLOG.md`: the **S39** entry (newest) and "Next steps".
-3. `docs/stories-avatars-design.md` (the S39 design) and, for the password-login work, `docs/password-login-plan.md` (it exists only in the local folder `D:\Yondo`, untracked: it belongs to another chat, do not commit it from here).
+3. `docs/stories-avatars-design.md` (the S39 design) and, for the password-login work, `docs/password-login-plan.md` (**it was never on GitHub (an untracked local file of another chat) and as of 2026-10-30 it is gone from `D:\Yondo` and was not found on D: or in the Copilot worktrees**: ask the owner for a copy, otherwise rebuild the plan from the S38 decision in CLAUDE.md §7).
 
-## 2. Where the code is (two local folders, one repo)
-- `D:\Yondo` = branch `design/prototype` (the live-demo branch; Render redeploys on every push).
-- `D:\Yondo-ccr` = branch **`ccr-15294129-n60ucy`** (the cloud chat's branch). **S39 work is here, pushed as an UNVERIFIED work-in-progress commit** (see §3).
+## 2. Where the code is (one local folder: `D:\Yondo`)
+- **Work in `D:\Yondo`.** As of 2026-10-30 it is a clean checkout of **`main`, which is stale** (4 migrations, no web app, no CLAUDE.md, no WORKLOG). An analysis that reads `main` wrongly concludes "Phase 6 done, 147 tests, next = Phase 7": do not trust it. Switch first: `git fetch origin; git switch ccr-15294129-n60ucy` (if `git status` shows modified tracked files, stop and ask the owner).
+- **`ccr-15294129-n60ucy`** (the cloud chat's branch) is the newest: **S39 work, pushed as an UNVERIFIED work-in-progress commit** (see §3). `design/prototype` is the live-demo branch (Render redeploys on every push). The old second folder `D:\Yondo-ccr` **no longer exists**, and the old local-only files of `D:\Yondo` (`.venv`, `reports/`, `research_notes/`) are gone too: recreate what you need (§6).
 - The branches **diverged**: `origin/design/prototype` has 1 commit that `ccr` lacks (`e2c6937`, removes "til mashqi" from copy, seeds, prototype and video scripts); `ccr` has 13+ commits that `design/prototype` lacks (warm skin, opening animation, S37 backend, S39). Merge-base `f93ccc7`. A fast-forward is impossible: plan one merge (`git fetch`, then merge `origin/design/prototype` into `ccr`, then resolve; expect small i18n/seed conflicts). Do not merge into `main`, force-push, open PRs or deploy without an explicit owner instruction (CLAUDE.md §5).
 - Migration **0019** (`20261029_0019_companion_stories.py`) may collide with the password-login chat's migration: renumber at merge time and re-run `alembic upgrade head` on SQLite and PostgreSQL.
 
@@ -39,8 +39,8 @@ You are continuing work on **Yondo** (companion discovery and booking for Uzbeki
 6. **Older queue:** WORKLOG "Next steps" item 000 (verifier pass over earlier unverified commits, schema regeneration, warm-skin follow-ups) and the owner items 0b, 00c, 00d, 00e.
 
 ## 6. Environment traps (these cost hours)
-- **C: was filled to 0 bytes once; it has about 10 GB now.** Put temp on D: for heavy runs: `$env:TEMP='D:\Yondo-ccr\.tmp\tmp'; $env:TMP=$env:TEMP`. Browser "Target crashed" = disk full, not a code bug.
-- **The venv's editable `yondo_api` points to another worktree** (`C:\Users\T31\copilot-worktrees\...`). Always set `PYTHONPATH=D:\Yondo-ccr\apps\api\src` (or `pip install -e apps/api` from the folder you work in) for pytest, e2e and the demo harness, otherwise you test the wrong code.
+- **C: was filled to 0 bytes once; it has about 10 GB now.** Put temp on D: for heavy runs: `$env:TEMP='D:\Yondo\.tmp\tmp'; $env:TMP=$env:TEMP` (create the folder first). Browser "Target crashed" = disk full, not a code bug.
+- **The global Python's editable `yondo_api` points to another worktree** (`C:\Users\T31\copilot-worktrees\...`; there is no `.venv` now). Always set `PYTHONPATH=D:\Yondo\apps\api\src` (or `pip install -e apps/api` from `D:\Yondo`) for pytest, e2e and the demo harness, otherwise you test the wrong code.
 - e2e (from `apps/web`, needs a current `dist`: run `npm run build` after any `src` change): set `CHROME='C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'`, `YONDO_PY=python`, `PYTHONPATH` as above; run it in the background with output to a file (about 25-30 minutes; ports 8000 and 4173 must be free).
 - Backend suite: `python -m pytest -p no:cacheprovider -o console_output_style=classic` from `apps/api` (no `-q`); never inside a 900 s limit. `.tmp/` is untracked scratch: never stage it.
 - Pushing works from this machine (credentials present). Never write a token into any file.
