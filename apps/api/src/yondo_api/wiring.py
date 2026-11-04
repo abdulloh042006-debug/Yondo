@@ -78,3 +78,18 @@ def configure_state(app: FastAPI, settings: Settings) -> None:
             settings.payment_checkout_base_url,
         )
     app.state.payment_providers = providers
+    app.state.push_provider = build_push_provider(settings)
+
+
+def build_push_provider(settings: Settings):
+    from yondo_api.integrations.push import FcmPushProvider, LogPushProvider
+
+    if settings.push_provider == 'fcm':
+        if not settings.fcm_service_account_file:
+            raise ValueError('YONDO_FCM_SERVICE_ACCOUNT_FILE is required for FCM push')
+        return FcmPushProvider.from_file(
+            settings.fcm_service_account_file, settings.fcm_project_id or None
+        )
+    if settings.push_provider == 'log':
+        return LogPushProvider()
+    return None
