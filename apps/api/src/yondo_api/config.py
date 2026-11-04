@@ -83,6 +83,8 @@ class Settings(BaseSettings):
     # Meeting flow.
     meeting_checkin_window_minutes: int = Field(default=30, ge=0)
     meeting_no_show_grace_minutes: int = Field(default=15, ge=0)
+    # PLACEHOLDER: active meetings nobody ended are completed this long after scheduled end.
+    meeting_auto_complete_hours: int = Field(default=2, gt=0)
 
     # Payments. 'sandbox' simulates a provider and is refused outside local environments.
     payment_provider: Literal['auto', 'sandbox', 'disabled'] = 'auto'
@@ -120,8 +122,9 @@ class Settings(BaseSettings):
     review_reminder_minutes: int = Field(default=120, gt=0)
     worker_interval_seconds: int = Field(default=30, gt=0)
 
-    # Safety.
+    # Safety. PLACEHOLDER: how long after a meeting a dispute may be opened.
     booking_share_ttl_hours: int = Field(default=24, gt=0)
+    dispute_window_days: int = Field(default=7, gt=0)
 
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:

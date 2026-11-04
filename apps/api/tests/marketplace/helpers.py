@@ -92,3 +92,26 @@ async def confirmed_booking(market, companion, **kwargs):
     assert payment.status_code == 200, payment.text
     assert await pay(market, payment.json()['id']) == 'captured'
     return booking, payment.json()
+
+
+async def started_booking(market, companion, **kwargs):
+    from yondo_api.core.time import utc_now
+
+    booking, payment = await confirmed_booking(market, companion, **kwargs)
+    start = utc_now() + timedelta(minutes=5)
+    await shift_booking(
+        market, booking['id'], starts_at=start, ends_at=start + timedelta(minutes=60)
+    )
+    for headers in (market.customer, companion.headers):
+        checked = await market.client.post(f'{B}/{booking["id"]}/check-in', headers=headers)
+        assert checked.status_code == 200, checked.text
+    started = await market.client.post(f'{B}/{booking["id"]}/start', headers=companion.headers)
+    assert started.status_code == 200, started.text
+    return started.json(), payment
+
+
+async def completed_booking(market, companion, **kwargs):
+    booking, payment = await started_booking(market, companion, **kwargs)
+    ended = await market.client.post(f'{B}/{booking["id"]}/end', headers=market.customer)
+    assert ended.status_code == 200, ended.text
+    return ended.json(), payment

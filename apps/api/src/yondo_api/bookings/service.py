@@ -114,6 +114,9 @@ def record_event(
                 'event': event,
             },
         )
+    from yondo_api.chat.service import post_system_message
+
+    post_system_message(session, booking, event, data or {})
 
 
 def transition(
@@ -667,6 +670,7 @@ async def build_responses(
     session: AsyncSession, request: Request, bookings: list[Booking], viewer: User
 ) -> list[BookingResponse]:
     from yondo_api.discovery.stats import companion_stats
+    from yondo_api.reviews.service import customer_ratings
 
     settings: Settings = request.app.state.settings
     user_ids = {b.customer_id for b in bookings} | {b.companion_id for b in bookings}
@@ -676,7 +680,7 @@ async def build_responses(
         else {}
     )
     companion_rating = await companion_stats(session, {b.companion_id for b in bookings})
-    customer_rating: dict[UUID, tuple[float | None, int]] = {}
+    customer_rating = await customer_ratings(session, {b.customer_id for b in bookings})
     profile_names = await _profile_names(session, {b.profile_id for b in bookings})
     now = utc_now()
     responses = []
