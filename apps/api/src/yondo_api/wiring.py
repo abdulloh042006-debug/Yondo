@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 def _routers() -> list:
     from yondo_api.admin.analytics import router as admin_analytics_router
     from yondo_api.admin.commerce import router as admin_commerce_router
+    from yondo_api.admin.gifts import router as admin_gifts_router
     from yondo_api.admin.trust import router as admin_trust_router
     from yondo_api.admin.users import router as admin_users_router
     from yondo_api.bookings.meeting import router as meeting_router
@@ -22,6 +23,9 @@ def _routers() -> list:
     from yondo_api.chat.router import router as chat_router
     from yondo_api.discovery.router import favorites_router
     from yondo_api.discovery.router import router as discovery_router
+    from yondo_api.gifts.catalog import favorites_router as product_favorites_router
+    from yondo_api.gifts.catalog import router as gifts_router
+    from yondo_api.gifts.vendor import router as vendor_router
     from yondo_api.payments.router import payouts_router
     from yondo_api.payments.router import router as payments_router
     from yondo_api.realtime.router import router as realtime_router
@@ -47,6 +51,10 @@ def _routers() -> list:
         admin_trust_router,
         admin_commerce_router,
         admin_analytics_router,
+        gifts_router,
+        product_favorites_router,
+        vendor_router,
+        admin_gifts_router,
     ]
 
 

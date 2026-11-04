@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import Field, model_validator
 
 from yondo_api.core.schemas import Input, Output, UtcDatetime
+from yondo_api.gifts.schemas import ProductCard
 
 SortOrder = Literal['recommended', 'rating', 'price_asc', 'price_desc', 'newest', 'distance']
 
@@ -119,6 +120,13 @@ class HomeSection(Output):
     items: list[CompanionCard]
 
 
+class GiftSection(Output):
+    key: str
+    title: str
+    items: list[ProductCard]
+
+
 class HomeResponse(Output):
     sections: list[HomeSection]
     popular_experiences: list[ExperienceCount]
+    gift_sections: list[GiftSection] = []

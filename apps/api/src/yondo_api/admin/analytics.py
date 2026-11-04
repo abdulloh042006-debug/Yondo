@@ -12,6 +12,7 @@ from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.core.deps import AdminUser, Session
 from yondo_api.core.schemas import Output
 from yondo_api.core.time import utc_now
+from yondo_api.gifts.models import GiftOrder, GiftOrderStatus
 from yondo_api.models.user import User, UserRole, UserRoleType
 from yondo_api.payments.models import PAID_STATUSES, Payment
 from yondo_api.reviews.models import Review, ReviewDirection
@@ -93,20 +94,27 @@ async def metrics(
         .group_by(Booking.customer_id)
         .having(func.count() > 1)
     )
-    paid = select(Payment).where(Payment.created_at >= since, Payment.status.in_(PAID_STATUSES))
-    gross = await session.scalar(
-        select(func.coalesce(func.sum(Payment.amount_minor), 0)).select_from(paid.subquery())
+    paid = (
+        select(Payment.amount_minor, Payment.refunded_minor)
+        .where(Payment.created_at >= since, Payment.status.in_(PAID_STATUSES))
+        .subquery()
     )
-    refunded = await session.scalar(
-        select(func.coalesce(func.sum(Payment.refunded_minor), 0)).select_from(paid.subquery())
-    )
+    gross = await session.scalar(select(func.coalesce(func.sum(paid.c.amount_minor), 0)))
+    refunded = await session.scalar(select(func.coalesce(func.sum(paid.c.refunded_minor), 0)))
     fees = await session.scalar(
         select(func.coalesce(func.sum(Booking.platform_fee_minor), 0)).where(
             period, Booking.confirmed_at.is_not(None), Booking.status != BookingStatus.CANCELLED
         )
     )
     confirmed = await count(select(Booking.id).where(period, Booking.confirmed_at.is_not(None)))
-    with_gifts = 0  # Gift attachment is measured once the gifts marketplace exists.
+    with_gifts = await count(
+        select(distinct(GiftOrder.booking_id)).where(
+            GiftOrder.booking_id.in_(
+                select(Booking.id).where(period, Booking.confirmed_at.is_not(None))
+            ),
+            GiftOrder.status != GiftOrderStatus.PENDING_PAYMENT,
+        )
+    )
     average = await session.scalar(
         select(func.avg(Review.rating)).where(
             Review.direction == ReviewDirection.FOR_COMPANION, Review.status == 'published'

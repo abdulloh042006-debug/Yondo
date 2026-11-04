@@ -18,11 +18,14 @@ from yondo_api.discovery.schemas import (
     CompanionCard,
     DiscoveryFilters,
     ExperienceCount,
+    GiftSection,
     HomeResponse,
     HomeSection,
     PublicProfile,
     SearchResult,
 )
+from yondo_api.gifts import service as gift_service
+from yondo_api.gifts.models import Product
 
 router = APIRouter(prefix='/discovery', tags=['discovery'])
 favorites_router = APIRouter(prefix='/favorites', tags=['favorites'])
@@ -55,7 +58,7 @@ async def home(
     longitude: Annotated[float | None, Query(ge=-180, le=180)] = None,
     city: Annotated[str | None, Query(max_length=128)] = None,
 ):
-    """TZ §6 home sections. Gift sections are served by the gifts catalog."""
+    """TZ §6 home sections: companions plus Flowers and Gifts from the marketplace."""
     location = (
         {'latitude': latitude, 'longitude': longitude}
         if latitude is not None and longitude is not None
@@ -91,7 +94,30 @@ async def home(
     experiences = Counter(
         code for c in candidates for code in {item.service_code for item in c.services}
     )
+    gift_sections = []
+    for key, title, categories in (
+        ('flowers', 'Flowers', ('flowers',)),
+        ('gifts', 'Gifts', ('gift_box', 'chocolate', 'toys', 'birthday', 'romantic', 'custom')),
+    ):
+        rows = list(
+            await session.execute(
+                gift_service.visible_query()
+                .where(Product.category.in_(categories), Product.stock > 0)
+                .order_by(Product.created_at.desc())
+                .limit(HOME_SECTION_SIZE)
+            )
+        )
+        gift_sections.append(
+            GiftSection(
+                key=key,
+                title=title,
+                items=await gift_service.product_cards(
+                    request, session, viewer, [tuple(row) for row in rows]
+                ),
+            )
+        )
     return HomeResponse(
+        gift_sections=gift_sections,
         sections=[
             HomeSection(
                 key=key,

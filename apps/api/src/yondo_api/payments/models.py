@@ -132,7 +132,7 @@ class Payout(TimestampMixin, Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     beneficiary_id: Mapped[UUID] = mapped_column(ForeignKey('users.id'))
     booking_id: Mapped[UUID | None] = mapped_column(ForeignKey('bookings.id'), unique=True)
-    gift_order_id: Mapped[UUID | None] = mapped_column(unique=True)
+    gift_order_id: Mapped[UUID | None] = mapped_column(ForeignKey('gift_orders.id'), unique=True)
     amount_minor: Mapped[int] = mapped_column(BigInteger)
     currency: Mapped[str] = mapped_column(String(3))
     status: Mapped[str] = mapped_column(String(16), default=PayoutStatus.HELD)

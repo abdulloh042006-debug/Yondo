@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +13,13 @@ from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings import service as bookings
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.config import Settings
+from yondo_api.core.db import lock_users
+from yondo_api.core.deps import require_active
 from yondo_api.core.money import BPS_DENOMINATOR, apply_bps
 from yondo_api.core.time import as_utc, utc_now
+from yondo_api.gifts import service as gift_service
+from yondo_api.gifts.models import CartItem
+from yondo_api.gifts.schemas import BookingGifts, GiftCheckout, GiftLine
 from yondo_api.models.user import User
 from yondo_api.notifications.service import notify
 from yondo_api.payments.models import (
@@ -54,8 +59,10 @@ async def checkout_booking(
     customer: User,
     booking_id: UUID,
     idempotency_key: str,
+    gifts: BookingGifts | None = None,
 ) -> Payment:
-    """Start (or resume) payment for an accepted booking. Idempotent per key and booking."""
+    """Start (or resume) payment for an accepted booking, optionally with gifts delivered to
+    the meeting place (Booking + Gift = One Checkout). Idempotent per key and booking."""
     existing = await session.scalar(
         select(Payment).where(
             Payment.payer_id == customer.id, Payment.idempotency_key == idempotency_key
@@ -95,6 +102,26 @@ async def checkout_booking(
     }
     amount = booking.total_minor
     provider = provider_for(app_state)
+    orders = []
+    if gifts is not None:
+        orders = await gift_service.build_orders(
+            session,
+            app_state.settings,
+            customer,
+            gifts.items,
+            recipient_name=gifts.recipient_name or customer.display_name or 'Yondo',
+            recipient_phone=customer.phone_number,
+            address=', '.join(
+                part for part in (booking.meeting_place_name, booking.meeting_address) if part
+            ),
+            latitude=booking.meeting_latitude,
+            longitude=booking.meeting_longitude,
+            delivery_at=booking.starts_at,
+            note=gifts.note,
+            booking_id=booking.id,
+            currency=booking.currency,
+        )
+        amount += gift_service.gift_breakdown(orders, breakdown)
     payment = Payment(
         payer_id=customer.id,
         booking_id=booking.id,
@@ -109,7 +136,75 @@ async def checkout_booking(
     )
     session.add(payment)
     await session.flush()
+    for order in orders:
+        order.payment_id = payment.id
     return await start_provider_checkout(session, provider, payment, f'Yondo booking {booking.id}')
+
+
+async def checkout_gifts(
+    session: AsyncSession, app_state: Any, customer: User, payload: GiftCheckout
+) -> Payment:
+    """Gift-only checkout: one payment for one order per vendor (TZ §28-§29)."""
+    existing = await session.scalar(
+        select(Payment).where(
+            Payment.payer_id == customer.id, Payment.idempotency_key == payload.idempotency_key
+        )
+    )
+    if existing is not None:
+        if existing.booking_id is not None:
+            raise ApplicationError(
+                'idempotency_key_reused', 'Idempotency key was used for another checkout', 409
+            )
+        return existing
+    require_active(customer)
+    await lock_users(session, [customer.id])
+    from_cart = payload.items is None
+    if from_cart:
+        cart = list(await session.scalars(select(CartItem).where(CartItem.user_id == customer.id)))
+        if not cart:
+            raise ApplicationError('cart_empty', 'Your cart is empty', 422)
+        lines = [
+            GiftLine(product_id=item.product_id, quantity=item.quantity, note=item.note)
+            for item in cart
+        ]
+    else:
+        lines = payload.items
+    delivery = payload.delivery
+    orders = await gift_service.build_orders(
+        session,
+        app_state.settings,
+        customer,
+        lines,
+        recipient_name=delivery.recipient_name,
+        recipient_phone=delivery.recipient_phone,
+        address=delivery.address,
+        latitude=delivery.latitude,
+        longitude=delivery.longitude,
+        delivery_at=delivery.delivery_at,
+        note=delivery.note,
+    )
+    breakdown: dict[str, Any] = {'service_amount_minor': 0, 'platform_fee_minor': 0}
+    amount = gift_service.gift_breakdown(orders, breakdown)
+    provider = provider_for(app_state)
+    payment = Payment(
+        payer_id=customer.id,
+        booking_id=None,
+        provider=provider.name,
+        idempotency_key=payload.idempotency_key,
+        status=PaymentStatus.PENDING,
+        currency=orders[0].currency,
+        amount_minor=amount,
+        refunded_minor=0,
+        breakdown=breakdown,
+        expires_at=utc_now() + timedelta(minutes=app_state.settings.gift_payment_window_minutes),
+    )
+    session.add(payment)
+    await session.flush()
+    for order in orders:
+        order.payment_id = payment.id
+    if from_cart:
+        await session.execute(delete(CartItem).where(CartItem.user_id == customer.id))
+    return await start_provider_checkout(session, provider, payment, 'Yondo gifts')
 
 
 async def start_provider_checkout(
@@ -141,7 +236,11 @@ async def start_provider_checkout(
 
 
 async def handle_webhook(
-    session: AsyncSession, provider: PaymentProvider, event: WebhookEvent, payload: dict[str, Any]
+    session: AsyncSession,
+    provider: PaymentProvider,
+    event: WebhookEvent,
+    payload: dict[str, Any],
+    settings: Settings,
 ) -> str:
     """Apply a verified provider event exactly once. Returns the recorded outcome."""
     payment = await lock_payment(
@@ -157,10 +256,12 @@ async def handle_webhook(
         if payment.status == PaymentStatus.PENDING:
             payment.status = PaymentStatus.FAILED
             payment.failure_reason = 'amount_mismatch'
+            await gift_service.release_unpaid_orders(session, payment, 'payment_failed')
     elif event.status == 'failed':
         if payment.status == PaymentStatus.PENDING:
             payment.status = PaymentStatus.FAILED
             payment.failure_reason = (event.failure_reason or 'declined')[:200]
+            await gift_service.release_unpaid_orders(session, payment, 'payment_failed')
             notify(
                 session,
                 payment.payer_id,
@@ -173,7 +274,7 @@ async def handle_webhook(
     elif payment.status in PAID_STATUSES:
         outcome = 'duplicate'
     else:
-        outcome = await capture(session, payment)
+        outcome = await capture(session, payment, settings)
     session.add(
         PaymentEvent(
             provider=provider.name,
@@ -192,7 +293,7 @@ async def handle_webhook(
     return outcome
 
 
-async def capture(session: AsyncSession, payment: Payment) -> str:
+async def capture(session: AsyncSession, payment: Payment, settings: Settings) -> str:
     """Record captured money and confirm the order, refunding money for dead orders."""
     now = utc_now()
     was_cancelled = payment.status in {PaymentStatus.CANCELLED, PaymentStatus.FAILED}
@@ -207,6 +308,15 @@ async def capture(session: AsyncSession, payment: Payment) -> str:
         f"{payment.amount_minor} {payment.currency} to'lov qabul qilindi.",
         {'payment_id': payment.id, 'booking_id': payment.booking_id or ''},
     )
+    commission = settings.vendor_commission_bps
+    if payment.booking_id is None:
+        if was_cancelled or not await gift_service.confirm_payment_orders(
+            session, payment, commission
+        ):
+            await gift_service.release_unpaid_orders(session, payment, 'order_not_payable')
+            queue_refund(session, payment, payment.amount_minor, 'order_not_payable')
+            return 'refunded_unpayable'
+        return 'captured'
     booking = await bookings.lock_booking(session, payment.booking_id)
     other_paid = await session.scalar(
         select(Payment.id).where(
@@ -217,6 +327,7 @@ async def capture(session: AsyncSession, payment: Payment) -> str:
     )
     if booking.status != BookingStatus.ACCEPTED or other_paid is not None or was_cancelled:
         # Late or duplicate money: return it in full automatically.
+        await gift_service.release_unpaid_orders(session, payment, 'order_not_payable')
         queue_refund(session, payment, payment.amount_minor, 'order_not_payable')
         return 'refunded_unpayable'
     booking.confirmed_at = now
@@ -246,6 +357,7 @@ async def capture(session: AsyncSession, payment: Payment) -> str:
         bookings.booking_notice(
             session, booking, party, 'booking_confirmed', title, f'Uchrashuv vaqti: {when}.'
         )
+    await gift_service.confirm_payment_orders(session, payment, settings.vendor_commission_bps)
     return 'captured'
 
 
@@ -299,6 +411,7 @@ async def settle_cancellation(session: AsyncSession, booking: Booking, refund_bp
     payment = await booking_payment(session, booking.id)
     if payment is not None and booking.refund_minor > 0:
         queue_refund(session, payment, booking.refund_minor, booking.cancellation_reason or '')
+    await gift_service.cancel_booking_orders(session, booking.id)
     payout = await booking_payout(session, booking.id)
     if payout is None or payout.status == PayoutStatus.PAID:
         return
@@ -393,6 +506,7 @@ async def expire_pending_payments(session: AsyncSession, now: datetime | None = 
     for payment in payments:
         payment.status = PaymentStatus.CANCELLED
         payment.failure_reason = 'expired'
+        await gift_service.release_unpaid_orders(session, payment, 'payment_expired')
     await session.commit()
     return len(payments)
 

@@ -4,12 +4,15 @@ from uuid import UUID
 from pydantic import Field
 
 from yondo_api.core.schemas import Input, Output, UtcDatetime
+from yondo_api.gifts.schemas import BookingGifts
 
 IdempotencyKey = str
 
 
 class BookingCheckout(Input):
     idempotency_key: str = Field(min_length=8, max_length=64, pattern=r'^[A-Za-z0-9_.:-]+$')
+    # Booking + Add Flowers + Add Gift = One Checkout (ROADMAP Phase 16).
+    gifts: BookingGifts | None = None
 
 
 class PaymentResponse(Output):

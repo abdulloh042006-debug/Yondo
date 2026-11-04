@@ -13,6 +13,7 @@ from yondo_api.api.errors import ApplicationError
 from yondo_api.core.deps import CurrentUser, Session
 from yondo_api.core.schemas import Page, PageParams, page_of
 from yondo_api.core.time import utc_now
+from yondo_api.gifts.schemas import GiftCheckout
 from yondo_api.payments import service
 from yondo_api.payments.models import Payment, Payout, PayoutStatus
 from yondo_api.payments.providers import SandboxPaymentProvider
@@ -38,9 +39,18 @@ async def checkout_booking(
     user: CurrentUser,
     session: Session,
 ):
-    return await service.checkout_booking(
-        session, request.app.state, user, booking_id, payload.idempotency_key
+    payment = await service.checkout_booking(
+        session, request.app.state, user, booking_id, payload.idempotency_key, payload.gifts
     )
+    return payment
+
+
+@router.post('/gifts/checkout', response_model=PaymentResponse)
+async def checkout_gifts(
+    payload: GiftCheckout, request: Request, user: CurrentUser, session: Session
+):
+    """Flowers & gifts checkout (from the cart or an explicit item list)."""
+    return await service.checkout_gifts(session, request.app.state, user, payload)
 
 
 @router.get('', response_model=Page[PaymentResponse])
@@ -79,7 +89,10 @@ async def provider_webhook(provider_name: str, request: Request, session: Sessio
         payload = json.loads(body)
     except ValueError:
         payload = {}
-    outcome = await service.handle_webhook(session, provider, event, payload)
+    outcome = await service.handle_webhook(
+        session, provider, event, payload, request.app.state.settings
+    )
+    await service.process_refunds(session, request.app.state)
     return WebhookAck(outcome=outcome)
 
 
@@ -135,7 +148,9 @@ async def sandbox_simulate(
         }
     ).encode()
     event = provider.parse_webhook({provider.signature_header: provider.sign(body)}, body)
-    outcome = await service.handle_webhook(session, provider, event, json.loads(body))
+    outcome = await service.handle_webhook(
+        session, provider, event, json.loads(body), request.app.state.settings
+    )
     await service.process_refunds(session, request.app.state)
     return WebhookAck(outcome=outcome)
 

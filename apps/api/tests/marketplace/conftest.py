@@ -20,9 +20,12 @@ class Companion:
     availability: list[dict] = field(default_factory=list)
 
 
+# Fixed once per session so a test crossing an hour boundary keeps consistent times.
+_BASE_HOUR = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+
+
 def hour_from_now(hours: float) -> datetime:
-    base = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
-    return base + timedelta(hours=hours)
+    return _BASE_HOUR + timedelta(hours=hours)
 
 
 class Market:
