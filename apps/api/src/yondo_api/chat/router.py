@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from anyio import to_thread
 from fastapi import APIRouter, Query, Request, Response
 from sqlalchemy import or_, select
 
-from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings.models import Booking
 from yondo_api.bookings.service import participant_booking, role_of
 from yondo_api.chat import service
@@ -22,9 +19,9 @@ from yondo_api.chat.schemas import (
     UnreadTotal,
 )
 from yondo_api.companions.dependencies import object_storage
-from yondo_api.companions.photos import IMAGE_TYPES, compensate_upload, process_image
 from yondo_api.core.db import commit
 from yondo_api.core.deps import CurrentUser, Session
+from yondo_api.core.images import IMAGE_REQUEST_BODY, discard_image, read_image, store_image
 from yondo_api.core.time import utc_now
 
 router = APIRouter(prefix='/chat', tags=['chat'])
@@ -159,50 +156,16 @@ async def send_message(
     '/bookings/{booking_id}/images',
     response_model=MessageResponse,
     status_code=201,
-    openapi_extra={
-        'requestBody': {
-            'required': True,
-            'content': {
-                mime: {'schema': {'type': 'string', 'format': 'binary'}}
-                for mime in IMAGE_TYPES.values()
-            },
-        }
-    },
+    openapi_extra=IMAGE_REQUEST_BODY,
 )
 async def send_image(booking_id: UUID, request: Request, user: CurrentUser, session: Session):
     """Raw JPEG/PNG/WebP upload; metadata is stripped and the image re-encoded."""
     booking, _ = await participant_booking(session, booking_id, user)
     await service.ensure_can_send(session, booking, user.id)
-    storage = object_storage(request)
-    settings = request.app.state.settings
-    content_type = request.headers.get('content-type', '').split(';')[0].strip()
-    if content_type not in IMAGE_TYPES.values():
-        raise ApplicationError('invalid_photo_type', 'A JPEG, PNG or WebP image is required', 415)
-    data = bytearray()
-    async for chunk in request.stream():
-        if len(data) + len(chunk) > settings.companion_photo_max_bytes:
-            raise ApplicationError('photo_too_large', 'Image exceeds the byte limit', 413)
-        data.extend(chunk)
-    content, width, height = await to_thread.run_sync(
-        process_image,
-        data,
-        content_type,
-        settings,
-        limiter=request.app.state.companion_image_limiter,
-    )
+    object_storage(request)
+    content, width, height = await read_image(request)
     key = f'chat/{booking.id}/{uuid4()}.jpg'
-
-    async def chunks():
-        yield content
-
-    try:
-        await storage.upload(key, chunks(), 'image/jpeg')
-    except asyncio.CancelledError:
-        await compensate_upload(storage, key)
-        raise
-    except Exception as exc:
-        await compensate_upload(storage, key)
-        raise ApplicationError('storage_unavailable', 'Image upload failed', 503) from exc
+    await store_image(request, key, content)
     try:
         booking, _ = await participant_booking(session, booking_id, user, lock=True)
         await service.ensure_can_send(session, booking, user.id)
@@ -216,7 +179,7 @@ async def send_image(booking_id: UUID, request: Request, user: CurrentUser, sess
         )
         await commit(session)
     except BaseException:
-        await compensate_upload(storage, key)
+        await discard_image(request, key)
         raise
     return await service.message_view(request, message)
 

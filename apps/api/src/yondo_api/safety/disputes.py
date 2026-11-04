@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import timedelta
 from typing import Literal
 from uuid import UUID, uuid4
 
-from anyio import to_thread
 from fastapi import APIRouter, Request
 from pydantic import Field
 from sqlalchemy import select
@@ -17,10 +15,16 @@ from yondo_api.api.errors import ApplicationError
 from yondo_api.bookings import service as bookings
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.companions.dependencies import object_storage
-from yondo_api.companions.photos import IMAGE_TYPES, compensate_upload, process_image
 from yondo_api.config import Settings
 from yondo_api.core.db import commit
 from yondo_api.core.deps import CurrentUser, Session
+from yondo_api.core.images import (
+    IMAGE_REQUEST_BODY,
+    discard_image,
+    read_image,
+    signed_url,
+    store_image,
+)
 from yondo_api.core.schemas import Input, Output, UtcDatetime
 from yondo_api.core.time import as_utc, utc_now
 from yondo_api.models.user import User
@@ -211,7 +215,6 @@ async def resolve_dispute(
 
 async def dispute_view(request: Request, session: AsyncSession, dispute: Dispute):
     view = DisputeResponse.model_validate(dispute)
-    storage = request.app.state.object_storage
     items = []
     for evidence in await session.scalars(
         select(DisputeEvidence)
@@ -219,13 +222,7 @@ async def dispute_view(request: Request, session: AsyncSession, dispute: Dispute
         .order_by(DisputeEvidence.created_at)
     ):
         item = EvidenceResponse.model_validate(evidence)
-        if evidence.storage_key and storage is not None:
-            try:
-                item.url = await storage.create_download_url(
-                    evidence.storage_key, EVIDENCE_URL_SECONDS
-                )
-            except Exception:
-                item.url = None
+        item.url = await signed_url(request, evidence.storage_key, EVIDENCE_URL_SECONDS)
         items.append(item)
     view.evidence = items
     return view
@@ -286,48 +283,14 @@ async def add_note(dispute_id: UUID, payload: EvidenceNote, user: CurrentUser, s
     '/disputes/{dispute_id}/evidence/image',
     response_model=EvidenceResponse,
     status_code=201,
-    openapi_extra={
-        'requestBody': {
-            'required': True,
-            'content': {
-                mime: {'schema': {'type': 'string', 'format': 'binary'}}
-                for mime in IMAGE_TYPES.values()
-            },
-        }
-    },
+    openapi_extra=IMAGE_REQUEST_BODY,
 )
 async def add_image(dispute_id: UUID, request: Request, user: CurrentUser, session: Session):
     dispute = await participant_dispute(session, dispute_id, user)
-    storage = object_storage(request)
-    settings = request.app.state.settings
-    content_type = request.headers.get('content-type', '').split(';')[0].strip()
-    if content_type not in IMAGE_TYPES.values():
-        raise ApplicationError('invalid_photo_type', 'A JPEG, PNG or WebP image is required', 415)
-    data = bytearray()
-    async for chunk in request.stream():
-        if len(data) + len(chunk) > settings.companion_photo_max_bytes:
-            raise ApplicationError('photo_too_large', 'Image exceeds the byte limit', 413)
-        data.extend(chunk)
-    content, _, _ = await to_thread.run_sync(
-        process_image,
-        data,
-        content_type,
-        settings,
-        limiter=request.app.state.companion_image_limiter,
-    )
+    object_storage(request)
+    content, _, _ = await read_image(request)
     key = f'disputes/{dispute.id}/{uuid4()}.jpg'
-
-    async def chunks():
-        yield content
-
-    try:
-        await storage.upload(key, chunks(), 'image/jpeg')
-    except asyncio.CancelledError:
-        await compensate_upload(storage, key)
-        raise
-    except Exception as exc:
-        await compensate_upload(storage, key)
-        raise ApplicationError('storage_unavailable', 'Image upload failed', 503) from exc
+    await store_image(request, key, content)
     evidence = DisputeEvidence(
         dispute_id=dispute.id,
         uploaded_by=user.id,
@@ -340,6 +303,8 @@ async def add_image(dispute_id: UUID, request: Request, user: CurrentUser, sessi
     try:
         await commit(session)
     except BaseException:
-        await compensate_upload(storage, key)
+        await discard_image(request, key)
         raise
-    return EvidenceResponse.model_validate(evidence)
+    view = EvidenceResponse.model_validate(evidence)
+    view.url = await signed_url(request, key, EVIDENCE_URL_SECONDS)
+    return view
