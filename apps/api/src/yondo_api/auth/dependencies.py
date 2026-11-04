@@ -20,6 +20,8 @@ _bearer = HTTPBearer(auto_error=False)
 async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
     factory = request.app.state.db_session_factory
     async with factory() as session:
+        # Realtime events queued during the transaction are published after commit.
+        session.info['realtime_broker'] = getattr(request.app.state, 'realtime_broker', None)
         yield session
 
 
