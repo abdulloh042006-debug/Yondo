@@ -510,9 +510,27 @@ def preview_cancellation(booking: Booking, role: str, now: datetime) -> Cancella
     refund = apply_bps(booking.total_minor, outcome.refund_bps) if paid else 0
     return CancellationPreview(
         refund_minor=refund,
-        refund_percent=outcome.refund_bps * 100 / BPS_DENOMINATOR,
+        refund_bps=outcome.refund_bps if paid else 0,
+        refund_percent=(outcome.refund_bps if paid else 0) * 100 / BPS_DENOMINATOR,
         policy=outcome.policy,
     )
+
+
+async def cancel_and_settle(
+    session: AsyncSession,
+    booking: Booking,
+    reason: CancellationReason,
+    actor_id: UUID | None,
+    note: str,
+    refund_bps: int,
+) -> None:
+    """Cancel and, for paid bookings, queue refunds and adjust the payout."""
+    from yondo_api.payments.service import settle_cancellation
+
+    paid = booking.confirmed_at is not None and booking.total_minor > 0
+    cancel_record(session, booking, reason, actor_id, utc_now(), note, refund_bps)
+    if paid:
+        await settle_cancellation(session, booking, refund_bps)
 
 
 async def cancel(session: AsyncSession, user: User, booking_id: UUID, note: str):
@@ -525,15 +543,7 @@ async def cancel(session: AsyncSession, user: User, booking_id: UUID, note: str)
     if role == 'companion' and booking.status == BookingStatus.PENDING:
         raise invalid_transition('Decline a pending request instead of cancelling it')
     reason = CancellationReason.CUSTOMER if role == 'customer' else CancellationReason.COMPANION
-    cancel_record(
-        session,
-        booking,
-        reason,
-        user.id,
-        now,
-        note,
-        int(preview.refund_percent * BPS_DENOMINATOR / 100),
-    )
+    await cancel_and_settle(session, booking, reason, user.id, note, preview.refund_bps)
     await save(session)
     return booking
 

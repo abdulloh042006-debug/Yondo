@@ -15,8 +15,10 @@ def _routers() -> list:
     from yondo_api.bookings.router import router as bookings_router
     from yondo_api.discovery.router import favorites_router
     from yondo_api.discovery.router import router as discovery_router
+    from yondo_api.payments.router import payouts_router
+    from yondo_api.payments.router import router as payments_router
 
-    return [discovery_router, favorites_router, bookings_router]
+    return [discovery_router, favorites_router, bookings_router, payments_router, payouts_router]
 
 
 ROUTERS: list = _routers()
@@ -27,4 +29,12 @@ def default_identity_eligibility() -> IdentityEligibility:
 
 
 def configure_state(app: FastAPI, settings: Settings) -> None:
-    return None
+    from yondo_api.payments.providers import SandboxPaymentProvider
+
+    providers = {}
+    if settings.effective_payment_provider == 'sandbox':
+        providers['sandbox'] = SandboxPaymentProvider(
+            settings.payment_webhook_secret.get_secret_value().encode(),
+            settings.payment_checkout_base_url,
+        )
+    app.state.payment_providers = providers

@@ -22,6 +22,7 @@ from yondo_api.bookings.schemas import (
 from yondo_api.core.deps import CurrentUser, Session
 from yondo_api.core.schemas import Page, PageParams, page_of
 from yondo_api.core.time import utc_now
+from yondo_api.payments.service import process_refunds
 
 router = APIRouter(prefix='/bookings', tags=['bookings'])
 
@@ -147,6 +148,8 @@ async def cancel_booking(
     booking_id: UUID, payload: DecisionNote, request: Request, user: CurrentUser, session: Session
 ):
     booking = await service.cancel(session, user, booking_id, payload.note)
+    # Best effort: send queued refunds now; the worker retries anything left pending.
+    await process_refunds(session, request.app.state)
     return await one(session, request, booking, user)
 
 

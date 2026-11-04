@@ -127,6 +127,7 @@ class DecisionNote(Input):
 
 class CancellationPreview(Output):
     refund_minor: int
+    refund_bps: int
     refund_percent: float
     policy: Literal['no_payment', 'free', 'partial', 'none', 'full_companion_cancel']
 

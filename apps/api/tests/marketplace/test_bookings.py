@@ -127,7 +127,12 @@ async def test_decline_and_cancel_rules(market):
     assert declined.json()['cancellation_reason'] == 'declined'
     second = await request_booking(market, companion, start_hours=27)
     preview = await market.client.get(f'{B}/{second["id"]}/cancellation', headers=market.customer)
-    assert preview.json() == {'refund_minor': 0, 'refund_percent': 0.0, 'policy': 'no_payment'}
+    assert preview.json() == {
+        'refund_minor': 0,
+        'refund_bps': 0,
+        'refund_percent': 0.0,
+        'policy': 'no_payment',
+    }
     cancelled = await market.client.post(
         f'{B}/{second["id"]}/cancel', headers=market.customer, json={'note': 'Changed plans'}
     )
@@ -144,13 +149,23 @@ async def test_cancellation_policy_preview_for_paid_booking(market):
     await shift_booking(market, booking['id'], status='confirmed', confirmed_at=utc_now())
     url = f'{B}/{booking["id"]}/cancellation'
     free = await market.client.get(url, headers=market.customer)
-    assert free.json() == {'refund_minor': 110_000, 'refund_percent': 100.0, 'policy': 'free'}
+    assert free.json() == {
+        'refund_minor': 110_000,
+        'refund_bps': 10_000,
+        'refund_percent': 100.0,
+        'policy': 'free',
+    }
     late_start = utc_now() + timedelta(hours=2)
     await shift_booking(
         market, booking['id'], starts_at=late_start, ends_at=late_start + timedelta(hours=1)
     )
     late = await market.client.get(url, headers=market.customer)
-    assert late.json() == {'refund_minor': 55_000, 'refund_percent': 50.0, 'policy': 'partial'}
+    assert late.json() == {
+        'refund_minor': 55_000,
+        'refund_bps': 5000,
+        'refund_percent': 50.0,
+        'policy': 'partial',
+    }
     by_companion = await market.client.get(url, headers=companion.headers)
     assert by_companion.json()['policy'] == 'full_companion_cancel'
     assert by_companion.json()['refund_minor'] == 110_000

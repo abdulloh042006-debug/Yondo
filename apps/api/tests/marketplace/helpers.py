@@ -64,3 +64,31 @@ async def move_to_past(market, booking_id, hours_ago: float):
         booking.starts_at = start
         booking.ends_at = start + duration
         await session.commit()
+
+
+P = f'{API}/payments'
+
+
+async def checkout(market, booking_id, key='checkout-key-1', headers=None):
+    response = await market.client.post(
+        f'{P}/bookings/{booking_id}/checkout',
+        headers=headers or market.customer,
+        json={'idempotency_key': key},
+    )
+    return response
+
+
+async def pay(market, payment_id, result='succeeded'):
+    response = await market.client.post(
+        f'{P}/sandbox/{payment_id}/simulate', json={'result': result}
+    )
+    assert response.status_code == 200, response.text
+    return response.json()['outcome']
+
+
+async def confirmed_booking(market, companion, **kwargs):
+    booking = await accepted_booking(market, companion, **kwargs)
+    payment = await checkout(market, booking['id'], key=f'key-{booking["id"]}')
+    assert payment.status_code == 200, payment.text
+    assert await pay(market, payment.json()['id']) == 'captured'
+    return booking, payment.json()

@@ -6,6 +6,7 @@ from yondo_api.discovery import models as discovery_models
 from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 from yondo_api.notifications import models as notification_models
+from yondo_api.payments import models as payment_models
 from yondo_api.safety import models as safety_models
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     'discovery_models',
     'safety_models',
     'notification_models',
+    'payment_models',
     'AccountStatus',
     'AuthSession',
     'OtpChallenge',
