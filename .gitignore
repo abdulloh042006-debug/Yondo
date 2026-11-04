@@ -33,6 +33,9 @@ build/
 .DS_Store
 Thumbs.db
 
+# Development-only local object storage (YONDO_STORAGE_BACKEND=local)
+.storage/
+
 # Logs and local-only files
 *.log
 *.local

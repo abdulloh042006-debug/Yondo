@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from yondo_api.models.user import UserRoleType
+from yondo_api.models.user import AccountStatus, UserRoleType
 
 OtpValue = Annotated[str, StringConstraints(pattern=r'^\d{6}$')]
 
@@ -41,7 +41,8 @@ class RoleSelection(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    age: int | None = Field(default=None, ge=0)
+    display_name: str | None = Field(default=None, min_length=1, max_length=128)
+    age: int | None = Field(default=None, ge=0, le=150)
     gender: str | None = Field(default=None, max_length=64)
     city: str | None = Field(default=None, max_length=128)
 
@@ -51,8 +52,11 @@ class UserResponse(BaseModel):
 
     id: UUID
     phone_number: str
+    display_name: str | None = None
     age: int | None
     gender: str | None
     city: str | None
     roles: list[UserRoleType]
+    account_status: AccountStatus | None = None
+    profile_complete: bool = False
     created_at: datetime
