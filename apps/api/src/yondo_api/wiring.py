@@ -11,7 +11,14 @@ if TYPE_CHECKING:
 
     from yondo_api.config import Settings
 
-ROUTERS: list = []
+def _routers() -> list:
+    from yondo_api.discovery.router import favorites_router
+    from yondo_api.discovery.router import router as discovery_router
+
+    return [discovery_router, favorites_router]
+
+
+ROUTERS: list = _routers()
 
 
 def default_identity_eligibility() -> IdentityEligibility:

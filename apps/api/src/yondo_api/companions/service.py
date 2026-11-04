@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, exists, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -173,6 +173,23 @@ async def companion_status(
         activation_requested=profile.activation_requested,
         publicly_active=profile.activation_requested and not blockers,
         blockers=blockers,
+    )
+
+
+def public_profile_conditions():
+    """SQL form of every database-backed gate in :func:`companion_status`.
+
+    Identity is checked separately through the identity adapter
+    (``integrations.verified_user_ids``) because it is owned by Trust & Safety.
+    """
+    return and_(
+        CompanionProfile.application_id == CompanionApplication.id,
+        CompanionApplication.user_id == User.id,
+        CompanionApplication.status == ApplicationStatus.APPROVED,
+        CompanionProfile.content_status == ContentStatus.APPROVED,
+        CompanionProfile.activation_requested.is_(True),
+        User.account_status == AccountStatus.ACTIVE,
+        exists().where(UserRole.user_id == User.id, UserRole.role == UserRoleType.COMPANION),
     )
 
 
