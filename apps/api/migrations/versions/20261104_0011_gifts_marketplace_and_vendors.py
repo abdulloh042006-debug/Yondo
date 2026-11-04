@@ -282,14 +282,16 @@ def upgrade() -> None:
         sa.UniqueConstraint('order_id'),
     )
     op.create_index('ix_gift_reviews_vendor', 'gift_reviews', ['vendor_id'], unique=False)
-    op.create_foreign_key(None, 'payouts', 'gift_orders', ['gift_order_id'], ['id'])
+    op.create_foreign_key(
+        'fk_payouts_gift_order_id', 'payouts', 'gift_orders', ['gift_order_id'], ['id']
+    )
 
 
 def downgrade() -> None:
     # WARNING: constraint name is None; this directive will fail as
     # rendered.  Add a name, or use a naming convention; see
     # https://alembic.sqlalchemy.org/en/latest/naming.html
-    op.drop_constraint(None, 'payouts', type_='foreignkey')
+    op.drop_constraint('fk_payouts_gift_order_id', 'payouts', type_='foreignkey')
     op.drop_index('ix_gift_reviews_vendor', table_name='gift_reviews')
     op.drop_table('gift_reviews')
     op.drop_index(op.f('ix_gift_order_items_order_id'), table_name='gift_order_items')

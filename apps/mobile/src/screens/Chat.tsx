@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Image, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
-import { api, realtimeUrl } from '../api';
+import { accessToken, api, realtimeUrl } from '../api';
 import { useAuth } from '../auth';
 import { formatDateTime, formatTime, STATUS_NAMES } from '../format';
 import { useNav } from '../nav';
@@ -63,8 +63,11 @@ export function ChatScreen() {
     };
     void load();
     const url = realtimeUrl();
-    if (url) {
+    const token = accessToken();
+    if (url && token) {
       socket = new WebSocket(url);
+      // Authenticate with the first message so the token never appears in a URL.
+      socket.onopen = () => socket?.send(JSON.stringify({ type: 'auth', access_token: token }));
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(String(event.data));
@@ -122,7 +125,7 @@ export function ChatScreen() {
         <Muted>Telefon raqam va shaxsiy kontaktlarni almashmang — muloqot va to'lov faqat Yondo ichida.</Muted>
         <Row style={{ flexWrap: 'nowrap', marginTop: 6 }}>
           <Button small variant="secondary" title="📷" onPress={() => void sendImage()} disabled={action.busy} />
-          <TextInput style={[styles.input, { flex: 1 }]} value={text} onChangeText={setText} placeholder="Xabar…" onSubmitEditing={send} returnKeyType="send" />
+          <TextInput style={[styles.input, { flex: 1, minWidth: 0 }]} value={text} onChangeText={setText} placeholder="Xabar…" onSubmitEditing={send} returnKeyType="send" />
           <Button small title="Yuborish" onPress={send} disabled={action.busy || !text.trim()} />
         </Row>
       </KeyboardAvoidingView>

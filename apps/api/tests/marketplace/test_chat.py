@@ -124,6 +124,10 @@ def test_websocket_streams_events_after_commit(tmp_path):
             event = socket.receive_json()
             assert event['type'] == 'notification'
             assert event['notification']['title'] == 'Hello'
+        # Preferred flow: credentials in the first message, never in the URL.
+        with client.websocket_connect(f'{API}/realtime/ws') as socket:
+            socket.send_json({'type': 'auth', 'access_token': tokens['access_token']})
+            assert socket.receive_json()['type'] == 'ready'
         try:
             with client.websocket_connect(f'{API}/realtime/ws?access_token=bad') as socket:
                 socket.receive_json()

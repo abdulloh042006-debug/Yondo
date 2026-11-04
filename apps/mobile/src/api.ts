@@ -70,9 +70,10 @@ export function buildUrl(path: string, query?: Query): string {
   return `${BASE}${path}${parts.length ? `?${parts.join('&')}` : ''}`;
 }
 
+/** Realtime endpoint; the client authenticates with an ``auth`` message after connecting. */
 export function realtimeUrl(): string | null {
   if (!tokens) return null;
-  return `${BASE.replace(/^http/, 'ws')}/realtime/ws?access_token=${encodeURIComponent(tokens.access_token)}`;
+  return `${BASE.replace(/^http/, 'ws')}/realtime/ws`;
 }
 
 async function refresh(): Promise<boolean> {

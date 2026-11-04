@@ -187,15 +187,20 @@ Toshkent → Samarqand → Andijon → Farg‘ona → Buxoro → boshqa shaharla
 
 ## Status
 
-`Planning / Pre-MVP`
+`MVP code complete — test mode` (closed beta needs real SMS, payment and push credentials).
 
 ## Development status
 
-Phase 4 backend foundation is located in [`apps/api`](./apps/api). Local PostgreSQL, Redis,
-and S3-compatible storage are defined in [`compose.yaml`](./compose.yaml). See
-[`docs/development.md`](./docs/development.md) for setup and verification commands.
+| Part | Path | State |
+| --- | --- | --- |
+| Backend API (Phases 4–18) | [`apps/api`](./apps/api) | Implemented and tested (SQLite + PostgreSQL) |
+| Admin + vendor web panel | [`apps/admin`](./apps/admin) | Implemented |
+| Customer + companion mobile app | [`apps/mobile`](./apps/mobile) | Implemented (Expo) |
+| Local stack, Dockerfiles, CI | [`compose.yaml`](./compose.yaml), [`.github/workflows`](./.github/workflows) | Implemented |
 
-
-## Current implementation status
-
-See [`docs/project-status-2026-10-13.md`](docs/project-status-2026-10-13.md) for the completed Phase 6 work, validation evidence, remaining production requirements, known risks, and explicitly out-of-scope phases.
+- Setup and commands: [`docs/development.md`](docs/development.md)
+- Task list (done / remaining): [`docs/project-tasks.md`](docs/project-tasks.md)
+- Placeholder business rules awaiting approval: [`docs/business-policies.md`](docs/business-policies.md)
+- API map: [`docs/api-overview.md`](docs/api-overview.md)
+- Deployment checklist: [`docs/deployment.md`](docs/deployment.md)
+- Phase 6 history: [`docs/project-status-2026-10-13.md`](docs/project-status-2026-10-13.md)

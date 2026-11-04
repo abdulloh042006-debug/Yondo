@@ -10,17 +10,30 @@ from yondo_api.auth.dependencies import resolve_access_token
 from yondo_api.realtime.broker import user_channel
 
 router = APIRouter(prefix='/realtime', tags=['realtime'])
-HEARTBEAT_SECONDS = 25
+AUTH_TIMEOUT_SECONDS = 10
+
+
+async def _first_message_token(websocket: WebSocket) -> str:
+    try:
+        message = await asyncio.wait_for(websocket.receive_json(), AUTH_TIMEOUT_SECONDS)
+    except (TimeoutError, ValueError, WebSocketDisconnect):
+        return ''
+    if isinstance(message, dict) and message.get('type') == 'auth':
+        return str(message.get('access_token') or '')
+    return ''
 
 
 @router.websocket('/ws')
 async def realtime_socket(websocket: WebSocket):
     """Per-user event stream: chat messages, booking updates and notifications.
 
-    Authenticate with ``?access_token=...`` (browsers cannot set WebSocket headers).
-    The token is never logged: request logging covers HTTP paths only.
+    Preferred: connect without credentials and send ``{"type": "auth", "access_token": ...}``
+    as the first message, so the token never appears in URLs or proxy access logs.
+    ``?access_token=`` is still accepted for simple clients; deployments then must not log
+    WebSocket query strings (the Docker image runs uvicorn with ``--no-access-log``).
     """
-    token = websocket.query_params.get('access_token') or ''
+    await websocket.accept()
+    token = websocket.query_params.get('access_token') or await _first_message_token(websocket)
     factory = websocket.app.state.db_session_factory
     try:
         async with factory() as session:
@@ -28,7 +41,6 @@ async def realtime_socket(websocket: WebSocket):
     except ApplicationError:
         await websocket.close(code=4401)
         return
-    await websocket.accept()
     broker = websocket.app.state.realtime_broker
     async with broker.subscribe(user_channel(principal.user.id)) as events:
 
