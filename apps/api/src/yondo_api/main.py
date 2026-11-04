@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from anyio import CapacityLimiter
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import event
 from sqlalchemy.orm import Session as OrmSession
 
@@ -153,6 +154,14 @@ def create_application(
     app.state.identity_eligibility = identity_eligibility or default_identity_eligibility()
     configure_state(app, app_settings)
     app.add_middleware(RequestContextMiddleware)
+    if app_settings.cors_allow_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(app_settings.cors_allow_origins),
+            allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+            allow_headers=['Authorization', 'Content-Type', 'X-Request-ID'],
+            expose_headers=['X-Request-ID'],
+        )
     install_exception_handlers(app)
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)

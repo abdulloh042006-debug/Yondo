@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     storage_local_root: str = '.storage'
     storage_local_public_url: str = 'http://localhost:8000/api/v1/storage/local'
 
+    # Browser origins allowed to call the API (admin/vendor web panel). JSON array.
+    cors_allow_origins: tuple[str, ...] = ()
+
     # Realtime fan-out. 'auto' uses memory in tests and Redis elsewhere.
     realtime_backend: Literal['auto', 'memory', 'redis'] = 'auto'
 

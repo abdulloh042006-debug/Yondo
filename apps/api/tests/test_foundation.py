@@ -115,6 +115,23 @@ async def test_notifications_list_read_and_realtime_after_commit():
         ).status_code == 204
 
 
+async def test_cors_is_opt_in_per_origin():
+    async with running_app(cors_allow_origins=('http://localhost:5173',)) as (_, client):
+        allowed = await client.options(
+            f'{API}/auth/me',
+            headers={'Origin': 'http://localhost:5173', 'Access-Control-Request-Method': 'GET'},
+        )
+        assert allowed.headers['access-control-allow-origin'] == 'http://localhost:5173'
+        denied = await client.options(
+            f'{API}/auth/me',
+            headers={'Origin': 'https://evil.test', 'Access-Control-Request-Method': 'GET'},
+        )
+        assert 'access-control-allow-origin' not in denied.headers
+    async with running_app() as (_, client):
+        response = await client.get('/health', headers={'Origin': 'http://localhost:5173'})
+        assert 'access-control-allow-origin' not in response.headers
+
+
 async def test_device_registration_moves_token_between_accounts():
     async with running_app() as (app, client):
         first, _ = await create_user(app, client, '901110004')

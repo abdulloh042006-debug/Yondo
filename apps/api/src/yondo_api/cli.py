@@ -2,6 +2,7 @@
 
 python -m yondo_api.cli grant-admin +998901234567
 python -m yondo_api.cli worker [--once]
+python -m yondo_api.cli seed-demo    # development only
 """
 
 from __future__ import annotations
@@ -47,9 +48,14 @@ def main(argv: list[str] | None = None) -> int:
     admin.add_argument('phone')
     worker = commands.add_parser('worker', help='run background jobs')
     worker.add_argument('--once', action='store_true', help='run every job once and exit')
+    commands.add_parser('seed-demo', help='create demo accounts and content (development only)')
     args = parser.parse_args(argv)
     if args.command == 'grant-admin':
         return asyncio.run(grant_admin(args.phone))
+    if args.command == 'seed-demo':
+        from yondo_api.demo import run_seed
+
+        return asyncio.run(run_seed())
     from yondo_api.worker import run_worker
 
     return asyncio.run(run_worker(once=args.once))
