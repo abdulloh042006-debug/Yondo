@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from support import API
 
@@ -77,8 +78,9 @@ async def test_filters_and_sorting(market):
         cheap.profile_id,
         pricey.profile_id,
     ]
-    tomorrow = (datetime.now(UTC) + timedelta(days=1)).date().isoformat()
-    assert len(ids(await get(available_on=tomorrow))) in {1, 2}
+    # available_on is a Tashkent calendar day; derive it from a window instant, not UTC.
+    window_day = hour_from_now(25).astimezone(ZoneInfo('Asia/Tashkent')).date().isoformat()
+    assert len(ids(await get(available_on=window_day))) == 2
     far = (datetime.now(UTC) + timedelta(days=30)).date().isoformat()
     assert ids(await get(available_on=far)) == []
     assert (await get(age_min=30, age_max=20)).status_code == 422
@@ -96,6 +98,7 @@ async def test_public_profile_hides_private_fields_and_lists_free_slots(market):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body['area'] == 'Mirobod'
+    assert body['user_id'] == str(companion.user_id)  # needed to report or block
     assert 'approx_latitude' not in body and 'phone_number' not in body
     assert body['languages'] == ['uz', 'en']
     assert len(body['photos']) == 1 and body['service_details'][0]['service_code'] == 'coffee'

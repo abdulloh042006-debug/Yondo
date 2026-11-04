@@ -441,6 +441,7 @@ async def public_profile(
     )
     return PublicProfile(
         **card.model_dump(),
+        user_id=candidate.user.id,
         bio=candidate.profile.bio,
         languages=candidate.profile.languages,
         interests=candidate.profile.interests,

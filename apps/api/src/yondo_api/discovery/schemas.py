@@ -100,6 +100,8 @@ class AvailabilitySlot(Output):
 
 
 class PublicProfile(CompanionCard):
+    # Opaque account id so the viewer can report or block this companion (TZ §24-§25).
+    user_id: UUID
     bio: str
     languages: list[str]
     interests: list[str]

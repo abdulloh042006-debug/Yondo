@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Yondo",
+    "slug": "yondo",
+    "scheme": "yondo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uz.yondo.app"
+    },
+    "android": {
+      "package": "uz.yondo.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#5B4BDB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Profil va hujjat rasmlarini yuklash uchun galereyaga ruxsat kerak.",
+          "cameraPermission": "Selfie va hujjat rasmini olish uchun kameraga ruxsat kerak."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Yaqin atrofdagi companionlarni ko'rsatish va SOS uchun joylashuv kerak."
+        }
+      ],
+      "expo-notifications"
+    ]
+  }
+}
