@@ -1,5 +1,6 @@
 """Import every ORM model so metadata (Alembic, tests) sees the complete schema."""
 
+from yondo_api.bookings import models as booking_models
 from yondo_api.companions import models as companion_models
 from yondo_api.discovery import models as discovery_models
 from yondo_api.models.auth import AuthSession, OtpChallenge
@@ -8,6 +9,7 @@ from yondo_api.notifications import models as notification_models
 from yondo_api.safety import models as safety_models
 
 __all__ = [
+    'booking_models',
     'companion_models',
     'discovery_models',
     'safety_models',

@@ -137,9 +137,7 @@ async def public_candidates(
     if filters.latitude is not None and filters.radius_km is not None:
         # Bounding box prefilter; the exact great-circle distance is applied below.
         delta_lat = filters.radius_km / 111.0
-        delta_lon = filters.radius_km / max(
-            111.0 * math.cos(math.radians(filters.latitude)), 0.001
-        )
+        delta_lon = filters.radius_km / max(111.0 * math.cos(math.radians(filters.latitude)), 0.001)
         query = query.where(
             CompanionProfile.approx_latitude.between(
                 filters.latitude - delta_lat, filters.latitude + delta_lat
@@ -279,9 +277,7 @@ async def primary_photos(
     if profile_ids:
         for photo in await session.scalars(
             select(CompanionPhoto)
-            .where(
-                CompanionPhoto.profile_id.in_(profile_ids), CompanionPhoto.deleted_at.is_(None)
-            )
+            .where(CompanionPhoto.profile_id.in_(profile_ids), CompanionPhoto.deleted_at.is_(None))
             .order_by(CompanionPhoto.profile_id, CompanionPhoto.position)
         ):
             photos.setdefault(photo.profile_id, photo)
@@ -367,8 +363,9 @@ async def public_candidate(
 async def busy_intervals(
     session: AsyncSession, companion_user_id: UUID, start: datetime, end: datetime
 ) -> list[tuple[datetime, datetime]]:
-    # Reservations are introduced by the booking engine (Phase 8).
-    return []
+    from yondo_api.bookings.service import held_intervals
+
+    return await held_intervals(session, companion_user_id, start, end)
 
 
 def subtract_intervals(
@@ -430,9 +427,7 @@ async def public_profile(
         await photo_view(request, photo)
         for photo in await session.scalars(
             select(CompanionPhoto)
-            .where(
-                CompanionPhoto.profile_id == profile_id, CompanionPhoto.deleted_at.is_(None)
-            )
+            .where(CompanionPhoto.profile_id == profile_id, CompanionPhoto.deleted_at.is_(None))
             .order_by(CompanionPhoto.position)
         )
     ]

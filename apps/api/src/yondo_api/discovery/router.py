@@ -68,9 +68,11 @@ async def home(
         base = base.model_copy(update={'city': None})
         candidates = await service.public_candidates(session, request, viewer, base)
     sections: list[tuple[str, str, list[service.Candidate]]] = []
-    today = utc_now().astimezone(
-        service.ZoneInfo(request.app.state.settings.booking_default_timezone)
-    ).date()
+    today = (
+        utc_now()
+        .astimezone(service.ZoneInfo(request.app.state.settings.booking_default_timezone))
+        .date()
+    )
     available = await service.public_candidates(
         session, request, viewer, base.model_copy(update={'available_on': today})
     )
@@ -156,6 +158,3 @@ async def remove_favorite(profile_id: UUID, viewer: CurrentUser, session: Sessio
     )
     await commit(session)
     return Response(status_code=204)
-
-
-

@@ -43,14 +43,10 @@ class Notification(TimestampMixin, Base):
 class DeviceToken(TimestampMixin, Base):
     __tablename__ = 'device_tokens'
     __table_args__ = (
-        CheckConstraint(
-            "platform IN ('android', 'ios', 'web')", name='ck_device_tokens_platform'
-        ),
+        CheckConstraint("platform IN ('android', 'ios', 'web')", name='ck_device_tokens_platform'),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey('users.id', ondelete='CASCADE'), index=True
-    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
     token: Mapped[str] = mapped_column(String(512), unique=True)
     platform: Mapped[str] = mapped_column(String(16))

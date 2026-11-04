@@ -12,10 +12,11 @@ if TYPE_CHECKING:
     from yondo_api.config import Settings
 
 def _routers() -> list:
+    from yondo_api.bookings.router import router as bookings_router
     from yondo_api.discovery.router import favorites_router
     from yondo_api.discovery.router import router as discovery_router
 
-    return [discovery_router, favorites_router]
+    return [discovery_router, favorites_router, bookings_router]
 
 
 ROUTERS: list = _routers()
