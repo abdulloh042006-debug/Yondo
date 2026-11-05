@@ -73,10 +73,11 @@ project is small (0.5 GB); both are plenty for a demo.
 
 ## First admin: admin bootstrap command
 Nobody can make themselves admin through the API (`PUT /auth/roles` refuses `admin`), so on a fresh production
-database the first admin is granted from the server shell, with the API's own environment (`YONDO_DATABASE_URL`):
+database the first admin is granted from the server shell, with the API's own environment (`YONDO_DATABASE_URL`).
+**First sign in once** in the web app with that phone (phone + code), so the account exists; an unknown phone is refused:
 
 ```bash
-python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX           # grant (creates an active user if missing)
+python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX           # grant (the user must already exist)
 python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX --revoke  # revoke; refuses to remove the last admin
 ```
 
@@ -89,8 +90,8 @@ python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX --revoke  # revoke; re
 
 It prints only the masked phone (`+998 90 *** ** 99`), is idempotent (a repeat run says "nothing changed"),
 writes an `admin_audit_events` row (`admin_bootstrap` / `admin_revoke`, admin = the user's own id) and refuses
-suspended, banned or deleted accounts. Exit codes: 0 done or nothing to change, 1 refused, 2 invalid phone.
-Signing in still uses the normal phone + code login. Type the number in the shell only: never commit it (the repository is public).
+unknown phones and suspended, banned or deleted accounts. Exit codes: 0 done or nothing to change, 1 refused,
+2 invalid phone, 3 database error (one masked line, no traceback). Type the number in the shell only: never commit it (the repository is public).
 
 ## Try it locally first (Windows PowerShell)
 

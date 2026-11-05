@@ -4,19 +4,21 @@
     python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX --revoke  # revoke
 
 Run it from apps/api with the API's environment (YONDO_DATABASE_URL). `PUT /auth/roles` never
-grants admin, so this command is the bootstrap path. A missing user is created as an active
-account with that phone (the same row the OTP login would create); signing in still needs the
-normal phone + code login. Idempotent: a repeated run changes nothing and says so. Every change
+grants admin, so this command is the bootstrap path. The person must sign in once first (phone +
+code), so the account exists and went through the normal login; an unknown phone is refused and
+nothing is written. Idempotent: a repeated run changes nothing and says so. Every change
 writes an AdminAuditEvent (admin_id = the user's own id: there is no other admin to name).
 Only the masked phone is ever printed.
 
-Exit codes: 0 done or nothing to change, 1 refused (account unavailable, last admin), 2 bad phone.
+Exit codes: 0 done or nothing to change, 1 refused (no such user, account unavailable, last
+admin), 2 bad phone, 3 database error (printed masked, without a traceback).
 """
 
 import argparse
 import asyncio
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from yondo_api.admin.models import AdminAuditEvent
@@ -24,7 +26,7 @@ from yondo_api.api.errors import ApplicationError
 from yondo_api.auth.phone import normalize_uzbekistan_phone
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 
-EXIT_OK, EXIT_REFUSED, EXIT_BAD_PHONE = 0, 1, 2
+EXIT_OK, EXIT_REFUSED, EXIT_BAD_PHONE, EXIT_DB_ERROR = 0, 1, 2, 3
 _UNAVAILABLE = {AccountStatus.SUSPENDED, AccountStatus.BANNED, AccountStatus.DELETED}
 _REASON = 'server-side admin bootstrap command'
 
@@ -38,15 +40,12 @@ def mask_phone(phone_number: str) -> str:
 async def grant_admin(session: AsyncSession, phone_number: str) -> tuple[int, str]:
     masked = mask_phone(phone_number)
     user = await session.scalar(select(User).where(User.phone_number == phone_number))
-    if user is not None and user.account_status in _UNAVAILABLE:
+    if user is None:
+        return EXIT_REFUSED, f'{masked}: no such user; sign in once first; nothing changed'
+    if user.account_status in _UNAVAILABLE:
         return EXIT_REFUSED, f'{masked}: account is {user.account_status.value}; nothing changed'
-    if user is not None and await session.get(UserRole, (user.id, UserRoleType.ADMIN)):
+    if await session.get(UserRole, (user.id, UserRoleType.ADMIN)):
         return EXIT_OK, f'{masked}: already an admin; nothing changed'
-    created = user is None
-    if created:
-        user = User(phone_number=phone_number, account_status=AccountStatus.ACTIVE)
-        session.add(user)
-        await session.flush()
     session.add(UserRole(user_id=user.id, role=UserRoleType.ADMIN))
     session.add(
         AdminAuditEvent(
@@ -54,7 +53,7 @@ async def grant_admin(session: AsyncSession, phone_number: str) -> tuple[int, st
         )
     )
     await session.commit()
-    return EXIT_OK, f'{masked}: admin role granted' + (' (new user created)' if created else '')
+    return EXIT_OK, f'{masked}: admin role granted'
 
 
 async def revoke_admin(session: AsyncSession, phone_number: str) -> tuple[int, str]:
@@ -95,21 +94,31 @@ async def run(
         print('invalid phone number (expected an Uzbekistan number such as +998 90 *** ** **)')
         return EXIT_BAD_PHONE
     action = revoke_admin if args.revoke else grant_admin
-    if session_factory is not None:
-        async with session_factory() as session:
-            code, message = await action(session, phone_number)
-    else:
-        from yondo_api.config import get_settings
-        from yondo_api.db.session import create_database_engine, create_session_factory
-
-        engine = create_database_engine(get_settings().database_url_async)
-        try:
-            async with create_session_factory(engine)() as session:
-                code, message = await action(session, phone_number)
-        finally:
-            await engine.dispose()
+    try:
+        code, message = await _execute(action, phone_number, session_factory)
+    except SQLAlchemyError as error:
+        # The driver's message and SQL parameters may contain the full phone: never print them.
+        message = (
+            f'{mask_phone(phone_number)}: database error ({type(error).__name__}); nothing changed'
+        )
+        code = EXIT_DB_ERROR
     print(message)
     return code
+
+
+async def _execute(action, phone_number: str, session_factory) -> tuple[int, str]:
+    if session_factory is not None:
+        async with session_factory() as session:
+            return await action(session, phone_number)
+    from yondo_api.config import get_settings
+    from yondo_api.db.session import create_database_engine, create_session_factory
+
+    engine = create_database_engine(get_settings().database_url_async)
+    try:
+        async with create_session_factory(engine)() as session:
+            return await action(session, phone_number)
+    finally:
+        await engine.dispose()
 
 
 if __name__ == '__main__':

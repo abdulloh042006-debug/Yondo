@@ -2,8 +2,10 @@ import os
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import event, select, text
+from sqlalchemy import event, func, select, text
+from sqlalchemy.exc import OperationalError
 
+from yondo_api.admin import bootstrap
 from yondo_api.admin.bootstrap import mask_phone, run
 from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.db.base import Base
@@ -54,11 +56,29 @@ async def test_bad_phone_exits_2_and_never_echoes_it(factory, capsys):
     assert '12345' not in capsys.readouterr().out
 
 
+async def add_user(factory, phone=PHONE, status=AccountStatus.VERIFICATION_PENDING):
+    async with factory() as session:
+        user = User(phone_number=phone, account_status=status)
+        session.add(user)
+        await session.commit()
+    return user
+
+
 @pytest.mark.asyncio
-async def test_grant_creates_active_admin_once_and_is_idempotent(factory, capsys):
+async def test_unknown_phone_is_refused_and_nothing_is_written(factory, capsys):
+    assert await run(['--phone', PHONE], factory) == 1
+    assert 'no such user; sign in once first' in capsys.readouterr().out
+    async with factory() as session:
+        assert await session.scalar(select(func.count()).select_from(User)) == 0
+    _, admins, events = await state(factory)
+    assert admins == [] and events == []
+
+
+@pytest.mark.asyncio
+async def test_grant_is_audited_once_and_idempotent(factory, capsys):
+    user = await add_user(factory)
     assert await run(['--phone', '90 111 00 99'], factory) == 0
-    user, admins, events = await state(factory)
-    assert user.account_status == AccountStatus.ACTIVE
+    _, admins, events = await state(factory)
     assert [a.user_id for a in admins] == [user.id]
     assert [(e.admin_id, e.target_id, e.action) for e in events] == [
         (user.id, user.id, 'admin_bootstrap')
@@ -69,6 +89,20 @@ async def test_grant_creates_active_admin_once_and_is_idempotent(factory, capsys
     assert '901110099' not in out
     _, admins, events = await state(factory)
     assert len(admins) == 1 and len(events) == 1
+
+
+@pytest.mark.asyncio
+async def test_database_error_is_masked_and_exits_3(factory, capsys, monkeypatch):
+    async def broken(session, phone_number):
+        raise OperationalError(
+            'SELECT ...', {'phone_number': phone_number}, Exception(phone_number)
+        )
+
+    monkeypatch.setattr(bootstrap, 'grant_admin', broken)
+    assert await run(['--phone', PHONE], factory) == 3
+    out = capsys.readouterr().out
+    assert 'database error (OperationalError)' in out and '+998 90 *** ** 99' in out
+    assert '901110099' not in out
 
 
 @pytest.mark.asyncio
@@ -90,9 +124,7 @@ async def test_grant_keeps_an_existing_user_and_roles(factory):
     'status', [AccountStatus.SUSPENDED, AccountStatus.BANNED, AccountStatus.DELETED]
 )
 async def test_grant_refuses_unavailable_accounts(factory, status):
-    async with factory() as session:
-        session.add(User(phone_number=PHONE, account_status=status))
-        await session.commit()
+    await add_user(factory, status=status)
     assert await run(['--phone', PHONE], factory) == 1
     _, admins, events = await state(factory)
     assert admins == [] and events == []
@@ -100,6 +132,9 @@ async def test_grant_refuses_unavailable_accounts(factory, status):
 
 @pytest.mark.asyncio
 async def test_revoke_refuses_the_last_admin_then_works_with_two(factory, capsys):
+    assert await run(['--phone', PHONE, '--revoke'], factory) == 0  # unknown: no-op
+    await add_user(factory)
+    await add_user(factory, OTHER)
     assert await run(['--phone', PHONE, '--revoke'], factory) == 0  # not an admin: no-op
     assert await run(['--phone', PHONE], factory) == 0
     assert await run(['--phone', PHONE, '--revoke'], factory) == 1
