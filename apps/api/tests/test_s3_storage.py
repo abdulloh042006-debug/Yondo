@@ -166,3 +166,15 @@ def test_production_storage_hands_out_https_urls_only():
     )
     assert ok.storage_public_endpoint == 'https://files.example.test'
     assert Settings(environment='test', storage_backend='s3').storage_backend == 's3'
+
+
+def test_old_job_alias_uses_the_same_storage_wiring(monkeypatch):
+    import runpy
+
+    from yondo_api import jobs
+
+    called = []
+    monkeypatch.setattr(jobs, 'run', lambda: called.append(True) or 0)
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module('yondo_api.account.jobs', run_name='__main__')
+    assert exit_info.value.code == 0 and called == [True]
