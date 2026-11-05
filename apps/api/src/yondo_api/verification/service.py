@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.companions.integrations import IdentityStatus
@@ -70,3 +70,68 @@ async def erase_verification_images(
             setattr(item, field, None)
         item.review_note = None
         item.updated_at = now
+
+
+DRAFT_MAX_AGE = timedelta(hours=24)
+
+
+async def delete_images(item: IdentityVerification, storage) -> bool:
+    """Delete the item's objects; clear each key only after its delete. True if none remain."""
+    for field in ('document_key', 'selfie_key'):
+        key = getattr(item, field)
+        if not key:
+            continue
+        if storage is None:
+            logger.warning('No object storage: verification image kept, id=%s', item.id)
+            continue
+        try:
+            await storage.delete(key)
+        except Exception:  # the key is kept so a later run can retry
+            logger.exception('Verification image not deleted: id=%s', item.id)
+            continue
+        setattr(item, field, None)
+    return item.document_key is None and item.selfie_key is None
+
+
+async def purge_decided_images(
+    session: AsyncSession, storage, retention_days: int, now: datetime | None = None
+) -> int:
+    """Jobs: delete images of verified/rejected submissions decided more than retention ago."""
+    cutoff = (now or datetime.now(UTC)) - timedelta(days=retention_days)
+    items = await session.scalars(
+        select(IdentityVerification).where(
+            IdentityVerification.status.in_(
+                [VerificationStatus.VERIFIED, VerificationStatus.REJECTED]
+            ),
+            IdentityVerification.reviewed_at <= cutoff,
+            (IdentityVerification.document_key.is_not(None))
+            | (IdentityVerification.selfie_key.is_not(None)),
+        )
+    )
+    cleared = 0
+    for item in items:
+        cleared += await delete_images(item, storage)
+    await session.commit()
+    return cleared
+
+
+async def purge_abandoned_drafts(
+    session: AsyncSession, storage, now: datetime | None = None
+) -> int:
+    """Jobs: remove drafts untouched for 24 h (never submitted) with their objects."""
+    cutoff = (now or datetime.now(UTC)) - DRAFT_MAX_AGE
+    items = await session.scalars(
+        select(IdentityVerification).where(
+            IdentityVerification.status == VerificationStatus.DRAFT,
+            IdentityVerification.updated_at <= cutoff,
+        )
+    )
+    removed = 0
+    for item in items:
+        if await delete_images(item, storage):
+            await session.execute(
+                delete(IdentityVerification).where(IdentityVerification.id == item.id)
+            )
+            removed += 1
+    await session.commit()
+    return removed

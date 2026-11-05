@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 from anyio import CancelScope, to_thread
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
@@ -20,7 +20,7 @@ from yondo_api.companions.dependencies import Admin, Principal, Session, object_
 from yondo_api.companions.photos import IMAGE_TYPES, compensate_upload, process_image
 from yondo_api.models.user import AccountStatus
 from yondo_api.verification.models import IdentityVerification, VerificationStatus
-from yondo_api.verification.service import latest
+from yondo_api.verification.service import delete_images, latest
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/verification', tags=['verification'])
@@ -82,22 +82,42 @@ def read(item: IdentityVerification) -> VerificationRead:
     )
 
 
-async def _url(storage, key: str | None) -> str | None:
+async def _url(storage, item: IdentityVerification, field: str) -> str | None:
+    key = getattr(item, f'{field}_key')
     if not key or storage is None:
         return None
     try:
         return await storage.create_download_url(key, IMAGE_URL_SECONDS)
     except Exception:
+        # Neither the key nor the URL is logged.
+        logger.warning('Verification image URL unavailable: id=%s image=%s', item.id, field)
         return None
 
 
-async def admin_read(request: Request, item: IdentityVerification) -> AdminVerificationRead:
+async def admin_read(
+    request: Request, item: IdentityVerification, admin=None, session=None
+) -> AdminVerificationRead:
+    """Admin view; every image URL handed out is audited (admin, verification, which image)."""
     storage = request.app.state.object_storage
+    urls = {}
+    for field in ('document', 'selfie'):
+        urls[field] = await _url(storage, item, field)
+        if urls[field] and admin is not None and session is not None:
+            session.add(
+                AdminAuditEvent(
+                    admin_id=admin.id,
+                    target_id=item.user_id,
+                    action='identity_image_viewed',
+                    reason=f'identity_verification:{item.id}:{field}',
+                )
+            )
+    if session is not None and session.new:
+        await session.commit()
     return AdminVerificationRead(
         **read(item).model_dump(),
         user_id=item.user_id,
-        document_url=await _url(storage, item.document_key),
-        selfie_url=await _url(storage, item.selfie_key),
+        document_url=urls['document'],
+        selfie_url=urls['selfie'],
     )
 
 
@@ -124,7 +144,9 @@ async def my_verification(principal: Principal, session: Session):
 
 
 @router.post('/me', response_model=VerificationRead, status_code=201)
-async def start(payload: VerificationStart, principal: Principal, session: Session):
+async def start(
+    payload: VerificationStart, request: Request, principal: Principal, session: Session
+):
     check_usable(principal)
     user_id = principal.user.id
     await companion_service.locked_user(session, user_id)
@@ -140,6 +162,18 @@ async def start(payload: VerificationStart, principal: Principal, session: Sessi
         current.document_type = payload.document_type
         item = current
     else:
+        used = await session.scalar(
+            select(func.count())
+            .select_from(IdentityVerification)
+            .where(
+                IdentityVerification.user_id == user_id,
+                IdentityVerification.status != VerificationStatus.DRAFT,
+            )
+        )
+        if used >= request.app.state.settings.identity_max_submissions_per_user:
+            raise ApplicationError(
+                'verification_attempts_exceeded', 'Too many verification attempts', 429
+            )
         item = IdentityVerification(
             user_id=user_id, status=VerificationStatus.DRAFT, document_type=payload.document_type
         )
@@ -254,7 +288,7 @@ async def queue(
         .order_by(IdentityVerification.submitted_at, IdentityVerification.id)
         .limit(limit)
     )
-    return [await admin_read(request, item) for item in items]
+    return [await admin_read(request, item, admin, session) for item in items]
 
 
 @admin_router.post('/{verification_id}/decision', response_model=AdminVerificationRead)
@@ -291,4 +325,9 @@ async def decide(
         )
     )
     await session.commit()
-    return await admin_read(request, item)
+    # Retention 0 (default): the images are deleted at the decision. A failed delete keeps the
+    # key so the jobs runner retries; a positive retention leaves them to that job.
+    if request.app.state.settings.identity_image_retention_days == 0:
+        await delete_images(item, request.app.state.object_storage)
+        await session.commit()
+    return await admin_read(request, item, admin, session)

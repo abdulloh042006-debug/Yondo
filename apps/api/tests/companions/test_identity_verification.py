@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -59,7 +60,9 @@ async def test_verification_feeds_the_companion_activation_gate(prepared):
     async with app.state.db_session_factory() as session:
         audit = (
             await session.scalars(
-                select(AdminAuditEvent).where(AdminAuditEvent.action.like('identity_%'))
+                select(AdminAuditEvent).where(
+                    AdminAuditEvent.action.in_(['identity_verified', 'identity_rejected'])
+                )
             )
         ).one()
     assert audit.action == 'identity_verified' and str(audit.target_id) == env['owner_id']
@@ -211,3 +214,145 @@ async def test_failed_save_deletes_the_new_upload_but_keeps_a_committed_one(env,
         row = await session.get(IdentityVerification, UUID(started.json()['id']))
         assert row.document_key is not None
     assert images() == {row.document_key}
+
+
+def verification_images(storage):
+    return {key for key in storage.objects if key.startswith('verifications/')}
+
+
+async def decide(client, env, item, decision='approve'):
+    return await client.post(
+        f'{ADMIN}/{item["id"]}/decision',
+        headers=env['admin'],
+        json={'decision': decision, 'note': 'checked'},
+    )
+
+
+async def test_decision_deletes_images_and_clears_keys(env):
+    client, storage = env['client'], env['storage']
+    item = await submit(client, env['other'])
+    assert len(verification_images(storage)) == 2
+    decided = await decide(client, env, item, 'reject')
+    assert decided.status_code == 200
+    body = decided.json()
+    assert body['has_document'] is False and body['has_selfie'] is False
+    assert body['document_url'] is None
+    assert verification_images(storage) == set()
+    async with env['app'].state.db_session_factory() as session:
+        row = await session.get(IdentityVerification, UUID(item['id']))
+        assert row.document_key is None and row.selfie_key is None
+
+
+async def test_failed_delete_at_decision_keeps_keys_and_job_retries(env):
+    from yondo_api.verification.service import purge_decided_images
+
+    client, storage = env['client'], env['storage']
+    item = await submit(client, env['other'])
+    real_delete = storage.delete
+
+    async def broken(key):
+        raise OSError('down')
+
+    storage.delete = broken
+    assert (await decide(client, env, item)).status_code == 200
+    assert len(verification_images(storage)) == 2
+    storage.delete = real_delete
+    async with env['app'].state.db_session_factory() as session:
+        assert await purge_decided_images(session, storage, 0) == 1
+    assert verification_images(storage) == set()
+
+
+async def test_retention_keeps_images_until_the_job_runs(env):
+    from datetime import timedelta
+
+    from yondo_api.verification.service import purge_decided_images
+
+    client, storage = env['client'], env['storage']
+    env['app'].state.settings.identity_image_retention_days = 7
+    item = await submit(client, env['other'])
+    decided = await decide(client, env, item)
+    assert decided.json()['document_url'] is not None
+    assert len(verification_images(storage)) == 2
+    async with env['app'].state.db_session_factory() as session:
+        assert await purge_decided_images(session, storage, 7) == 0
+        later = datetime.now(UTC) + timedelta(days=8)
+        assert await purge_decided_images(session, storage, 7, later) == 1
+    assert verification_images(storage) == set()
+
+
+async def test_admin_image_access_is_audited_without_url_or_key(env):
+    client = env['client']
+    env['app'].state.settings.identity_image_retention_days = 7
+    item = await submit(client, env['other'])
+    assert (await client.get(ADMIN, headers=env['admin'])).status_code == 200
+    async with env['app'].state.db_session_factory() as session:
+        events = list(
+            await session.scalars(
+                select(AdminAuditEvent).where(AdminAuditEvent.action == 'identity_image_viewed')
+            )
+        )
+    assert {e.reason for e in events} == {
+        f'identity_verification:{item["id"]}:document',
+        f'identity_verification:{item["id"]}:selfie',
+    }
+    admin_id = (await client.get('/api/v1/auth/me', headers=env['admin'])).json()['id']
+    assert all(str(e.admin_id) == admin_id and 'storage.test' not in e.reason for e in events)
+
+
+async def test_url_failure_is_logged_not_swallowed(env, caplog):
+    client, storage = env['client'], env['storage']
+    await submit(client, env['other'])
+
+    async def broken(key, expires_in_seconds=300):
+        raise OSError('presign failed')
+
+    storage.create_download_url = broken
+    with caplog.at_level('WARNING'):
+        queue = await client.get(ADMIN, headers=env['admin'])
+    assert queue.json()[0]['document_url'] is None
+    assert 'Verification image URL unavailable' in caplog.text
+    assert 'verifications/' not in caplog.text
+
+
+async def test_submissions_are_capped_per_user(env):
+    client = env['client']
+    env['app'].state.settings.identity_max_submissions_per_user = 2
+    for _ in range(2):
+        await asyncio.sleep(1.1)  # SQLite timestamps are per second: keep `latest` unambiguous
+        item = await submit(client, env['other'])
+        assert (await decide(client, env, item, 'reject')).status_code == 200
+    blocked = await client.post(V, headers=env['other'], json={'document_type': 'passport'})
+    assert blocked.status_code == 429
+    assert 'verification_attempts_exceeded' in blocked.text
+
+
+async def test_job_removes_abandoned_drafts_with_their_objects(env):
+    from datetime import timedelta
+
+    from yondo_api.verification.service import purge_abandoned_drafts
+
+    client, storage = env['client'], env['storage']
+    await client.post(V, headers=env['owner'], json={'document_type': 'passport'})
+    await client.post(
+        f'{V}/document', headers={**env['owner'], 'Content-Type': 'image/png'}, content=png()
+    )
+    assert len(verification_images(storage)) == 1
+    async with env['app'].state.db_session_factory() as session:
+        assert await purge_abandoned_drafts(session, storage) == 0  # fresh draft stays
+        later = datetime.now(UTC) + timedelta(hours=25)
+        assert await purge_abandoned_drafts(session, storage, later) == 1
+        rows = (await session.scalars(select(IdentityVerification))).all()
+    assert rows == [] and verification_images(storage) == set()
+
+
+def test_alembic_has_a_single_head():
+    from pathlib import Path
+
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    root = Path(__file__).resolve().parents[2]
+    config = Config(str(root / 'alembic.ini'))
+    config.set_main_option('script_location', str(root / 'migrations'))
+    assert len(ScriptDirectory.from_config(config).get_heads()) == 1
+
