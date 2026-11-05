@@ -99,7 +99,7 @@ async def test_manual_transfer_is_confirmed_by_an_admin_and_confirms_the_booking
     body = page.json()
     assert body['amount_minor'] == 50000 and body['reference'] == reference
     assert [c['number'] for c in body['cards']] == ['8600 0000 0000 0001', '9860 0000 0000 0002']
-    assert body['confirmed_by_admin'] is False
+    assert body['state'] == 'open'
     for headers in (e['owner'], e['other'], e['admin']):
         hidden = await client.get(f'/api/v1/payments/manual/{reference}', headers=headers)
         assert hidden.status_code == 404
@@ -131,7 +131,7 @@ async def test_manual_transfer_is_confirmed_by_an_admin_and_confirms_the_booking
     booking = await client.get(f'/api/v1/bookings/{booking_id}', headers=e['customer'])
     assert booking.json()['status'] == 'confirmed'
     page = (await client.get(f'/api/v1/payments/manual/{reference}', headers=e['customer'])).json()
-    assert page['confirmed_by_admin'] is True and page['cards'] == []
+    assert page['state'] == 'confirmed' and page['cards'] == []
     assert (await client.get('/api/v1/admin/payments/manual', headers=e['admin'])).json() == []
     done = await client.get(
         '/api/v1/admin/payments/manual', headers=e['admin'], params={'status': 'succeeded'}
@@ -190,3 +190,92 @@ async def test_admin_cannot_confirm_own_payment_and_late_money_is_flagged_for_re
     async with e['app'].state.db_session_factory() as session:
         booking = await session.get(Booking, UUID(booking_id))
         assert booking.status == BookingStatus.CANCELLED
+
+
+async def _manual_payment(e, key):
+    service = await setup_bookable_companion(e)
+    booking_id = await accepted_booking(e, service)
+    created = await e['client'].post(
+        f'/api/v1/payments/bookings/{booking_id}',
+        headers={**e['customer'], 'Idempotency-Key': key},
+    )
+    assert created.status_code == 201, created.text
+    return booking_id, created.json()['checkout_url'].rsplit('/', 1)[1]
+
+
+@pytest.mark.asyncio
+async def test_cards_are_hidden_once_the_booking_cannot_be_paid_and_late_money_says_refund(
+    prepared,
+):
+    e, client = prepared, prepared['client']
+    manual_mode(e)
+    booking_id, reference = await _manual_payment(e, 'manual-payment-0003')
+    cancelled = await client.post(
+        f'/api/v1/bookings/{booking_id}/cancel', headers=e['owner'], json={'reason': ''}
+    )
+    assert cancelled.status_code == 200, cancelled.text
+    page = (await client.get(f'/api/v1/payments/manual/{reference}', headers=e['customer'])).json()
+    assert page['state'] == 'closed' and page['cards'] == []
+    # Late money is recorded, but the customer is never told the booking is confirmed.
+    late = await client.post(
+        f'/api/v1/admin/payments/manual/{reference}/received', headers=e['admin']
+    )
+    assert late.status_code == 200 and late.json()['refund_required'] is True
+    assert late.json()['booking_status'] == 'cancelled'
+    page = (await client.get(f'/api/v1/payments/manual/{reference}', headers=e['customer'])).json()
+    assert page['state'] == 'refund_required' and page['cards'] == []
+
+
+@pytest.mark.asyncio
+async def test_an_overdue_booking_is_expired_before_the_money_is_recorded(prepared):
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import update
+
+    e, client = prepared, prepared['client']
+    manual_mode(e)
+    booking_id, reference = await _manual_payment(e, 'manual-payment-0004')
+    # The start time passed and the hourly sweep has not run yet.
+    async with e['app'].state.db_session_factory() as session:
+        past = datetime.now(UTC) - timedelta(hours=3)
+        await session.execute(
+            update(Booking)
+            .where(Booking.id == UUID(booking_id))
+            .values(starts_at=past, ends_at=past + timedelta(hours=1))
+        )
+        await session.commit()
+    page = (await client.get(f'/api/v1/payments/manual/{reference}', headers=e['customer'])).json()
+    assert page['state'] == 'closed' and page['cards'] == []
+    late = await client.post(
+        f'/api/v1/admin/payments/manual/{reference}/received', headers=e['admin']
+    )
+    assert late.status_code == 200, late.text
+    assert late.json()['booking_status'] == 'expired' and late.json()['refund_required'] is True
+
+
+@pytest.mark.asyncio
+async def test_companion_who_is_admin_cannot_confirm_and_webhook_refuses_manual_refs(prepared):
+    from yondo_api.payments.provider import PaymentEvent
+
+    e, client = prepared, prepared['client']
+    manual_mode(e)
+    booking_id, reference = await _manual_payment(e, 'manual-payment-0005')
+    owner_id = (await client.get('/api/v1/auth/me', headers=e['owner'])).json()['id']
+    async with e['app'].state.db_session_factory() as session:
+        session.add(UserRole(user_id=UUID(owner_id), role=UserRoleType.ADMIN))
+        await session.commit()
+    own = await client.post(
+        f'/api/v1/admin/payments/manual/{reference}/received', headers=e['owner']
+    )
+    assert own.status_code == 403 and own.json()['code'] == 'self_approval_forbidden'
+
+    class ForgingProvider:
+        async def verify_event(self, body, headers):
+            return PaymentEvent('forged-1', reference, 'succeeded')
+
+    # Even a provider whose signature check passed cannot confirm a manual (YND-) payment.
+    e['app'].state.payment_provider = ForgingProvider()
+    forged = await client.post('/api/v1/payments/webhook', content=b'{}')
+    assert forged.status_code == 401
+    booking = await client.get(f'/api/v1/bookings/{booking_id}', headers=e['customer'])
+    assert booking.json()['status'] == 'accepted'

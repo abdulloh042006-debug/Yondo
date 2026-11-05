@@ -39,9 +39,11 @@ export function ManualPay() {
       <div className="glass pad stack">
         <h1>{t('manualPay.title')}</h1>
         <p className="big">{t('manualPay.amount', { amount: formatMoney(p.amount_minor, p.currency) })}</p>
-        {p.confirmed_by_admin ? (
+        {p.state === 'confirmed' ? (
           <p className="banner" role="status">{t('manualPay.confirmed')}</p>
-        ) : p.status !== 'pending' ? (
+        ) : p.state === 'refund_required' ? (
+          <p className="banner" role="status">{t('manualPay.refund')}</p>
+        ) : p.state !== 'open' ? (
           <p className="banner" role="status">{t('manualPay.notOpen')}</p>
         ) : (
           <>
@@ -69,7 +71,7 @@ export function ManualPay() {
           </>
         )}
         <div className="row">
-          {!p.confirmed_by_admin && p.status === 'pending' && (
+          {p.state === 'open' && (
             <button type="button" className="btn ghost" onClick={res.reload}>{t('manualPay.refresh')}</button>
           )}
           <Link className="btn ghost" to={`/bookings/${p.booking_id}`}>{t('manualPay.back')}</Link>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,7 +11,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class ManualPaymentCard(BaseModel):
     """A card customers transfer to while payments are confirmed by hand (shown to the payer)."""
 
-    model_config = ConfigDict(extra='forbid', frozen=True)
+    # A malformed value must not print a card number into the host's logs.
+    model_config = ConfigDict(extra='forbid', frozen=True, hide_input_in_errors=True)
     label: str = Field(min_length=1, max_length=32)  # e.g. "Uzcard", "Humo", "Visa (Uzum)"
     number: str = Field(pattern=r'^[0-9 ]{16,23}$')
     holder: str = Field(min_length=1, max_length=64)
@@ -30,6 +32,7 @@ class Settings(BaseSettings):
         env_prefix='YONDO_',
         case_sensitive=False,
         extra='ignore',
+        hide_input_in_errors=True,  # settings carry secrets and card numbers
     )
 
     app_name: str = 'Yondo API'
@@ -169,7 +172,9 @@ class Settings(BaseSettings):
         if self.payment_provider == 'manual':
             if not self.manual_payment_cards:
                 raise ValueError('YONDO_PAYMENT_PROVIDER=manual needs YONDO_MANUAL_PAYMENT_CARDS')
-            if not self.public_web_url.startswith('https://'):
+            if not self.public_web_url.startswith('https://') or not urlsplit(
+                self.public_web_url
+            ).hostname:
                 raise ValueError(
                     'YONDO_PAYMENT_PROVIDER=manual needs an https YONDO_PUBLIC_WEB_URL'
                 )

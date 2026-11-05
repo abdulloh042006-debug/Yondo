@@ -9,10 +9,10 @@ Owner decision, 2026-11-05: for roughly the first month, with few users, payment
    - the configured cards;
    - the exact amount;
    - a code such as `YND-7KQ2-9MX4`, which the customer types into the transfer comment.
-   Only that customer sees the cards; everyone else gets "not found".
+   Only that customer sees the cards; everyone else gets "not found". The cards are shown only while the booking is `accepted` and its start time has not passed. Otherwise the page says the payment is no longer open.
 3. The customer pays from their own bank app (Uzcard, Humo or Visa). The app moves no money and promises no confirmation time.
 4. The admin opens **Admin → Payments**. When the bank shows that exact amount with that code, the admin presses **Money received** and confirms. The booking becomes `confirmed` through the same idempotent path a provider webhook uses. Pressing twice does nothing more, and an admin cannot confirm their own payment. Each confirmation is audited (`manual_payment_received`).
-5. If the booking was cancelled or expired before the money was confirmed, the payment is marked **refund needed**. The refund is made by hand.
+5. If the booking was cancelled before the money was confirmed, or its start time has passed (the confirmation expires it first, as the hourly job would), the payment is marked **refund needed**. The customer's page then says that, never "confirmed". The refund is made by hand. An admin cannot confirm a payment for a booking in which they are the customer or the companion.
 
 No "not received" button exists. A booking that stays unpaid expires at its start time, as before.
 

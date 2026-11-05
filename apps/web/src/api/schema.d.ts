@@ -2275,6 +2275,8 @@ export interface components {
              * Format: uuid
              */
             booking_id: string;
+            /** Booking Status */
+            booking_status: string;
             /**
              * Created At
              * Format: date-time
@@ -2982,13 +2984,11 @@ export interface components {
              * Format: uuid
              */
             booking_id: string;
-            /** Cards */
-            cards: components["schemas"]["ManualCardRead"][];
             /**
-             * Confirmed By Admin
-             * @description True once an admin recorded the money.
+             * Cards
+             * @description Only while the state is "open".
              */
-            confirmed_by_admin: boolean;
+            cards: components["schemas"]["ManualCardRead"][];
             /**
              * Created At
              * Format: date-time
@@ -2998,6 +2998,12 @@ export interface components {
             currency: string;
             /** Reference */
             reference: string;
+            /**
+             * State
+             * @description open: transfer now; confirmed: money recorded and booking confirmed; refund_required: money recorded for a cancelled/expired booking; closed: do not pay.
+             * @enum {string}
+             */
+            state: "open" | "confirmed" | "refund_required" | "closed";
             /** Status */
             status: string;
         };

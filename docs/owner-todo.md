@@ -1,4 +1,4 @@
-# Egadan kerakli narsalar (2026-11-06 holati)
+# Egadan kerakli narsalar (2026-11-05 kechqurun holati)
 
 Qisqa ro'yxat. Har bandda nima kerakligi va nima uchunligi yozilgan. Kod tomoni tayyor; bu yerdagilarni faqat siz qila olasiz.
 

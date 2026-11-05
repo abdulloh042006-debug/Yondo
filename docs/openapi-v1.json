@@ -418,6 +418,10 @@
             "title": "Booking Id",
             "type": "string"
           },
+          "booking_status": {
+            "title": "Booking Status",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -456,6 +460,7 @@
           "booking_id",
           "customer_id",
           "status",
+          "booking_status",
           "amount_minor",
           "currency",
           "refund_required",
@@ -2023,16 +2028,12 @@
             "type": "string"
           },
           "cards": {
+            "description": "Only while the state is \"open\".",
             "items": {
               "$ref": "#/components/schemas/ManualCardRead"
             },
             "title": "Cards",
             "type": "array"
-          },
-          "confirmed_by_admin": {
-            "description": "True once an admin recorded the money.",
-            "title": "Confirmed By Admin",
-            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -2045,6 +2046,17 @@
           },
           "reference": {
             "title": "Reference",
+            "type": "string"
+          },
+          "state": {
+            "description": "open: transfer now; confirmed: money recorded and booking confirmed; refund_required: money recorded for a cancelled/expired booking; closed: do not pay.",
+            "enum": [
+              "open",
+              "confirmed",
+              "refund_required",
+              "closed"
+            ],
+            "title": "State",
             "type": "string"
           },
           "status": {
@@ -2060,7 +2072,7 @@
           "currency",
           "created_at",
           "cards",
-          "confirmed_by_admin"
+          "state"
         ],
         "title": "ManualPaymentRead",
         "type": "object"

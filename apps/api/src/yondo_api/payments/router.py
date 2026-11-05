@@ -18,6 +18,8 @@ from yondo_api.payments.schemas import PaymentResponse
 from yondo_api.payments.service import apply_payment_event, platform_fee
 
 router = APIRouter(prefix='/payments', tags=['payments'])
+# Manual card-transfer payments (payments/manual.py); only an admin confirms them, never a webhook.
+MANUAL_REFERENCE_PREFIX = 'YND-'
 
 
 @router.post('/bookings/{booking_id}', response_model=PaymentResponse, status_code=201)
@@ -158,6 +160,8 @@ async def payment_webhook(request: Request, session: Session):
         ) from exc
     if event.status not in {'succeeded', 'failed'}:
         raise ApplicationError('invalid_payment_event', 'Payment event status is invalid', 422)
+    if event.provider_reference.startswith(MANUAL_REFERENCE_PREFIX):
+        raise ApplicationError('invalid_payment_event', 'Payment event could not be verified', 401)
     await apply_verified_event(request, session, event)
 
 

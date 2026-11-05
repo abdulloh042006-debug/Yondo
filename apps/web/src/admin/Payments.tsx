@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import type { Schemas } from '../api/client';
 import { t } from '../i18n';
 import { formatInstant, formatMoney } from '../lib/format';
+import { BOOKING_STATUS } from '../lib/labels';
 import { useResource } from '../lib/useResource';
 import { ConfirmDialog, Empty, ErrorState, Loading, useToast } from '../ui/feedback';
 import { Id } from './shared';
@@ -25,7 +26,7 @@ export function AdminPayments() {
       {res.loading && !res.data ? <Loading /> : res.error ? <ErrorState error={res.error} onRetry={res.reload} /> : !res.data?.length ? <Empty title={t('admin.payments.none')} /> : (
         <div className="glass table-wrap">
           <table className="data">
-            <thead><tr><th>{t('admin.col.reference')}</th><th>{t('admin.col.amount')}</th><th>{t('admin.col.created')}</th><th>{t('common.booking')}</th><th /></tr></thead>
+            <thead><tr><th>{t('admin.col.reference')}</th><th>{t('admin.col.amount')}</th><th>{t('admin.col.created')}</th><th>{t('common.booking')}</th><th>{t('admin.col.status')}</th><th /></tr></thead>
             <tbody>
               {res.data.map((p) => (
                 <tr key={p.payment_id}>
@@ -33,6 +34,7 @@ export function AdminPayments() {
                   <td>{formatMoney(p.amount_minor, p.currency)}</td>
                   <td>{formatInstant(p.created_at)}</td>
                   <td><Id value={p.booking_id} /></td>
+                  <td>{BOOKING_STATUS[p.booking_status]?.label ?? p.booking_status}</td>
                   <td>
                     {p.status === 'pending' ? (
                       <button type="button" className="btn sm" onClick={() => setConfirming(p)}>{t('admin.payments.received')}</button>

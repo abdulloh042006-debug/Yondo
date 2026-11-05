@@ -34,6 +34,18 @@ Done: owner decision "first month without a payment API: transfers to my cards, 
   - The webhook refuses manual events.
 - Web: `/pay/:reference` page and Admin → Payments; 26 keys in each of uz/ru/en.
 - `docs/payments-manual.md`; CLAUDE.md §7: two owner lines (government framing; manual payments, card numbers never in the repo).
+Verifier: first review REJECT. Blocking issues, all fixed with regression tests:
+- the cards were shown for cancelled or expired bookings; now only while the booking is `accepted` and not overdue;
+- the customer page said "confirmed" when the money was flagged for a refund; there is now a `state` field (open / confirmed / refund_required / closed);
+- confirming an overdue booking confirmed it; it now expires it first, so the money is flagged for a refund.
+
+Also fixed:
+- an audit row is written only when the payment is really applied;
+- a companion who is also an admin cannot confirm;
+- the webhook refuses `YND-` references;
+- settings errors hide their inputs (card numbers in logs);
+- the https host is checked.
+
 Not done: mobile shows the web `/pay` page through the browser (in-app instructions after PR #13 merges); no "not received" button (an unpaid booking expires at its start); refunds are manual.
 Next: verifier, PR; owner sets the env values on the host (list: `docs/owner-todo.md`).
 Evidence:
