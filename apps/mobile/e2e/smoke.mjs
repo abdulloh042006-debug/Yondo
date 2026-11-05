@@ -47,7 +47,7 @@ page.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.tes
 const tab = (name) => page.getByRole('tab', { name, exact: true }).click();
 const button = (name) => page.getByRole('button', { name, exact: true });
 async function axe(label) {
-  if (!AXE_PATH) return;
+  assert(AXE_PATH, 'axe-core not found: run npm ci in apps/web (or apps/mobile) first');
   await page.addScriptTag({ content: readFileSync(AXE_PATH, 'utf8') });
   const v = await page.evaluate(async () => {
     const r = await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'], resultTypes: ['violations'] });

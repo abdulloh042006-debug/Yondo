@@ -7,20 +7,26 @@ import { useTheme } from '../theme';
 import { Tag } from '../ui';
 
 export type Card = Schemas['CompanionCard'];
-const urlCache = new Map<string, string>();
+/** Signed URLs live 5 minutes on the server; a cached one is reused for 4. */
+const URL_TTL_MS = 4 * 60_000;
+const urlCache = new Map<string, { url: string; at: number }>();
+const cached = (id: string): string | null => {
+  const hit = urlCache.get(id);
+  return hit && Date.now() - hit.at < URL_TTL_MS ? hit.url : null;
+};
 
 /** Short-lived signed photo URL from the API; without storage the initial is shown instead. */
 export function CompanionImage({ card, size }: { card: Card; size: number }) {
   const { palette } = useTheme();
   const photo = card.photos[0];
-  const [url, setUrl] = useState<string | null>(photo ? (urlCache.get(photo.id) ?? null) : null);
+  const [url, setUrl] = useState<string | null>(photo ? cached(photo.id) : null);
   useEffect(() => {
-    if (!photo || urlCache.has(photo.id)) return;
+    if (!photo || cached(photo.id)) return;
     let live = true;
     api
       .get<Schemas['PhotoDownload']>(`/discovery/companions/${card.id}/photos/${photo.id}/download`, { anonymous: true })
       .then((r) => {
-        urlCache.set(photo.id, r.url);
+        urlCache.set(photo.id, { url: r.url, at: Date.now() });
         if (live) setUrl(r.url);
       })
       .catch(() => {});

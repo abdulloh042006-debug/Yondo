@@ -45,7 +45,12 @@ export function BookingsScreen() {
         </>
       )}
       {res.data?.map((b) => (
-        <Pressable key={b.id} role="button" aria-label={t('bd.open')} onPress={() => nav.push({ name: 'booking', id: b.id })}>
+        <Pressable
+          key={b.id}
+          role="button"
+          aria-label={`${t('bd.open')}: ${serviceLabel(b.service_code)}, ${formatInstant(b.starts_at)}, ${BOOKING_STATUS[b.status]?.label ?? b.status}`}
+          onPress={() => nav.push({ name: 'booking', id: b.id })}
+        >
           <Card>
             <Row style={{ justifyContent: 'space-between' }}>
               <Text style={{ color: palette.fg, fontWeight: '700', fontSize: 16 }}>{serviceLabel(b.service_code)}</Text>

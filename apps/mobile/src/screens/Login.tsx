@@ -123,11 +123,13 @@ export function ConsentCheck({ checked, onChange }: { checked: boolean; onChange
         />
         <Text style={{ color: palette.fg, flex: 1, fontSize: 15 }}>{t('legal.agree')}</Text>
       </Pressable>
-      {!!WEB_URL && (
+      {WEB_URL ? (
         <Row>
           <Button kind="ghost" small label={t('legal.terms')} onPress={() => void Linking.openURL(`${WEB_URL}/terms`)} />
           <Button kind="ghost" small label={t('legal.privacy')} onPress={() => void Linking.openURL(`${WEB_URL}/privacy`)} />
         </Row>
+      ) : (
+        <Text style={{ color: palette.muted }}>{t('mobile.webMissing')}</Text>
       )}
     </View>
   );
