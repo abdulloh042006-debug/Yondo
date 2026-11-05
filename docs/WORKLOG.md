@@ -25,6 +25,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S43 — Gifts/vendor gaps: admin moderation list, vendor delete, audited publish (2026-11-05) [cloud chat]
+Done: `GET /gifts/admin/products` (admin; incl. unpublished and sold-out; `published=`, `vendor_id=` filters) so an admin can find products to publish; `DELETE /vendor/products/{id}` (own, never-ordered products only; cart lines go with it; ordered = 409 `gift_product_in_use`, unpublish instead); admin publish/unpublish write an `AdminAuditEvent` (target = vendor user id, reason `gift_product:<id>`). Vendor orders/earnings stay 503 (no gift order or payout rules).
+Not done (owner decision, asked): vendor profile/shop and approval before publishing, product photos in beta. Web screens for vendor/admin gifts: NOT IMPLEMENTED.
+Next: verifier review, then a PR to `main` (owner merges).
+Evidence: `tests/companions/test_gift_vendor_gaps.py` 2 passed (SQLite + PostgreSQL); gift tests 31 passed on PostgreSQL; full suite on PostgreSQL 347 passed; `export_openapi.py --check` PASS; web typecheck PASS.
+
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
