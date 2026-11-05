@@ -71,6 +71,27 @@ Neon setup (about 5 minutes, you sign in yourself):
 Free limits to know: Neon suspends the compute after ~5 idle minutes (the first query after that adds about a second) and the free
 project is small (0.5 GB); both are plenty for a demo.
 
+## First admin: admin bootstrap command
+Nobody can make themselves admin through the API (`PUT /auth/roles` refuses `admin`), so on a fresh production
+database the first admin is granted from the server shell, with the API's own environment (`YONDO_DATABASE_URL`):
+
+```bash
+python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX           # grant (creates an active user if missing)
+python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX --revoke  # revoke; refuses to remove the last admin
+```
+
+- **Render:** service → *Shell* tab, run the command (the image has `yondo_api` installed; the env is the service's).
+  Render's Shell may not be offered on the free instance type: then run it from `apps/api` on your own machine with
+  `YONDO_DATABASE_URL` set to the same database (paste the URL in your own terminal, never into a file).
+  The public demo seeds its own admin from `YONDO_DEMO_ADMIN_PHONE` and does not need this.
+- **DigitalOcean** (`digitalocean/`): `docker compose exec api python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX`.
+- **Elsewhere:** from `apps/api` with the API's environment set.
+
+It prints only the masked phone (`+998 90 *** ** 99`), is idempotent (a repeat run says "nothing changed"),
+writes an `admin_audit_events` row (`admin_bootstrap` / `admin_revoke`, admin = the user's own id) and refuses
+suspended, banned or deleted accounts. Exit codes: 0 done or nothing to change, 1 refused, 2 invalid phone.
+Signing in still uses the normal phone + code login. Type the number in the shell only: never commit it (the repository is public).
+
 ## Try it locally first (Windows PowerShell)
 
 ```powershell
