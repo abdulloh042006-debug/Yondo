@@ -28,7 +28,9 @@ async def main(storage=None) -> int:
     finally:
         await engine.dispose()
     if storage is None and erased:
-        logging.getLogger(__name__).warning('No object storage configured: photo objects kept')
+        logging.getLogger(__name__).warning(
+            'No object storage configured: photo and ID image objects kept'
+        )
     print(
         f'bookings_expired={expired} accounts_erased={len(erased)} '
         f'skipped_open_bookings={len(skipped)}'

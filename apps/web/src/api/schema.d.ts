@@ -3624,7 +3624,10 @@ export interface components {
              * @enum {string}
              */
             decision: "approve" | "reject";
-            /** Note */
+            /**
+             * Note
+             * @description Shown to the user in GET /verification/me; erased with the account.
+             */
             note: string;
         };
         /** VerificationRead */

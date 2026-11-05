@@ -33,8 +33,9 @@ async def latest(session: AsyncSession, user_id: UUID, *, submitted_only: bool =
 class DatabaseIdentityEligibility:
     """Identity status from the latest submitted verification; drafts never count.
 
-    This is the read-only adapter the companion activation gate and discovery use: a
-    revoked (rejected) verification immediately makes the companion ineligible again.
+    This is the read-only adapter the companion activation gate and discovery use. A
+    decision is final for that submission: there is no revocation endpoint yet, so a
+    verified companion stays verified until a newer submission is decided.
     """
 
     async def get_status(self, session: AsyncSession, user_id: UUID) -> IdentityStatus:
@@ -45,19 +46,27 @@ class DatabaseIdentityEligibility:
 async def erase_verification_images(
     session: AsyncSession, user_id: UUID, storage, now: datetime | None = None
 ) -> None:
-    """Account erasure: delete document/selfie objects; keep only the de-identified decision."""
+    """Account erasure: delete document/selfie objects; keep only the de-identified decision.
+
+    A key is cleared only after its object was deleted. Without storage, or when a delete
+    fails, the private key stays on the row so the object can still be found and removed.
+    """
     now = now or datetime.now(UTC)
     for item in await session.scalars(
         select(IdentityVerification).where(IdentityVerification.user_id == user_id)
     ):
         for field in ('document_key', 'selfie_key'):
             key = getattr(item, field)
-            if key and storage is not None:
-                try:
-                    await storage.delete(key)
-                except Exception:  # the key is kept so a later run can retry
-                    logger.exception('Verification image not deleted: id=%s', item.id)
-                    continue
+            if not key:
+                continue
+            if storage is None:
+                logger.warning('No object storage: verification image kept, id=%s', item.id)
+                continue
+            try:
+                await storage.delete(key)
+            except Exception:  # the key is kept so a later run can retry
+                logger.exception('Verification image not deleted: id=%s', item.id)
+                continue
             setattr(item, field, None)
         item.review_note = None
         item.updated_at = now

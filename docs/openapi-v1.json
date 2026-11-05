@@ -3645,6 +3645,7 @@
             "type": "string"
           },
           "note": {
+            "description": "Shown to the user in GET /verification/me; erased with the account.",
             "maxLength": 2000,
             "minLength": 1,
             "title": "Note",

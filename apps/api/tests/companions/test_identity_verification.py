@@ -63,6 +63,8 @@ async def test_verification_feeds_the_companion_activation_gate(prepared):
             )
         ).one()
     assert audit.action == 'identity_verified' and str(audit.target_id) == env['owner_id']
+    # The free-text note is user-visible and erasable; the durable audit row keeps only the id.
+    assert audit.reason == f'identity_verification:{decided.json()["id"]}'
 
 
 async def test_rejection_allows_a_new_attempt_and_self_review_is_refused(env):
@@ -127,3 +129,85 @@ async def test_account_erasure_deletes_verification_images(env):
         kept = await session.get(IdentityVerification, UUID(item['id']))
         assert kept.document_key is None and kept.selfie_key is None
     assert not any(key.startswith('verifications/') for key in storage.objects)
+
+
+async def test_erasure_without_storage_or_with_a_failing_delete_keeps_the_keys(env):
+    client, storage = env['client'], env['storage']
+    item = await submit(client, env['owner'])
+    stored = {key for key in storage.objects if key.startswith('verifications/')}
+    assert len(stored) == 2
+
+    class FailingStorage:
+        async def delete(self, key):
+            raise OSError('bucket unreachable')
+
+    for broken in (None, FailingStorage()):
+        async with env['app'].state.db_session_factory() as session:
+            user = await session.get(User, UUID(env['owner_id']))
+            await erase_account(session, user, broken, datetime.now(UTC))
+            await session.commit()
+            kept = await session.get(IdentityVerification, UUID(item['id']))
+            # The keys still point at the objects, so a run with storage can remove them.
+            assert {kept.document_key, kept.selfie_key} == stored
+            assert kept.review_note is None
+    assert stored <= set(storage.objects)
+    async with env['app'].state.db_session_factory() as session:
+        user = await session.get(User, UUID(env['owner_id']))
+        await erase_account(session, user, storage, datetime.now(UTC))
+        await session.commit()
+        cleared = await session.get(IdentityVerification, UUID(item['id']))
+        assert cleared.document_key is None and cleared.selfie_key is None
+    assert not stored & set(storage.objects)
+
+
+async def test_failed_save_deletes_the_new_upload_but_keeps_a_committed_one(env, monkeypatch):
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from yondo_api.verification import router as verification_router
+
+    client, storage = env['client'], env['storage']
+    started = await client.post(V, headers=env['owner'], json={'document_type': 'passport'})
+    assert started.status_code == 201, started.text
+    headers = {**env['owner'], 'Content-Type': 'image/png'}
+    images = lambda: {key for key in storage.objects if key.startswith('verifications/')}  # noqa: E731
+
+    # 1) The save fails before commit: the new object is removed again.
+    real_draft_for = verification_router.draft_for
+    lookups = []
+
+    async def second_lookup_fails(session, user_id):
+        lookups.append(user_id)
+        if len(lookups) == 2:  # the lookup after the upload, inside the save
+            raise RuntimeError('database went away before commit')
+        return await real_draft_for(session, user_id)
+
+    monkeypatch.setattr(verification_router, 'draft_for', second_lookup_fails)
+    try:
+        await client.post(f'{V}/document', headers=headers, content=png())
+    except RuntimeError:
+        pass
+    assert images() == set()
+    monkeypatch.setattr(verification_router, 'draft_for', real_draft_for)
+
+    # 2) The commit succeeds but its outcome is lost: the row uses the object, so it stays.
+    real_commit = AsyncSession.commit
+
+    async def commit_then_fail(self):
+        saving = any(
+            isinstance(row, IdentityVerification) and row.document_key
+            for row in self.sync_session.dirty
+        )
+        await real_commit(self)
+        if saving:
+            raise ConnectionError('connection lost after COMMIT')
+
+    monkeypatch.setattr(AsyncSession, 'commit', commit_then_fail)
+    try:
+        await client.post(f'{V}/document', headers=headers, content=png())
+    except ConnectionError:
+        pass
+    monkeypatch.setattr(AsyncSession, 'commit', real_commit)
+    async with env['app'].state.db_session_factory() as session:
+        row = await session.get(IdentityVerification, UUID(started.json()['id']))
+        assert row.document_key is not None
+    assert images() == {row.document_key}

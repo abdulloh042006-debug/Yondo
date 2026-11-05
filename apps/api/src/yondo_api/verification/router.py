@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
-from anyio import to_thread
+from anyio import CancelScope, to_thread
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -21,6 +22,7 @@ from yondo_api.models.user import AccountStatus
 from yondo_api.verification.models import IdentityVerification, VerificationStatus
 from yondo_api.verification.service import latest
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/verification', tags=['verification'])
 admin_router = APIRouter(prefix='/admin/verifications', tags=['admin verification'])
 IMAGE_URL_SECONDS = 300
@@ -60,7 +62,11 @@ class AdminVerificationRead(VerificationRead):
 class VerificationDecision(BaseModel):
     model_config = ConfigDict(extra='forbid')
     decision: Literal['approve', 'reject']
-    note: str = Field(min_length=1, max_length=2000)
+    note: str = Field(
+        min_length=1,
+        max_length=2000,
+        description='Shown to the user in GET /verification/me; erased with the account.',
+    )
 
 
 def read(item: IdentityVerification) -> VerificationRead:
@@ -142,6 +148,21 @@ async def start(payload: VerificationStart, principal: Principal, session: Sessi
     return read(item)
 
 
+async def _reconcile_failed_save(request: Request, storage, draft_id, field, key) -> None:
+    """Delete the new object only when a fresh transaction shows the row does not use it."""
+    try:
+        with CancelScope(shield=True):
+            async with request.app.state.db_session_factory() as fresh:
+                row = await fresh.get(IdentityVerification, draft_id)
+                saved = row is not None and getattr(row, f'{field}_key') == key
+    except Exception:
+        # Commit outcome unknown: keep the object; the private key in the log allows cleanup.
+        logger.exception('Verification upload outcome unknown: storage_key=%s', key)
+        return
+    if not saved:
+        await compensate_upload(storage, key)
+
+
 async def _upload(request: Request, principal, session, field: str) -> VerificationRead:
     check_usable(principal)
     storage = object_storage(request)
@@ -186,7 +207,7 @@ async def _upload(request: Request, principal, session, field: str) -> Verificat
         setattr(draft, f'{field}_key', key)
         await session.commit()
     except BaseException:
-        await compensate_upload(storage, key)
+        await _reconcile_failed_save(request, storage, draft_id, field, key)
         raise
     if previous:
         await compensate_upload(storage, previous)
@@ -265,7 +286,8 @@ async def decide(
             admin_id=admin.id,
             target_id=item.user_id,
             action='identity_verified' if approved else 'identity_rejected',
-            reason=payload.note,
+            # Not the free-text note: audit rows outlive account erasure.
+            reason=f'identity_verification:{item.id}',
         )
     )
     await session.commit()
