@@ -16,6 +16,30 @@ from yondo_api.companions.schemas import (
 router = APIRouter(prefix='/companions/me', tags=['companion resources'])
 
 
+async def ensure_availability_edit_safe(session: Session, item: CompanionAvailability) -> None:
+    from yondo_api.bookings.models import Booking, BookingStatus
+
+    booked = await session.scalar(
+        select(Booking.id).where(
+            Booking.profile_id == item.profile_id,
+            Booking.status.in_(
+                (
+                    BookingStatus.PENDING,
+                    BookingStatus.ACCEPTED,
+                    BookingStatus.CONFIRMED,
+                    BookingStatus.ACTIVE,
+                )
+            ),
+            Booking.starts_at < item.ends_at,
+            Booking.ends_at > item.starts_at,
+        )
+    )
+    if booked is not None:
+        from yondo_api.api.errors import ApplicationError
+
+        raise ApplicationError('availability_reserved', 'Availability has active reservations', 409)
+
+
 @router.get('/services', response_model=list[ServiceResponse])
 async def list_services(owner: Owner, session: Session):
     profile = await service.profile_for(session, owner.id)
@@ -98,6 +122,7 @@ async def update_availability(
 ):
     profile = await service.profile_for(session, owner.id)
     item = await service.owned_resource(session, CompanionAvailability, availability_id, profile.id)
+    await ensure_availability_edit_safe(session, item)
     await service.ensure_no_overlap(session, profile.id, payload, exclude_id=item.id)
     for key, value in payload.model_dump().items():
         setattr(item, key, value)
@@ -109,6 +134,7 @@ async def update_availability(
 async def delete_availability(availability_id: UUID, owner: Owner, session: Session):
     profile = await service.profile_for(session, owner.id)
     item = await service.owned_resource(session, CompanionAvailability, availability_id, profile.id)
+    await ensure_availability_edit_safe(session, item)
     await session.delete(item)
     await service.save(session)
     return Response(status_code=204)

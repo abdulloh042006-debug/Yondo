@@ -1,0 +1,26 @@
+# DOMAIN comes from .env:
+#   a real domain  (yondo.example)  -> Caddy gets and renews the HTTPS certificate by itself;
+#   ":80"                           -> plain HTTP on the server's IP, for private tests with FAKE data only.
+{$DOMAIN::80} {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# The API and its chat socket (/api/v1/chat/ws/...) and the liveness check.
+	@backend path /api/* /health
+	handle @backend {
+		reverse_proxy api:8000
+	}
+
+	# The built web app; unknown paths fall back to index.html (client-side routes).
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

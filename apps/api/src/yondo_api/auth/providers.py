@@ -1,12 +1,16 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 
 from yondo_api.api.errors import ApplicationError
+
+OtpChannel = Literal['telegram', 'sms']
 
 
 @dataclass(frozen=True, slots=True)
 class OtpDelivery:
     development_code: str | None = None
+    # Where a real code was sent ('telegram', later maybe 'sms'). None = development/on-screen.
+    channel: OtpChannel | None = None
 
 
 class OtpDeliveryProvider(Protocol):
@@ -15,6 +19,24 @@ class OtpDeliveryProvider(Protocol):
 
 class OtpRateLimitHook(Protocol):
     async def check(self) -> None: ...
+
+
+def otp_channel_unavailable() -> ApplicationError:
+    """This phone number cannot receive a code through the configured channel."""
+    return ApplicationError(
+        'otp_channel_unavailable',
+        'This phone number cannot receive a verification code through this channel',
+        422,
+    )
+
+
+def otp_delivery_failed() -> ApplicationError:
+    """The delivery provider errored or timed out; nothing was sent that we can rely on."""
+    return ApplicationError(
+        'otp_delivery_failed',
+        'The verification code could not be delivered; try again later',
+        502,
+    )
 
 
 class DevelopmentOtpProvider:

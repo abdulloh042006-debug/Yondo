@@ -70,6 +70,7 @@ async def request_otp(
         expires_in_seconds=300,
         resend_after_seconds=60,
         development_otp=development_otp,
+        delivery_channel=issued.channel,
     )
 
 
@@ -119,6 +120,7 @@ async def get_profile(
         age=user.age,
         gender=user.gender,
         city=user.city,
+        ui_locale=user.ui_locale,
         roles=list(roles),
         created_at=user.created_at,
     )
@@ -144,6 +146,7 @@ async def update_profile(
         age=user.age,
         gender=user.gender,
         city=user.city,
+        ui_locale=user.ui_locale,
         roles=list(roles),
         created_at=user.created_at,
     )

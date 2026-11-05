@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+apps/web/e2e/.tmp
+apps/web/e2e/shots
+apps/mobile
+design-prototype
+marketing
+.env
+.env.*

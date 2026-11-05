@@ -10,6 +10,7 @@ import pytest_asyncio
 from PIL import Image
 from sqlalchemy import event, text
 
+from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -80,7 +81,13 @@ async def env():
         database_url=os.environ.get('YONDO_TEST_DATABASE_URL', 'sqlite+aiosqlite:///:memory:'),
     )
     storage, identity = MemoryStorage(), TestIdentity()
-    app = create_application(settings, object_storage=storage, identity_eligibility=identity)
+    # Pinned: tests never reach the real Telegram Gateway, whatever the shell environment holds.
+    app = create_application(
+        settings,
+        otp_provider=DevelopmentOtpProvider(),
+        object_storage=storage,
+        identity_eligibility=identity,
+    )
     async with app.router.lifespan_context(app):
         engine = app.state.db_engine
         if engine.dialect.name == 'sqlite':

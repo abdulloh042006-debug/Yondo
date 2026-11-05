@@ -266,13 +266,14 @@ async def test_profile_api_validation(prepared, payload):
     assert response.json()['code'] == 'validation_error'
 
 
-async def test_no_public_discovery_or_out_of_scope_routes(prepared):
+async def test_phase_routes_are_registered(prepared):
     paths = set(prepared['app'].openapi()['paths'])
     assert '/api/v1/companions' not in paths
-    for path in paths:
-        assert not any(
-            word in path for word in ['booking', 'payment', '/chat', '/calls', '/discovery']
-        )
+    assert any(path.startswith('/api/v1/chat') for path in paths)
+    assert not any('/calls' in path for path in paths)
+    assert '/api/v1/discovery/companions' in paths
+    assert '/api/v1/bookings' in paths
+    assert '/api/v1/payments/webhook' in paths
 
 
 async def test_identity_provider_failure_does_not_activate(prepared):

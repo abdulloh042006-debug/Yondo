@@ -1,0 +1,43 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>YONDO — logo mavzulari</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F5F2EC;--ink:#111;--acc:#E8501A;--mut:#5A5750;--line:#dcd8d0}
+:root[data-theme=dark]{--paper:#111;--ink:#F5F2EC;--acc:#E8501A;--mut:#A9A69F;--line:#2d2d2d}
+:root[data-theme=mono]{--paper:#fff;--ink:#000;--acc:#000;--mut:#444;--line:#ccc}
+:root[data-theme=mono-dark]{--paper:#000;--ink:#fff;--acc:#fff;--mut:#bbb;--line:#333}
+*{box-sizing:border-box}body{margin:0;padding:24px;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;transition:background-color .2s,color .2s;max-width:900px;margin-inline:auto;min-height:100vh}
+@media(prefers-reduced-motion:reduce){body{transition:none}}
+h1{font-size:22px;margin:0 0 4px}.mut{color:var(--mut);max-width:70ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tabs button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:600 14px Inter;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.tabs button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.lg{display:flex;align-items:center;gap:12px;color:var(--ink)}.lg .wm{font:700 40px 'Space Grotesk',sans-serif;letter-spacing:-.03em}
+.l{stroke:var(--ink);fill:none;stroke-linecap:round;stroke-linejoin:round}.n{fill:var(--ink)}.a{fill:var(--acc)}
+.mono-a{fill:none;stroke:var(--ink);stroke-width:4}
+.row{display:flex;gap:16px;align-items:end;margin:20px 0;padding:20px 0;border-top:1px solid var(--line)}
+table{border-collapse:collapse;font-size:13px;width:100%}td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="s" viewBox="0 0 64 64"><g class="l" stroke-width="5"><path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12"/></g><circle class="n" cx="14" cy="12" r="7"/><circle class="a" cx="50" cy="12" r="7"/><circle class="n" cx="32" cy="55" r="5.5"/></symbol>
+<symbol id="sm" viewBox="0 0 64 64"><g class="l" stroke-width="9"><path d="M16 15 28 34Q31 38 32 40M48 15 36 34Q33 38 32 40M32 40v17"/></g><circle class="n" cx="16" cy="15" r="9"/><circle class="a" cx="48" cy="15" r="9"/></symbol>
+<symbol id="sx" viewBox="0 0 64 64"><g class="l" stroke-width="5"><path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12"/></g><circle class="n" cx="14" cy="12" r="7"/><circle class="mono-a" cx="50" cy="12" r="5"/><circle class="n" cx="32" cy="55" r="5.5"/></symbol>
+</defs></svg>
+<h1>YONDO — mavzuga moslashuvchi logo</h1>
+<p class="mut">Logo ranglari mavzu tokenlaridan (<code>--ink</code>, <code>--acc</code>) olinadi, shuning uchun mavzu almashganda u o‘zi moslashadi. Bir rangli mavzularda akcent tugun <b>ichi bo‘sh halqa</b> bo‘lib, rang yo‘qolsa ham ajralib turadi.</p>
+<div class="tabs" role="group" aria-label="Mavzu">
+<button data-t="light" aria-pressed="true">Yorug‘</button><button data-t="dark" aria-pressed="false">Qorong‘i</button><button data-t="mono" aria-pressed="false">Bir rangli</button><button data-t="mono-dark" aria-pressed="false">Bir rangli (qora)</button></div>
+<div class="lg"><svg width="64" height="64" id="main"><use href="#s"/></svg><span class="wm">YONDO</span></div>
+<div class="row" id="sizes"></div>
+<table><tr><th>Mavzu</th><th>Ink</th><th>Akcent</th><th>Fon</th><th>Eslatma</th></tr>
+<tr><td>Yorug‘</td><td>#111</td><td>#E8501A</td><td>#F5F2EC</td><td>Akcent/fon 3.36:1 (hisoblangan), faqat grafik</td></tr>
+<tr><td>Qorong‘i</td><td>#F5F2EC</td><td>#E8501A</td><td>#111</td><td>Akcent/fon 5.03:1 (hisoblangan)</td></tr>
+<tr><td>Bir rangli</td><td colspan="2">#000 (halqa)</td><td>#FFF</td><td>Bosma, kashta, faks</td></tr>
+<tr><td>Bir rangli (qora)</td><td colspan="2">#FFF (halqa)</td><td>#000</td><td>Teskari variant</td></tr></table>
+<script>
+const r=document.documentElement,B=[...document.querySelectorAll('[data-t]')],sz=document.getElementById('sizes'),m=document.getElementById('main');
+function draw(t){const mono=t.startsWith('mono');m.innerHTML='<use href="#'+(mono?'sx':'s')+'"/>';
+sz.innerHTML=[16,24,32,48,64].map(s=>'<svg width="'+s+'" height="'+s+'"><use href="#'+(s<=24?'sm':mono?'sx':'s')+'"/></svg>').join('')+'<span class="mut">16 / 24 px: kichik variant</span>'}
+function set(t){if(t==='light')r.removeAttribute('data-theme');else r.dataset.theme=t;B.forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));draw(t)}
+B.forEach(b=>b.onclick=()=>set(b.dataset.t));
+set(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+</script></body></html>
