@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     storage_access_key: str = ''
     storage_secret_key: str = Field(default='', repr=False)
     storage_region: str = 'us-east-1'
+    # 'disabled' keeps photo/verification uploads at 503 until private storage is configured.
+    storage_backend: Literal['disabled', 's3'] = 'disabled'
+    storage_path_style: bool = True
+    # Origin clients use to fetch presigned URLs (defaults to storage_endpoint).
+    storage_public_endpoint: str | None = None
     fcm_project_id: str = ''
     auth_otp_pepper: SecretStr = SecretStr('development-only-change-me')
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
