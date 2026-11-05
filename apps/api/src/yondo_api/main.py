@@ -106,6 +106,9 @@ def create_application(
         finally:
             await redis_client.aclose()
             await engine.dispose()
+            storage = getattr(app.state, 'object_storage', None)
+            if hasattr(storage, 'aclose'):
+                await storage.aclose()
 
     app = FastAPI(
         title=app_settings.app_name,

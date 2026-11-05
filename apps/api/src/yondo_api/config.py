@@ -118,16 +118,28 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def validate_object_storage(self) -> Settings:
-        # Presigned photo/ID URLs reach clients: outside local environments they must be https.
-        public = self.storage_public_endpoint or self.storage_endpoint
-        if (
-            self.storage_backend == 's3'
-            and self.environment in {'staging', 'production'}
-            and not public.startswith('https://')
+        if self.storage_backend != 's3':
+            return self
+        from urllib.parse import urlsplit
+
+        from yondo_api.integrations.s3 import is_ip_or_localhost
+
+        if not self.storage_path_style and is_ip_or_localhost(
+            urlsplit(self.storage_endpoint).hostname or ''
         ):
-            raise ValueError(
-                'YONDO_STORAGE_PUBLIC_ENDPOINT (or YONDO_STORAGE_ENDPOINT) must be an https URL'
-            )
+            raise ValueError('YONDO_STORAGE_PATH_STYLE=false needs a DNS endpoint, not an IP')
+        if self.environment in {'staging', 'production'}:
+            # Photo/ID bytes and presigned URLs travel over these origins: https only.
+            endpoints = {
+                'YONDO_STORAGE_ENDPOINT': self.storage_endpoint,
+                'YONDO_STORAGE_PUBLIC_ENDPOINT': self.storage_public_endpoint
+                or self.storage_endpoint,
+            }
+            for name, url in endpoints.items():
+                if not url.startswith('https://'):
+                    raise ValueError(f'{name} must be an https URL')
+            if not (self.storage_bucket and self.storage_access_key and self.storage_secret_key):
+                raise ValueError('S3 storage needs bucket, access key and secret key')
         return self
 
     @model_validator(mode='after')

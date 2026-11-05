@@ -158,13 +158,23 @@ def test_production_storage_hands_out_https_urls_only():
     }
     with pytest.raises(ValueError, match='https'):
         Settings(**base, storage_endpoint='http://minio:9000')
-    # A private-network endpoint is fine when clients get an https public origin.
+    # The server-side endpoint carries ID images too: http is refused even with https public.
+    with pytest.raises(ValueError, match='YONDO_STORAGE_ENDPOINT'):
+        Settings(
+            **base,
+            storage_endpoint='http://minio:9000',
+            storage_public_endpoint='https://files.example.test',
+        )
     ok = Settings(
         **base,
-        storage_endpoint='http://minio:9000',
+        storage_endpoint='https://minio.internal:9000',
         storage_public_endpoint='https://files.example.test',
     )
     assert ok.storage_public_endpoint == 'https://files.example.test'
+    with pytest.raises(ValueError, match='bucket'):
+        Settings(
+            **{**base, 'storage_access_key': ''}, storage_endpoint='https://s3.example.test'
+        )
     assert Settings(environment='test', storage_backend='s3').storage_backend == 's3'
 
 
@@ -178,3 +188,32 @@ def test_old_job_alias_uses_the_same_storage_wiring(monkeypatch):
     with pytest.raises(SystemExit) as exit_info:
         runpy.run_module('yondo_api.account.jobs', run_name='__main__')
     assert exit_info.value.code == 0 and called == [True]
+
+
+def test_virtual_hosted_style_rejects_ip_and_localhost():
+    kwargs = dict(bucket='b', access_key='k', secret_key='s', region='us-east-1', path_style=False)
+    for endpoint in ('http://127.0.0.1:9000', 'http://localhost:9000', 'http://[::1]:9000'):
+        with pytest.raises(ValueError, match='DNS'):
+            S3ObjectStorage(endpoint=endpoint, **kwargs)
+    with pytest.raises(ValueError, match='PATH_STYLE'):
+        Settings(
+            environment='test',
+            storage_backend='s3',
+            storage_path_style=False,
+            storage_endpoint='http://127.0.0.1:9000',
+        )
+    S3ObjectStorage(endpoint='https://s3.example.test', **kwargs)
+
+
+async def test_adapter_reuses_one_client_and_closes_it():
+    storage = S3ObjectStorage(
+        endpoint='https://s3.example.test',
+        bucket='b',
+        access_key='k',
+        secret_key='s',
+        region='us-east-1',
+    )
+    first = storage._http()
+    assert storage._http() is first
+    await storage.aclose()
+    assert first.is_closed and storage._client is None

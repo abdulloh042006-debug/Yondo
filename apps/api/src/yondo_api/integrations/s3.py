@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import ipaddress
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from urllib.parse import quote, urlsplit
@@ -40,6 +41,27 @@ def _signing_key(secret_key: str, date: str, region: str) -> bytes:
     return _sign(key, 'aws4_request')
 
 
+def _signature(
+    secret_key: str, date: str, region: str, scope: str, amz_date: str, request: str
+) -> str:
+    string_to_sign = '\n'.join(
+        ['AWS4-HMAC-SHA256', amz_date, scope, hashlib.sha256(request.encode()).hexdigest()]
+    )
+    return hmac.new(
+        _signing_key(secret_key, date, region), string_to_sign.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def is_ip_or_localhost(hostname: str) -> bool:
+    if hostname == 'localhost' or hostname.endswith('.localhost'):
+        return True
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        return False
+    return True
+
+
 def _uri_encode(value: str, *, keep_slash: bool) -> str:
     return quote(value, safe='/~' if keep_slash else '~')
 
@@ -66,7 +88,21 @@ class S3ObjectStorage:
         self.secret_key = secret_key
         self.region = region
         self.path_style = path_style
+        if not path_style and is_ip_or_localhost(urlsplit(self.endpoint).hostname or ''):
+            raise ValueError('virtual-hosted style storage needs a DNS name, not an IP')
         self._client = client
+        self._owns_client = client is None
+
+    def _http(self) -> httpx.AsyncClient:
+        # One pooled client per adapter (connection reuse instead of a new TLS session per call).
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=30)
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client is not None and self._owns_client:
+            await self._client.aclose()
+            self._client = None
 
     def _location(self, base: str, key: str) -> tuple[str, str]:
         parts = urlsplit(base)
@@ -118,19 +154,9 @@ class S3ObjectStorage:
                 'UNSIGNED-PAYLOAD',
             ]
         )
-        string_to_sign = '\n'.join(
-            [
-                'AWS4-HMAC-SHA256',
-                amz_date,
-                scope,
-                hashlib.sha256(canonical_request.encode()).hexdigest(),
-            ]
+        signature = _signature(
+            self.secret_key, date, self.region, scope, amz_date, canonical_request
         )
-        signature = hmac.new(
-            _signing_key(self.secret_key, date, self.region),
-            string_to_sign.encode(),
-            hashlib.sha256,
-        ).hexdigest()
         return f'{url}?{canonical_query}&X-Amz-Signature={signature}'
 
     def _signed_headers(
@@ -151,19 +177,9 @@ class S3ObjectStorage:
             [method, self._canonical_path(url), '', canonical_headers, signed, payload_hash]
         )
         scope = f'{date}/{self.region}/s3/aws4_request'
-        string_to_sign = '\n'.join(
-            [
-                'AWS4-HMAC-SHA256',
-                amz_date,
-                scope,
-                hashlib.sha256(canonical_request.encode()).hexdigest(),
-            ]
+        signature = _signature(
+            self.secret_key, date, self.region, scope, amz_date, canonical_request
         )
-        signature = hmac.new(
-            _signing_key(self.secret_key, date, self.region),
-            string_to_sign.encode(),
-            hashlib.sha256,
-        ).hexdigest()
         headers['authorization'] = (
             f'AWS4-HMAC-SHA256 Credential={self.access_key}/{scope}, '
             f'SignedHeaders={signed}, Signature={signature}'
@@ -175,17 +191,15 @@ class S3ObjectStorage:
         url, host = self._location(self.endpoint, key)
         payload_hash = hashlib.sha256(body).hexdigest() if body else _EMPTY_SHA256
         headers = self._signed_headers(method, url, host, payload_hash, extra)
-        if self._client is not None:
-            response = await self._client.request(method, url, content=body, headers=headers)
-        else:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.request(method, url, content=body, headers=headers)
+        response = await self._http().request(method, url, content=body, headers=headers)
         if method == 'DELETE' and response.status_code == 404:
             return
         response.raise_for_status()
 
     async def upload(self, key: str, content: AsyncIterator[bytes], content_type: str) -> None:
-        body = b''.join([chunk async for chunk in content])
+        chunks = [chunk async for chunk in content]
+        body = b''.join(chunks)
+        del chunks  # sizes are capped upstream; free the pieces before signing and sending
         await self._request('PUT', key, body, **{'content-type': content_type})
 
     async def create_download_url(self, key: str, expires_in_seconds: int = 300) -> str:

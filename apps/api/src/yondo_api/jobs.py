@@ -28,6 +28,8 @@ async def main(storage=None) -> int:
             erased, skipped = await process_due_deletions(session, storage)
     finally:
         await engine.dispose()
+        if hasattr(storage, 'aclose'):
+            await storage.aclose()
     if storage is None and erased:
         logging.getLogger(__name__).warning('No object storage configured: photo objects kept')
     print(
