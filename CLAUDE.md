@@ -11,7 +11,7 @@ Also read `AGENTS.md` (repo rules; not repeated here) and **`docs/WORKLOG.md` โ
 - **If a limit looks near: stop starting new work, finish the WORKLOG entry (ยง6), commit, make the bundle, then stop.**
 
 ## 2. Where things are
-- `apps/api` FastAPI backend (17 migrations, 220 tests on PostgreSQL). `apps/web` = the real web app + secured admin console (React/TS/Vite, talks to the real API via `/api`; see `apps/web/README.md`, `docs/web-and-admin.md`). `apps/mobile` is a README stub; `apps/admin/README.md` points to `apps/web/src/admin`.
+- `apps/api` FastAPI backend (17 migrations, 220 tests on PostgreSQL). `apps/web` = the real web app + secured admin console (React/TS/Vite, talks to the real API via `/api`; see `apps/web/README.md`, `docs/web-and-admin.md`). `apps/mobile` = Expo app sharing `apps/web/src` i18n (see its README); `apps/admin/README.md` points to `apps/web/src/admin`.
 - `marketing/ad-video/` = promo-video pipeline (scripts only, no audio/video committed; see its README). Screens: `capture_proto.mjs` (design-prototype) or `capture.mjs` (apps/web). Owner video rules: 9:16 + 16:9, UZ + RU, voices from voicelab.uz supplied by the owner, **no DEMO labels in the video**, only ink/paper/carrot.
 - `docs/openapi-v1.json` = API contract (CI keeps it in sync). `docs/frontend-api-integration.md` = client rules.
 - `design-prototype/` = brand, tokens, component library, mock-backed prototype, tests, reports. Start at `design-prototype/docs/02-handoff.md`, decisions in `docs/03-decisions-and-contract.md`, staging in `docs/04-staging-readiness.md`, evidence in `reports/test-report.md` and `reports/backend-audit.md`.
