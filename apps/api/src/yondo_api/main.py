@@ -40,7 +40,7 @@ from yondo_api.gifts.router import router as gifts_router
 from yondo_api.gifts.test_orders import router as gift_test_orders_router
 from yondo_api.gifts.vendor import router as vendor_router
 from yondo_api.integration.router import router as integration_router
-from yondo_api.integrations.s3 import S3ObjectStorage
+from yondo_api.integrations.s3 import build_object_storage
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 from yondo_api.meetings.router import router as meetings_router
@@ -64,21 +64,6 @@ def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
     if settings.environment in {'development', 'test'}:
         return DevelopmentOtpProvider()
     return UnconfiguredOtpProvider()
-
-
-def build_object_storage(settings: Settings) -> ObjectStorage | None:
-    """Private S3-compatible storage (AWS S3, MinIO, ...) when configured; otherwise None (503)."""
-    if settings.storage_backend != 's3':
-        return None
-    return S3ObjectStorage(
-        endpoint=settings.storage_endpoint,
-        bucket=settings.storage_bucket,
-        access_key=settings.storage_access_key,
-        secret_key=settings.storage_secret_key,
-        region=settings.storage_region,
-        path_style=settings.storage_path_style,
-        public_endpoint=settings.storage_public_endpoint,
-    )
 
 
 def create_application(

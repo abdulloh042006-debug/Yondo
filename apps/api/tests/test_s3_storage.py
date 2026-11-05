@@ -88,3 +88,81 @@ def test_storage_backend_setting_selects_the_adapter():
         )
     )
     assert isinstance(configured.state.object_storage, S3ObjectStorage)
+
+
+@pytest.mark.parametrize(
+    ('endpoint', 'expected_host'),
+    [
+        ('https://user:pw@Spaces.Example:443', 'spaces.example'),
+        ('http://minio:80', 'minio'),
+        ('http://minio:9000', 'minio:9000'),
+        ('https://[::1]:9443', '[::1]:9443'),
+    ],
+)
+async def test_signed_host_is_the_host_httpx_sends(endpoint, expected_host):
+    sent: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request)
+        return httpx.Response(200)
+
+    storage = S3ObjectStorage(
+        endpoint=endpoint,
+        bucket='b',
+        access_key='key',
+        secret_key='secret',
+        region='us-east-1',
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+    url, host = storage._location(endpoint, 'k')
+    assert host == expected_host
+    assert '@' not in url
+    await storage.delete('k')
+    assert sent[0].headers['host'] == expected_host
+
+
+def test_scheduled_job_erases_with_the_configured_storage(monkeypatch):
+    from yondo_api import jobs
+
+    seen = []
+
+    async def fake_main(storage=None):
+        seen.append(storage)
+        return 0
+
+    monkeypatch.setattr(jobs, 'main', fake_main)
+    monkeypatch.setattr(
+        jobs,
+        'get_settings',
+        lambda: Settings(
+            environment='test',
+            storage_backend='s3',
+            storage_access_key='key',
+            storage_secret_key='secret',
+        ),
+    )
+    assert jobs.run() == 0
+    monkeypatch.setattr(jobs, 'get_settings', lambda: Settings(environment='test'))
+    assert jobs.run() == 0
+    assert isinstance(seen[0], S3ObjectStorage)
+    assert seen[1] is None
+
+
+def test_production_storage_hands_out_https_urls_only():
+    base = {
+        'environment': 'production',
+        'auth_otp_pepper': 'p' * 40,
+        'storage_backend': 's3',
+        'storage_access_key': 'key',
+        'storage_secret_key': 'secret',
+    }
+    with pytest.raises(ValueError, match='https'):
+        Settings(**base, storage_endpoint='http://minio:9000')
+    # A private-network endpoint is fine when clients get an https public origin.
+    ok = Settings(
+        **base,
+        storage_endpoint='http://minio:9000',
+        storage_public_endpoint='https://files.example.test',
+    )
+    assert ok.storage_public_endpoint == 'https://files.example.test'
+    assert Settings(environment='test', storage_backend='s3').storage_backend == 's3'

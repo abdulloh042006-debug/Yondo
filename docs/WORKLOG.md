@@ -26,8 +26,9 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 
 ## Session log
 ## S41 — S3-compatible photo storage adapter (2026-11-05) [cloud chat]
-Done: `integrations/s3.py` (dependency-free AWS SigV4: signed PUT/DELETE, presigned 5-minute GET, path or virtual-hosted style, separate public origin), wired by `YONDO_STORAGE_BACKEND=s3` in `main.build_object_storage`; default `disabled` keeps uploads at 503; an injected storage (demo `MemoryStorage`, tests) still wins. Env examples and both deploy READMEs updated.
+Done: `integrations/s3.py` (dependency-free AWS SigV4: signed PUT/DELETE, presigned 5-minute GET, path or virtual-hosted style, separate public origin), wired by `YONDO_STORAGE_BACKEND=s3` in `integrations.s3.build_object_storage` (API and the hourly `python -m yondo_api.jobs`, so scheduled erasure deletes the objects); default `disabled` keeps uploads at 503; an injected storage (demo `MemoryStorage`, tests) still wins. Env examples and both deploy READMEs updated.
 Not done: a run against a real bucket (no Docker/MinIO in the cloud sandbox; the MinIO binary URL answers 410).
+Verifier (independent agent): first review REJECT, blocking = the hourly job erased accounts with storage=None, so photos stayed in the bucket; fixed (job builds the same storage, test added). Also fixed: signed Host = what httpx sends (no user-info/default port); staging/production need an https public storage origin. Re-review: see the PR.
 Next: owner creates a private bucket + keys; port (2) ID + selfie verification.
 Evidence: `tests/test_s3_storage.py` 4 passed (AWS reference presign vector; signed path-style PUT/DELETE; adapter selection); header signatures compared with botocore's `S3SigV4Auth` at the same timestamp: MATCH for 3 requests (space and `+=` in keys), scratch-only, botocore not added as a dependency; backend 340 passed + 9 skipped (SQLite); ruff PASS; OpenAPI check PASS.
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]

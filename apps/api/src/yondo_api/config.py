@@ -117,6 +117,20 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode='after')
+    def validate_object_storage(self) -> Settings:
+        # Presigned photo/ID URLs reach clients: outside local environments they must be https.
+        public = self.storage_public_endpoint or self.storage_endpoint
+        if (
+            self.storage_backend == 's3'
+            and self.environment in {'staging', 'production'}
+            and not public.startswith('https://')
+        ):
+            raise ValueError(
+                'YONDO_STORAGE_PUBLIC_ENDPOINT (or YONDO_STORAGE_ENDPOINT) must be an https URL'
+            )
+        return self
+
+    @model_validator(mode='after')
     def validate_click_test_mode(self) -> Settings:
         if self.click_test_enabled and (
             self.environment not in {'test', 'development'}

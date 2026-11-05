@@ -14,7 +14,19 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
+from yondo_api.config import Settings
+from yondo_api.integrations.storage import ObjectStorage
+
 _EMPTY_SHA256 = hashlib.sha256(b'').hexdigest()
+_DEFAULT_PORTS = {'http': 80, 'https': 443}
+
+
+def _authority(scheme: str, hostname: str, port: int | None) -> str:
+    """The Host value httpx sends: user-info dropped, default port omitted, IPv6 bracketed."""
+    host = f'[{hostname}]' if ':' in hostname else hostname
+    if port is not None and port != _DEFAULT_PORTS.get(scheme):
+        host = f'{host}:{port}'
+    return host
 
 
 def _sign(key: bytes, message: str) -> bytes:
@@ -59,11 +71,12 @@ class S3ObjectStorage:
     def _location(self, base: str, key: str) -> tuple[str, str]:
         parts = urlsplit(base)
         encoded_key = _uri_encode(key, keep_slash=True)
+        authority = _authority(parts.scheme, parts.hostname or '', parts.port)
         if self.path_style:
-            host = parts.netloc
+            host = authority
             path = f'{parts.path}/{self.bucket}/{encoded_key}'
         else:
-            host = f'{self.bucket}.{parts.netloc}'
+            host = f'{self.bucket}.{authority}'
             path = f'{parts.path}/{encoded_key}'
         return f'{parts.scheme}://{host}{path}', host
 
@@ -180,3 +193,18 @@ class S3ObjectStorage:
 
     async def delete(self, key: str) -> None:
         await self._request('DELETE', key)
+
+
+def build_object_storage(settings: Settings) -> ObjectStorage | None:
+    """Private S3-compatible storage (AWS S3, MinIO, ...) when configured; otherwise None (503)."""
+    if settings.storage_backend != 's3':
+        return None
+    return S3ObjectStorage(
+        endpoint=settings.storage_endpoint,
+        bucket=settings.storage_bucket,
+        access_key=settings.storage_access_key,
+        secret_key=settings.storage_secret_key,
+        region=settings.storage_region,
+        path_style=settings.storage_path_style,
+        public_endpoint=settings.storage_public_endpoint,
+    )

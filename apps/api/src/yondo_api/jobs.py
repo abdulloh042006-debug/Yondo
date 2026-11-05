@@ -14,6 +14,7 @@ from yondo_api.account.deletion import process_due_deletions
 from yondo_api.bookings.expiry import expire_stale_bookings
 from yondo_api.config import get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
+from yondo_api.integrations.s3 import build_object_storage
 
 
 async def main(storage=None) -> int:
@@ -36,5 +37,10 @@ async def main(storage=None) -> int:
     return 1 if skipped else 0
 
 
+def run() -> int:
+    # Same storage as the API (YONDO_STORAGE_BACKEND); without it erasure keeps photo objects.
+    return asyncio.run(main(build_object_storage(get_settings())))
+
+
 if __name__ == '__main__':
-    raise SystemExit(asyncio.run(main()))
+    raise SystemExit(run())
