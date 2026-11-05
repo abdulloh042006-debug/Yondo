@@ -24,14 +24,12 @@ from yondo_api.auth.schemas import (
 from yondo_api.auth.service import (
     TokenResponseData,
     issue_otp,
-    profile_complete,
-    refresh_account_activation,
     revoke_session,
     rotate_refresh_token,
     verify_otp,
 )
 from yondo_api.config import Settings
-from yondo_api.models.user import User, UserRole, UserRoleType
+from yondo_api.models.user import UserRole, UserRoleType
 
 router = APIRouter(prefix='/auth', tags=['authentication'])
 SessionDependency = Annotated[AsyncSession, Depends(get_db_session)]
@@ -106,43 +104,49 @@ async def logout(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-async def _user_response(session: AsyncSession, user: User) -> UserResponse:
-    roles = await session.scalars(select(UserRole.role).where(UserRole.user_id == user.id))
-    return UserResponse(
-        id=user.id,
-        phone_number=user.phone_number,
-        display_name=user.display_name,
-        age=user.age,
-        gender=user.gender,
-        city=user.city,
-        roles=list(roles),
-        account_status=user.account_status,
-        profile_complete=profile_complete(user),
-        created_at=user.created_at,
-    )
-
-
 @router.get('/me', response_model=UserResponse)
 async def get_profile(
     principal: PrincipalDependency,
     session: SessionDependency,
 ) -> UserResponse:
-    return await _user_response(session, principal.user)
+    roles = await session.scalars(
+        select(UserRole.role).where(UserRole.user_id == principal.user.id)
+    )
+    user = principal.user
+    return UserResponse(
+        id=user.id,
+        phone_number=user.phone_number,
+        age=user.age,
+        gender=user.gender,
+        city=user.city,
+        roles=list(roles),
+        created_at=user.created_at,
+    )
 
 
 @router.put('/profile', response_model=UserResponse)
 async def update_profile(
     payload: UserProfileUpdate,
-    request: Request,
     principal: PrincipalDependency,
     session: SessionDependency,
 ) -> UserResponse:
     for field in payload.model_fields_set:
         setattr(principal.user, field, getattr(payload, field))
-    refresh_account_activation(principal.user, request.app.state.settings)
     await session.commit()
     await session.refresh(principal.user)
-    return await _user_response(session, principal.user)
+    roles = await session.scalars(
+        select(UserRole.role).where(UserRole.user_id == principal.user.id)
+    )
+    user = principal.user
+    return UserResponse(
+        id=user.id,
+        phone_number=user.phone_number,
+        age=user.age,
+        gender=user.gender,
+        city=user.city,
+        roles=list(roles),
+        created_at=user.created_at,
+    )
 
 
 @router.put('/roles', response_model=list[UserRoleType])

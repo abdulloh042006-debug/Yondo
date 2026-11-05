@@ -20,8 +20,6 @@ _bearer = HTTPBearer(auto_error=False)
 async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
     factory = request.app.state.db_session_factory
     async with factory() as session:
-        # Realtime events queued during the transaction are published after commit.
-        session.info['realtime_broker'] = getattr(request.app.state, 'realtime_broker', None)
         yield session
 
 
@@ -37,13 +35,10 @@ async def get_authenticated_user(
 ) -> AuthenticatedUser:
     if credentials is None:
         raise ApplicationError('authentication_required', 'Authentication is required', 401)
-    return await resolve_access_token(session, credentials.credentials)
-
-
-async def resolve_access_token(session: AsyncSession, token: str) -> AuthenticatedUser:
-    """Validate an opaque access token; shared by HTTP and WebSocket authentication."""
     auth_session = await session.scalar(
-        select(AuthSession).where(AuthSession.access_token_hash == _token_hash(token))
+        select(AuthSession).where(
+            AuthSession.access_token_hash == _token_hash(credentials.credentials)
+        )
     )
     now = _now()
     if (

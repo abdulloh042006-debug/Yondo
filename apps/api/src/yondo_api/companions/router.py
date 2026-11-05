@@ -15,13 +15,9 @@ from yondo_api.companions.schemas import (
     ApplicationResponse,
     ApplicationWrite,
     CompanionStatus,
-    LocationWrite,
     ProfileResponse,
     ProfileWrite,
 )
-
-# Two decimal places is roughly 1.1 km: enough for distance search, not a precise location.
-LOCATION_PRECISION = 2
 
 router = APIRouter(prefix='/companions/me', tags=['companions'])
 
@@ -104,21 +100,6 @@ async def update_profile(payload: ProfileWrite, owner: Owner, session: Session):
     for key, value in payload.model_dump().items():
         setattr(profile, key, value)
     service.invalidate_content(profile)
-    await service.save(session)
-    return profile
-
-
-@router.put('/location', response_model=ProfileResponse)
-async def update_location(payload: LocationWrite, owner: Owner, session: Session):
-    """Set the approximate public area; it does not change content approval."""
-    profile = await service.profile_for(session, owner.id)
-    profile.area = payload.area
-    profile.approx_latitude = (
-        None if payload.latitude is None else round(payload.latitude, LOCATION_PRECISION)
-    )
-    profile.approx_longitude = (
-        None if payload.longitude is None else round(payload.longitude, LOCATION_PRECISION)
-    )
     await service.save(session)
     return profile
 

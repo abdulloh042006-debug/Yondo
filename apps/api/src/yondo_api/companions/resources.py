@@ -3,7 +3,6 @@ from uuid import UUID
 from fastapi import APIRouter, Request, Response
 from sqlalchemy import select
 
-from yondo_api.bookings.service import guard_availability_change
 from yondo_api.companions import service
 from yondo_api.companions.dependencies import Owner, Session
 from yondo_api.companions.models import CompanionAvailability, CompanionService
@@ -100,9 +99,6 @@ async def update_availability(
     profile = await service.profile_for(session, owner.id)
     item = await service.owned_resource(session, CompanionAvailability, availability_id, profile.id)
     await service.ensure_no_overlap(session, profile.id, payload, exclude_id=item.id)
-    await guard_availability_change(
-        session, profile.id, owner.id, item, (payload.starts_at, payload.ends_at)
-    )
     for key, value in payload.model_dump().items():
         setattr(item, key, value)
     await service.save(session)
@@ -113,7 +109,6 @@ async def update_availability(
 async def delete_availability(availability_id: UUID, owner: Owner, session: Session):
     profile = await service.profile_for(session, owner.id)
     item = await service.owned_resource(session, CompanionAvailability, availability_id, profile.id)
-    await guard_availability_change(session, profile.id, owner.id, item, None)
     await session.delete(item)
     await service.save(session)
     return Response(status_code=204)

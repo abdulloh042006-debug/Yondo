@@ -44,25 +44,6 @@ def _new_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def profile_complete(user: User) -> bool:
-    return bool(user.display_name and user.age is not None and user.gender and user.city)
-
-
-def refresh_account_activation(user: User, settings: Settings) -> None:
-    """Activate a phone-verified account once its basic profile is complete.
-
-    Only ``verification_pending`` accounts change. Moderation states (restricted,
-    suspended, banned) are never lifted here. The minimum age is configurable policy.
-    """
-    if (
-        user.account_status == AccountStatus.VERIFICATION_PENDING
-        and profile_complete(user)
-        and user.age is not None
-        and user.age >= settings.account_min_age
-    ):
-        user.account_status = AccountStatus.ACTIVE
-
-
 @dataclass(frozen=True, slots=True)
 class IssuedOtp:
     development_code: str | None

@@ -1,25 +1,5 @@
 name: yondo
 
-# Local development stack. Infrastructure only:
-#   docker compose up -d postgres redis minio
-# Full stack (API, worker, admin panel) with the "app" profile:
-#   docker compose --profile app up -d --build
-# The app profile runs in development mode (sandbox payments, OTP shown in responses).
-# It is NOT a production deployment; see docs/deployment.md.
-
-x-api-env: &api-env
-  YONDO_ENVIRONMENT: development
-  YONDO_DATABASE_URL: postgresql+psycopg://yondo:yondo@postgres:5432/yondo
-  YONDO_REDIS_URL: redis://redis:6379/0
-  YONDO_STORAGE_BACKEND: s3
-  YONDO_STORAGE_ENDPOINT: http://minio:9000
-  YONDO_STORAGE_PUBLIC_ENDPOINT: http://localhost:9000
-  YONDO_STORAGE_BUCKET: yondo-local
-  YONDO_STORAGE_ACCESS_KEY: yondo
-  YONDO_STORAGE_SECRET_KEY: change-me-in-local-env
-  YONDO_PAYMENT_CHECKOUT_BASE_URL: http://localhost:8000/api/v1/payments/sandbox
-  YONDO_CORS_ALLOW_ORIGINS: '["http://localhost:8081","http://localhost:19006"]'
-
 services:
   postgres:
     image: postgres:17-alpine
@@ -61,55 +41,6 @@ services:
       - '9001:9001'
     volumes:
       - minio_data:/data
-
-  minio-init:
-    profiles: ['app']
-    image: minio/mc:latest
-    depends_on: [minio]
-    entrypoint: >
-      /bin/sh -c "until mc alias set local http://minio:9000 yondo change-me-in-local-env; do sleep 2; done;
-      mc mb --ignore-existing local/yondo-local"
-
-  migrate:
-    profiles: ['app']
-    build: ./apps/api
-    command: ['alembic', 'upgrade', 'head']
-    environment: *api-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  api:
-    profiles: ['app']
-    build: ./apps/api
-    environment: *api-env
-    ports:
-      - '8000:8000'
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
-
-  worker:
-    profiles: ['app']
-    build: ./apps/api
-    command: ['python', '-m', 'yondo_api.cli', 'worker']
-    environment: *api-env
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-
-  admin:
-    profiles: ['app']
-    build: ./apps/admin
-    ports:
-      - '8080:80'
-    depends_on: [api]
 
 volumes:
   postgres_data:

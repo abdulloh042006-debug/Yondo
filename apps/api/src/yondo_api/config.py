@@ -54,81 +54,6 @@ class Settings(BaseSettings):
     companion_price_max_minor: int | None = Field(default=None, gt=0)
     companion_allowed_unit_minutes: tuple[int, ...] = ()
 
-    # Accounts. PLACEHOLDER policy: minimum age must be confirmed by the business/legal team.
-    account_min_age: int = Field(default=18, ge=0, le=150)
-
-    # Object storage backend. 'local' is a development-only filesystem adapter.
-    storage_backend: Literal['disabled', 's3', 'local'] = 'disabled'
-    storage_path_style: bool = True
-    storage_public_endpoint: str | None = None
-    storage_local_root: str = '.storage'
-    storage_local_public_url: str = 'http://localhost:8000/api/v1/storage/local'
-
-    # Browser origins allowed to call the API (admin/vendor web panel). JSON array.
-    cors_allow_origins: tuple[str, ...] = ()
-
-    # Realtime fan-out. 'auto' uses memory in tests and Redis elsewhere.
-    realtime_backend: Literal['auto', 'memory', 'redis'] = 'auto'
-
-    # Booking. PLACEHOLDER policy values; every number is configurable and pending approval.
-    booking_default_timezone: str = 'Asia/Tashkent'
-    booking_min_lead_minutes: int = Field(default=60, ge=0)
-    booking_max_horizon_days: int = Field(default=60, gt=0)
-    booking_max_duration_minutes: int = Field(default=480, gt=0)
-    booking_request_ttl_minutes: int = Field(default=120, gt=0)
-    booking_payment_window_minutes: int = Field(default=60, gt=0)
-    booking_platform_fee_bps: int = Field(default=1000, ge=0, le=10_000)
-    booking_companion_commission_bps: int = Field(default=0, ge=0, le=10_000)
-    booking_free_cancellation_hours: int = Field(default=24, ge=0)
-    booking_late_cancellation_refund_bps: int = Field(default=5000, ge=0, le=10_000)
-    booking_contract_version: str = 'draft-2026-11'
-
-    # Meeting flow.
-    meeting_checkin_window_minutes: int = Field(default=30, ge=0)
-    meeting_no_show_grace_minutes: int = Field(default=15, ge=0)
-    # PLACEHOLDER: active meetings nobody ended are completed this long after scheduled end.
-    meeting_auto_complete_hours: int = Field(default=2, gt=0)
-
-    # Payments. 'sandbox' simulates a provider and is refused outside local environments.
-    payment_provider: Literal['auto', 'sandbox', 'disabled'] = 'auto'
-    payment_webhook_secret: SecretStr = SecretStr('development-only-webhook-secret')
-    payment_checkout_base_url: str = 'http://localhost:8000/api/v1/payments/sandbox'
-    payout_release_delay_hours: int = Field(default=24, ge=0)
-
-    # Reviews. Quick-tag taxonomy is a PLACEHOLDER pending product approval.
-    review_window_days: int = Field(default=14, gt=0)
-    review_tags_for_companion: tuple[str, ...] = (
-        'punctual',
-        'friendly',
-        'great_conversation',
-        'respectful',
-        'as_described',
-    )
-    review_tags_for_customer: tuple[str, ...] = (
-        'respectful',
-        'punctual',
-        'polite',
-        'followed_rules',
-        'pleasant',
-    )
-
-    # Gifts marketplace.
-    gift_platform_fee_bps: int = Field(default=0, ge=0, le=10_000)
-    vendor_commission_bps: int = Field(default=0, ge=0, le=10_000)
-    gift_max_product_images: int = Field(default=10, gt=0, le=100)
-    gift_payment_window_minutes: int = Field(default=30, gt=0)
-
-    # Notifications and background worker.
-    push_provider: Literal['log', 'fcm', 'disabled'] = 'log'
-    fcm_service_account_file: str | None = None
-    meeting_reminder_minutes: int = Field(default=60, gt=0)
-    review_reminder_minutes: int = Field(default=120, gt=0)
-    worker_interval_seconds: int = Field(default=30, gt=0)
-
-    # Safety. PLACEHOLDER: how long after a meeting a dispute may be opened.
-    booking_share_ttl_hours: int = Field(default=24, gt=0)
-    dispute_window_days: int = Field(default=7, gt=0)
-
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:
         if (self.companion_price_max_minor is not None
@@ -148,25 +73,6 @@ class Settings(BaseSettings):
                 'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
             )
         return self
-
-    @model_validator(mode='after')
-    def validate_production_integrations(self) -> Settings:
-        if self.environment in {'staging', 'production'}:
-            if self.payment_provider == 'sandbox':
-                raise ValueError('The sandbox payment provider is only for local environments')
-            if self.storage_backend == 'local':
-                raise ValueError('Local filesystem storage is only for local environments')
-        return self
-
-    @property
-    def effective_payment_provider(self) -> str:
-        if self.payment_provider == 'auto':
-            return 'sandbox' if self.is_local else 'disabled'
-        return self.payment_provider
-
-    @property
-    def is_local(self) -> bool:
-        return self.environment in {'development', 'test'}
 
     @property
     def database_url_sync(self) -> str:

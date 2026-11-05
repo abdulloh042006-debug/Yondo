@@ -266,11 +266,13 @@ async def test_profile_api_validation(prepared, payload):
     assert response.json()['code'] == 'validation_error'
 
 
-async def test_companion_owner_routes_are_not_a_public_listing(prepared):
-    # Public discovery lives under /discovery and applies the canonical gate (Phase 7).
+async def test_no_public_discovery_or_out_of_scope_routes(prepared):
     paths = set(prepared['app'].openapi()['paths'])
     assert '/api/v1/companions' not in paths
-    assert not any('/calls' in path for path in paths)
+    for path in paths:
+        assert not any(
+            word in path for word in ['booking', 'payment', '/chat', '/calls', '/discovery']
+        )
 
 
 async def test_identity_provider_failure_does_not_activate(prepared):

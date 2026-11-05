@@ -73,23 +73,6 @@ class ProfileResponse(Output):
     content_status: ContentStatus
     activation_requested: bool
     review_note: str | None
-    area: str | None = None
-    approx_latitude: float | None = None
-    approx_longitude: float | None = None
-
-
-class LocationWrite(Input):
-    """Approximate public area. Coordinates are rounded to ~1 km before storage."""
-
-    area: str | None = Field(default=None, min_length=1, max_length=128)
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
-
-    @model_validator(mode='after')
-    def paired_coordinates(self) -> Self:
-        if (self.latitude is None) != (self.longitude is None):
-            raise ValueError('latitude and longitude must be provided together')
-        return self
 
 
 class ServiceWrite(Input):

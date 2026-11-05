@@ -1,9 +1,0 @@
-.env
-.venv
-.pytest_cache
-.ruff_cache
-.storage
-dist
-build
-**/__pycache__
-*.egg-info
