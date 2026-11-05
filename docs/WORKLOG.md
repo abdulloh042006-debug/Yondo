@@ -25,6 +25,27 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S45 — Manual card-transfer payments for the beta (2026-11-05) [cloud chat]
+Done: owner decision "first month without a payment API: transfers to my cards, I confirm by hand; one switch to the APIs later".
+- `YONDO_PAYMENT_PROVIDER` = auto | manual | tezcheck.
+- `payments/manual.py`: checkout = `/pay/<YND-XXXX-XXXX>` with the cards (`YONDO_MANUAL_PAYMENT_CARDS`, host env only), the exact amount (booking price + configured fee) and the transfer code.
+  - `GET /payments/manual/{ref}`: the paying customer only.
+  - `GET /admin/payments/manual` and `POST /admin/payments/manual/{ref}/received`: audited, no self-confirmation, idempotent, through the webhook's event path (extracted as `apply_verified_event`; its `system_message` is now defined before the try).
+  - The webhook refuses manual events.
+- Web: `/pay/:reference` page and Admin → Payments; 26 keys in each of uz/ru/en.
+- `docs/payments-manual.md`; CLAUDE.md §7: two owner lines (government framing; manual payments, card numbers never in the repo).
+Not done: mobile shows the web `/pay` page through the browser (in-app instructions after PR #13 merges); no "not received" button (an unpaid booking expires at its start); refunds are manual.
+Next: verifier, PR; owner sets the env values on the host (list: `docs/owner-todo.md`).
+Evidence:
+- `tests/companions/test_manual_payments.py` 3 + `test_payments.py` 7 passed on PostgreSQL.
+- Web typecheck/lint PASS, vitest 53/53, build PASS.
+- Browser flow against the real API, fake cards, 5/5:
+  - the customer sees the cards and the code;
+  - another user gets 404;
+  - admin "Money received" → booking confirmed;
+  - the cards are hidden afterwards.
+- Full suite: see the PR.
+
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).

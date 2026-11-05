@@ -146,6 +146,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/payments/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Manual Queue
+         * @description Open manual transfers to look for in the bank; oldest first so nothing waits forever.
+         */
+        get: operations["manual_queue_api_v1_admin_payments_manual_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/payments/manual/{reference}/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Received
+         * @description The admin saw the exact amount with this reference arrive on a configured card.
+         */
+        post: operations["mark_received_api_v1_admin_payments_manual__reference__received_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/reports": {
         parameters: {
             query?: never;
@@ -1716,6 +1756,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/manual/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Manual Payment
+         * @description Transfer instructions, for the customer who has to pay (anyone else gets 404).
+         */
+        get: operations["manual_payment_api_v1_payments_manual__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/webhook": {
         parameters: {
             query?: never;
@@ -2205,6 +2265,39 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
+        };
+        /** AdminManualPaymentRead */
+        AdminManualPaymentRead: {
+            /** Amount Minor */
+            amount_minor: number;
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /**
+             * Payment Id
+             * Format: uuid
+             */
+            payment_id: string;
+            /** Reference */
+            reference: string;
+            /** Refund Required */
+            refund_required: boolean;
+            /** Status */
+            status: string;
         };
         /** AdminReportRead */
         AdminReportRead: {
@@ -2870,6 +2963,43 @@ export interface components {
             status: string;
             /** Version */
             version: string;
+        };
+        /** ManualCardRead */
+        ManualCardRead: {
+            /** Holder */
+            holder: string;
+            /** Label */
+            label: string;
+            /** Number */
+            number: string;
+        };
+        /** ManualPaymentRead */
+        ManualPaymentRead: {
+            /** Amount Minor */
+            amount_minor: number;
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /** Cards */
+            cards: components["schemas"]["ManualCardRead"][];
+            /**
+             * Confirmed By Admin
+             * @description True once an admin recorded the money.
+             */
+            confirmed_by_admin: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
         };
         /** MeetingState */
         MeetingState: {
@@ -3766,6 +3896,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TestOrderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    manual_queue_api_v1_admin_payments_manual_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "succeeded";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminManualPaymentRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_received_api_v1_admin_payments_manual__reference__received_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminManualPaymentRead"];
                 };
             };
             /** @description Validation Error */
@@ -6903,6 +7096,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    manual_payment_api_v1_payments_manual__reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualPaymentRead"];
                 };
             };
             /** @description Validation Error */
