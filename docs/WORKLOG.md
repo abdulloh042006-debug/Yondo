@@ -25,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S41 — Fixed the `yondo-tun` axe contrast flake on /login (2026-11-05) [cloud chat, designer worker]
+Done: root cause = a theme change was not atomic. Switching from a light theme to `yondo-tun` snapped the page ground to ink while `.lang-opt` (color/background 0.2 s) and `.btn` (background 0.2 s; its color snaps) still faded from the old values: dark-on-dark for one transition (`button.lang-opt[lang=ru|en]` #241c16 on #111111 = 1.12:1; `.btn` #111111 on #8e3140 = 2.39:1). Only the dark theme passes through such a frame, and when the browser starts the transition decides whether axe sees it, hence intermittent. Fix: `ui/theme.tsx` turns CSS transitions off (`data-theme-switching`, `styles.css`) for every `data-theme` change until one frame with the new colours is drawn; motion animations untouched. Test `ui/theme.test.tsx`. Spec unchanged.
+Not done: the page-entrance fade (PageTransition, 0.5 s) can still be sampled mid-fade on a very slow machine in any theme (seen only with forced CPU throttling, gul/stone at opacity 0.91); the 1.7 s wait covered it in every normal run.
+Next: Next steps unchanged.
+Evidence: probe (switch at rest, axe 0–150 ms after): before 19/20 runs FAIL, after 0/20; at rest lang buttons and `.btn` 16.89:1. Web typecheck, lint, build PASS, vitest 54/54, e2e 3 runs in a row: 61/61, 61/61, 61/61 (`node e2e/run.mjs`, real API on SQLite).
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
