@@ -3,11 +3,13 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.dependencies import Principal, Session
-from yondo_api.gifts.models import GiftProduct
+from yondo_api.gifts.models import GiftCartItem, GiftProduct
+from yondo_api.gifts.orders_models import GiftTestOrderItem
 from yondo_api.gifts.router import Category, ProductRead, require_role
 from yondo_api.models.user import UserRoleType
 
@@ -59,6 +61,32 @@ async def vendor_unpublish(product_id: UUID, principal: Principal, session: Sess
     await session.commit()
     await session.refresh(product)
     return product
+
+@router.delete('/products/{product_id}', status_code=204)
+async def delete_product(product_id: UUID, principal: Principal, session: Session):
+    """Remove an own product that was never ordered; ordered products can only be unpublished."""
+    await require_role(principal, session, UserRoleType.VENDOR)
+    product = await session.scalar(select(GiftProduct).where(
+        GiftProduct.id == product_id, GiftProduct.vendor_id == principal.user.id
+    ).with_for_update())
+    if product is None:
+        raise ApplicationError('gift_not_found', 'Gift not found', 404)
+    ordered = await session.scalar(
+        select(GiftTestOrderItem.id).where(GiftTestOrderItem.product_id == product_id).limit(1)
+    )
+    if ordered is not None:
+        raise ApplicationError(
+            'gift_product_in_use', 'Ordered products cannot be deleted; unpublish instead', 409
+        )
+    await session.execute(delete(GiftCartItem).where(GiftCartItem.product_id == product_id))
+    await session.delete(product)
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise ApplicationError(
+            'gift_product_in_use', 'Ordered products cannot be deleted; unpublish instead', 409
+        ) from exc
 
 @router.get('/summary')
 async def summary(principal: Principal, session: Session):
