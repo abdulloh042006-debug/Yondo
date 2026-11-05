@@ -1250,6 +1250,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gifts/admin/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Products
+         * @description Moderation list: unlike the public catalog it includes unpublished and sold-out products.
+         */
+        get: operations["admin_products_api_v1_gifts_admin_products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gifts/admin/products/{product_id}/publish": {
         parameters: {
             query?: never;
@@ -1961,7 +1981,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Product
+         * @description Remove an own product that was never ordered; ordered products can only be unpublished.
+         */
+        delete: operations["delete_product_api_v1_vendor_products__product_id__delete"];
         options?: never;
         head?: never;
         /** Update Product */
@@ -6050,6 +6074,39 @@ export interface operations {
             };
         };
     };
+    admin_products_api_v1_gifts_admin_products_get: {
+        parameters: {
+            query?: {
+                published?: boolean | null;
+                vendor_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     publish_product_api_v1_gifts_admin_products__product_id__publish_post: {
         parameters: {
             query?: never;
@@ -7413,6 +7470,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    delete_product_api_v1_vendor_products__product_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

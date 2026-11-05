@@ -7858,6 +7858,94 @@
         ]
       }
     },
+    "/api/v1/gifts/admin/products": {
+      "get": {
+        "description": "Moderation list: unlike the public catalog it includes unpublished and sold-out products.",
+        "operationId": "admin_products_api_v1_gifts_admin_products_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "published",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Published"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendor_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vendor Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductRead"
+                  },
+                  "title": "Response Admin Products Api V1 Gifts Admin Products Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Products",
+        "tags": [
+          "gifts"
+        ]
+      }
+    },
     "/api/v1/gifts/admin/products/{product_id}/publish": {
       "post": {
         "operationId": "publish_product_api_v1_gifts_admin_products__product_id__publish_post",
@@ -9881,6 +9969,46 @@
       }
     },
     "/api/v1/vendor/products/{product_id}": {
+      "delete": {
+        "description": "Remove an own product that was never ordered; ordered products can only be unpublished.",
+        "operationId": "delete_product_api_v1_vendor_products__product_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Product",
+        "tags": [
+          "vendor"
+        ]
+      },
       "patch": {
         "operationId": "update_product_api_v1_vendor_products__product_id__patch",
         "parameters": [
