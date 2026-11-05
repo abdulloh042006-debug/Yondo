@@ -25,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S41 (docs) — Password-login design plan (2026-11-05) [cloud chat, designer worker]
+Done: `docs/auth-password-login.md`: TZ.md amendment text (TZ.md not edited), flows, API, migration, scrypt hashing (stdlib, no new dependency), per-phone and per-IP limits, web UI + i18n drafts (uz/ru/en), test plan, 7 owner questions (each with a *taklif*). Facts cite the code (`auth/service.py`, `auth/router.py`, `auth/providers.py`, `models/*`, `account/deletion.py`).
+Not done: no code. Waits for the owner's answers to Q1–Q7.
+Next: the owner answers §8, then backend (migration 0018, endpoints, tests), then web.
+Evidence: docs only; facts checked against the code by the verifier.
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
