@@ -8,6 +8,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 - The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
+000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) S3/MinIO photo adapter, (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
 00a. **Owner decision 2026-10-29 (S38): add password login** (phone + password; code only for sign-up, new device and password reset): a code per login is slow and costs money. Plan first: TZ.md amendment (owner approves; TZ says phone → OTP only), API (password-hash migration, set/change/reset endpoints, password login with rate limit and lockout, OpenAPI export), web UI (login, set password in Settings, uz/ru/en keys), tests; the verifier approves before commit (S36).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
@@ -24,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
+Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
+Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
+Next: merge this PR after green CI (first CI run of this line: CI triggers only on `main` pushes and PRs), then the four port PRs.
+Evidence: local run on the merged tree: ruff PASS, `export_openapi.py --check` PASS, web lint/typecheck PASS, vitest 53/53, build PASS; backend pytest: see the PR description.
 ## S39 — Removed "til mashqi" (language practice) from the whole project (2026-10-29)
 Done: owner decision 2026-10-29. Removed the phrase from `marketing/ad-video` (`build_timeline.py` UZ+RU lines and chips, `README.md`, `mk_preview.py`, `server_video.py` seed bio), `infra/deploy/demo/demo_app.py` seed bio, and the prototype mock service text `Ingliz tilida suhbat` -> `Erkin mavzuda suhbat` (`mockapi.js`; rebuilt with `node design-prototype/prototype/build.js`: only that string changed in `index.html` and `screens/0N-*.html`). Profile languages / `language` filter kept on purpose. CLAUDE.md §7 got the rule.
 Not done: native-speaker copy review; real `apps/web` i18n already had no such text (grep: 0 hits).
