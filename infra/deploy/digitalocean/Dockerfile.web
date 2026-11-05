@@ -1,0 +1,12 @@
+# Web app + Caddy reverse proxy (automatic HTTPS). Build context: the repository root.
+#   docker build -f infra/deploy/digitalocean/Dockerfile.web -t yondo-web .
+FROM node:22-slim AS web
+WORKDIR /web
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+COPY apps/web/ ./
+RUN npm run build
+
+FROM caddy:2-alpine
+COPY --from=web /web/dist /srv
+COPY infra/deploy/digitalocean/Caddyfile /etc/caddy/Caddyfile

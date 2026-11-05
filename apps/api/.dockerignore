@@ -1,9 +1,12 @@
-.env
-.venv
+**/__pycache__
+**/*.pyc
 .pytest_cache
 .ruff_cache
-.storage
-dist
 build
-**/__pycache__
+dist
 *.egg-info
+.env
+.env.*
+Dockerfile
+.dockerignore
+try_telegram_gateway.py

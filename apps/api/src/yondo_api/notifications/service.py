@@ -1,51 +1,38 @@
-from __future__ import annotations
+"""Durable in-app notifications committed with the triggering transaction."""
+from datetime import UTC, datetime
+from uuid import UUID
 
-from typing import Any
-from uuid import UUID, uuid4
-
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from yondo_api.core.time import utc_now
-from yondo_api.notifications.models import Notification, PushStatus
-from yondo_api.realtime.broker import queue_event
+from yondo_api.bookings.models import Booking
+from yondo_api.companions.models import CompanionApplication, CompanionProfile
+from yondo_api.notifications.models import UserNotification
 
 
-def notify(
+async def enqueue_booking_notice(
     session: AsyncSession,
-    user_id: UUID,
+    booking: Booking,
     kind: str,
-    title: str,
-    body: str = '',
-    data: dict[str, Any] | None = None,
+    source_id: UUID,
     *,
-    push: bool = True,
-) -> Notification:
-    """Record an in-app notification; push delivery happens later through the outbox worker."""
-    payload = {key: str(value) for key, value in (data or {}).items()}
-    notification = Notification(
-        id=uuid4(),
-        user_id=user_id,
-        kind=kind,
-        title=title,
-        body=body,
-        data=payload,
-        push_status=PushStatus.PENDING if push else PushStatus.SKIPPED,
-        push_attempts=0,
+    actor_id: UUID | None = None,
+    recipients: str = 'other',
+) -> None:
+    companion_id = await session.scalar(
+        select(CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.application_id == CompanionApplication.id)
+        .where(CompanionProfile.id == booking.profile_id)
     )
-    session.add(notification)
-    queue_event(
-        session,
-        user_id,
-        {
-            'type': 'notification',
-            'notification': {
-                'id': str(notification.id),
-                'kind': kind,
-                'title': title,
-                'body': body,
-                'data': payload,
-                'created_at': utc_now().isoformat(),
-            },
-        },
-    )
-    return notification
+    for recipient_id in {booking.customer_id, companion_id} - {None}:
+        if recipients == 'other' and recipient_id == actor_id:
+            continue
+        session.add(UserNotification(
+            recipient_id=recipient_id,
+            actor_id=actor_id,
+            booking_id=booking.id,
+            kind=kind,
+            source_key=f'{kind}:{source_id}',
+            details={'booking_id': str(booking.id)},
+            created_at=datetime.now(UTC),
+        ))

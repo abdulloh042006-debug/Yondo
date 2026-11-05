@@ -1,140 +1,76 @@
-from __future__ import annotations
-
-from typing import Any, Literal
+from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import AwareDatetime, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 from yondo_api.bookings.models import BookingStatus
-from yondo_api.core.schemas import Input, Output, UtcDatetime
 
 
-class MeetingPlace(Input):
-    name: str = Field(min_length=1, max_length=200)
-    address: str = Field(default='', max_length=500)
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
+class BookingCreate(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
 
-    @model_validator(mode='after')
-    def paired(self):
-        if (self.latitude is None) != (self.longitude is None):
-            raise ValueError('latitude and longitude must be provided together')
-        return self
-
-
-class BookingRequest(Input):
-    profile_id: UUID
     service_id: UUID
     starts_at: AwareDatetime
-    duration_minutes: int = Field(strict=True, gt=0, le=24 * 60)
-    meeting_place: MeetingPlace
-    note: str = Field(default='', max_length=2000)
-    rebooked_from_id: UUID | None = None
+    duration_minutes: int = Field(strict=True, gt=0, le=2_147_483_647)
+    timezone: str = Field(min_length=1, max_length=64)
+    meeting_place: Annotated[str, StringConstraints(min_length=1, max_length=512)]
+
+    @field_validator('timezone')
+    @classmethod
+    def validate_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError, OSError) as exc:
+            raise ValueError('An IANA timezone is required') from exc
+        return value
 
     @field_validator('starts_at')
     @classmethod
-    def whole_minute(cls, value):
-        if value.second or value.microsecond:
-            raise ValueError('starts_at must be on a whole minute')
-        return value
+    def normalize_start(cls, value: datetime) -> datetime:
+        try:
+            return value.astimezone(UTC)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError('Datetime must represent a supported UTC instant') from exc
 
 
-class BookingCreate(BookingRequest):
-    # The customer explicitly accepts the booking contract and platform rules (TZ §11).
-    accept_contract: Literal[True]
+class BookingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class Quote(Output):
-    service_code: str
-    unit_price_minor: int
-    unit_minutes: int
-    duration_minutes: int
-    currency: str
-    service_amount_minor: int
-    platform_fee_minor: int
-    total_minor: int
-    starts_at: UtcDatetime
-    ends_at: UtcDatetime
-    timezone: str
-    contract: dict[str, Any]
-
-
-class Party(Output):
     id: UUID
-    display_name: str | None
-    age: int | None = None
-    gender: str | None = None
-    rating_average: float | None = None
-    rating_count: int = 0
-
-
-class BookingResponse(Output):
-    id: UUID
+    customer_id: UUID
+    profile_id: UUID
+    service_id: UUID
     status: BookingStatus
-    role: Literal['customer', 'companion', 'admin']
-    customer: Party
-    companion: Party
-    profile_id: UUID
-    service_id: UUID | None
     service_code: str
-    unit_price_minor: int
-    unit_minutes: int
-    currency: str
-    starts_at: UtcDatetime
-    ends_at: UtcDatetime
-    duration_minutes: int
+    service_description: str
+    starts_at: datetime
+    ends_at: datetime
     timezone: str
-    meeting_place: MeetingPlace
-    note: str
-    service_amount_minor: int
-    platform_fee_minor: int
-    total_minor: int
-    companion_payout_minor: int | None
-    refund_minor: int
-    contract: dict[str, Any]
-    contract_version: str
-    customer_accepted_at: UtcDatetime
-    companion_accepted_at: UtcDatetime | None
-    request_expires_at: UtcDatetime
-    payment_due_at: UtcDatetime | None
-    confirmed_at: UtcDatetime | None
-    cancelled_at: UtcDatetime | None
-    cancellation_reason: str | None
-    cancellation_note: str | None
-    customer_checked_in_at: UtcDatetime | None
-    companion_checked_in_at: UtcDatetime | None
-    started_at: UtcDatetime | None
-    ended_at: UtcDatetime | None
-    no_show_party: str | None
-    rebooked_from_id: UUID | None
-    created_at: UtcDatetime
-    actions: list[str]
-
-
-class BookingEventResponse(Output):
-    id: UUID
-    event: str
-    actor_id: UUID | None
-    from_status: str | None
-    to_status: str
-    data: dict[str, Any]
-    created_at: UtcDatetime
-
-
-class DecisionNote(Input):
-    note: str = Field(default='', max_length=2000)
-
-
-class CancellationPreview(Output):
-    refund_minor: int
-    refund_bps: int
-    refund_percent: float
-    policy: Literal['no_payment', 'free', 'partial', 'none', 'full_companion_cancel']
-
-
-class RebookTemplate(Output):
-    profile_id: UUID
-    service_id: UUID | None
-    service_code: str
     duration_minutes: int
-    meeting_place: MeetingPlace
+    meeting_place: str
+    price_minor: int
+    currency: str
+    customer_contract_accepted_at: datetime
+    companion_contract_accepted_at: datetime | None
+    created_at: datetime
+
+    @field_validator(
+        'starts_at',
+        'ends_at',
+        'customer_contract_accepted_at',
+        'companion_contract_accepted_at',
+        'created_at',
+    )
+    @classmethod
+    def normalize_datetimes(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
+
+class BookingCancel(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+
+    reason: str = Field(default='', max_length=2000)

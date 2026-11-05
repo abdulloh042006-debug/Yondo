@@ -1,1 +1,1 @@
-"""Phase 10: booking-linked chat."""
+"""Booking-scoped messages, read cursors, and one-time socket tickets."""

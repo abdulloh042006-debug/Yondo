@@ -1,62 +1,40 @@
-from __future__ import annotations
-
 from datetime import datetime
-from enum import StrEnum
-from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from yondo_api.core.time import utc_now
 from yondo_api.db.base import Base, TimestampMixin
 
 
-class PushStatus(StrEnum):
-    PENDING = 'pending'
-    SENT = 'sent'
-    FAILED = 'failed'
-    SKIPPED = 'skipped'
-
-
-class Notification(TimestampMixin, Base):
-    __tablename__ = 'notifications'
+class UserNotification(TimestampMixin, Base):
+    __tablename__ = 'user_notifications'
     __table_args__ = (
         CheckConstraint(
-            "push_status IN ('pending', 'sent', 'failed', 'skipped')",
-            name='ck_notifications_push_status',
+            "kind IN ('booking_requested','booking_accepted','booking_declined',"
+            "'booking_cancelled','payment_confirmed','chat_message',"
+            "'review_reminder','gift_order_created','gift_test_paid','gift_preparing',"
+            "'gift_out_for_delivery','gift_delivered','gift_cancelled')",
+            name='ck_user_notification_kind',
         ),
-        Index('ix_notifications_user_created', 'user_id', 'created_at'),
-        Index('ix_notifications_push_status', 'push_status'),
+        UniqueConstraint('recipient_id', 'source_key', name='uq_notice_recipient_source'),
+        CheckConstraint(
+            '(booking_id IS NOT NULL AND gift_order_id IS NULL) OR '
+            '(booking_id IS NULL AND gift_order_id IS NOT NULL)',
+            name='ck_notification_single_resource',
+        ),
+        Index('ix_user_notifications_recipient_created', 'recipient_id', 'created_at'),
     )
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-    kind: Mapped[str] = mapped_column(String(64))
-    title: Mapped[str] = mapped_column(String(200))
-    body: Mapped[str] = mapped_column(Text, default='')
-    data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    recipient_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'))
+    actor_id: Mapped[UUID | None] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'))
+    booking_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('bookings.id', ondelete='RESTRICT'), nullable=True
+    )
+    gift_order_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('gift_test_orders.id', ondelete='RESTRICT'), nullable=True
+    )
+    kind: Mapped[str] = mapped_column(String(40))
+    source_key: Mapped[str] = mapped_column(String(160))
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    push_status: Mapped[str] = mapped_column(String(16), default=PushStatus.PENDING)
-    push_attempts: Mapped[int] = mapped_column(Integer, default=0)
-
-
-class NotificationKey(Base):
-    """Idempotency keys for scheduled notices (reminders are sent at most once)."""
-
-    __tablename__ = 'notification_keys'
-
-    key: Mapped[str] = mapped_column(String(160), primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-
-
-class DeviceToken(TimestampMixin, Base):
-    __tablename__ = 'device_tokens'
-    __table_args__ = (
-        CheckConstraint("platform IN ('android', 'ios', 'web')", name='ck_device_tokens_platform'),
-    )
-
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    token: Mapped[str] = mapped_column(String(512), unique=True)
-    platform: Mapped[str] = mapped_column(String(16))

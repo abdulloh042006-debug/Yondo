@@ -1,101 +1,87 @@
-from typing import Annotated
+from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
-from sqlalchemy import delete, func, select, update
+from fastapi import APIRouter, Query
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import func, select, update
 
 from yondo_api.api.errors import ApplicationError
-from yondo_api.core.db import commit
-from yondo_api.core.deps import CurrentUser, Session
-from yondo_api.core.schemas import Page, PageParams, page_of
-from yondo_api.core.time import utc_now
-from yondo_api.notifications.models import DeviceToken, Notification
-from yondo_api.notifications.schemas import (
-    DeviceRegistration,
-    DeviceRemoval,
-    NotificationResponse,
-    UnreadCount,
-)
+from yondo_api.companions.dependencies import Principal, Session
+from yondo_api.models.user import AccountStatus
+from yondo_api.notifications.models import UserNotification
 
 router = APIRouter(prefix='/notifications', tags=['notifications'])
 
+class NotificationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    booking_id: UUID | None
+    gift_order_id: UUID | None
+    kind: str
+    details: dict
+    created_at: datetime
+    read_at: datetime | None
 
-@router.get('', response_model=Page[NotificationResponse])
+def check_active(principal: Principal) -> None:
+    if principal.user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'Account unavailable', 403)
+
+@router.get('', response_model=list[NotificationRead])
 async def list_notifications(
-    user: CurrentUser,
-    session: Session,
-    params: Annotated[PageParams, Depends()],
-    unread_only: bool = False,
+    principal: Principal, session: Session, unread_only: bool = False,
+    limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0, le=1_000_000)
 ):
-    query = select(Notification).where(Notification.user_id == user.id)
+    check_active(principal)
+    query = select(UserNotification).where(UserNotification.recipient_id == principal.user.id)
     if unread_only:
-        query = query.where(Notification.read_at.is_(None))
-    rows = list(
-        await session.scalars(
-            query.order_by(Notification.created_at.desc(), Notification.id.desc())
-            .offset(params.offset)
-            .limit(params.limit + 1)
-        )
+        query = query.where(UserNotification.read_at.is_(None))
+    query = (
+        query.order_by(UserNotification.created_at.desc(), UserNotification.id.desc())
+        .offset(offset)
+        .limit(limit)
     )
-    return page_of([NotificationResponse.model_validate(row) for row in rows], params)
+    return list(await session.scalars(query))
 
-
-@router.get('/unread-count', response_model=UnreadCount)
-async def unread_count(user: CurrentUser, session: Session):
+@router.get('/unread-count')
+async def unread_count(principal: Principal, session: Session):
+    check_active(principal)
     count = await session.scalar(
-        select(func.count())
-        .select_from(Notification)
-        .where(Notification.user_id == user.id, Notification.read_at.is_(None))
-    )
-    return UnreadCount(unread=count or 0)
-
-
-@router.post('/{notification_id}/read', response_model=NotificationResponse)
-async def mark_read(notification_id: UUID, user: CurrentUser, session: Session):
-    item = await session.scalar(
-        select(Notification).where(
-            Notification.id == notification_id, Notification.user_id == user.id
+        select(func.count()).select_from(UserNotification).where(
+            UserNotification.recipient_id == principal.user.id,
+            UserNotification.read_at.is_(None),
         )
     )
-    if item is None:
+    return {'unread_count': count or 0}
+
+@router.post('/read-all')
+async def mark_all_read(principal: Principal, session: Session):
+    check_active(principal)
+    result = await session.execute(
+        update(UserNotification)
+        .where(
+            UserNotification.recipient_id == principal.user.id,
+            UserNotification.read_at.is_(None),
+        )
+        .values(read_at=datetime.now(UTC))
+    )
+    await session.commit()
+    return {'marked_count': result.rowcount}
+
+
+@router.post('/{notification_id}/read', response_model=NotificationRead)
+async def mark_read(notification_id: UUID, principal: Principal, session: Session):
+    check_active(principal)
+    row = await session.scalar(
+        select(UserNotification).where(
+            UserNotification.id == notification_id,
+            UserNotification.recipient_id == principal.user.id,
+        ).with_for_update()
+    )
+    if row is None:
         raise ApplicationError('notification_not_found', 'Notification not found', 404)
-    if item.read_at is None:
-        item.read_at = utc_now()
-        await commit(session)
-    return item
-
-
-@router.post('/read-all', status_code=204)
-async def mark_all_read(user: CurrentUser, session: Session):
-    await session.execute(
-        update(Notification)
-        .where(Notification.user_id == user.id, Notification.read_at.is_(None))
-        .values(read_at=utc_now())
-    )
-    await commit(session)
-    return Response(status_code=204)
-
-
-@router.put('/devices', status_code=204)
-async def register_device(payload: DeviceRegistration, user: CurrentUser, session: Session):
-    existing = await session.scalar(select(DeviceToken).where(DeviceToken.token == payload.token))
-    if existing is None:
-        session.add(DeviceToken(user_id=user.id, token=payload.token, platform=payload.platform))
-    else:
-        # A device token belongs to whichever account last signed in on that device.
-        existing.user_id = user.id
-        existing.platform = payload.platform
-        existing.updated_at = utc_now()
-    await commit(session, 'device_conflict', 'Device token is already registered')
-    return Response(status_code=204)
-
-
-@router.post('/devices/remove', status_code=204)
-async def remove_device(payload: DeviceRemoval, user: CurrentUser, session: Session):
-    await session.execute(
-        delete(DeviceToken).where(
-            DeviceToken.token == payload.token, DeviceToken.user_id == user.id
-        )
-    )
-    await commit(session)
-    return Response(status_code=204)
+    if row.read_at is None:
+        row.read_at = datetime.now(UTC)
+        await session.commit()
+        await session.refresh(row)
+    return row

@@ -1,27 +1,23 @@
-from __future__ import annotations
+"""Shared block gate used by booking and private chat."""
 
 from uuid import UUID
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from yondo_api.api.errors import ApplicationError
 from yondo_api.safety.models import UserBlock
 
 
-async def blocked_either_way(session: AsyncSession, user_id: UUID) -> set[UUID]:
-    rows = await session.execute(
-        select(UserBlock.blocker_id, UserBlock.blocked_id).where(
-            or_(UserBlock.blocker_id == user_id, UserBlock.blocked_id == user_id)
+async def blocked_between(session: AsyncSession, user_a: UUID, user_b: UUID | None) -> bool:
+    if user_b is None:
+        return True
+    return bool(
+        await session.scalar(
+            select(UserBlock.id).where(
+                or_(
+                    (UserBlock.blocker_id == user_a) & (UserBlock.blocked_id == user_b),
+                    (UserBlock.blocker_id == user_b) & (UserBlock.blocked_id == user_a),
+                )
+            )
         )
     )
-    return {blocked if blocker == user_id else blocker for blocker, blocked in rows}
-
-
-async def is_blocked(session: AsyncSession, first: UUID, second: UUID) -> bool:
-    return second in await blocked_either_way(session, first)
-
-
-async def ensure_not_blocked(session: AsyncSession, first: UUID, second: UUID) -> None:
-    if await is_blocked(session, first, second):
-        raise ApplicationError('user_blocked', 'This interaction is blocked', 403)

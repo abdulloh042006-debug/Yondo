@@ -1,10 +1,7 @@
 # Infrastructure
 
-- Local services and an optional full development stack: root [`compose.yaml`](../compose.yaml)
-  (`docker compose --profile app up -d --build`).
-- Images: [`apps/api/Dockerfile`](../apps/api/Dockerfile) (API, worker, migrations) and
-  [`apps/admin/Dockerfile`](../apps/admin/Dockerfile) (panel served by nginx).
-- Production requirements and integration checklist: [`docs/deployment.md`](../docs/deployment.md).
+Reserved for deployment and infrastructure configuration. Local development dependencies are
+currently defined in the root [`compose.yaml`](../compose.yaml).
 
-Cloud-specific infrastructure (Terraform, Kubernetes manifests) is not included because the
-hosting provider has not been chosen yet.
+- [`deploy/`](deploy/README.md): public **demo** image (API + web in one container, harness in `deploy/demo/`) for free hosting; not production.
+- [`jobs/`](jobs/README.md): scheduling for `python -m yondo_api.jobs` (booking expiry + account erasure).

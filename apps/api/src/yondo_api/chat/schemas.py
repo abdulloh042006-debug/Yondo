@@ -1,57 +1,45 @@
-from typing import Annotated, Any, Literal
+from datetime import UTC, datetime
+from typing import Literal
 from uuid import UUID
 
-from pydantic import Discriminator, Field, Tag
-
-from yondo_api.bookings.schemas import MeetingPlace
-from yondo_api.core.schemas import Input, Output, UtcDatetime
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class TextMessage(Input):
-    kind: Literal['text'] = 'text'
-    body: str = Field(min_length=1, max_length=2000)
+class ChatMessageWrite(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+
+    kind: Literal['text', 'meeting_point'] = 'text'
+    body: str = Field(min_length=1, max_length=4000)
 
 
-class MeetingPointMessage(Input):
-    kind: Literal['meeting_point']
-    meeting_point: MeetingPlace
-    body: str = Field(default='', max_length=500)
+class ChatMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-def _message_kind(value: Any) -> str:
-    if isinstance(value, dict):
-        return value.get('kind', 'text')
-    return getattr(value, 'kind', 'text')
-
-
-# ``kind`` defaults to text so simple clients can send ``{"body": "..."}``.
-OutgoingMessage = Annotated[
-    Annotated[TextMessage, Tag('text')] | Annotated[MeetingPointMessage, Tag('meeting_point')],
-    Discriminator(_message_kind),
-]
-
-
-class MessageResponse(Output):
     id: UUID
     booking_id: UUID
     sender_id: UUID | None
     kind: str
-    body: str
-    payload: dict[str, Any]
-    image_url: str | None = None
-    created_at: UtcDatetime
+    body: str | None
+    payload: dict | None
+    system_code: str | None
+    created_at: datetime
+
+    @field_validator('created_at')
+    @classmethod
+    def normalize_created_at(cls, value: datetime) -> datetime:
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
-class Conversation(Output):
+class ChatSocketTicket(BaseModel):
+    ticket: str
+    expires_in_seconds: int = 90
+
+
+class ChatReadResult(BaseModel):
     booking_id: UUID
-    booking_status: str
-    counterpart_id: UUID
-    counterpart_name: str | None
-    starts_at: UtcDatetime
-    last_message: MessageResponse | None
-    unread: int
-    can_send: bool
+    unread_count: int
 
 
-class UnreadTotal(Output):
-    unread: int
+class ChatUnreadItem(BaseModel):
+    booking_id: UUID
+    unread_count: int

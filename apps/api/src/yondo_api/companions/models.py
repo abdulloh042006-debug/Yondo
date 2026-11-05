@@ -10,7 +10,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
-    Float,
     ForeignKey,
     Index,
     Integer,
@@ -90,10 +89,6 @@ class CompanionProfile(TimestampMixin, Base):
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey('users.id'))
     review_note: Mapped[str | None] = mapped_column(Text)
-    # Approximate public area only (TZ §41). Coordinates are rounded before storage.
-    area: Mapped[str | None] = mapped_column(String(128))
-    approx_latitude: Mapped[float | None] = mapped_column(Float)
-    approx_longitude: Mapped[float | None] = mapped_column(Float)
 
 
 class CompanionService(TimestampMixin, Base):

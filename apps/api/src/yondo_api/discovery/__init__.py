@@ -1,1 +1,1 @@
-"""Phase 7: companion discovery, public profiles and favorites."""
+"""Public companion discovery and customer favorites."""

@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,25 @@ class Settings(BaseSettings):
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
     auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Telegram Gateway (https://core.telegram.org/gateway): delivers login codes to the user's
+    # Telegram account. Unset token = not configured. Never log or echo the token.
+    telegram_gateway_token: SecretStr | None = None
+    telegram_gateway_base_url: str = 'https://gatewayapi.telegram.org'
+    telegram_gateway_timeout_seconds: float = Field(default=10.0, gt=0)
+    # Unset until the fee policy has been approved. Values are basis points.
+    platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
+    # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
+    click_test_enabled: bool = False
+    click_test_service_id: int | None = Field(default=None, gt=0)
+    click_test_secret: SecretStr = SecretStr('')
+    # TezCheck payment aggregator (https://tezcheck.uz/api-docs). Empty token = not configured.
+    tezcheck_api_url: str = 'https://api.tezcheck.uz/api/merchant/v1'
+    tezcheck_token: SecretStr = SecretStr('')
+    tezcheck_cash_desk_code: str = ''
+    tezcheck_webhook_secret: SecretStr = SecretStr('')
+    tezcheck_return_url: str = ''
+    # Accept payments TezCheck marks as environment "test" (its test provider). Never in prod.
+    tezcheck_accept_test_payments: bool = False
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
@@ -54,85 +73,12 @@ class Settings(BaseSettings):
     companion_price_max_minor: int | None = Field(default=None, gt=0)
     companion_allowed_unit_minutes: tuple[int, ...] = ()
 
-    # Accounts. PLACEHOLDER policy: minimum age must be confirmed by the business/legal team.
-    account_min_age: int = Field(default=18, ge=0, le=150)
-
-    # Object storage backend. 'local' is a development-only filesystem adapter.
-    storage_backend: Literal['disabled', 's3', 'local'] = 'disabled'
-    storage_path_style: bool = True
-    storage_public_endpoint: str | None = None
-    storage_local_root: str = '.storage'
-    storage_local_public_url: str = 'http://localhost:8000/api/v1/storage/local'
-
-    # Browser origins allowed to call the API (admin/vendor web panel). JSON array.
-    cors_allow_origins: tuple[str, ...] = ()
-
-    # Realtime fan-out. 'auto' uses memory in tests and Redis elsewhere.
-    realtime_backend: Literal['auto', 'memory', 'redis'] = 'auto'
-
-    # Booking. PLACEHOLDER policy values; every number is configurable and pending approval.
-    booking_default_timezone: str = 'Asia/Tashkent'
-    booking_min_lead_minutes: int = Field(default=60, ge=0)
-    booking_max_horizon_days: int = Field(default=60, gt=0)
-    booking_max_duration_minutes: int = Field(default=480, gt=0)
-    booking_request_ttl_minutes: int = Field(default=120, gt=0)
-    booking_payment_window_minutes: int = Field(default=60, gt=0)
-    booking_platform_fee_bps: int = Field(default=1000, ge=0, le=10_000)
-    booking_companion_commission_bps: int = Field(default=0, ge=0, le=10_000)
-    booking_free_cancellation_hours: int = Field(default=24, ge=0)
-    booking_late_cancellation_refund_bps: int = Field(default=5000, ge=0, le=10_000)
-    booking_contract_version: str = 'draft-2026-11'
-
-    # Meeting flow.
-    meeting_checkin_window_minutes: int = Field(default=30, ge=0)
-    meeting_no_show_grace_minutes: int = Field(default=15, ge=0)
-    # PLACEHOLDER: active meetings nobody ended are completed this long after scheduled end.
-    meeting_auto_complete_hours: int = Field(default=2, gt=0)
-
-    # Payments. 'sandbox' simulates a provider and is refused outside local environments.
-    payment_provider: Literal['auto', 'sandbox', 'disabled'] = 'auto'
-    payment_webhook_secret: SecretStr = SecretStr('development-only-webhook-secret')
-    payment_checkout_base_url: str = 'http://localhost:8000/api/v1/payments/sandbox'
-    payout_release_delay_hours: int = Field(default=24, ge=0)
-
-    # Reviews. Quick-tag taxonomy is a PLACEHOLDER pending product approval.
-    review_window_days: int = Field(default=14, gt=0)
-    review_tags_for_companion: tuple[str, ...] = (
-        'punctual',
-        'friendly',
-        'great_conversation',
-        'respectful',
-        'as_described',
-    )
-    review_tags_for_customer: tuple[str, ...] = (
-        'respectful',
-        'punctual',
-        'polite',
-        'followed_rules',
-        'pleasant',
-    )
-
-    # Gifts marketplace.
-    gift_platform_fee_bps: int = Field(default=0, ge=0, le=10_000)
-    vendor_commission_bps: int = Field(default=0, ge=0, le=10_000)
-    gift_max_product_images: int = Field(default=10, gt=0, le=100)
-    gift_payment_window_minutes: int = Field(default=30, gt=0)
-
-    # Notifications and background worker.
-    push_provider: Literal['log', 'fcm', 'disabled'] = 'log'
-    fcm_service_account_file: str | None = None
-    meeting_reminder_minutes: int = Field(default=60, gt=0)
-    review_reminder_minutes: int = Field(default=120, gt=0)
-    worker_interval_seconds: int = Field(default=30, gt=0)
-
-    # Safety. PLACEHOLDER: how long after a meeting a dispute may be opened.
-    booking_share_ttl_hours: int = Field(default=24, gt=0)
-    dispute_window_days: int = Field(default=7, gt=0)
-
     @model_validator(mode='after')
     def validate_companion_settings(self) -> Settings:
-        if (self.companion_price_max_minor is not None
-                and self.companion_price_max_minor < self.companion_price_min_minor):
+        if (
+            self.companion_price_max_minor is not None
+            and self.companion_price_max_minor < self.companion_price_min_minor
+        ):
             raise ValueError('Companion maximum price must not be below minimum price')
         if any(value <= 0 for value in self.companion_allowed_unit_minutes):
             raise ValueError('Companion pricing units must be positive minutes')
@@ -149,24 +95,47 @@ class Settings(BaseSettings):
             )
         return self
 
+    @field_validator('telegram_gateway_token')
+    @classmethod
+    def empty_telegram_gateway_token_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
+        # `YONDO_TELEGRAM_GATEWAY_TOKEN=` (empty) in an env file must mean "not configured".
+        if value is not None and not value.get_secret_value().strip():
+            return None
+        return value
+
     @model_validator(mode='after')
-    def validate_production_integrations(self) -> Settings:
-        if self.environment in {'staging', 'production'}:
-            if self.payment_provider == 'sandbox':
-                raise ValueError('The sandbox payment provider is only for local environments')
-            if self.storage_backend == 'local':
-                raise ValueError('Local filesystem storage is only for local environments')
+    def validate_telegram_gateway(self) -> Settings:
+        if self.telegram_gateway_token is None:
+            return self
+        if not self.telegram_gateway_base_url.startswith('https://'):
+            raise ValueError('YONDO_TELEGRAM_GATEWAY_BASE_URL must be an https URL')
         return self
 
-    @property
-    def effective_payment_provider(self) -> str:
-        if self.payment_provider == 'auto':
-            return 'sandbox' if self.is_local else 'disabled'
-        return self.payment_provider
+    @model_validator(mode='after')
+    def validate_click_test_mode(self) -> Settings:
+        if self.click_test_enabled and (
+            self.environment not in {'test', 'development'}
+            or self.click_test_service_id is None
+            or len(self.click_test_secret.get_secret_value()) < 32
+        ):
+            raise ValueError(
+                'CLICK test mode requires a local environment, service ID and 32+ character key'
+            )
+        return self
 
-    @property
-    def is_local(self) -> bool:
-        return self.environment in {'development', 'test'}
+    @model_validator(mode='after')
+    def validate_tezcheck(self) -> Settings:
+        if self.tezcheck_accept_test_payments and self.environment == 'production':
+            raise ValueError('YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS is not allowed in production')
+        if self.tezcheck_token.get_secret_value():
+            if not self.tezcheck_api_url.startswith('https://'):
+                raise ValueError('YONDO_TEZCHECK_API_URL must be an https URL')
+            if len(self.tezcheck_webhook_secret.get_secret_value()) < 16:
+                raise ValueError(
+                    'TezCheck needs YONDO_TEZCHECK_WEBHOOK_SECRET (16+ characters): '
+                    'without it payment events cannot be verified'
+                )
+        return self
 
     @property
     def database_url_sync(self) -> str:
@@ -174,9 +143,7 @@ class Settings(BaseSettings):
 
     @property
     def database_url_async(self) -> str:
-        return self.database_url.replace(
-            'postgresql+psycopg://', 'postgresql+psycopg_async://'
-        )
+        return self.database_url.replace('postgresql+psycopg://', 'postgresql+psycopg_async://')
 
 
 @lru_cache

@@ -1,195 +1,211 @@
-from __future__ import annotations
+from urllib.parse import urlsplit
+from uuid import UUID
 
-import html
-import json
-from typing import Annotated
-from uuid import UUID, uuid4
-
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Header, Request
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from yondo_api.api.errors import ApplicationError
-from yondo_api.core.deps import CurrentUser, Session
-from yondo_api.core.schemas import Page, PageParams, page_of
-from yondo_api.core.time import utc_now
-from yondo_api.gifts.schemas import GiftCheckout
-from yondo_api.payments import service
-from yondo_api.payments.models import Payment, Payout, PayoutStatus
-from yondo_api.payments.providers import SandboxPaymentProvider
-from yondo_api.payments.schemas import (
-    BookingCheckout,
-    Earnings,
-    EarningsSummary,
-    PaymentResponse,
-    PayoutResponse,
-    SandboxResult,
-    WebhookAck,
-)
+from yondo_api.bookings.expiry import refuse_if_expired
+from yondo_api.bookings.models import Booking, BookingStatus
+from yondo_api.bookings.router import _participant
+from yondo_api.chat.service import append_system_message, publish
+from yondo_api.companions.dependencies import Principal, Session
+from yondo_api.notifications.service import enqueue_booking_notice
+from yondo_api.payments.models import Payment, PaymentEventReceipt, PaymentStatus
+from yondo_api.payments.provider import PaymentEvent
+from yondo_api.payments.schemas import PaymentResponse
+from yondo_api.payments.service import apply_payment_event, platform_fee
 
 router = APIRouter(prefix='/payments', tags=['payments'])
-payouts_router = APIRouter(prefix='/payouts', tags=['payouts'])
 
 
-@router.post('/bookings/{booking_id}/checkout', response_model=PaymentResponse)
-async def checkout_booking(
+@router.post('/bookings/{booking_id}', response_model=PaymentResponse, status_code=201)
+async def create_checkout(
     booking_id: UUID,
-    payload: BookingCheckout,
     request: Request,
-    user: CurrentUser,
+    principal: Principal,
     session: Session,
+    idempotency_key: str = Header(alias='Idempotency-Key', min_length=8, max_length=128),
 ):
-    payment = await service.checkout_booking(
-        session, request.app.state, user, booking_id, payload.idempotency_key, payload.gifts
+    booking = await session.scalar(
+        select(Booking)
+        .where(Booking.id == booking_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
     )
+    if booking is None:
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    is_customer, _ = await _participant(session, booking, principal.user.id)
+    customer_id = principal.user.id
+    if not is_customer:
+        raise ApplicationError('customer_role_required', 'Only the customer can pay', 403)
+    if booking.status != BookingStatus.ACCEPTED:
+        raise ApplicationError('booking_not_payable', 'Only an accepted booking can be paid', 409)
+    existing = await session.scalar(
+        select(Payment).where(
+            Payment.customer_id == customer_id,
+            Payment.idempotency_key == idempotency_key,
+        )
+    )
+    if existing is not None:
+        if existing.booking_id != booking.id:
+            raise ApplicationError(
+                'idempotency_key_conflict', 'Idempotency key was used for another booking', 409
+            )
+        if existing.status != PaymentStatus.CREATING:
+            return existing
+        payment = existing
+    else:
+        if booking.status != BookingStatus.ACCEPTED:
+            raise ApplicationError(
+                'booking_not_payable', 'Only an accepted booking can be paid', 409
+            )
+        await refuse_if_expired(session, booking)
+        settings = request.app.state.settings
+        fee_bps = settings.platform_fee_bps
+        if fee_bps is None:
+            raise ApplicationError(
+                'payment_configuration_unavailable', 'Platform fee is not configured', 503
+            )
+        fee = platform_fee(booking.price_minor, fee_bps)
+        if booking.price_minor + fee > 9_223_372_036_854_775_807:
+            raise ApplicationError('payment_amount_overflow', 'Payment amount is too large', 422)
+        payment = Payment(
+            booking_id=booking.id,
+            customer_id=customer_id,
+            idempotency_key=idempotency_key,
+            status=PaymentStatus.CREATING,
+            subtotal_minor=booking.price_minor,
+            platform_fee_minor=fee,
+            amount_minor=booking.price_minor + fee,
+            currency=booking.currency,
+        )
+        session.add(payment)
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            payment = await session.scalar(
+                select(Payment).where(
+                    Payment.customer_id == customer_id,
+                    Payment.idempotency_key == idempotency_key,
+                )
+            )
+            if payment is None or payment.booking_id != booking.id:
+                raise ApplicationError(
+                    'idempotency_key_conflict', 'Idempotency key was already used', 409
+                ) from None
+            if payment.status != PaymentStatus.CREATING:
+                return payment
+
+    if booking.status != BookingStatus.ACCEPTED:
+        raise ApplicationError('booking_not_payable', 'Booking is not payable', 409)
+    provider = request.app.state.payment_provider
+    try:
+        checkout = await provider.create_checkout(
+            idempotency_key=str(payment.id),
+            amount_minor=payment.amount_minor,
+            currency=payment.currency,
+            description=f'Yondo booking {booking.id}',
+        )
+    except Exception as exc:
+        raise ApplicationError(
+            'payment_provider_unavailable', 'Checkout could not be created', 503
+        ) from exc
+    parsed_checkout_url = urlsplit(checkout.checkout_url)
+    if parsed_checkout_url.scheme != 'https' or not parsed_checkout_url.netloc:
+        raise ApplicationError('payment_provider_unavailable', 'Checkout could not be created', 503)
+    booking = await session.scalar(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    payment.provider_reference = checkout.provider_reference
+    payment.checkout_url = checkout.checkout_url
+    payment.status = PaymentStatus.PENDING
+    await session.commit()
+    if booking is None or booking.status != BookingStatus.ACCEPTED:
+        # Keep provider reference for late webhooks, but never return a checkout URL.
+        raise ApplicationError('booking_not_payable', 'Booking was cancelled', 409)
+    await session.refresh(payment)
     return payment
 
 
-@router.post('/gifts/checkout', response_model=PaymentResponse)
-async def checkout_gifts(
-    payload: GiftCheckout, request: Request, user: CurrentUser, session: Session
-):
-    """Flowers & gifts checkout (from the cart or an explicit item list)."""
-    return await service.checkout_gifts(session, request.app.state, user, payload)
-
-
-@router.get('', response_model=Page[PaymentResponse])
-async def my_payments(
-    user: CurrentUser, session: Session, params: Annotated[PageParams, Depends()]
-):
-    rows = list(
+@router.get('/bookings/{booking_id}', response_model=list[PaymentResponse])
+async def list_booking_payments(booking_id: UUID, principal: Principal, session: Session):
+    booking = await session.get(Booking, booking_id)
+    if booking is None:
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    await _participant(session, booking, principal.user.id)
+    return list(
         await session.scalars(
             select(Payment)
-            .where(Payment.payer_id == user.id)
-            .order_by(Payment.created_at.desc(), Payment.id)
-            .offset(params.offset)
-            .limit(params.limit + 1)
+            .where(Payment.booking_id == booking.id)
+            .order_by(Payment.created_at.desc())
         )
     )
-    return page_of([PaymentResponse.model_validate(row) for row in rows], params)
 
 
-@router.get('/{payment_id}', response_model=PaymentResponse)
-async def get_payment(payment_id: UUID, user: CurrentUser, session: Session):
-    payment = await session.get(Payment, payment_id)
-    if payment is None or payment.payer_id != user.id:
-        raise ApplicationError('payment_not_found', 'Payment not found', 404)
-    return payment
-
-
-@router.post('/webhooks/{provider_name}', response_model=WebhookAck)
-async def provider_webhook(provider_name: str, request: Request, session: Session):
-    """Provider callback. Authenticated by the provider signature, not a user session."""
-    provider = request.app.state.payment_providers.get(provider_name)
-    if provider is None:
-        raise ApplicationError('not_found', 'Not found', 404)
+@router.post('/webhook', status_code=204)
+async def payment_webhook(request: Request, session: Session):
+    provider = request.app.state.payment_provider
     body = await request.body()
-    event = provider.parse_webhook({k.lower(): v for k, v in request.headers.items()}, body)
     try:
-        payload = json.loads(body)
-    except ValueError:
-        payload = {}
-    outcome = await service.handle_webhook(
-        session, provider, event, payload, request.app.state.settings
+        event: PaymentEvent = await provider.verify_event(body, dict(request.headers))
+    except Exception as exc:
+        raise ApplicationError(
+            'invalid_payment_event', 'Payment event could not be verified', 401
+        ) from exc
+    if event.status not in {'succeeded', 'failed'}:
+        raise ApplicationError('invalid_payment_event', 'Payment event status is invalid', 422)
+    booking_id = await session.scalar(
+        select(Payment.booking_id).where(Payment.provider_reference == event.provider_reference)
     )
-    await service.process_refunds(session, request.app.state)
-    return WebhookAck(outcome=outcome)
-
-
-def _sandbox(request: Request) -> SandboxPaymentProvider:
-    provider = request.app.state.payment_providers.get('sandbox')
-    if not request.app.state.settings.is_local or not isinstance(provider, SandboxPaymentProvider):
-        raise ApplicationError('not_found', 'Not found', 404)
-    return provider
-
-
-@router.get('/sandbox/{payment_id}', response_class=HTMLResponse, include_in_schema=False)
-async def sandbox_checkout_page(payment_id: UUID, request: Request, session: Session):
-    _sandbox(request)
-    payment = await session.get(Payment, payment_id)
-    if payment is None:
+    if booking_id is None:
         raise ApplicationError('payment_not_found', 'Payment not found', 404)
-    amount = html.escape(f'{payment.amount_minor} {payment.currency}')
-    status = html.escape(payment.status)
-    return HTMLResponse(
-        f"""<!doctype html><html><head><meta name="viewport" content="width=device-width">
-<title>Yondo sandbox payment</title></head>
-<body style="font-family:sans-serif;max-width:420px;margin:40px auto;padding:0 16px">
-<h2>Yondo sandbox payment</h2><p>Amount: <b>{amount}</b></p><p>Status: {status}</p>
-<p>This simulated page exists only in local development.</p>
-<button onclick="go('succeeded')">Pay</button> <button onclick="go('failed')">Fail</button>
-<p id="out"></p>
-<script>
-async function go(result) {{
-  const r = await fetch(location.pathname + '/simulate', {{method: 'POST',
-    headers: {{'Content-Type': 'application/json'}}, body: JSON.stringify({{result}})}});
-  document.getElementById('out').textContent = JSON.stringify(await r.json());
-}}
-</script></body></html>"""
+    booking = await session.scalar(
+        select(Booking).where(Booking.id == booking_id).with_for_update()
+        .execution_options(populate_existing=True)
     )
-
-
-@router.post('/sandbox/{payment_id}/simulate', response_model=WebhookAck, include_in_schema=False)
-async def sandbox_simulate(
-    payment_id: UUID, payload: SandboxResult, request: Request, session: Session
-):
-    """Local only: emulate the provider calling the signed webhook."""
-    provider = _sandbox(request)
-    payment = await session.get(Payment, payment_id)
-    if payment is None:
+    if booking is None:
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    payment = await session.scalar(
+        select(Payment).where(Payment.provider_reference == event.provider_reference)
+        .with_for_update().execution_options(populate_existing=True)
+    )
+    if payment is None or payment.booking_id != booking.id:
         raise ApplicationError('payment_not_found', 'Payment not found', 404)
-    body = json.dumps(
-        {
-            'event_id': str(uuid4()),
-            'payment_id': payment.provider_payment_id,
-            'status': payload.result,
-            'amount_minor': payment.amount_minor,
-            'currency': payment.currency,
-        }
-    ).encode()
-    event = provider.parse_webhook({provider.signature_header: provider.sign(body)}, body)
-    outcome = await service.handle_webhook(
-        session, provider, event, json.loads(body), request.app.state.settings
-    )
-    await service.process_refunds(session, request.app.state)
-    return WebhookAck(outcome=outcome)
-
-
-@payouts_router.get('/me', response_model=Earnings)
-async def my_earnings(user: CurrentUser, session: Session):
-    """Companion/vendor earnings (TZ §4, §30)."""
-    payouts = list(
-        await session.scalars(
-            select(Payout)
-            .where(Payout.beneficiary_id == user.id)
-            .order_by(Payout.created_at.desc())
-            .limit(200)
-        )
-    )
-    now = utc_now()
-    totals: dict[str, dict[str, int]] = {}
-    for payout in payouts:
-        bucket = totals.setdefault(
-            payout.currency, {'held': 0, 'scheduled': 0, 'available': 0, 'paid': 0}
-        )
-        if payout.status == PayoutStatus.HELD:
-            bucket['held'] += payout.amount_minor
-        elif payout.status == PayoutStatus.PAID:
-            bucket['paid'] += payout.amount_minor
-        elif service.is_due(payout, now):
-            bucket['available'] += payout.amount_minor
-        elif payout.status == PayoutStatus.SCHEDULED:
-            bucket['scheduled'] += payout.amount_minor
-    return Earnings(
-        summary=[
-            EarningsSummary(
-                currency=currency,
-                held_minor=values['held'],
-                scheduled_minor=values['scheduled'],
-                available_minor=values['available'],
-                paid_minor=values['paid'],
+    try:
+        was_confirmed = booking.status == BookingStatus.CONFIRMED
+        already_paid = payment.status == PaymentStatus.SUCCEEDED
+        applied = await apply_payment_event(session, payment, booking, event.event_id, event.status)
+        system_message = None
+        if (
+            applied
+            and not already_paid
+            and not was_confirmed
+            and event.status == 'succeeded'
+            and booking.status == BookingStatus.CONFIRMED
+        ):
+            system_message = append_system_message(
+                session, booking.id, 'payment_confirmed', {'status': booking.status}
             )
-            for currency, values in sorted(totals.items())
-        ],
-        payouts=[PayoutResponse.model_validate(item) for item in payouts],
-    )
+            await session.flush()
+            await enqueue_booking_notice(session, booking, 'payment_confirmed',
+                                         system_message.id, recipients='both')
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        # Duplicate webhook delivery or a concurrent success event is safe to retry.
+        receipt = await session.scalar(
+            select(PaymentEventReceipt.id).where(
+                PaymentEventReceipt.provider_event_id == event.event_id
+            )
+        )
+        if receipt is None:
+            raise ApplicationError(
+                'payment_event_conflict', 'Payment event was not applied', 409
+            ) from exc
+    if system_message is not None:
+        await session.refresh(system_message)
+        await publish(request, system_message)

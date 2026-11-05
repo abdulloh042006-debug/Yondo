@@ -5,14 +5,14 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 from anyio import CapacityLimiter
-from fastapi import APIRouter, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import event
-from sqlalchemy.orm import Session as OrmSession
+from fastapi import FastAPI
 
+from yondo_api.account.admin import router as account_admin_router
+from yondo_api.account.router import legal_router
+from yondo_api.account.router import router as account_router
+from yondo_api.admin.router import router as admin_router
 from yondo_api.api.errors import install_exception_handlers
 from yondo_api.api.health import DatabaseHealthCheck, RedisHealthCheck, public_router
-from yondo_api.api.local_storage import router as local_storage_router
 from yondo_api.api.middleware import RequestContextMiddleware
 from yondo_api.api.v1.router import router as api_v1_router
 from yondo_api.auth.providers import (
@@ -23,67 +23,46 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.auth.telegram_gateway import TelegramGatewayOtpProvider
+from yondo_api.beta.router import router as beta_router
+from yondo_api.bookings.router import router as bookings_router
+from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
-from yondo_api.companions.integrations import IdentityEligibility
+from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
 from yondo_api.companions.photos import router as companion_photos_router
 from yondo_api.companions.resources import router as companion_resources_router
 from yondo_api.companions.router import router as companion_router
 from yondo_api.config import Settings, get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
-from yondo_api.integrations.local_storage import LocalObjectStorage
-from yondo_api.integrations.s3 import S3ObjectStorage
+from yondo_api.discovery.router import router as discovery_router
+from yondo_api.gifts.click_test import router as click_test_router
+from yondo_api.gifts.router import router as gifts_router
+from yondo_api.gifts.test_orders import router as gift_test_orders_router
+from yondo_api.gifts.vendor import router as vendor_router
+from yondo_api.integration.router import router as integration_router
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
+from yondo_api.meetings.router import router as meetings_router
 from yondo_api.notifications.router import router as notifications_router
-from yondo_api.realtime.broker import (
-    InMemoryBroker,
-    RealtimeBroker,
-    RedisBroker,
-    discard_after_rollback,
-    flush_after_commit,
-)
-
-# Publish realtime events only for committed transactions.
-if not event.contains(OrmSession, 'after_commit', flush_after_commit):
-    event.listen(OrmSession, 'after_commit', flush_after_commit)
-    event.listen(
-        OrmSession, 'after_soft_rollback', lambda session, _: discard_after_rollback(session)
-    )
+from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
+from yondo_api.payments.router import router as payments_router
+from yondo_api.payments.tezcheck import TezCheckPaymentProvider
+from yondo_api.reviews.router import router as reviews_router
+from yondo_api.safety.admin import router as safety_admin_router
+from yondo_api.safety.router import router as safety_router
 
 
-def build_object_storage(settings: Settings) -> ObjectStorage | None:
-    if settings.storage_backend == 's3':
-        return S3ObjectStorage(
-            endpoint=settings.storage_endpoint,
-            bucket=settings.storage_bucket,
-            access_key=settings.storage_access_key,
-            secret_key=settings.storage_secret_key,
-            region=settings.storage_region,
-            path_style=settings.storage_path_style,
-            public_endpoint=settings.storage_public_endpoint,
+def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
+    """Pick the OTP provider: a configured real provider wins in every environment."""
+    if settings.telegram_gateway_token is not None:
+        return TelegramGatewayOtpProvider(
+            settings.telegram_gateway_token.get_secret_value(),
+            base_url=settings.telegram_gateway_base_url,
+            timeout_seconds=settings.telegram_gateway_timeout_seconds,
         )
-    if settings.storage_backend == 'local':
-        return LocalObjectStorage(
-            settings.storage_local_root,
-            settings.auth_otp_pepper.get_secret_value().encode(),
-            settings.storage_local_public_url,
-        )
-    return None
-
-
-def domain_routers() -> list[APIRouter]:
-    from yondo_api.wiring import ROUTERS
-
-    return [
-        auth_router,
-        companion_router,
-        companion_resources_router,
-        companion_photos_router,
-        companion_admin_router,
-        notifications_router,
-        local_storage_router,
-        *ROUTERS,
-    ]
+    if settings.environment in {'development', 'test'}:
+        return DevelopmentOtpProvider()
+    return UnconfiguredOtpProvider()
 
 
 def create_application(
@@ -92,15 +71,11 @@ def create_application(
     otp_provider: OtpDeliveryProvider | None = None,
     object_storage: ObjectStorage | None = None,
     identity_eligibility: IdentityEligibility | None = None,
-    realtime_broker: RealtimeBroker | None = None,
+    payment_provider: PaymentProvider | None = None,
 ) -> FastAPI:
-    from yondo_api.wiring import configure_state, default_identity_eligibility
-
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level)
-    selected_otp_provider = otp_provider or (
-        DevelopmentOtpProvider() if app_settings.is_local else UnconfiguredOtpProvider()
-    )
+    selected_otp_provider = otp_provider or select_otp_provider(app_settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -121,14 +96,6 @@ def create_application(
             if app_settings.auth_otp_provider_rate_limit_per_minute > 0
             else NoopOtpRateLimitHook()
         )
-        if realtime_broker is not None:
-            app.state.realtime_broker = realtime_broker
-        elif app_settings.realtime_backend == 'redis' or (
-            app_settings.realtime_backend == 'auto' and app_settings.environment != 'test'
-        ):
-            app.state.realtime_broker = RedisBroker(redis_client)
-        else:
-            app.state.realtime_broker = InMemoryBroker()
         app.state.readiness_checks = {
             'database': DatabaseHealthCheck(engine),
             'redis': RedisHealthCheck(redis_client),
@@ -148,25 +115,44 @@ def create_application(
         redoc_url=None,
     )
     app.state.settings = app_settings
-    app.state.object_storage = (
-        object_storage if object_storage is not None else build_object_storage(app_settings)
+    app.state.object_storage = object_storage
+    app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
+    app.state.payment_provider = payment_provider or (
+        TezCheckPaymentProvider.from_settings(app_settings)
+        if app_settings.tezcheck_token.get_secret_value()
+        else UnconfiguredPaymentProvider()
     )
-    app.state.identity_eligibility = identity_eligibility or default_identity_eligibility()
-    configure_state(app, app_settings)
     app.add_middleware(RequestContextMiddleware)
-    if app_settings.cors_allow_origins:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=list(app_settings.cors_allow_origins),
-            allow_methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            allow_headers=['Authorization', 'Content-Type', 'X-Request-ID'],
-            expose_headers=['X-Request-ID'],
-        )
     install_exception_handlers(app)
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
-    for router in domain_routers():
-        app.include_router(router, prefix=app_settings.api_v1_prefix)
+    app.include_router(auth_router, prefix=app_settings.api_v1_prefix)
+    for companion_routes in (
+        companion_router,
+        companion_resources_router,
+        companion_photos_router,
+        companion_admin_router,
+        discovery_router,
+        bookings_router,
+        payments_router,
+        chat_router,
+        gifts_router,
+        gift_test_orders_router,
+        click_test_router,
+        vendor_router,
+        integration_router,
+        notifications_router,
+        beta_router,
+        admin_router,
+        safety_router,
+        safety_admin_router,
+        account_router,
+        account_admin_router,
+        legal_router,
+        reviews_router,
+        meetings_router,
+    ):
+        app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app
 
 

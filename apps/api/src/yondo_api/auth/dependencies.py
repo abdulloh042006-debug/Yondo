@@ -20,8 +20,6 @@ _bearer = HTTPBearer(auto_error=False)
 async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
     factory = request.app.state.db_session_factory
     async with factory() as session:
-        # Realtime events queued during the transaction are published after commit.
-        session.info['realtime_broker'] = getattr(request.app.state, 'realtime_broker', None)
         yield session
 
 
@@ -37,13 +35,10 @@ async def get_authenticated_user(
 ) -> AuthenticatedUser:
     if credentials is None:
         raise ApplicationError('authentication_required', 'Authentication is required', 401)
-    return await resolve_access_token(session, credentials.credentials)
-
-
-async def resolve_access_token(session: AsyncSession, token: str) -> AuthenticatedUser:
-    """Validate an opaque access token; shared by HTTP and WebSocket authentication."""
     auth_session = await session.scalar(
-        select(AuthSession).where(AuthSession.access_token_hash == _token_hash(token))
+        select(AuthSession).where(
+            AuthSession.access_token_hash == _token_hash(credentials.credentials)
+        )
     )
     now = _now()
     if (
@@ -55,6 +50,10 @@ async def resolve_access_token(session: AsyncSession, token: str) -> Authenticat
             'invalid_access_token', 'The access token is invalid or expired', 401
         )
     user = await session.get(User, auth_session.user_id)
-    if user is None or user.account_status in {AccountStatus.SUSPENDED, AccountStatus.BANNED}:
+    if user is None or user.account_status in {
+        AccountStatus.SUSPENDED,
+        AccountStatus.BANNED,
+        AccountStatus.DELETED,
+    }:
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
     return AuthenticatedUser(user=user, session=auth_session)

@@ -1,0 +1,16 @@
+# systemd unit for the Yondo maintenance jobs (booking expiry + account erasure).
+# Install: copy both files to /etc/systemd/system/, adjust User/WorkingDirectory/EnvironmentFile,
+# then: systemctl daemon-reload && systemctl enable --now yondo-jobs.timer
+[Unit]
+Description=Yondo maintenance jobs (expire overdue bookings, erase accounts due for deletion)
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=yondo
+WorkingDirectory=/opt/yondo/apps/api
+# Same settings as the API (YONDO_DATABASE_URL, YONDO_ENVIRONMENT, ...). Never commit this file.
+EnvironmentFile=/etc/yondo/api.env
+ExecStart=/opt/yondo/venv/bin/python -m yondo_api.jobs
+# Exit code 1 = an account could not be erased because of open bookings: alert an operator.
+SuccessExitStatus=0

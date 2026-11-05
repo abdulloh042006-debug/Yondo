@@ -1,1 +1,1 @@
-"""Phase 9: checkout, provider integration, refunds and payouts."""
+"""Provider-neutral payment records and payout release rules."""

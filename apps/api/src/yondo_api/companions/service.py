@@ -1,10 +1,11 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import and_, exists, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.integrations import IdentityEligibility, IdentityStatus
 from yondo_api.companions.models import (
@@ -176,23 +177,6 @@ async def companion_status(
     )
 
 
-def public_profile_conditions():
-    """SQL form of every database-backed gate in :func:`companion_status`.
-
-    Identity is checked separately through the identity adapter
-    (``integrations.verified_user_ids``) because it is owned by Trust & Safety.
-    """
-    return and_(
-        CompanionProfile.application_id == CompanionApplication.id,
-        CompanionApplication.user_id == User.id,
-        CompanionApplication.status == ApplicationStatus.APPROVED,
-        CompanionProfile.content_status == ContentStatus.APPROVED,
-        CompanionProfile.activation_requested.is_(True),
-        User.account_status == AccountStatus.ACTIVE,
-        exists().where(UserRole.user_id == User.id, UserRole.role == UserRoleType.COMPANION),
-    )
-
-
 async def review_application(
     session: AsyncSession,
     application_id: UUID,
@@ -218,6 +202,14 @@ async def review_application(
     existing.reviewed_by = reviewer.id
     existing.reviewed_at = datetime.now(UTC)
     existing.review_note = note
+    session.add(
+        AdminAuditEvent(
+            admin_id=reviewer.id,
+            target_id=existing.user_id,
+            action=f'companion_application:{decision}',
+            reason=note.strip(),
+        )
+    )
     await save(session)
     return existing
 
@@ -249,5 +241,13 @@ async def review_content(
     profile.reviewed_by = reviewer.id
     profile.reviewed_at = datetime.now(UTC)
     profile.review_note = note
+    session.add(
+        AdminAuditEvent(
+            admin_id=reviewer.id,
+            target_id=application.user_id,
+            action=f'companion_content:{decision}',
+            reason=note.strip(),
+        )
+    )
     await save(session)
     return profile

@@ -1,173 +1,346 @@
-from __future__ import annotations
-
-from typing import Annotated, Literal
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Query, Request
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 
-from yondo_api.bookings import service
-from yondo_api.bookings.models import Booking, BookingEvent, BookingStatus
-from yondo_api.bookings.schemas import (
-    BookingCreate,
-    BookingEventResponse,
-    BookingRequest,
-    BookingResponse,
-    CancellationPreview,
-    DecisionNote,
-    MeetingPlace,
-    Quote,
-    RebookTemplate,
+from yondo_api.account.deletion import pending_request
+from yondo_api.api.errors import ApplicationError
+from yondo_api.bookings.expiry import refuse_if_expired
+from yondo_api.bookings.models import Booking, BookingStatus
+from yondo_api.bookings.schemas import BookingCancel, BookingCreate, BookingResponse
+from yondo_api.chat.service import append_system_message, publish
+from yondo_api.companions import service as companion_service
+from yondo_api.companions.dependencies import Principal, Session
+from yondo_api.companions.models import (
+    CompanionApplication,
+    CompanionAvailability,
+    CompanionProfile,
+    CompanionService,
 )
-from yondo_api.core.deps import CurrentUser, Session
-from yondo_api.core.schemas import Page, PageParams, page_of
-from yondo_api.core.time import utc_now
-from yondo_api.payments.service import process_refunds
+from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.notifications.service import enqueue_booking_notice
+from yondo_api.payments.models import Payment, PaymentStatus
 
 router = APIRouter(prefix='/bookings', tags=['bookings'])
-
-FINISHED = (
-    BookingStatus.COMPLETED,
-    BookingStatus.CANCELLED,
-    BookingStatus.NO_SHOW,
-    BookingStatus.DISPUTED,
+RESERVING_STATUSES = (
+    BookingStatus.PENDING,
+    BookingStatus.ACCEPTED,
+    BookingStatus.CONFIRMED,
+    BookingStatus.ACTIVE,
 )
 
 
-async def one(session, request, booking: Booking, viewer) -> BookingResponse:
-    return (await service.build_responses(session, request, [booking], viewer))[0]
+async def _active_customer(principal: Principal, session: Session) -> User:
+    user = await session.get(User, principal.user.id)
+    if user is None or user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
+    if await session.get(UserRole, (user.id, UserRoleType.CUSTOMER)) is None:
+        raise ApplicationError('customer_role_required', 'Customer role is required', 403)
+    if await pending_request(session, user.id) is not None:
+        raise ApplicationError(
+            'account_deletion_pending', 'Cancel the deletion request to book again', 409
+        )
+    return user
 
 
-@router.post('/quote', response_model=Quote)
-async def quote(payload: BookingRequest, request: Request, user: CurrentUser, session: Session):
-    """Booking Summary: price breakdown and the contract the customer will accept."""
-    prepared = await service.prepare(session, request, user, payload)
-    service_item, amounts = prepared['service'], prepared['amounts']
-    return Quote(
-        service_code=service_item.service_code,
-        unit_price_minor=service_item.price_minor,
-        unit_minutes=service_item.unit_minutes,
-        duration_minutes=payload.duration_minutes,
-        currency=service_item.currency,
-        service_amount_minor=amounts.service_amount_minor,
-        platform_fee_minor=amounts.platform_fee_minor,
-        total_minor=amounts.total_minor,
-        starts_at=prepared['starts_at'],
-        ends_at=prepared['ends_at'],
-        timezone=prepared['timezone'],
-        contract=prepared['contract'],
+async def _booking(session: Session, booking_id: UUID, *, lock: bool = False) -> Booking:
+    if lock:
+        booking = await session.scalar(
+            select(Booking)
+            .where(Booking.id == booking_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    else:
+        booking = await session.get(Booking, booking_id)
+    if booking is None:
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    return booking
+
+
+async def _participant(session: Session, booking: Booking, user_id: UUID) -> tuple[bool, bool]:
+    profile_owner_id = await session.scalar(
+        select(CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.application_id == CompanionApplication.id)
+        .where(CompanionProfile.id == booking.profile_id)
     )
+    is_customer = booking.customer_id == user_id
+    is_companion = profile_owner_id == user_id
+    if not (is_customer or is_companion):
+        raise ApplicationError('booking_not_found', 'Booking not found', 404)
+    user = await session.get(User, user_id)
+    if user is None or user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
+    required_role = UserRoleType.CUSTOMER if is_customer else UserRoleType.COMPANION
+    if await session.get(UserRole, (user_id, required_role)) is None:
+        raise ApplicationError('account_role_required', 'The required account role is missing', 403)
+    return is_customer, is_companion
+
+
+async def _public_profile(session: Session, profile_id: UUID, request):
+    row = (
+        await session.execute(
+            select(CompanionProfile, User)
+            .join(CompanionApplication, CompanionApplication.id == CompanionProfile.application_id)
+            .join(User, User.id == CompanionApplication.user_id)
+            .where(CompanionProfile.id == profile_id)
+        )
+    ).first()
+    if row is None:
+        raise ApplicationError('companion_not_found', 'Companion not found', 404)
+    profile, user = row
+    if await pending_request(session, user.id) is not None:
+        raise ApplicationError('companion_not_found', 'Companion not found', 404)
+    status = await companion_service.companion_status(
+        session, user, profile, request.app.state.identity_eligibility
+    )
+    if not status.publicly_active:
+        raise ApplicationError('companion_not_found', 'Companion not found', 404)
+    return profile
 
 
 @router.post('', response_model=BookingResponse, status_code=201)
 async def create_booking(
-    payload: BookingCreate, request: Request, user: CurrentUser, session: Session
+    payload: BookingCreate, request: Request, principal: Principal, session: Session
 ):
-    booking = await service.create(session, request, user, payload)
-    return await one(session, request, booking, user)
+    customer = await _active_customer(principal, session)
+    service_item = await session.get(CompanionService, payload.service_id)
+    if service_item is None:
+        raise ApplicationError('companion_service_not_found', 'Service not found', 404)
+    profile = await _public_profile(session, service_item.profile_id, request)
 
-
-@router.get('', response_model=Page[BookingResponse])
-async def list_bookings(
-    request: Request,
-    user: CurrentUser,
-    session: Session,
-    params: Annotated[PageParams, Depends()],
-    role: Literal['customer', 'companion', 'any'] = 'any',
-    status: Annotated[list[BookingStatus] | None, Query()] = None,
-    scope: Literal['upcoming', 'past', 'all'] = 'all',
-):
-    query = select(Booking)
-    if role == 'customer':
-        query = query.where(Booking.customer_id == user.id)
-    elif role == 'companion':
-        query = query.where(Booking.companion_id == user.id)
-    else:
-        query = query.where(or_(Booking.customer_id == user.id, Booking.companion_id == user.id))
-    if status:
-        query = query.where(Booking.status.in_(status))
-    now = utc_now()
-    if scope == 'upcoming':
-        query = query.where(Booking.ends_at > now, Booking.status.not_in(FINISHED)).order_by(
-            Booking.starts_at
-        )
-    elif scope == 'past':
-        query = query.where(or_(Booking.ends_at <= now, Booking.status.in_(FINISHED))).order_by(
-            Booking.starts_at.desc()
-        )
-    else:
-        query = query.order_by(Booking.starts_at.desc())
-    rows = list(await session.scalars(query.offset(params.offset).limit(params.limit + 1)))
-    page = page_of(rows, params)
-    return Page[BookingResponse](
-        items=await service.build_responses(session, request, page.items, user),
-        next_offset=page.next_offset,
+    # Serialize requests for the same companion; PostgreSQL also has a GiST exclusion
+    # constraint as the final concurrency guard.
+    profile = await companion_service.profile_for(
+        session,
+        await session.scalar(
+            select(CompanionApplication.user_id).where(
+                CompanionApplication.id == profile.application_id
+            )
+        ),
     )
+    # Profile owner edits use the same profile lock; refresh after acquiring it.
+    await session.refresh(service_item)
+    await session.refresh(profile)
+    await _public_profile(session, profile.id, request)
+    if service_item.profile_id != profile.id:
+        raise ApplicationError('companion_service_not_found', 'Service not found', 404)
+    if service_item.unit_minutes <= 0:
+        raise ApplicationError('invalid_booking_duration', 'Invalid pricing unit', 422)
+    if payload.duration_minutes % service_item.unit_minutes:
+        raise ApplicationError(
+            'invalid_booking_duration',
+            'Duration must be a whole number of the service pricing unit',
+            422,
+        )
+    try:
+        ends_at = payload.starts_at + timedelta(minutes=payload.duration_minutes)
+    except OverflowError as exc:
+        raise ApplicationError(
+            'invalid_booking_interval', 'Booking interval is invalid', 422
+        ) from exc
+    if payload.starts_at <= datetime.now(UTC):
+        raise ApplicationError('booking_start_in_past', 'Booking must start in the future', 422)
+    availability = select(CompanionAvailability.id).where(
+        CompanionAvailability.profile_id == profile.id,
+        CompanionAvailability.starts_at <= payload.starts_at,
+        CompanionAvailability.ends_at >= ends_at,
+    )
+    if await session.scalar(availability) is None:
+        raise ApplicationError('availability_not_found', 'The companion is not available then', 409)
+    overlap = select(Booking.id).where(
+        Booking.profile_id == profile.id,
+        Booking.status.in_(RESERVING_STATUSES),
+        Booking.starts_at < ends_at,
+        Booking.ends_at > payload.starts_at,
+    )
+    if await session.scalar(overlap) is not None:
+        raise ApplicationError('booking_time_unavailable', 'That time is already reserved', 409)
+    units = payload.duration_minutes // service_item.unit_minutes
+    if service_item.price_minor * units > 9_223_372_036_854_775_807:
+        raise ApplicationError('booking_price_overflow', 'Booking price is too large', 422)
+    from yondo_api.safety.service import blocked_between
+
+    companion_id = await session.scalar(
+        select(CompanionApplication.user_id).where(
+            CompanionApplication.id == profile.application_id
+        )
+    )
+    if companion_id == customer.id:
+        raise ApplicationError('self_booking_forbidden', 'Cannot book own service', 403)
+    if await blocked_between(session, customer.id, companion_id):
+        raise ApplicationError('booking_blocked', 'Booking is unavailable', 403)
+    booking = Booking(
+        customer_id=customer.id,
+        profile_id=profile.id,
+        service_id=service_item.id,
+        status=BookingStatus.PENDING,
+        service_code=service_item.service_code,
+        service_description=service_item.description,
+        starts_at=payload.starts_at,
+        ends_at=ends_at,
+        timezone=payload.timezone,
+        duration_minutes=payload.duration_minutes,
+        meeting_place=payload.meeting_place,
+        price_minor=service_item.price_minor * units,
+        currency=service_item.currency,
+        customer_contract_accepted_at=datetime.now(UTC),
+    )
+    session.add(booking)
+    await session.flush()
+    system_message = append_system_message(
+        session, booking.id, 'booking_requested', {'status': booking.status}
+    )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_requested', system_message.id,
+                                 actor_id=principal.user.id)
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise ApplicationError(
+            'booking_time_unavailable', 'That time is already reserved', 409
+        ) from exc
+    await session.refresh(booking)
+    await session.refresh(system_message)
+    await publish(request, system_message)
+    return booking
+
+
+@router.get('', response_model=list[BookingResponse])
+async def list_bookings(
+    principal: Principal,
+    session: Session,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    companion_user_id = (
+        select(CompanionApplication.user_id)
+        .join(CompanionProfile, CompanionProfile.application_id == CompanionApplication.id)
+        .where(CompanionProfile.id == Booking.profile_id)
+        .scalar_subquery()
+    )
+    user = await session.get(User, principal.user.id)
+    if user is None or user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
+    customer_allowed = await session.get(UserRole, (user.id, UserRoleType.CUSTOMER))
+    companion_allowed = await session.get(UserRole, (user.id, UserRoleType.COMPANION))
+    if customer_allowed is None and companion_allowed is None:
+        raise ApplicationError('account_role_required', 'Booking role required', 403)
+    predicates = []
+    if customer_allowed is not None:
+        predicates.append(Booking.customer_id == user.id)
+    if companion_allowed is not None:
+        predicates.append(companion_user_id == user.id)
+    query = (
+        select(Booking)
+        .where(or_(*predicates))
+        .order_by(Booking.starts_at.desc(), Booking.id)
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(await session.scalars(query))
 
 
 @router.get('/{booking_id}', response_model=BookingResponse)
-async def get_booking(booking_id: UUID, request: Request, user: CurrentUser, session: Session):
-    booking, _ = await service.participant_booking(session, booking_id, user)
-    return await one(session, request, booking, user)
-
-
-@router.get('/{booking_id}/events', response_model=list[BookingEventResponse])
-async def booking_events(booking_id: UUID, user: CurrentUser, session: Session):
-    await service.participant_booking(session, booking_id, user)
-    return list(
-        await session.scalars(
-            select(BookingEvent)
-            .where(BookingEvent.booking_id == booking_id)
-            .order_by(BookingEvent.created_at, BookingEvent.id)
-        )
-    )
+async def get_booking(booking_id: UUID, principal: Principal, session: Session):
+    booking = await _booking(session, booking_id)
+    await _participant(session, booking, principal.user.id)
+    return booking
 
 
 @router.post('/{booking_id}/accept', response_model=BookingResponse)
-async def accept_booking(booking_id: UUID, request: Request, user: CurrentUser, session: Session):
-    booking = await service.accept(session, request, user, booking_id)
-    return await one(session, request, booking, user)
+async def accept_booking(
+    booking_id: UUID, request: Request, principal: Principal, session: Session
+):
+    booking = await _booking(session, booking_id, lock=True)
+    _, is_companion = await _participant(session, booking, principal.user.id)
+    if not is_companion:
+        raise ApplicationError('companion_role_required', 'Only the companion can accept', 403)
+    if booking.status != BookingStatus.PENDING:
+        raise ApplicationError(
+            'invalid_booking_transition', 'Only pending bookings can be accepted', 409
+        )
+    await refuse_if_expired(session, booking)
+    booking.status = BookingStatus.ACCEPTED
+    booking.companion_contract_accepted_at = datetime.now(UTC)
+    system_message = append_system_message(
+        session, booking.id, 'booking_accepted', {'status': booking.status}
+    )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_accepted', system_message.id,
+                                 actor_id=principal.user.id)
+    await session.commit()
+    await session.refresh(booking)
+    await session.refresh(system_message)
+    await publish(request, system_message)
+    return booking
 
 
 @router.post('/{booking_id}/decline', response_model=BookingResponse)
 async def decline_booking(
-    booking_id: UUID, payload: DecisionNote, request: Request, user: CurrentUser, session: Session
+    booking_id: UUID,
+    payload: BookingCancel,
+    request: Request,
+    principal: Principal,
+    session: Session,
 ):
-    booking = await service.decline(session, user, booking_id, payload.note)
-    return await one(session, request, booking, user)
-
-
-@router.get('/{booking_id}/cancellation', response_model=CancellationPreview)
-async def cancellation_preview(booking_id: UUID, user: CurrentUser, session: Session):
-    booking, role = await service.participant_booking(session, booking_id, user)
-    return service.preview_cancellation(booking, role, utc_now())
+    booking = await _booking(session, booking_id, lock=True)
+    _, is_companion = await _participant(session, booking, principal.user.id)
+    if not is_companion:
+        raise ApplicationError('companion_role_required', 'Only the companion can decline', 403)
+    if booking.status != BookingStatus.PENDING:
+        raise ApplicationError(
+            'invalid_booking_transition', 'Only pending bookings can be declined', 409
+        )
+    booking.status = BookingStatus.CANCELLED
+    system_message = append_system_message(
+        session, booking.id, 'booking_declined', {'status': booking.status}
+    )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_declined', system_message.id,
+                                 actor_id=principal.user.id)
+    await session.commit()
+    await session.refresh(booking)
+    await session.refresh(system_message)
+    await publish(request, system_message)
+    return booking
 
 
 @router.post('/{booking_id}/cancel', response_model=BookingResponse)
 async def cancel_booking(
-    booking_id: UUID, payload: DecisionNote, request: Request, user: CurrentUser, session: Session
+    booking_id: UUID,
+    payload: BookingCancel,
+    request: Request,
+    principal: Principal,
+    session: Session,
 ):
-    booking = await service.cancel(session, user, booking_id, payload.note)
-    # Best effort: send queued refunds now; the worker retries anything left pending.
-    await process_refunds(session, request.app.state)
-    return await one(session, request, booking, user)
-
-
-@router.get('/{booking_id}/rebook', response_model=RebookTemplate)
-async def rebook_template(booking_id: UUID, user: CurrentUser, session: Session):
-    """Book Again (TZ §35): a prefilled request; the client picks a new time."""
-    booking, role = await service.participant_booking(session, booking_id, user)
-    if role != 'customer' or booking.status != BookingStatus.COMPLETED:
-        raise service.invalid_transition('Only a completed booking can be booked again')
-    return RebookTemplate(
-        profile_id=booking.profile_id,
-        service_id=booking.service_id,
-        service_code=booking.service_code,
-        duration_minutes=booking.duration_minutes,
-        meeting_place=MeetingPlace.model_construct(
-            name=booking.meeting_place_name,
-            address=booking.meeting_address,
-            latitude=booking.meeting_latitude,
-            longitude=booking.meeting_longitude,
-        ),
+    booking = await _booking(session, booking_id, lock=True)
+    await _participant(session, booking, principal.user.id)
+    if booking.status not in {
+        BookingStatus.PENDING,
+        BookingStatus.ACCEPTED,
+        BookingStatus.CONFIRMED,
+    }:
+        raise ApplicationError(
+            'invalid_booking_transition', 'This booking can no longer be cancelled', 409
+        )
+    payment = await session.scalar(
+        select(Payment).where(Payment.booking_id == booking.id).with_for_update()
     )
+    if payment is not None and payment.status == PaymentStatus.SUCCEEDED:
+        payment.refund_required = True  # Manual reconciliation, not an automatic refund.
+    booking.status = BookingStatus.CANCELLED
+    system_message = append_system_message(
+        session, booking.id, 'booking_cancelled', {'status': booking.status}
+    )
+    await session.flush()
+    await enqueue_booking_notice(session, booking, 'booking_cancelled', system_message.id,
+                                 actor_id=principal.user.id)
+    await session.commit()
+    await session.refresh(booking)
+    await session.refresh(system_message)
+    await publish(request, system_message)
+    return booking

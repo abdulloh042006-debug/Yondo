@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.api.errors import ApplicationError
 from yondo_api.auth.phone import normalize_uzbekistan_phone
-from yondo_api.auth.providers import OtpDeliveryProvider
+from yondo_api.auth.providers import OtpChannel, OtpDeliveryProvider
 from yondo_api.config import Settings
 from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User
@@ -44,28 +44,10 @@ def _new_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def profile_complete(user: User) -> bool:
-    return bool(user.display_name and user.age is not None and user.gender and user.city)
-
-
-def refresh_account_activation(user: User, settings: Settings) -> None:
-    """Activate a phone-verified account once its basic profile is complete.
-
-    Only ``verification_pending`` accounts change. Moderation states (restricted,
-    suspended, banned) are never lifted here. The minimum age is configurable policy.
-    """
-    if (
-        user.account_status == AccountStatus.VERIFICATION_PENDING
-        and profile_complete(user)
-        and user.age is not None
-        and user.age >= settings.account_min_age
-    ):
-        user.account_status = AccountStatus.ACTIVE
-
-
 @dataclass(frozen=True, slots=True)
 class IssuedOtp:
     development_code: str | None
+    channel: OtpChannel | None = None
 
 
 async def issue_otp(
@@ -76,11 +58,23 @@ async def issue_otp(
 ) -> IssuedOtp:
     phone_number = normalize_uzbekistan_phone(phone)
     now = _now()
+    if session.get_bind().dialect.name == 'postgresql':
+        # Serialise requests per phone. With no challenge row yet, FOR UPDATE locks nothing, so
+        # two concurrent first requests would both call the (paid) provider and the second
+        # INSERT would then fail with an IntegrityError. The transaction-scoped advisory lock
+        # is released when the transaction ends (the commit below, or the session closing after
+        # an error); the loser then finds the new challenge and gets the cooldown (429).
+        await session.execute(
+            text('SELECT pg_advisory_xact_lock(hashtextextended(:phone, 0))'),
+            {'phone': phone_number},
+        )
     challenge = await session.get(OtpChallenge, phone_number, with_for_update=True)
     if challenge is not None and now < _as_utc(challenge.issued_at) + OTP_RESEND_COOLDOWN:
         raise ApplicationError('otp_resend_cooldown', 'Wait before requesting another code', 429)
 
     code = f'{secrets.randbelow(1_000_000):06d}'
+    # Deliver first: if the provider raises, nothing is written, so no resend cooldown starts
+    # and a previous still-valid challenge is left untouched.
     delivery = await provider.deliver(phone_number, code)
     if challenge is None:
         challenge = OtpChallenge(
@@ -99,7 +93,7 @@ async def issue_otp(
         challenge.failed_attempts = 0
         challenge.blocked_until = None
     await session.commit()
-    return IssuedOtp(delivery.development_code)
+    return IssuedOtp(delivery.development_code, delivery.channel)
 
 
 async def verify_otp(
