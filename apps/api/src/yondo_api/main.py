@@ -28,7 +28,7 @@ from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
 from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
-from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
+from yondo_api.companions.integrations import IdentityEligibility
 from yondo_api.companions.photos import router as companion_photos_router
 from yondo_api.companions.resources import router as companion_resources_router
 from yondo_api.companions.router import router as companion_router
@@ -50,6 +50,9 @@ from yondo_api.payments.tezcheck import TezCheckPaymentProvider
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
+from yondo_api.verification.router import admin_router as verification_admin_router
+from yondo_api.verification.router import router as verification_router
+from yondo_api.verification.service import DatabaseIdentityEligibility
 
 
 def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
@@ -116,7 +119,8 @@ def create_application(
     )
     app.state.settings = app_settings
     app.state.object_storage = object_storage
-    app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
+    # Trust & Safety verification records are the identity source (ID + selfie review).
+    app.state.identity_eligibility = identity_eligibility or DatabaseIdentityEligibility()
     app.state.payment_provider = payment_provider or (
         TezCheckPaymentProvider.from_settings(app_settings)
         if app_settings.tezcheck_token.get_secret_value()
@@ -151,6 +155,8 @@ def create_application(
         legal_router,
         reviews_router,
         meetings_router,
+        verification_router,
+        verification_admin_router,
     ):
         app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app

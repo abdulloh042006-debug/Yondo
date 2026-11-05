@@ -25,6 +25,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S42 — ID document + selfie verification, admin review in beta (2026-11-05) [cloud chat]
+Done: `verification/` (table `identity_verifications`, migration 0018): user `POST /verification/me` (document type), raw-image `/me/document` and `/me/selfie` (re-encoded, EXIF stripped, private keys), `/me/submit`; admin queue `GET /admin/verifications` (presigned 5-minute image URLs) and `POST /admin/verifications/{id}/decision` (audited, no self-review). `DatabaseIdentityEligibility` is now the default identity gate (owner decision: in beta an admin approves by hand). Account erasure deletes the images.
+Verifier: first review REJECT, blocking = erasure without storage cleared the keys while the objects stayed; fixed (a key is cleared only after its object is deleted; test). Also fixed: failed-save cleanup checks the row in a fresh transaction before deleting the upload; the audit reason is `identity_verification:<id>`, not the note (audit rows outlive erasure); docstring no longer claims revocation.
+Not done: revoking a verified companion (no endpoint); image retention after a decision and audit of image views (owner decision); web screens for this flow.
+Next: re-review by the verifier, then a PR to `main` (owner merges). The hourly job passes real storage only with the S3 PR (#10).
+Evidence: see the PR description (focused tests, full suite on SQLite and PostgreSQL, migration up/down).
+
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).

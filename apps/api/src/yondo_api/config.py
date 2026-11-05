@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
     companion_photo_max_bytes: int = Field(default=10_485_760, gt=0)
+    # PROPOSAL, not an owner decision: days to keep ID/selfie images after an admin decision.
+    # 0 = delete at the decision. The jobs runner removes older ones when this is > 0.
+    identity_image_retention_days: int = Field(default=0, ge=0)
+    # Technical abuse cap on ID submissions per user (not a business rule).
+    identity_max_submissions_per_user: int = Field(default=5, gt=0)
     companion_photo_max_pixels: int = Field(default=25_000_000, gt=0)
     companion_service_codes: tuple[str, ...] = (
         'coffee',
