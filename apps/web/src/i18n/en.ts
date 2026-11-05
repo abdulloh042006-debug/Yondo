@@ -820,4 +820,12 @@ export const en: Record<Key, string> = {
   'notif.kind.gift_out_for_delivery': 'Gift out for delivery',
   'notif.kind.gift_delivered': 'Gift delivered',
   'notif.kind.gift_cancelled': 'Gift order cancelled',
+  // --- mobile app (apps/mobile shares these dictionaries)
+  'mobile.day': 'Day',
+  'mobile.time': 'Time (hh:mm)',
+  'mobile.webOnly': 'Chat, meeting check-in, reviews, favourites and the companion studio are in the web app for now.',
+  'mobile.enableCustomer': 'Turn on the customer role',
+  'mobile.themeSystem': 'Same as the device',
+  'mobile.webMissing': 'The web app address is not configured (EXPO_PUBLIC_WEB_URL).',
+  'mobile.loginForBookings': 'Sign in to see your bookings.',
 };

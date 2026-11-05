@@ -25,6 +25,15 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S44 — Mobile app (Expo) on the owner-reviewed line (2026-11-05) [cloud chat]
+Done: `apps/mobile` = one Expo app, role modes like `apps/web` (working default; the one-app vs two-apps decision is still the owner's).
+- Screens: discovery, profile + 5-field booking, sign-in (phone + code, consent with versions), bookings + detail (companion accept/decline, cancel, payment only when `accepted` with one Idempotency-Key, 503 = unavailable), report/block via `booking_id`, SOS (112/contacts via the phone, moderator signal), settings (uz/ru/en, 1995/2026, `yondo`/`yondo-tun`).
+- The uz/ru/en dictionaries, formatting, error texts, labels and legal versions are imported from `apps/web/src` (no copies); 7 new `mobile.*` keys in all three dictionaries. Brand icons from `design-prototype/brand/logo/png`. New CI job "Mobile app typecheck and bundle".
+- Fixed during the smoke run: react-native-web 0.21 ignores `accessibilityState`, so tabs/chips/checkbox now use `role` + `aria-*` (radio groups for chips); signing out or in resets the tab stacks (another account's booking screen stayed open).
+Not done: chat, meeting check-in, reviews, favourites, push, companion studio, gifts, SOS location (web only, listed in `apps/mobile/README.md`); no real iOS/Android device run.
+Next: verifier review, then a PR to `main` (owner merges).
+Evidence: mobile `tsc` PASS; `expo export --platform web` PASS; `apps/mobile/e2e/smoke.mjs` 8/8 against the real API (DEMO seed) incl. axe on 4 screens; web typecheck/lint PASS, vitest 53/53, build PASS.
+
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
