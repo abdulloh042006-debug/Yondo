@@ -25,6 +25,22 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S49 — Owner's approved product decisions recorded (2026-11-06) [cloud chat]
+Done:
+- `docs/product-decisions.md` is now the source of truth.
+- TZ.md §26/§27/§42 amended (§42: PR #18 Q6).
+- CLAUDE.md §7 line added; it reverses "no passwords" and replaces "one payment per booking" with retries.
+- The owner handed merging and branch cleanup to the CEO session (relayed).
+Next (backlog for the CEO; one task, one branch, verifier first):
+1. Payment attempts and retry: drop `uq_payment_single_booking` in favour of one open or succeeded attempt per booking; checkout breakdown; companion Gross / Deductions / Commission / Net; demo uses the simulator with a 5% fee.
+2. Mandatory password (scrypt) + Telegram-bot OTP. The bot cannot message a person by phone, so it works by deep link + contact share. Password reset, lockout, IP limit and session revocation.
+3. Google sign-in and Telegram Login. Built behind config with test doubles; real client IDs and bot tokens are the owner's keys.
+4. Vendor approval + mandatory shop profile.
+5. Refund review + settlement records (idempotent, audited, none for cancelled / disputed / refunded).
+6. Mobile Companion and Vendor modes.
+Blockers: keys for Google OAuth, the Telegram bot and Telegram Login (BotFather /setdomain) are the owner's step; the code is built and tested with test doubles until then.
+Evidence: docs only.
+
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
