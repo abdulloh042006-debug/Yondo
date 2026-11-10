@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import exists, select
 from sqlalchemy.exc import IntegrityError
 
+from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.dependencies import Principal, Session
 from yondo_api.gifts.models import GiftCartItem, GiftProduct
@@ -225,6 +226,35 @@ async def checkout(principal: Principal, session: Session):
     )
 
 
+def _product_audit(principal: Principal, product: GiftProduct, action: str) -> AdminAuditEvent:
+    # The audit target is a user id, so the vendor is the target and the product id is the reason.
+    return AdminAuditEvent(
+        admin_id=principal.user.id,
+        target_id=product.vendor_id,
+        action=action,
+        reason=f'gift_product:{product.id}',
+    )
+
+
+@router.get('/admin/products', response_model=list[ProductRead])
+async def admin_products(
+    principal: Principal,
+    session: Session,
+    published: bool | None = None,
+    vendor_id: UUID | None = None,
+    limit: int = Query(default=50, ge=1, le=100),
+):
+    """Moderation list: unlike the public catalog it includes unpublished and sold-out products."""
+    await require_role(principal, session, UserRoleType.ADMIN)
+    q = select(GiftProduct)
+    if published is not None:
+        q = q.where(GiftProduct.published.is_(published))
+    if vendor_id is not None:
+        q = q.where(GiftProduct.vendor_id == vendor_id)
+    q = q.order_by(GiftProduct.updated_at.desc(), GiftProduct.id).limit(limit)
+    return list(await session.scalars(q))
+
+
 @router.post('/admin/products/{product_id}/publish', response_model=ProductRead)
 async def publish_product(product_id: UUID, principal: Principal, session: Session):
     await require_role(principal, session, UserRoleType.ADMIN)
@@ -240,6 +270,7 @@ async def publish_product(product_id: UUID, principal: Principal, session: Sessi
     if product.stock < 1:
         raise ApplicationError('gift_unavailable', 'Product is out of stock', 409)
     product.published = True
+    session.add(_product_audit(principal, product, 'gift_product_published'))
     await session.commit()
     await session.refresh(product)
     return product
@@ -254,6 +285,7 @@ async def unpublish_product(product_id: UUID, principal: Principal, session: Ses
     if product is None:
         raise ApplicationError('gift_not_found', 'Gift not found', 404)
     product.published = False
+    session.add(_product_audit(principal, product, 'gift_product_unpublished'))
     await session.commit()
     await session.refresh(product)
     return product
