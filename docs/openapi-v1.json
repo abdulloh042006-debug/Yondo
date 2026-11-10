@@ -407,6 +407,68 @@
         "title": "AdminDeletionRead",
         "type": "object"
       },
+      "AdminManualPaymentRead": {
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "booking_status": {
+            "title": "Booking Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "customer_id": {
+            "format": "uuid",
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "payment_id": {
+            "format": "uuid",
+            "title": "Payment Id",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "refund_required": {
+            "title": "Refund Required",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "payment_id",
+          "booking_id",
+          "customer_id",
+          "status",
+          "booking_status",
+          "amount_minor",
+          "currency",
+          "refund_required",
+          "created_at"
+        ],
+        "title": "AdminManualPaymentRead",
+        "type": "object"
+      },
       "AdminReportRead": {
         "properties": {
           "acknowledged": {
@@ -2037,6 +2099,90 @@
           "version"
         ],
         "title": "LivenessResponse",
+        "type": "object"
+      },
+      "ManualCardRead": {
+        "properties": {
+          "holder": {
+            "title": "Holder",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "number",
+          "holder"
+        ],
+        "title": "ManualCardRead",
+        "type": "object"
+      },
+      "ManualPaymentRead": {
+        "properties": {
+          "amount_minor": {
+            "title": "Amount Minor",
+            "type": "integer"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "cards": {
+            "description": "Only while the state is \"open\".",
+            "items": {
+              "$ref": "#/components/schemas/ManualCardRead"
+            },
+            "title": "Cards",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "state": {
+            "description": "open: transfer now; confirmed: money recorded and booking confirmed; refund_required: money recorded for a cancelled/expired booking; closed: do not pay.",
+            "enum": [
+              "open",
+              "confirmed",
+              "refund_required",
+              "closed"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "booking_id",
+          "status",
+          "amount_minor",
+          "currency",
+          "created_at",
+          "cards",
+          "state"
+        ],
+        "title": "ManualPaymentRead",
         "type": "object"
       },
       "MeetingState": {
@@ -4258,6 +4404,123 @@
         "summary": "Operator Update Test Status",
         "tags": [
           "manual gift test orders"
+        ]
+      }
+    },
+    "/api/v1/admin/payments/manual": {
+      "get": {
+        "description": "Open manual transfers to look for in the bank; oldest first so nothing waits forever.",
+        "operationId": "manual_queue_api_v1_admin_payments_manual_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "succeeded"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminManualPaymentRead"
+                  },
+                  "title": "Response Manual Queue Api V1 Admin Payments Manual Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Manual Queue",
+        "tags": [
+          "admin payments"
+        ]
+      }
+    },
+    "/api/v1/admin/payments/manual/{reference}/received": {
+      "post": {
+        "description": "The admin saw the exact amount with this reference arrive on a configured card.",
+        "operationId": "mark_received_api_v1_admin_payments_manual__reference__received_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "title": "Reference",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminManualPaymentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark Received",
+        "tags": [
+          "admin payments"
         ]
       }
     },
@@ -9609,6 +9872,54 @@
           }
         ],
         "summary": "Create Checkout",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/manual/{reference}": {
+      "get": {
+        "description": "Transfer instructions, for the customer who has to pay (anyone else gets 404).",
+        "operationId": "manual_payment_api_v1_payments_manual__reference__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "title": "Reference",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualPaymentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Manual Payment",
         "tags": [
           "payments"
         ]

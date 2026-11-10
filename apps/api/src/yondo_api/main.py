@@ -45,6 +45,9 @@ from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 from yondo_api.meetings.router import router as meetings_router
 from yondo_api.notifications.router import router as notifications_router
+from yondo_api.payments.manual import ManualTransferPaymentProvider
+from yondo_api.payments.manual import admin_router as manual_payments_admin_router
+from yondo_api.payments.manual import router as manual_payments_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
 from yondo_api.payments.tezcheck import TezCheckPaymentProvider
@@ -67,6 +70,15 @@ def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
     if settings.environment in {'development', 'test'}:
         return DevelopmentOtpProvider()
     return UnconfiguredOtpProvider()
+
+
+def select_payment_provider(settings: Settings) -> PaymentProvider:
+    """YONDO_PAYMENT_PROVIDER picks it; "auto" = TezCheck when its token is set, else none."""
+    if settings.payment_provider == 'manual':
+        return ManualTransferPaymentProvider(settings.public_web_url)
+    if settings.tezcheck_token.get_secret_value():
+        return TezCheckPaymentProvider.from_settings(settings)
+    return UnconfiguredPaymentProvider()
 
 
 def create_application(
@@ -127,11 +139,7 @@ def create_application(
     )
     # Trust & Safety verification records are the identity source (ID + selfie review).
     app.state.identity_eligibility = identity_eligibility or DatabaseIdentityEligibility()
-    app.state.payment_provider = payment_provider or (
-        TezCheckPaymentProvider.from_settings(app_settings)
-        if app_settings.tezcheck_token.get_secret_value()
-        else UnconfiguredPaymentProvider()
-    )
+    app.state.payment_provider = payment_provider or select_payment_provider(app_settings)
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
@@ -145,6 +153,8 @@ def create_application(
         discovery_router,
         bookings_router,
         payments_router,
+        manual_payments_router,
+        manual_payments_admin_router,
         chat_router,
         gifts_router,
         gift_test_orders_router,
