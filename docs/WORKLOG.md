@@ -25,6 +25,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S41 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
+Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
+Next: script 2 from session yondo-43.
+Evidence: audio-ears on the final mp4: −13.8 LUFS, TP −1.8 dBTP, 0 clipped, hits within ±2 frames of the cuts.
+Branch: `feat/ad-video-1` (PR to main).
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
