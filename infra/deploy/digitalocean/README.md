@@ -7,7 +7,7 @@ Bu **demo emas**, haqiqiy API (`apps/api`) + veb-ilova (`apps/web`) + PostgreSQL
 ## Nima bor va nima YO‘Q (halol ro‘yxat)
 | Bor | Hali yo‘q (beta uchun blokerlar) |
 |---|---|
-| API + migratsiyalar, veb-ilova, PostgreSQL, Redis (chat), soatlik vazifalar (`jobs`), avtomatik HTTPS (Caddy), kunlik zaxira skripti | **Rasm saqlash** (S3/MinIO adapteri yozilmagan: rasm yuklash xato beradi) · **shaxs tasdig‘i** (ulanmagan) · **SMS** (kod faqat Telegram orqali, token kerak) · to‘lov (TezCheck + domen + komissiya qarori) |
+| API + migratsiyalar, veb-ilova, PostgreSQL, Redis (chat), soatlik vazifalar (`jobs`), avtomatik HTTPS (Caddy), kunlik zaxira skripti | **Rasm saqlash bucket’i** (S3 adapteri bor; S3-mos bucket va `.env` dagi `YONDO_STORAGE_*` qatorlari kerak, aks holda rasm yuklash 503) · **shaxs tasdig‘i** (ulanmagan) · **SMS** (kod faqat Telegram orqali, token kerak) · to‘lov (TezCheck + domen + komissiya qarori) |
 | Ekranda kod **yo‘q** (production’da ko‘rsatilmaydi) | Birinchi admin: tayyor buyruq yo‘q (pastda SQL) |
 
 ## Domen kerakmi?

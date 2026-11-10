@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { ApplicationDetail, Applications } from './Applications';
 import { Dashboard } from './Dashboard';
 import { AdminBookings, AuditLog } from './Lists';
+import { AdminPayments } from './Payments';
 import { Safety } from './Safety';
 import { AdminLayout } from './shared';
 import { Deletions, SupportQueue } from './Support';
@@ -19,6 +20,7 @@ export default function AdminRoutes() {
         <Route path="support" element={<SupportQueue />} />
         <Route path="deletions" element={<Deletions />} />
         <Route path="bookings" element={<AdminBookings />} />
+        <Route path="payments" element={<AdminPayments />} />
         <Route path="audit" element={<AuditLog />} />
       </Route>
     </Routes>
