@@ -39,7 +39,7 @@ TezCheck adapter (`apps/api/src/yondo_api/payments/tezcheck.py`) instead of the 
 - Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (any spelling the API accepts; it replaces the well-known `+998901110001`; nobody else knows which number is the admin). If it is **not** set, the public image fails closed: the admin gets a random unknown number, so nobody can open the admin console (set the variable when you need it). A malformed value stops the start with a clear message. Check after every deploy that `+998901110001` gets 403 on `/api/v1/admin/summary`.
 - **Do not enter real phone numbers or personal data.** With the default throw-away SQLite everything disappears at the next start, but in **persistent mode every phone number, booking and chat stays in the database** until an account-deletion request is processed (the 15-minute loop does that after the 30-day window). Treat the site as public either way.
 - The legal pages are still drafts (operator name "hali ko‘rsatilmagan"); see `docs/legal/pre-publication-checklist.md`.
-- Not included: realtime chat (the socket needs Redis; the web app polls every 8 s instead) and photo storage (no S3 adapter yet).
+- Not included: realtime chat (the socket needs Redis; the web app polls every 8 s instead) and photo storage (the demo keeps photos in memory; real deployments set `YONDO_STORAGE_BACKEND=s3`, see `digitalocean/.env.example`).
 
 A real launch still needs the owner items in `docs/WORKLOG.md` → Next steps (operator name, SMS provider, payment provider and fee policy, backups, PostgreSQL, S3/MinIO storage).
 
@@ -70,6 +70,28 @@ Neon setup (about 5 minutes, you sign in yourself):
 
 Free limits to know: Neon suspends the compute after ~5 idle minutes (the first query after that adds about a second) and the free
 project is small (0.5 GB); both are plenty for a demo.
+
+## First admin: admin bootstrap command
+Nobody can make themselves admin through the API (`PUT /auth/roles` refuses `admin`), so on a fresh production
+database the first admin is granted from the server shell, with the API's own environment (`YONDO_DATABASE_URL`).
+**First sign in once** in the web app with that phone (phone + code), so the account exists; an unknown phone is refused:
+
+```bash
+python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX           # grant (the user must already exist)
+python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX --revoke  # revoke; refuses to remove the last admin
+```
+
+- **Render:** service → *Shell* tab, run the command (the image has `yondo_api` installed; the env is the service's).
+  Render's Shell may not be offered on the free instance type: then run it from `apps/api` on your own machine with
+  `YONDO_DATABASE_URL` set to the same database (paste the URL in your own terminal, never into a file).
+  The public demo seeds its own admin from `YONDO_DEMO_ADMIN_PHONE` and does not need this.
+- **DigitalOcean** (`digitalocean/`): `docker compose exec api python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX`.
+- **Elsewhere:** from `apps/api` with the API's environment set.
+
+It prints only the masked phone (`+998 90 *** ** 99`), is idempotent (a repeat run says "nothing changed"),
+writes an `admin_audit_events` row (`admin_bootstrap` / `admin_revoke`, admin = the user's own id) and refuses
+unknown phones and suspended, banned or deleted accounts. Exit codes: 0 done or nothing to change, 1 refused,
+2 invalid phone, 3 database error (one masked line, no traceback). Type the number in the shell only: never commit it (the repository is public).
 
 ## Try it locally first (Windows PowerShell)
 

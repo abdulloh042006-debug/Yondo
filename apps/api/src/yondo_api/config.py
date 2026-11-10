@@ -2,9 +2,28 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ManualPaymentCard(BaseModel):
+    """A card customers transfer to while payments are confirmed by hand (shown to the payer)."""
+
+    # A malformed value must not print a card number into the host's logs.
+    model_config = ConfigDict(extra='forbid', frozen=True, hide_input_in_errors=True)
+    label: str = Field(min_length=1, max_length=32)  # e.g. "Uzcard", "Humo", "Visa (Uzum)"
+    number: str = Field(pattern=r'^[0-9 ]{16,23}$')
+    holder: str = Field(min_length=1, max_length=64)
+
+    @field_validator('number')
+    @classmethod
+    def sixteen_to_nineteen_digits(cls, value: str) -> str:
+        digits = value.replace(' ', '')
+        if not 16 <= len(digits) <= 19:
+            raise ValueError('a card number has 16 to 19 digits')
+        return ' '.join(digits[i : i + 4] for i in range(0, len(digits), 4))
 
 
 class Settings(BaseSettings):
@@ -13,6 +32,7 @@ class Settings(BaseSettings):
         env_prefix='YONDO_',
         case_sensitive=False,
         extra='ignore',
+        hide_input_in_errors=True,  # settings carry secrets and card numbers
     )
 
     app_name: str = 'Yondo API'
@@ -28,6 +48,11 @@ class Settings(BaseSettings):
     storage_access_key: str = ''
     storage_secret_key: str = Field(default='', repr=False)
     storage_region: str = 'us-east-1'
+    # 'disabled' keeps photo/verification uploads at 503 until private storage is configured.
+    storage_backend: Literal['disabled', 's3'] = 'disabled'
+    storage_path_style: bool = True
+    # Origin clients use to fetch presigned URLs (defaults to storage_endpoint).
+    storage_public_endpoint: str | None = None
     fcm_project_id: str = ''
     auth_otp_pepper: SecretStr = SecretStr('development-only-change-me')
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
@@ -52,10 +77,25 @@ class Settings(BaseSettings):
     tezcheck_return_url: str = ''
     # Accept payments TezCheck marks as environment "test" (its test provider). Never in prod.
     tezcheck_accept_test_payments: bool = False
+    # Which payment provider the API uses. "auto": TezCheck when its token is set, else none (503).
+    # "manual": customers transfer to the cards below and an admin confirms receipt by hand (beta,
+    # few users). "tezcheck": TezCheck only. Switching is this one setting; payments already created
+    # keep working (manual ones can still be confirmed after a switch).
+    payment_provider: Literal['auto', 'manual', 'tezcheck'] = 'auto'
+    # JSON list, set ONLY in the host's environment (the repository is public), e.g.
+    # [{"label":"Uzcard","number":"8600 ....","holder":"Name S."}]. Shown only to the payer.
+    manual_payment_cards: tuple[ManualPaymentCard, ...] = ()
+    # https origin of the web app; the manual payment page is <public_web_url>/pay/<reference>.
+    public_web_url: str = ''
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
     companion_photo_max_bytes: int = Field(default=10_485_760, gt=0)
+    # PROPOSAL, not an owner decision: days to keep ID/selfie images after an admin decision.
+    # 0 = delete at the decision. The jobs runner removes older ones when this is > 0.
+    identity_image_retention_days: int = Field(default=0, ge=0)
+    # Technical abuse cap on ID submissions per user (not a business rule).
+    identity_max_submissions_per_user: int = Field(default=5, gt=0)
     companion_photo_max_pixels: int = Field(default=25_000_000, gt=0)
     companion_service_codes: tuple[str, ...] = (
         'coffee',
@@ -112,6 +152,32 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode='after')
+    def validate_object_storage(self) -> Settings:
+        if self.storage_backend != 's3':
+            return self
+        from urllib.parse import urlsplit
+
+        from yondo_api.integrations.s3 import is_ip_or_localhost
+
+        if not self.storage_path_style and is_ip_or_localhost(
+            urlsplit(self.storage_endpoint).hostname or ''
+        ):
+            raise ValueError('YONDO_STORAGE_PATH_STYLE=false needs a DNS endpoint, not an IP')
+        if self.environment in {'staging', 'production'}:
+            # Photo/ID bytes and presigned URLs travel over these origins: https only.
+            endpoints = {
+                'YONDO_STORAGE_ENDPOINT': self.storage_endpoint,
+                'YONDO_STORAGE_PUBLIC_ENDPOINT': self.storage_public_endpoint
+                or self.storage_endpoint,
+            }
+            for name, url in endpoints.items():
+                if not url.startswith('https://'):
+                    raise ValueError(f'{name} must be an https URL')
+            if not (self.storage_bucket and self.storage_access_key and self.storage_secret_key):
+                raise ValueError('S3 storage needs bucket, access key and secret key')
+        return self
+
+    @model_validator(mode='after')
     def validate_click_test_mode(self) -> Settings:
         if self.click_test_enabled and (
             self.environment not in {'test', 'development'}
@@ -135,6 +201,21 @@ class Settings(BaseSettings):
                     'TezCheck needs YONDO_TEZCHECK_WEBHOOK_SECRET (16+ characters): '
                     'without it payment events cannot be verified'
                 )
+        return self
+
+    @model_validator(mode='after')
+    def validate_payment_provider(self) -> Settings:
+        if self.payment_provider == 'manual':
+            if not self.manual_payment_cards:
+                raise ValueError('YONDO_PAYMENT_PROVIDER=manual needs YONDO_MANUAL_PAYMENT_CARDS')
+            if not self.public_web_url.startswith('https://') or not urlsplit(
+                self.public_web_url
+            ).hostname:
+                raise ValueError(
+                    'YONDO_PAYMENT_PROVIDER=manual needs an https YONDO_PUBLIC_WEB_URL'
+                )
+        if self.payment_provider == 'tezcheck' and not self.tezcheck_token.get_secret_value():
+            raise ValueError('YONDO_PAYMENT_PROVIDER=tezcheck needs YONDO_TEZCHECK_TOKEN')
         return self
 
     @property

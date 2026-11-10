@@ -111,7 +111,7 @@ Google and Telegram are separate login providers. Sending OTP codes through Tele
 | 5% commission | `platform_fee()` exists, but the fee is added to the customer total and the payout is 100% of the subtotal. **To change**: deduct it from the payout. |
 | Simulator payments | The demo payment provider (`infra/deploy/demo/demo_payment.py`) exists. |
 | Manual card transfers | Built in PR #16, **off** by default; it needs the owner's separate permission. |
-| TezCheck | The adapter is on main (`payments/tezcheck.py`). In `auto` mode it is used once a token is set. Do not set a token in the beta. |
+| TezCheck | The adapter is on main (`payments/tezcheck.py`). In `auto` mode it is used once a token is set. No live token in the beta (test tokens only, owner S32). |
 | One payment per booking | Still enforced (`uq_payment_single_booking`). **To change**: allow retry attempts. |
 | ID images deleted at decision | In PR #11 (owner commit `d45eb28`, retention default 0). |
 | Admin bootstrap | PR #14 |

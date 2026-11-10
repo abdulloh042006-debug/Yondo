@@ -5,6 +5,7 @@ import { RequireAuth } from './auth/guards';
 import { Account } from './pages/Account';
 import { Bookings } from './pages/Bookings';
 import { DemoPay } from './pages/DemoPay';
+import { ManualPay } from './pages/ManualPay';
 import { Discovery } from './pages/Discovery';
 import { Favorites } from './pages/Favorites';
 import { Login } from './pages/Login';
@@ -39,6 +40,7 @@ export function App() {
           <Route path="bookings" element={<RequireAuth><Bookings /></RequireAuth>} />
           <Route path="bookings/:id" element={<RequireAuth><BookingDetail /></RequireAuth>} />
           <Route path="demo-pay/:reference" element={<RequireAuth><DemoPay /></RequireAuth>} />
+          <Route path="pay/:reference" element={<RequireAuth><ManualPay /></RequireAuth>} />
           <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
           <Route path="account" element={<RequireAuth><Account /></RequireAuth>} />
           <Route path="studio" element={<RequireAuth role="companion"><Studio /></RequireAuth>} />
