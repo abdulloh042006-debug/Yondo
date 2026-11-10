@@ -355,4 +355,3 @@ def test_alembic_has_a_single_head():
     config = Config(str(root / 'alembic.ini'))
     config.set_main_option('script_location', str(root / 'migrations'))
     assert len(ScriptDirectory.from_config(config).get_heads()) == 1
-

@@ -4,7 +4,7 @@ Qisqa ro'yxat. Har bandda nima kerakligi va nima uchunligi yozilgan. Kod tomoni 
 
 ## 1. PR'larni ko'rib chiqish va birlashtirish (sizning qaroringiz)
 
-Tartib: **#10 → #11 → #12 → #13 → #14**. Har biri CI'da yashil va mustaqil verifier tomonidan tekshirilgan. Har birlashtirishdan keyin keyingi PR'dagi konfliktlarni (`WORKLOG.md`, `main.py`, `jobs.py`) men merge commit bilan hal qilaman.
+Tartib: **#10 → #11 → #12 → #13 → #16**, keyin #14, #15, #17, #18 va mahsulot qarorlari PR'i (2026-11-10: hammasi yondo-43 tomonidan birlashtirilmoqda, egasi 2026-11-06 da ruxsat bergan). Har biri CI'da yashil va mustaqil verifier tomonidan tekshirilgan. Har birlashtirishdan keyin keyingi PR'dagi konfliktlarni (`WORKLOG.md`, `main.py`, `jobs.py`) men merge commit bilan hal qilaman.
 
 | PR | Nima |
 |---|---|
@@ -12,7 +12,8 @@ Tartib: **#10 → #11 → #12 → #13 → #14**. Har biri CI'da yashil va mustaq
 | #11 | ID va selfi tasdiqlash (admin qo'lda) |
 | #12 | Gifts/vendor: moderatsiya ro'yxati, mahsulotni o'chirish, audit |
 | #13 | Mobil ilova (Expo) |
-| #14 | Qo'lda tasdiqlanadigan karta to'lovi |
+| #16 | Qo'lda tasdiqlanadigan karta to'lovi (o'chiq; yoqish uchun egasining alohida ruxsati kerak) |
+| #14 | Admin'ni ishga tushirish buyrug'i |
 
 ## 2. Qo'lda to'lovni yoqish (server sozlamasi; Render → Environment)
 
@@ -42,7 +43,7 @@ Keyin TezCheck'ka o'tish uchun TezCheck kalitlarini qo'shasiz va `YONDO_PAYMENT_
 6. **Qaytarish (refund) va hamrohga to'lash:**
    - Bekor qilingan bron uchun pul kelsa, ilova uni "qaytarish kerak" deb belgilaydi, lekin pulni qaytarishni siz qilasiz.
    - Hamrohlarga pulni qanday va qachon o'tkazasiz?
-   
+
    Ilova bu qoidalarni o'zi to'qib chiqarmaydi.
 
 ## 4. Hisob va kalitlar (tayyor bo'lganda)

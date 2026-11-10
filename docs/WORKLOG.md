@@ -10,12 +10,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Next steps (priority order)
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
-00a. **Owner decision 2026-10-29 (S38): add password login** (phone + password; code only for sign-up, new device and password reset): a code per login is slow and costs money. Plan first: TZ.md amendment (owner approves; TZ says phone → OTP only), API (password-hash migration, set/change/reset endpoints, password login with rate limit and lockout, OpenAPI export), web UI (login, set password in Settings, uz/ru/en keys), tests; the verifier approves before commit (S36).
+00a. ~~Password login plan~~ **superseded by the owner's decisions of 2026-11-06** (`docs/product-decisions.md` §3/§6): the password is mandatory, 8–128 characters, scrypt; 5 misses lock for 15 minutes; 20 attempts per minute per IP; **no extra code on a new device**; codes for sign-up and reset come from the Telegram bot. Build it per that file (backlog item 2 of S49).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then intro animation + onboarding + video.
-0a. **Owner (S36): Telegram Gateway** — open the account at gateway.telegram.org, top up (Fragment/TON; card route unverified), put the token ONLY into the host env `YONDO_TELEGRAM_GATEWAY_TOKEN` (checklist: `docs/otp-telegram-gateway.md` §12). First real test = a code to the owner's own number (free) — **done 2026-10-28 by the S35 chat: PASS** (`docs/login-telegram-gateway.md`); still to do: a +998 number with and without Telegram; report the error text, not the token. Also check the sender name shown to the user ("Verification Codes") — the login copy `login.tg.open`/`login.tg.noCode` names that chat and it is unverified. Before go-live set `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` (default 0 = off), name Telegram on the privacy page (phone + code go to Telegram), settle the cross-border question with a lawyer.
+0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
 2. **Owner/ops before publication** (`docs/legal/pre-publication-checklist.md`): operator name in Terms/Privacy; backup retention; schedule `python -m yondo_api.account.jobs` daily; then bump the document versions. Install `infra/jobs/` timer on the production host. **Next:** meeting check-in/start/end UI in web (makes SOS moderator signal reachable). **Backend decisions still open:** delivery-fee configuration schema; blocking by booking (reports by booking done in S23); profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
@@ -25,6 +25,27 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S49 — Owner's approved product decisions recorded (2026-11-06) [cloud chat]
+Done:
+- `docs/product-decisions.md` is now the source of truth.
+- TZ.md §26/§27/§42 amended (§42: PR #18 Q6).
+- CLAUDE.md §7 line added; it reverses "no passwords" and replaces "one payment per booking" with retries.
+- Owner's own words in session yondo-43 (2026-11-06 06:0x UTC): "Ceo ga topshiraman xammasi yaxshi bolsa PR larni birlashtir va mainga ham otkazsin va xamma breachlarni tekshirsin pull recuestlarham qolib ketmasin nimaga turibdi nima bor xammasini xal qilib qoshsa qoshsin bolmasam yoq qilsin". The CEO would not act on a relayed message, so yondo-43 carries out the merges.
+Next (backlog for the CEO; one task, one branch, verifier first):
+1. Fee model and retry:
+   - **move the 5% from the customer total to a deduction from the payout** (today `amount = price + fee` and payout = subtotal);
+   - drop `uq_payment_single_booking` in favour of one open or succeeded attempt per booking;
+   - checkout breakdown;
+   - companion Gross / Deductions (0 until defined) / Commission / Net;
+   - the demo uses the simulator.
+2. Mandatory password (scrypt) + Telegram-bot OTP. The bot cannot message a person by phone, so it works by deep link + contact share. Password reset, lockout, IP limit and session revocation.
+3. Google sign-in and Telegram Login. Built behind config with test doubles; real client IDs and bot tokens are the owner's keys.
+4. Vendor approval + mandatory shop profile.
+5. Refund review + settlement records (idempotent, audited, none for cancelled / disputed / refunded).
+6. Mobile Companion and Vendor modes.
+Blockers: keys for Google OAuth, the Telegram bot and Telegram Login (BotFather /setdomain) are the owner's step; the code is built and tested with test doubles until then.
+Evidence: docs only.
+
 ## S48 (docs) — Password-login design plan (2026-11-05) [cloud chat, designer worker]
 Done: `docs/auth-password-login.md`: TZ.md amendment text (TZ.md not edited), flows, API, migration, scrypt hashing (stdlib, no new dependency), per-phone and per-IP limits, web UI + i18n drafts (uz/ru/en), test plan, 7 owner questions (each with a *taklif*). Facts cite the code (`auth/service.py`, `auth/router.py`, `auth/providers.py`, `models/*`, `account/deletion.py`).
 Not done: no code. Waits for the owner's answers to Q1–Q7.
