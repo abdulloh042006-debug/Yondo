@@ -820,4 +820,12 @@ export const ru: Record<Key, string> = {
   'notif.kind.gift_out_for_delivery': 'Подарок в пути',
   'notif.kind.gift_delivered': 'Подарок доставлен',
   'notif.kind.gift_cancelled': 'Заказ подарка отменён',
+  // --- mobile app (apps/mobile shares these dictionaries)
+  'mobile.day': 'День',
+  'mobile.time': 'Время (чч:мм)',
+  'mobile.webOnly': 'Чат, встреча, отзывы, избранное и студия компаньона пока есть только в веб-версии.',
+  'mobile.enableCustomer': 'Включить роль клиента',
+  'mobile.themeSystem': 'Как на устройстве',
+  'mobile.webMissing': 'Адрес веб-версии не настроен (EXPO_PUBLIC_WEB_URL).',
+  'mobile.loginForBookings': 'Войдите, чтобы увидеть свои брони.',
 };
