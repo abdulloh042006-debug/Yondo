@@ -13,7 +13,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00a. **Owner decision 2026-10-29 (S38): add password login** (phone + password; code only for sign-up, new device and password reset): a code per login is slow and costs money. Plan first: TZ.md amendment (owner approves; TZ says phone → OTP only), API (password-hash migration, set/change/reset endpoints, password login with rate limit and lockout, OpenAPI export), web UI (login, set password in Settings, uz/ru/en keys), tests; the verifier approves before commit (S36).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
-00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, admin bootstrap command, Docker build check of the production package.
+00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then intro animation + onboarding + video.
 0a. **Owner (S36): Telegram Gateway** — open the account at gateway.telegram.org, top up (Fragment/TON; card route unverified), put the token ONLY into the host env `YONDO_TELEGRAM_GATEWAY_TOKEN` (checklist: `docs/otp-telegram-gateway.md` §12). First real test = a code to the owner's own number (free) — **done 2026-10-28 by the S35 chat: PASS** (`docs/login-telegram-gateway.md`); still to do: a +998 number with and without Telegram; report the error text, not the token. Also check the sender name shown to the user ("Verification Codes") — the login copy `login.tg.open`/`login.tg.noCode` names that chat and it is unverified. Before go-live set `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` (default 0 = off), name Telegram on the privacy page (phone + code go to Telegram), settle the cross-border question with a lawyer.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -25,6 +25,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S46 — Admin bootstrap command (2026-11-05) [cloud worker]
+Done: `python -m yondo_api.admin.bootstrap --phone … [--revoke]` (`apps/api/src/yondo_api/admin/bootstrap.py`): normalises with `normalize_uzbekistan_phone`, finds the user and adds `admin`. After CEO review: an **unknown phone is refused** (exit 1, nothing written: sign in once first; no create path), and a database error prints one masked line (exit 3, no traceback with the number). Idempotent; refuses suspended/banned/deleted; `--revoke` refuses the last admin (admin rows locked `FOR UPDATE` on PostgreSQL); `AdminAuditEvent` `admin_bootstrap`/`admin_revoke` with admin_id = the user's own id; masked phone only. Docs: `infra/deploy/README.md` "First admin" (Render Shell, DigitalOcean); DigitalOcean step 3 uses the command (sign-in first stays required). Tests: `apps/api/tests/test_admin_bootstrap.py` (10).
+Not done: Next steps 00d — the rest of the beta code gaps.
+Evidence: see the PR #14 description (verifier run on the final commit).
+Commit: this entry's commits (branch `feat/admin-bootstrap`, PR #14 to `main`).
+
 ## S45 — Manual card-transfer payments for the beta (2026-11-05) [cloud chat]
 Done: owner decision "first month without a payment API: transfers to my cards, I confirm by hand; one switch to the APIs later".
 - `YONDO_PAYMENT_PROVIDER` = auto | manual | tezcheck.
