@@ -848,4 +848,12 @@ export const ru: Record<Key, string> = {
   'admin.col.amount': 'Сумма',
   'admin.audit.manual_payment': 'Ручной платёж',
   'err.payment_not_pending': 'Этот платёж больше не ожидает перевода.',
+  // --- mobile app (apps/mobile shares these dictionaries)
+  'mobile.day': 'День',
+  'mobile.time': 'Время (чч:мм)',
+  'mobile.webOnly': 'Чат, встреча, отзывы, избранное и студия компаньона пока есть только в веб-версии.',
+  'mobile.enableCustomer': 'Включить роль клиента',
+  'mobile.themeSystem': 'Как на устройстве',
+  'mobile.webMissing': 'Адрес веб-версии не настроен (EXPO_PUBLIC_WEB_URL).',
+  'mobile.loginForBookings': 'Войдите, чтобы увидеть свои брони.',
 };

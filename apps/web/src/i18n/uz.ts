@@ -847,5 +847,13 @@ export const uz = {
   'admin.col.amount': 'Summa',
   'admin.audit.manual_payment': 'Qölda tölov',
   'err.payment_not_pending': 'Bu tölov endi pul kutmayapti.',
+  // --- mobile app (apps/mobile shares these dictionaries)
+  'mobile.day': 'Kun',
+  'mobile.time': 'Vaqt (soat:daqiqa)',
+  'mobile.webOnly': 'Çat, uçraşuv, şarhlar, sevimlilar va hamroh studiyasi hozirça faqat veb-ilovada.',
+  'mobile.enableCustomer': 'Mijoz rolini yoqiş',
+  'mobile.themeSystem': 'Qurilma böyiça',
+  'mobile.webMissing': 'Veb-ilova manzili sozlanmagan (EXPO_PUBLIC_WEB_URL).',
+  'mobile.loginForBookings': 'Bronlaringizni köriş uçun hisobingizga kiring.',
 };
 export type Key = keyof typeof uz;
