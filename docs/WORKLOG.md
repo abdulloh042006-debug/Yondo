@@ -25,6 +25,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S42 — ID document + selfie verification, admin review in beta (2026-11-05) [cloud chat]
+Done: `verification/` (table `identity_verifications`, migration 0018): user `POST /verification/me` (document type), raw-image `/me/document` and `/me/selfie` (re-encoded, EXIF stripped, private keys), `/me/submit`; admin queue `GET /admin/verifications` (presigned 5-minute image URLs) and `POST /admin/verifications/{id}/decision` (audited, no self-review). `DatabaseIdentityEligibility` is now the default identity gate (owner decision: in beta an admin approves by hand). Account erasure deletes the images.
+Verifier: first review REJECT, blocking = erasure without storage cleared the keys while the objects stayed; fixed (a key is cleared only after its object is deleted; test). Also fixed: failed-save cleanup checks the row in a fresh transaction before deleting the upload; the audit reason is `identity_verification:<id>`, not the note (audit rows outlive erasure); docstring no longer claims revocation.
+Not done: revoking a verified companion (no endpoint); image retention after a decision and audit of image views (owner decision); web screens for this flow.
+Next: re-review by the verifier, then a PR to `main` (owner merges). The hourly job passes real storage only with the S3 PR (#10).
+Evidence: see the PR description (focused tests, full suite on SQLite and PostgreSQL, migration up/down).
+
 ## S41 — S3-compatible photo storage adapter (2026-11-05) [cloud chat]
 Done: `integrations/s3.py` (dependency-free AWS SigV4: signed PUT/DELETE, presigned 5-minute GET, path or virtual-hosted style, separate public origin), wired by `YONDO_STORAGE_BACKEND=s3` in `integrations.s3.build_object_storage` (API and the hourly `python -m yondo_api.jobs`, so scheduled erasure deletes the objects); default `disabled` keeps uploads at 503; an injected storage (demo `MemoryStorage`, tests) still wins. Env examples and both deploy READMEs updated.
 Not done: a run against a real bucket (no Docker/MinIO in the cloud sandbox; the MinIO binary URL answers 410).

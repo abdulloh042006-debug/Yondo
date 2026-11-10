@@ -659,6 +659,114 @@
         "title": "AdminUserRead",
         "type": "object"
       },
+      "AdminVerificationRead": {
+        "properties": {
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          },
+          "has_document": {
+            "title": "Has Document",
+            "type": "boolean"
+          },
+          "has_selfie": {
+            "title": "Has Selfie",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "selfie_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selfie Url"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "pending",
+              "verified",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "document_type",
+          "has_document",
+          "has_selfie",
+          "submitted_at",
+          "reviewed_at",
+          "review_note",
+          "user_id",
+          "document_url",
+          "selfie_url"
+        ],
+        "title": "AdminVerificationRead",
+        "type": "object"
+      },
       "ApplicationResponse": {
         "properties": {
           "id": {
@@ -3524,6 +3632,129 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VerificationDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "note": {
+            "description": "Shown to the user in GET /verification/me; erased with the account.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "note"
+        ],
+        "title": "VerificationDecision",
+        "type": "object"
+      },
+      "VerificationRead": {
+        "properties": {
+          "document_type": {
+            "title": "Document Type",
+            "type": "string"
+          },
+          "has_document": {
+            "title": "Has Document",
+            "type": "boolean"
+          },
+          "has_selfie": {
+            "title": "Has Selfie",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "pending",
+              "verified",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "document_type",
+          "has_document",
+          "has_selfie",
+          "submitted_at",
+          "reviewed_at",
+          "review_note"
+        ],
+        "title": "VerificationRead",
+        "type": "object"
+      },
+      "VerificationStart": {
+        "additionalProperties": false,
+        "properties": {
+          "document_type": {
+            "enum": [
+              "passport",
+              "id_card",
+              "driver_license"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_type"
+        ],
+        "title": "VerificationStart",
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -4680,6 +4911,133 @@
         "summary": "Set Account Status",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/verifications": {
+      "get": {
+        "operationId": "queue_api_v1_admin_verifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "verified",
+                "rejected"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminVerificationRead"
+                  },
+                  "title": "Response Queue Api V1 Admin Verifications Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Queue",
+        "tags": [
+          "admin verification"
+        ]
+      }
+    },
+    "/api/v1/admin/verifications/{verification_id}/decision": {
+      "post": {
+        "operationId": "decide_api_v1_admin_verifications__verification_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "verification_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Verification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminVerificationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decide",
+        "tags": [
+          "admin verification"
         ]
       }
     },
@@ -10007,6 +10365,210 @@
         "summary": "Summary",
         "tags": [
           "vendor"
+        ]
+      }
+    },
+    "/api/v1/verification/me": {
+      "get": {
+        "operationId": "my_verification_api_v1_verification_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/VerificationRead"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response My Verification Api V1 Verification Me Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Verification",
+        "tags": [
+          "verification"
+        ]
+      },
+      "post": {
+        "operationId": "start_api_v1_verification_me_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start",
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/api/v1/verification/me/document": {
+      "post": {
+        "description": "Raw JPEG/PNG/WebP photo of the identity document.",
+        "operationId": "upload_document_api_v1_verification_me_document_post",
+        "requestBody": {
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Document",
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/api/v1/verification/me/selfie": {
+      "post": {
+        "description": "Raw JPEG/PNG/WebP selfie for comparison with the document photo.",
+        "operationId": "upload_selfie_api_v1_verification_me_selfie_post",
+        "requestBody": {
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Selfie",
+        "tags": [
+          "verification"
+        ]
+      }
+    },
+    "/api/v1/verification/me/submit": {
+      "post": {
+        "operationId": "submit_api_v1_verification_me_submit_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit",
+        "tags": [
+          "verification"
         ]
       }
     },
