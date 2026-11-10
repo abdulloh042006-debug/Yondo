@@ -819,5 +819,13 @@ export const uz = {
   'notif.kind.gift_out_for_delivery': 'Sovğa yetkazilmoqda',
   'notif.kind.gift_delivered': 'Sovğa yetkazildi',
   'notif.kind.gift_cancelled': 'Sovğa buyurtmasi bekor qilindi',
+  // --- mobile app (apps/mobile shares these dictionaries)
+  'mobile.day': 'Kun',
+  'mobile.time': 'Vaqt (soat:daqiqa)',
+  'mobile.webOnly': 'Çat, uçraşuv, şarhlar, sevimlilar va hamroh studiyasi hozirça faqat veb-ilovada.',
+  'mobile.enableCustomer': 'Mijoz rolini yoqiş',
+  'mobile.themeSystem': 'Qurilma böyiça',
+  'mobile.webMissing': 'Veb-ilova manzili sozlanmagan (EXPO_PUBLIC_WEB_URL).',
+  'mobile.loginForBookings': 'Bronlaringizni köriş uçun hisobingizga kiring.',
 };
 export type Key = keyof typeof uz;
