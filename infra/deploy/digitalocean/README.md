@@ -35,10 +35,11 @@ curl http://localhost/health
 Birinchi qurish 5–10 daqiqa (taxminiy). `.env` — sirlar: uni hech kimga yubormang va git’ga qo‘shmang. Telegram tokenini (`YONDO_TELEGRAM_GATEWAY_TOKEN`) shu faylga o‘zingiz yozasiz.
 
 ## 3. Birinchi admin
-Avval veb-ilovada o‘z raqamingiz bilan bir marta kiring (akkaunt yaratiladi), keyin serverda:
+**Avval** veb-ilovada o‘z raqamingiz bilan bir marta kiring (akkaunt yaratiladi; bu qadam majburiy), keyin serverda:
 ```bash
-docker compose exec postgres psql -U yondo -d yondo -c "INSERT INTO user_roles (user_id, role) SELECT id, 'admin' FROM users WHERE phone_number = '+998XXXXXXXXX' ON CONFLICT DO NOTHING;"
+docker compose exec api python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX
 ```
+(Akkaunt bo‘lmasa, buyruq rad etadi va hech narsa yozmaydi; qayta ishga tushirish hech narsani o‘zgartirmaydi. Batafsil: [`../README.md`](../README.md#first-admin-admin-bootstrap-command).)
 Admin sahifalari xato bersa, menga yozing (hisob holati yoki yosh maydoni kerak bo‘lishi mumkin).
 
 ## 4. Yangilash, zaxira, holat
