@@ -17,6 +17,7 @@ from yondo_api.account.deletion import process_due_deletions
 from yondo_api.bookings.expiry import expire_stale_bookings
 from yondo_api.config import get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
+from yondo_api.integrations.s3 import build_object_storage
 from yondo_api.verification.service import purge_abandoned_drafts, purge_decided_images
 
 
@@ -37,6 +38,8 @@ async def main(storage=None) -> int:
             drafts_purged = await purge_abandoned_drafts(session, storage)
     finally:
         await engine.dispose()
+        if hasattr(storage, 'aclose'):
+            await storage.aclose()
     if storage is None and erased:
         logging.getLogger(__name__).warning(
             'No object storage configured: photo and ID image objects kept'
@@ -49,5 +52,10 @@ async def main(storage=None) -> int:
     return 1 if skipped else 0
 
 
+def run() -> int:
+    # Same storage as the API (YONDO_STORAGE_BACKEND); without it erasure keeps photo objects.
+    return asyncio.run(main(build_object_storage(get_settings())))
+
+
 if __name__ == '__main__':
-    raise SystemExit(asyncio.run(main()))
+    raise SystemExit(run())

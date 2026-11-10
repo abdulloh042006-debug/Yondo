@@ -40,6 +40,7 @@ from yondo_api.gifts.router import router as gifts_router
 from yondo_api.gifts.test_orders import router as gift_test_orders_router
 from yondo_api.gifts.vendor import router as vendor_router
 from yondo_api.integration.router import router as integration_router
+from yondo_api.integrations.s3 import build_object_storage
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 from yondo_api.meetings.router import router as meetings_router
@@ -108,6 +109,9 @@ def create_application(
         finally:
             await redis_client.aclose()
             await engine.dispose()
+            storage = getattr(app.state, 'object_storage', None)
+            if hasattr(storage, 'aclose'):
+                await storage.aclose()
 
     app = FastAPI(
         title=app_settings.app_name,
@@ -118,7 +122,9 @@ def create_application(
         redoc_url=None,
     )
     app.state.settings = app_settings
-    app.state.object_storage = object_storage
+    app.state.object_storage = (
+        object_storage if object_storage is not None else build_object_storage(app_settings)
+    )
     # Trust & Safety verification records are the identity source (ID + selfie review).
     app.state.identity_eligibility = identity_eligibility or DatabaseIdentityEligibility()
     app.state.payment_provider = payment_provider or (

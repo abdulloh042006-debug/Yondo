@@ -39,7 +39,7 @@ TezCheck adapter (`apps/api/src/yondo_api/payments/tezcheck.py`) instead of the 
 - Because the OTP is on screen, **anyone who opens the URL can sign in as any phone number**, including the admin. Mitigation built in: set `YONDO_DEMO_ADMIN_PHONE` to a private, unguessable number (any spelling the API accepts; it replaces the well-known `+998901110001`; nobody else knows which number is the admin). If it is **not** set, the public image fails closed: the admin gets a random unknown number, so nobody can open the admin console (set the variable when you need it). A malformed value stops the start with a clear message. Check after every deploy that `+998901110001` gets 403 on `/api/v1/admin/summary`.
 - **Do not enter real phone numbers or personal data.** With the default throw-away SQLite everything disappears at the next start, but in **persistent mode every phone number, booking and chat stays in the database** until an account-deletion request is processed (the 15-minute loop does that after the 30-day window). Treat the site as public either way.
 - The legal pages are still drafts (operator name "hali ko‘rsatilmagan"); see `docs/legal/pre-publication-checklist.md`.
-- Not included: realtime chat (the socket needs Redis; the web app polls every 8 s instead) and photo storage (no S3 adapter yet).
+- Not included: realtime chat (the socket needs Redis; the web app polls every 8 s instead) and photo storage (the demo keeps photos in memory; real deployments set `YONDO_STORAGE_BACKEND=s3`, see `digitalocean/.env.example`).
 
 A real launch still needs the owner items in `docs/WORKLOG.md` → Next steps (operator name, SMS provider, payment provider and fee policy, backups, PostgreSQL, S3/MinIO storage).
 
