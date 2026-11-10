@@ -7,7 +7,7 @@ Bu **demo emas**, haqiqiy API (`apps/api`) + veb-ilova (`apps/web`) + PostgreSQL
 ## Nima bor va nima YO‘Q (halol ro‘yxat)
 | Bor | Hali yo‘q (beta uchun blokerlar) |
 |---|---|
-| API + migratsiyalar, veb-ilova, PostgreSQL, Redis (chat), soatlik vazifalar (`jobs`), avtomatik HTTPS (Caddy), kunlik zaxira skripti | **Rasm saqlash** (S3/MinIO adapteri yozilmagan: rasm yuklash xato beradi) · **shaxs tasdig‘i** (ulanmagan) · **SMS** (kod faqat Telegram orqali, token kerak) · to‘lov (TezCheck + domen + komissiya qarori) |
+| API + migratsiyalar, veb-ilova, PostgreSQL, Redis (chat), soatlik vazifalar (`jobs`), avtomatik HTTPS (Caddy), kunlik zaxira skripti | **Rasm saqlash bucket’i** (S3 adapteri bor; S3-mos bucket va `.env` dagi `YONDO_STORAGE_*` qatorlari kerak, aks holda rasm yuklash 503) · **shaxs tasdig‘i** (ulanmagan) · **SMS** (kod faqat Telegram orqali, token kerak) · to‘lov (TezCheck + domen + komissiya qarori) |
 | Ekranda kod **yo‘q** (production’da ko‘rsatilmaydi) | Birinchi admin: tayyor buyruq yo‘q (pastda SQL) |
 
 ## Domen kerakmi?
@@ -35,10 +35,11 @@ curl http://localhost/health
 Birinchi qurish 5–10 daqiqa (taxminiy). `.env` — sirlar: uni hech kimga yubormang va git’ga qo‘shmang. Telegram tokenini (`YONDO_TELEGRAM_GATEWAY_TOKEN`) shu faylga o‘zingiz yozasiz.
 
 ## 3. Birinchi admin
-Avval veb-ilovada o‘z raqamingiz bilan bir marta kiring (akkaunt yaratiladi), keyin serverda:
+**Avval** veb-ilovada o‘z raqamingiz bilan bir marta kiring (akkaunt yaratiladi; bu qadam majburiy), keyin serverda:
 ```bash
-docker compose exec postgres psql -U yondo -d yondo -c "INSERT INTO user_roles (user_id, role) SELECT id, 'admin' FROM users WHERE phone_number = '+998XXXXXXXXX' ON CONFLICT DO NOTHING;"
+docker compose exec api python -m yondo_api.admin.bootstrap --phone +998XXXXXXXXX
 ```
+(Akkaunt bo‘lmasa, buyruq rad etadi va hech narsa yozmaydi; qayta ishga tushirish hech narsani o‘zgartirmaydi. Batafsil: [`../README.md`](../README.md#first-admin-admin-bootstrap-command).)
 Admin sahifalari xato bersa, menga yozing (hisob holati yoki yosh maydoni kerak bo‘lishi mumkin).
 
 ## 4. Yangilash, zaxira, holat

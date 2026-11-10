@@ -1,6 +1,14 @@
 # Password login (phone + password) — design plan
 
-Status: **PLAN, not built.** The owner approves it before any code is written.
+Status: **PLAN, not built.** **The owner answered Q1–Q7 on 2026-11-06** (`docs/product-decisions.md` §3/§6). Where this plan differs, those answers win:
+- the password is **mandatory** (Q1);
+- there is no extra code on a new device;
+- codes come from the Telegram bot (no Gateway, no SMS);
+- 5 misses lock for 15 minutes, and 20 attempts per minute per IP;
+- changing the password ends the other sessions, and a reset ends all;
+- `hashlib.scrypt`.
+
+The *taklif* defaults below are kept only as history.
 Why: on 2026-10-29 the owner decided to add password login next to phone + code (CLAUDE.md §7, WORKLOG Next step 00a). Sending a code for every login is slow, and every Telegram Gateway code costs money.
 Labels used here: **taklif** marks a proposed default that the owner decides (§8). Everything else is a technical consequence of today's code.
 
@@ -25,9 +33,9 @@ Labels used here: **taklif** marks a proposed default that the owner decides (§
 
 ## 1. Proposed TZ.md amendment (owner approves; TZ.md is NOT edited by this PR)
 
-> **§42 Authentication (tahrir, 2026-xx-xx, egasi tasdiqladi)**
+> **§42 Authentication (tahrir, 2026-11-06, egasi tasdiqladi; Q1 bo‘yicha tuzatilgan — TZ.md'dagi amaldagi matnga qarang)**
 > MVP: Phone number → OTP (ro‘yxatdan o‘tish va har qanday kirish uchun).
-> Qo‘shimcha: telefon raqami tasdiqlangan foydalanuvchi ixtiyoriy ravishda **parol** o‘rnatishi mumkin; keyin u **telefon + parol** bilan kod kutmasdan kiradi. Kod bilan kirish har doim saqlanadi.
+> Qo‘shimcha: telefon raqami tasdiqlangan foydalanuvchi **parol o‘rnatishi shart** (Q1: majburiy; parolsiz akkaunt to‘liq faollashmaydi); keyin u **telefon + parol** bilan kod kutmasdan kiradi.
 > Parolni unutgan foydalanuvchi uni telefoniga yuborilgan kod orqali tiklaydi; tiklash boshqa barcha seanslarni yopadi *(taklif, Q5)*.
 > Parollar faqat bir tomonlama xesh ko‘rinishida saqlanadi; ochiq matnda hech qayerda (DB, log, javob) bo‘lmaydi.
 > Keyinchalik: Google, Apple.
