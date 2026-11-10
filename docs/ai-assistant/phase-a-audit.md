@@ -1,11 +1,11 @@
 # Yondo AI Assistant — Phase A audit (no code)
 
 > **Qisqacha (egasi uchun):**
-> 1. AI yordamchi uchun mavjud backend (FastAPI, PostgreSQL, Redis, rollar, audit jurnali) qayta ishlatiladi; Internal rejim faqat server tomonidagi admin roli bilan ochiladi.
-> 2. Bilim bazasi faqat tasdiqlangan hujjatlardan iborat bo‘ladi; hozir ommaviy foydalanish uchun tayyor matnlar kam (Yordam sahifasidagi FAQ, qoidalar loyihalari).
-> 3. Telefon, ism, to‘lov, chat, SOS, joylashuv kabi ma’lumotlar AI provayderga hech qachon yuborilmaydi (oq ro‘yxat + tozalash).
-> 4. Vektor baza (pgvector) hozircha shart emas: oddiy PostgreSQL to‘liq matnli qidiruv yetarli (taklif).
-> 5. bymuslim.shop provayderi tekshirilmagan: Public rejimda ishlatishdan oldin sizning qaroringiz kerak (8-bo‘lim savollari).
+> 1. AI yordamchi uchun mavjud backend (FastAPI, PostgreSQL, Redis, rollar, audit jurnali) qayta ishlatiladi; Internal rejim faqat server tomonidagi admin roli bilan ochiladi (alohida "dasturchi" roli hozircha yo‘q).
+> 2. Bilim bazasi faqat tasdiqlangan hujjatlardan iborat bo‘ladi; hujjatlarni mustaqil tekshiruvdan keyin CEO tasdiqlaydi. Boshlang‘ich manba — Yordam sahifasidagi 9 ta FAQ.
+> 3. Telefon, ism, to‘lov, chat, SOS, joylashuv kabi ma’lumotlar AI provayderga hech qachon yuborilmaydi; savol-javoblar telefon/ismsiz 30 kun saqlanib, keyin o‘chiriladi (Maxfiylik sahifasida yoziladi).
+> 4. Mehmonlar ham (ro‘yxatdan o‘tmasdan) foydalana oladi, IP bo‘yicha cheklov bilan; tugma har sahifada o‘ng pastda va Yordam sahifasida; javob foydalanuvchi tanlagan alifboda (1995 yoki 2026).
+> 5. Ochiq savollar (sizga): bymuslim provayderini Public rejimda ishlatish (Q1) va byudjet (Q2). Taklif: bymuslim faqat Internal rejimda sinov uchun; Public rejim ishonchli provayder va byudjetni kutadi (9-bo‘lim).
 
 Status: **Phase A report.** No endpoint was called and no code was written. Base: `origin/main` @ `f4c6e7a`.
 Labels: **taklif** = a proposal the owner decides. PASS / FAIL / BLOCKED / NOT IMPLEMENTED are used as in CLAUDE.md.
@@ -157,3 +157,24 @@ Owner questions (each has a *taklif*):
 | H — Docs and UI | Help-page widget + admin panel (i18n keys, a11y, brand rules), runbook, owner guide for approving docs | M |
 
 Dependencies: E's live tests and any public launch wait for Q1/Q2. B–D and F–G can run with `FakeProvider`.
+
+## 9. Decisions (2026-11-10)
+
+The owner answered Q1–Q8 in the CEO session and left the smaller ones to the CEO. Recorded as received. These decisions replace the *taklif* defaults in §3, §7 and §8 where they differ.
+
+| Q | Decision | By |
+|---|---|---|
+| Q1 | **OPEN** (public use of the unverified bymuslim provider). Asked to the owner. CEO proposal: use bymuslim **only in Internal mode, for contract tests**; Public mode waits for a trusted provider and a budget. | owner (open) |
+| Q2 | **OPEN** (budget). Asked to the owner. | owner (open) |
+| Q3 | Anonymous access: **YES**, with a per-IP rate limit. | owner |
+| Q4 | Developer role: **not now**. Internal mode = the existing `Admin` dependency (`companions/dependencies.py:34`). | CEO |
+| Q5 | Knowledge docs are approved by **the CEO, after an independent verifier review**. | CEO (delegated by owner) |
+| Q6 | Retention: assistant questions and answers are **kept 30 days, with no phone number or name stored, then deleted**. The Privacy page must say so. | CEO (delegated by owner) |
+| Q7 | UI: a **visible floating button at the bottom right of every page**, plus an entry on the Help page. | CEO (delegated by owner) |
+| Q8 | Uzbek spelling: answers follow the **user's chosen alphabet (1995 or 2026)**, the same as the UI. | CEO |
+
+What the plan now needs:
+- **Phase D:** Public mode accepts anonymous callers (per-IP limit) as well as signed-in ones.
+- **Phase F:** `assistant_usage` stores question and answer text, redacted per §3, with a 30-day deletion job. It still stores no phone number or name. The deletion hook stays.
+- **Phase H:** a floating button plus a Help entry, and a Privacy-page update. The Privacy text is a legal draft, so the owner reviews the change.
+- **Phase E:** live provider calls are limited to Internal mode until Q1 and Q2 are answered.
