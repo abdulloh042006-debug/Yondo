@@ -25,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S42 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 30 s 9:16 reel from owner script 2 (stitch/match-cut chain, kinetic words SUHBAT/SAYR/SHAHAR→KASHF, real `apps/web` screens, objects assemble the logo); breakdown `marketing/ad-video/scripts/02-bir-harakat.md`, sources `marketing/ad-video/reel2/`.
+Not done: VO — edge-tts blocked (WebSocket not passed by the sandbox proxy), other free TTS needs torch; kinetic type carries the lines. Media not committed; mp4 sent to the owner.
+Evidence: audio-ears on the final mp4: −13.9 LUFS, TP −2.5 dBTP, 0 clipped, hits within ±2 frames of most cuts.
+Branch: `feat/ad-video-2` (PR to main; depends on PR #20 for `reel1/capture_list.mjs`).
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).

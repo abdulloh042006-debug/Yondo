@@ -80,3 +80,7 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
   animatable SVG, and the page lays a live copy over the photo: the arm rises and waves hello, the head sways (line 4).
   No air-kiss or other romantic gesture (product rule).
 - RU cut: the app's own RU locale (top-bar switch before each shot); `ru-dict.json` only translates seed data.
+
+## Reel 2 (2026-11-10, VIDEOCHI)
+- «Bir harakat — bir nechta imkoniyat» (9:16, 30 s, no VO): breakdown `scripts/02-bir-harakat.md`, sources `reel2/`. Uses the reel 1 captures
+  (`reel1/capture_list.mjs`, PR #20).
