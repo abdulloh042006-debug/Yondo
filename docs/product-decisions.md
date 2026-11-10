@@ -8,10 +8,10 @@
 
 | Decision | Detail |
 |---|---|
-| Platform commission (beta) | **5%** (`YONDO_PLATFORM_FEE_BPS=500`), integer tiyin, half-up rounding as `platform_fee()` does today |
+| Platform commission (beta) | **5%**, **deducted from the companion's side**: net = gross − 5%. The customer is not charged the commission on top. Integer tiyin, half-up rounding as `platform_fee()` does today. **This is a code change**: today `payments/router.py` sets `amount = price + fee` (the customer pays the fee on top) and the payout equals the subtotal (the companion gets 100%). Both must move to "customer pays the service amount, payout = gross − 5%". Setting `YONDO_PLATFORM_FEE_BPS=500` alone is not enough. |
 | Taxes | Counted **separately** from the commission. No tax rate is defined yet, so no tax line is invented: a tax line appears only once a rate is configured. |
 | Customer checkout | Show, simply and transparently: service price, discounts (if any), additional charges (if any), and the final amount to pay. Lines that do not exist are not shown. |
-| Companion finances | Shown separately: **Gross** (service total), **Deductions** (discounts and holds), **Commission** (5%), **Net** (what the companion receives) |
+| Companion finances | Shown separately: **Gross** (service total), **Deductions**, **Commission** (5%), **Net** (what the companion receives). What counts as a deduction has **not** been defined by the owner yet, so it shows 0 until he defines it. |
 | Real money | **Off.** Until a real payment integration and its settings are ready, use the payment **simulator / test mode** (the demo payment provider). Turning on real payments, including the manual card-transfer mode of PR #16, needs the owner's **separate** permission. |
 | Failed payment | A **retry is allowed**. Each attempt is its own payment attempt or transaction record. Idempotency keys and a database constraint (at most one open or succeeded attempt per booking) prevent a double charge. This replaces the old "one payment per booking" rule (`uq_payment_single_booking`). |
 
@@ -41,7 +41,7 @@ Google and Telegram are separate login providers. Sending OTP codes through Tele
   2. The bot asks the person to share their contact (Telegram's "share phone number" button).
   3. The bot accepts the contact only when its phone matches the number being verified and the contact belongs to that Telegram user.
   4. It then sends the code. Later codes, such as password resets, go to the stored Telegram chat.
-- The existing Telegram Gateway provider stays available as a paid option. It is not the default in the demo.
+- The existing Telegram Gateway provider stays in the code as a paid option. It is used only with the owner's permission and is not the default in the demo. The development/demo harness may still show the code on screen, but only to fake test accounts and never to real users.
 
 **Password (mandatory):**
 - Every account must have a password before it is fully active:
@@ -108,9 +108,10 @@ Google and Telegram are separate login providers. Sending OTP codes through Tele
 
 | Area | Status |
 |---|---|
-| 5% commission | Fee calculation exists (`payments/service.py: platform_fee`). The value is configuration, not code. |
+| 5% commission | `platform_fee()` exists, but the fee is added to the customer total and the payout is 100% of the subtotal. **To change**: deduct it from the payout. |
 | Simulator payments | The demo payment provider (`infra/deploy/demo/demo_payment.py`) exists. |
 | Manual card transfers | Built in PR #16, **off** by default; it needs the owner's separate permission. |
+| TezCheck | The adapter is on main (`payments/tezcheck.py`). In `auto` mode it is used once a token is set. Do not set a token in the beta. |
 | One payment per booking | Still enforced (`uq_payment_single_booking`). **To change**: allow retry attempts. |
 | ID images deleted at decision | In PR #11 (owner commit `d45eb28`, retention default 0). |
 | Admin bootstrap | PR #14 |

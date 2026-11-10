@@ -33,8 +33,9 @@ Platformani boshqaradi.
 ## 3. Customer funksiyalari
 
 Customer:
-- telefon orqali ro‘yxatdan o‘tadi;
-- OTP orqali tasdiqlanadi;
+- telefon orqali ro‘yxatdan o‘tadi (2026-11-06 dan: yoki Google / Telegram orqali; `docs/product-decisions.md` §3);
+- OTP orqali tasdiqlanadi (demo'da kod Telegram bot orqali);
+- parol yaratadi (majburiy);
 - profil yaratadi;
 - yosh va jinsini ko‘rsatadi;
 - shaharni tanlaydi;
@@ -354,7 +355,7 @@ Service price + Platform fee + Gift + Delivery = Total.
 
 MVPda lokal payment provider integratsiyasi qo‘shiladi. Provider tanlash alohida tekshiriladi.
 
-**Tuzatish (ega, 2026-11-06, `docs/product-decisions.md` §1):** beta komissiyasi 5%; soliqlar komissiyadan alohida (stavka belgilanmaguncha soliq qatori ko‘rsatilmaydi). Checkout'da xizmat narxi, chegirmalar va qo‘shimcha to‘lovlar (bo‘lsa) hamda yakuniy summa aniq ko‘rsatiladi. Real to‘lov integratsiyasi tayyor bo‘lmaguncha faqat simulator/test rejimi; real to‘lovlar egasining alohida ruxsati bilan yoqiladi. Muvaffaqiyatsiz to‘lovdan keyin qayta urinish mumkin; har urinish alohida yozuv, idempotency va cheklov orqali double charge yo‘q.
+**Tuzatish (ega, 2026-11-06, `docs/product-decisions.md` §1):** yuqoridagi formula xizmat qismi uchun bekor qilinadi. Mijoz xizmat narxini to‘laydi (chegirmalar va qo‘shimcha to‘lovlar bo‘lsa, ular ham hisobga olinadi; sovg‘a buyurtmasida esa sovg‘a va yetkazib berish narxi). Platforma komissiyasi mijozga qo‘shilmaydi, hamroh to‘lovidan ushlanadi. Beta komissiyasi 5%; soliqlar komissiyadan alohida (stavka belgilanmaguncha soliq qatori ko‘rsatilmaydi). Checkout'da xizmat narxi, chegirmalar va qo‘shimcha to‘lovlar (bo‘lsa) hamda yakuniy summa aniq ko‘rsatiladi. Real to‘lov integratsiyasi tayyor bo‘lmaguncha faqat simulator/test rejimi; real to‘lovlar egasining alohida ruxsati bilan yoqiladi. Muvaffaqiyatsiz to‘lovdan keyin qayta urinish mumkin; har urinish alohida yozuv, idempotency va cheklov orqali double charge yo‘q.
 
 ## 27. Companion payout
 
@@ -362,7 +363,7 @@ Customer → Platform → Booking completed → Companion payout.
 
 Dispute ochilsa payout vaqtincha ushlab turiladi.
 
-**Tuzatish (ega, 2026-11-06, `docs/product-decisions.md` §1, §5):** hamroh uchun Gross / Deductions / Commission (5%) / Net alohida ko‘rsatiladi; net = gross − 5% (va ushlab qolishlar). Beta'da settlement'ni administrator boshqaradi; refund avtomatik emas — admin ko‘rib chiqadi va dastlabki to‘lov usuliga qaytaradi. Canceled, disputed va refunded buyurtmalarga payout yo‘q; takroriy settlement/refund oldi olinadi; har bir moliyaviy operatsiya audit log'da.
+**Tuzatish (ega, 2026-11-06, `docs/product-decisions.md` §1, §5):** hamroh uchun Gross / Deductions / Commission (5%) / Net alohida ko‘rsatiladi; net = gross − 5% (va ushlab qolishlar). Beta'da settlement'ni administrator boshqarishi mumkin; refund avtomatik emas — admin ko‘rib chiqadi va dastlabki to‘lov usuliga qaytaradi. Canceled, disputed va refunded buyurtmalarga payout yo‘q; takroriy settlement/refund oldi olinadi; har bir moliyaviy operatsiya audit log'da.
 
 ## 28. Gift marketplace
 
