@@ -25,6 +25,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S43 — Gifts/vendor gaps: admin moderation list, vendor delete, audited publish (2026-11-05) [cloud chat]
+Done: `GET /gifts/admin/products` (admin; incl. unpublished and sold-out; `published=`, `vendor_id=` filters) so an admin can find products to publish; `DELETE /vendor/products/{id}` (own, never-ordered products only; cart lines go with it; ordered = 409 `gift_product_in_use`, unpublish instead); admin publish/unpublish write an `AdminAuditEvent` (target = vendor user id, reason `gift_product:<id>`). Vendor orders/earnings stay 503 (no gift order or payout rules).
+Not done (owner decision, asked): vendor profile/shop and approval before publishing, product photos in beta. Web screens for vendor/admin gifts: NOT IMPLEMENTED.
+Next: verifier review, then a PR to `main` (owner merges).
+Evidence: `tests/companions/test_gift_vendor_gaps.py` 2 passed (SQLite + PostgreSQL); gift tests 31 passed on PostgreSQL; full suite on PostgreSQL 347 passed; `export_openapi.py --check` PASS; web typecheck PASS.
+
 ## S42 — ID document + selfie verification, admin review in beta (2026-11-05) [cloud chat]
 Done: `verification/` (table `identity_verifications`, migration 0018): user `POST /verification/me` (document type), raw-image `/me/document` and `/me/selfie` (re-encoded, EXIF stripped, private keys), `/me/submit`; admin queue `GET /admin/verifications` (presigned 5-minute image URLs) and `POST /admin/verifications/{id}/decision` (audited, no self-review). `DatabaseIdentityEligibility` is now the default identity gate (owner decision: in beta an admin approves by hand). Account erasure deletes the images.
 Verifier: first review REJECT, blocking = erasure without storage cleared the keys while the objects stayed; fixed (a key is cleared only after its object is deleted; test). Also fixed: failed-save cleanup checks the row in a fresh transaction before deleting the upload; the audit reason is `identity_verification:<id>`, not the note (audit rows outlive erasure); docstring no longer claims revocation.
