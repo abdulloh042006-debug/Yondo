@@ -10,6 +10,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Next steps (priority order)
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) S3/MinIO photo adapter, (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
+00e. **AI assistant (2026-11-10):** Phase A audit in `docs/ai-assistant/phase-a-audit.md`; owner answers Q1–Q8 (provider for public mode, budget, retention, roles) → then phase B. No provider call until Q1/Q2.
 00a. **Owner decision 2026-10-29 (S38): add password login** (phone + password; code only for sign-up, new device and password reset): a code per login is slow and costs money. Plan first: TZ.md amendment (owner approves; TZ says phone → OTP only), API (password-hash migration, set/change/reset endpoints, password login with rate limit and lockout, OpenAPI export), web UI (login, set password in Settings, uz/ru/en keys), tests; the verifier approves before commit (S36).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
@@ -25,6 +26,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S41 (ai-a) — AI assistant Phase A audit (2026-11-10) [cloud chat, researcher worker]
+Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
+Not done: no code; provider unverified.
+Next: owner answers Q1–Q8; then phase B (knowledge/ schema + seed FAQ).
+Blockers: none for docs; live provider tests wait for Q1/Q2.
+Evidence: docs only; independent verifier review before push (see PR).
+Commit: see PR (docs/ai-assistant-phase-a).
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
