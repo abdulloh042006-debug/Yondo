@@ -105,6 +105,28 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  mobile:
+    name: Mobile app typecheck and bundle
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      # Also type-checks the apps/web i18n, format and label modules the app shares.
+      - run: npm run typecheck
+      - name: Bundle the app with Metro (web target; catches unresolved shared imports)
+        run: npx expo export --platform web --output-dir "$RUNNER_TEMP/mobile-dist"
+        env:
+          EXPO_OFFLINE: '1'
+          CI: '1'
+
   docker-image:
     name: Demo Docker image build and smoke test
     runs-on: ubuntu-latest

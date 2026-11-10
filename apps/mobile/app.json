@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Yondo",
+    "slug": "yondo",
+    "scheme": "yondo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F2EC"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uz.yondo.app"
+    },
+    "android": {
+      "package": "uz.yondo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/splash.png",
+        "backgroundColor": "#F5F2EC",
+        "monochromeImage": "./assets/adaptive-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "tsconfigPaths": false
+    }
+  }
+}

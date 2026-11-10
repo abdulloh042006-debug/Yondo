@@ -8,28 +8,98 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 - The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
-000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) S3/MinIO photo adapter, (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
+000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
 00a. **Owner decision 2026-10-29 (S38): add password login** (phone + password; code only for sign-up, new device and password reset): a code per login is slow and costs money. Plan first: TZ.md amendment (owner approves; TZ says phone → OTP only), API (password-hash migration, set/change/reset endpoints, password login with rate limit and lockout, OpenAPI export), web UI (login, set password in Settings, uz/ru/en keys), tests; the verifier approves before commit (S36).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
-00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, admin bootstrap command, Docker build check of the production package.
+00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then intro animation + onboarding + video.
 0a. **Owner (S36): Telegram Gateway** — open the account at gateway.telegram.org, top up (Fragment/TON; card route unverified), put the token ONLY into the host env `YONDO_TELEGRAM_GATEWAY_TOKEN` (checklist: `docs/otp-telegram-gateway.md` §12). First real test = a code to the owner's own number (free) — **done 2026-10-28 by the S35 chat: PASS** (`docs/login-telegram-gateway.md`); still to do: a +998 number with and without Telegram; report the error text, not the token. Also check the sender name shown to the user ("Verification Codes") — the login copy `login.tg.open`/`login.tg.noCode` names that chat and it is unverified. Before go-live set `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` (default 0 = off), name Telegram on the privacy page (phone + code go to Telegram), settle the cross-border question with a lawyer.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
 1. **Owner: revoke the GitHub token pasted in chat on S10** and set up env-based auth (`gh auth login` / credential manager / SSH / `GH_TOKEN`) so pushes need no pasted token. Then read the CI result for `design/prototype` and fix any failure.
 2. **Owner/ops before publication** (`docs/legal/pre-publication-checklist.md`): operator name in Terms/Privacy; backup retention; schedule `python -m yondo_api.account.jobs` daily; then bump the document versions. Install `infra/jobs/` timer on the production host. **Next:** meeting check-in/start/end UI in web (makes SOS moderator signal reachable). **Backend decisions still open:** delivery-fee configuration schema; blocking by booking (reports by booking done in S23); profile→user id mapping (options A/B/C in `design-prototype/docs/03-decisions-and-contract.md`, unlocks customer-side report/block); CORS policy; whether to cap/stringify amounts > 2^53−1; apply `contract/openapi-v1.decisions.overlay.json` to the FastAPI models.
 3. **Staging:** none documented. Obtain URL, test-login method (staging has no dev OTP; no SMS provider), payment sandbox, approved fee policy (`docs/04-staging-readiness.md`). Then add a read-only real-API contract check and an adapter that swaps the mock for the real client.
-4. **Real clients:** web + admin exist in `apps/web` (S14); `apps/mobile` is a stub. Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
+4. **Real clients:** web + admin exist in `apps/web` (S14); `apps/mobile` = Expo app (S44, PR #13; web-only parts listed in its README). Build only if ROADMAP authorizes; reuse `design-prototype/design-system` and `prototype/src/logic.js`.
 5. **Quality gaps:** native Uzbek copy review (and native ru/en review of `apps/web/src/i18n`, S21); real iOS Safari/Android, Firefox/WebKit and screen-reader testing; logo symbol outlining, kerning, similarity/legal check; merch + presentation (P1/P2) not started.
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S41 — Fixed the `yondo-tun` axe contrast flake on /login (2026-11-05) [cloud chat, designer worker]
+## S47 — Fixed the `yondo-tun` axe contrast flake on /login (2026-11-05) [cloud chat, designer worker]
 Done: root cause = a theme change was not atomic. Switching from a light theme to `yondo-tun` snapped the page ground to ink while `.lang-opt` (color/background 0.2 s) and `.btn` (background 0.2 s; its color snaps) still faded from the old values: dark-on-dark for one transition (`button.lang-opt[lang=ru|en]` #241c16 on #111111 = 1.12:1; `.btn` #111111 on #8e3140 = 2.39:1). Only the dark theme passes through such a frame, and when the browser starts the transition decides whether axe sees it, hence intermittent. Fix: `ui/theme.tsx` turns CSS transitions off (`data-theme-switching`, `styles.css`) for every `data-theme` change until one frame with the new colours is drawn; motion animations untouched. Test `ui/theme.test.tsx`. Spec unchanged.
 Not done: the page-entrance fade (PageTransition, 0.5 s) can still be sampled mid-fade on a very slow machine in any theme (seen only with forced CPU throttling, gul/stone at opacity 0.91); the 1.7 s wait covered it in every normal run.
 Next: Next steps unchanged.
 Evidence: probe (switch at rest, axe 0–150 ms after): before 19/20 runs FAIL, after 0/20; at rest lang buttons and `.btn` 16.89:1. Web typecheck, lint, build PASS, vitest 54/54, e2e 3 runs in a row: 61/61, 61/61, 61/61 (`node e2e/run.mjs`, real API on SQLite).
+## S46 — Admin bootstrap command (2026-11-05) [cloud worker]
+Done: `python -m yondo_api.admin.bootstrap --phone … [--revoke]` (`apps/api/src/yondo_api/admin/bootstrap.py`): normalises with `normalize_uzbekistan_phone`, finds the user and adds `admin`. After CEO review: an **unknown phone is refused** (exit 1, nothing written: sign in once first; no create path), and a database error prints one masked line (exit 3, no traceback with the number). Idempotent; refuses suspended/banned/deleted; `--revoke` refuses the last admin (admin rows locked `FOR UPDATE` on PostgreSQL); `AdminAuditEvent` `admin_bootstrap`/`admin_revoke` with admin_id = the user's own id; masked phone only. Docs: `infra/deploy/README.md` "First admin" (Render Shell, DigitalOcean); DigitalOcean step 3 uses the command (sign-in first stays required). Tests: `apps/api/tests/test_admin_bootstrap.py` (10).
+Not done: Next steps 00d — the rest of the beta code gaps.
+Evidence: see the PR #14 description (verifier run on the final commit).
+Commit: this entry's commits (branch `feat/admin-bootstrap`, PR #14 to `main`).
+
+## S45 — Manual card-transfer payments for the beta (2026-11-05) [cloud chat]
+Done: owner decision "first month without a payment API: transfers to my cards, I confirm by hand; one switch to the APIs later".
+- `YONDO_PAYMENT_PROVIDER` = auto | manual | tezcheck.
+- `payments/manual.py`: checkout = `/pay/<YND-XXXX-XXXX>` with the cards (`YONDO_MANUAL_PAYMENT_CARDS`, host env only), the exact amount (booking price + configured fee) and the transfer code.
+  - `GET /payments/manual/{ref}`: the paying customer only.
+  - `GET /admin/payments/manual` and `POST /admin/payments/manual/{ref}/received`: audited, no self-confirmation, idempotent, through the webhook's event path (extracted as `apply_verified_event`; its `system_message` is now defined before the try).
+  - The webhook refuses manual events.
+- Web: `/pay/:reference` page and Admin → Payments; 26 keys in each of uz/ru/en.
+- `docs/payments-manual.md`; CLAUDE.md §7: two owner lines (government framing; manual payments, card numbers never in the repo).
+Verifier: first review REJECT. Blocking issues, all fixed with regression tests:
+- the cards were shown for cancelled or expired bookings; now only while the booking is `accepted` and not overdue;
+- the customer page said "confirmed" when the money was flagged for a refund; there is now a `state` field (open / confirmed / refund_required / closed);
+- confirming an overdue booking confirmed it; it now expires it first, so the money is flagged for a refund.
+
+Also fixed:
+- an audit row is written only when the payment is really applied;
+- a companion who is also an admin cannot confirm;
+- the webhook refuses `YND-` references;
+- settings errors hide their inputs (card numbers in logs);
+- the https host is checked.
+
+Not done: mobile shows the web `/pay` page through the browser (in-app instructions after PR #13 merges); no "not received" button (an unpaid booking expires at its start); refunds are manual.
+Next: verifier, PR; owner sets the env values on the host (list: `docs/owner-todo.md`).
+Evidence:
+- `tests/companions/test_manual_payments.py` 3 + `test_payments.py` 7 passed on PostgreSQL.
+- Web typecheck/lint PASS, vitest 53/53, build PASS.
+- Browser flow against the real API, fake cards, 5/5:
+  - the customer sees the cards and the code;
+  - another user gets 404;
+  - admin "Money received" → booking confirmed;
+  - the cards are hidden afterwards.
+- Full suite: see the PR.
+
+## S44 — Mobile app (Expo) on the owner-reviewed line (2026-11-05) [cloud chat]
+Done: `apps/mobile` = one Expo app, role modes like `apps/web` (working default; the one-app vs two-apps decision is still the owner's).
+- Screens: discovery, profile + 5-field booking, sign-in (phone + code, consent with versions), bookings + detail (companion accept/decline, cancel, payment only when `accepted` with one Idempotency-Key, 503 = unavailable), report/block via `booking_id`, SOS (112/contacts via the phone, moderator signal), settings (uz/ru/en, 1995/2026, `yondo`/`yondo-tun`).
+- The uz/ru/en dictionaries, formatting, error texts, labels and legal versions are imported from `apps/web/src` (no copies); 7 new `mobile.*` keys in all three dictionaries. Brand icons from `design-prototype/brand/logo/png`. New CI job "Mobile app typecheck and bundle".
+- Fixed during the smoke run: react-native-web 0.21 ignores `accessibilityState`, so tabs/chips/checkbox now use `role` + `aria-*` (radio groups for chips); signing out or in resets the tab stacks (another account's booking screen stayed open).
+Not done: chat, meeting check-in, reviews, favourites, push, companion studio, gifts, SOS location (web only, listed in `apps/mobile/README.md`); no real iOS/Android device run.
+Verifier: APPROVE (`94854c6`, PR #13); its non-blocking findings fixed in the next commit: a note when no web URL is set for the Terms/Privacy links, distinct accessible names for booking cards, `expo-constants` declared, signed photo URLs re-fetched after 4 minutes, the smoke fails if axe-core is missing. Known: a booking whose payment `failed` cannot be paid again on any client (web included): the server keeps one payment per booking (`uq_payment_single_booking`), and a new Idempotency-Key gets 409 `idempotency_key_conflict` (verifier, real API). Changing that is a backend/owner decision. An unreachable server at start-up shows the signed-out state while keeping the tokens.
+Next: owner merges #10 → #11 → #12 → #13 (I resolve the WORKLOG/main.py/jobs.py conflicts after each); owner decides one app vs two apps.
+Blockers: none for the code; a real-device run needs a phone with Expo Go and the API on a reachable URL.
+Evidence: mobile `tsc` PASS; `expo export --platform web` PASS; `apps/mobile/e2e/smoke.mjs` 8/8 against the real API (DEMO seed) incl. axe on 4 screens; web typecheck/lint PASS, vitest 53/53, build PASS.
+Commit: `94854c6` (app) + the follow-up commit with the verifier fixes (both on `port/mobile-app`).
+
+## S43 — Gifts/vendor gaps: admin moderation list, vendor delete, audited publish (2026-11-05) [cloud chat]
+Done: `GET /gifts/admin/products` (admin; incl. unpublished and sold-out; `published=`, `vendor_id=` filters) so an admin can find products to publish; `DELETE /vendor/products/{id}` (own, never-ordered products only; cart lines go with it; ordered = 409 `gift_product_in_use`, unpublish instead); admin publish/unpublish write an `AdminAuditEvent` (target = vendor user id, reason `gift_product:<id>`). Vendor orders/earnings stay 503 (no gift order or payout rules).
+Not done (owner decision, asked): vendor profile/shop and approval before publishing, product photos in beta. Web screens for vendor/admin gifts: NOT IMPLEMENTED.
+Next: verifier review, then a PR to `main` (owner merges).
+Evidence: `tests/companions/test_gift_vendor_gaps.py` 2 passed (SQLite + PostgreSQL); gift tests 31 passed on PostgreSQL; full suite on PostgreSQL 347 passed; `export_openapi.py --check` PASS; web typecheck PASS.
+
+## S42 — ID document + selfie verification, admin review in beta (2026-11-05) [cloud chat]
+Done: `verification/` (table `identity_verifications`, migration 0018): user `POST /verification/me` (document type), raw-image `/me/document` and `/me/selfie` (re-encoded, EXIF stripped, private keys), `/me/submit`; admin queue `GET /admin/verifications` (presigned 5-minute image URLs) and `POST /admin/verifications/{id}/decision` (audited, no self-review). `DatabaseIdentityEligibility` is now the default identity gate (owner decision: in beta an admin approves by hand). Account erasure deletes the images.
+Verifier: first review REJECT, blocking = erasure without storage cleared the keys while the objects stayed; fixed (a key is cleared only after its object is deleted; test). Also fixed: failed-save cleanup checks the row in a fresh transaction before deleting the upload; the audit reason is `identity_verification:<id>`, not the note (audit rows outlive erasure); docstring no longer claims revocation.
+Not done: revoking a verified companion (no endpoint); image retention after a decision and audit of image views (owner decision); web screens for this flow.
+Next: re-review by the verifier, then a PR to `main` (owner merges). The hourly job passes real storage only with the S3 PR (#10).
+Evidence: see the PR description (focused tests, full suite on SQLite and PostgreSQL, migration up/down).
+
+## S41 — S3-compatible photo storage adapter (2026-11-05) [cloud chat]
+Done: `integrations/s3.py` (dependency-free AWS SigV4: signed PUT/DELETE, presigned 5-minute GET, path or virtual-hosted style, separate public origin), wired by `YONDO_STORAGE_BACKEND=s3` in `integrations.s3.build_object_storage` (API and the hourly `python -m yondo_api.jobs`, so scheduled erasure deletes the objects); default `disabled` keeps uploads at 503; an injected storage (demo `MemoryStorage`, tests) still wins. Env examples and both deploy READMEs updated.
+Not done: a run against a real bucket (no Docker/MinIO in the cloud sandbox; the MinIO binary URL answers 410).
+Verifier (independent agent): first review REJECT, blocking = the hourly job erased accounts with storage=None, so photos stayed in the bucket; fixed (job builds the same storage, test added). Also fixed: signed Host = what httpx sends (no user-info/default port); staging/production need an https public storage origin. Re-review: see the PR.
+Next: owner creates a private bucket + keys; port (2) ID + selfie verification.
+Evidence: `tests/test_s3_storage.py` 4 passed (AWS reference presign vector; signed path-style PUT/DELETE; adapter selection); header signatures compared with botocore's `S3SigV4Auth` at the same timestamp: MATCH for 3 requests (space and `+=` in keys), scratch-only, botocore not added as a dependency; backend 340 passed + 9 skipped (SQLite); ruff PASS; OpenAPI check PASS.
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).
