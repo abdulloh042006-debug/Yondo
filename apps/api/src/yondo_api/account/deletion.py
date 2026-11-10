@@ -35,6 +35,7 @@ from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
 from yondo_api.safety.models import TrustedContact, UserBlock
+from yondo_api.verification.service import erase_verification_images
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ async def erase_account(
 ) -> None:
     """De-identify one account in the current transaction (the caller commits)."""
     uid = user.id
+    await erase_verification_images(session, uid, storage, now)
     profile_ids = list(await session.scalars(_profile_ids(uid)))
     if profile_ids:
         photos = list(

@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     storage_access_key: str = ''
     storage_secret_key: str = Field(default='', repr=False)
     storage_region: str = 'us-east-1'
+    # 'disabled' keeps photo/verification uploads at 503 until private storage is configured.
+    storage_backend: Literal['disabled', 's3'] = 'disabled'
+    storage_path_style: bool = True
+    # Origin clients use to fetch presigned URLs (defaults to storage_endpoint).
+    storage_public_endpoint: str | None = None
     fcm_project_id: str = ''
     auth_otp_pepper: SecretStr = SecretStr('development-only-change-me')
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
@@ -56,6 +61,11 @@ class Settings(BaseSettings):
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
     companion_photo_max_bytes: int = Field(default=10_485_760, gt=0)
+    # PROPOSAL, not an owner decision: days to keep ID/selfie images after an admin decision.
+    # 0 = delete at the decision. The jobs runner removes older ones when this is > 0.
+    identity_image_retention_days: int = Field(default=0, ge=0)
+    # Technical abuse cap on ID submissions per user (not a business rule).
+    identity_max_submissions_per_user: int = Field(default=5, gt=0)
     companion_photo_max_pixels: int = Field(default=25_000_000, gt=0)
     companion_service_codes: tuple[str, ...] = (
         'coffee',
@@ -109,6 +119,32 @@ class Settings(BaseSettings):
             return self
         if not self.telegram_gateway_base_url.startswith('https://'):
             raise ValueError('YONDO_TELEGRAM_GATEWAY_BASE_URL must be an https URL')
+        return self
+
+    @model_validator(mode='after')
+    def validate_object_storage(self) -> Settings:
+        if self.storage_backend != 's3':
+            return self
+        from urllib.parse import urlsplit
+
+        from yondo_api.integrations.s3 import is_ip_or_localhost
+
+        if not self.storage_path_style and is_ip_or_localhost(
+            urlsplit(self.storage_endpoint).hostname or ''
+        ):
+            raise ValueError('YONDO_STORAGE_PATH_STYLE=false needs a DNS endpoint, not an IP')
+        if self.environment in {'staging', 'production'}:
+            # Photo/ID bytes and presigned URLs travel over these origins: https only.
+            endpoints = {
+                'YONDO_STORAGE_ENDPOINT': self.storage_endpoint,
+                'YONDO_STORAGE_PUBLIC_ENDPOINT': self.storage_public_endpoint
+                or self.storage_endpoint,
+            }
+            for name, url in endpoints.items():
+                if not url.startswith('https://'):
+                    raise ValueError(f'{name} must be an https URL')
+            if not (self.storage_bucket and self.storage_access_key and self.storage_secret_key):
+                raise ValueError('S3 storage needs bucket, access key and secret key')
         return self
 
     @model_validator(mode='after')
