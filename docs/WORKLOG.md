@@ -25,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S48 (docs) — Password-login design plan (2026-11-05) [cloud chat, designer worker]
+Done: `docs/auth-password-login.md`: TZ.md amendment text (TZ.md not edited), flows, API, migration, scrypt hashing (stdlib, no new dependency), per-phone and per-IP limits, web UI + i18n drafts (uz/ru/en), test plan, 7 owner questions (each with a *taklif*). Facts cite the code (`auth/service.py`, `auth/router.py`, `auth/providers.py`, `models/*`, `account/deletion.py`).
+Not done: no code. Waits for the owner's answers to Q1–Q7.
+Next: the owner answers §8, then backend (migration 0018, endpoints, tests), then web.
+Evidence: docs only; facts checked against the code by the verifier.
 ## S47 — Fixed the `yondo-tun` axe contrast flake on /login (2026-11-05) [cloud chat, designer worker]
 Done: root cause = a theme change was not atomic. Switching from a light theme to `yondo-tun` snapped the page ground to ink while `.lang-opt` (color/background 0.2 s) and `.btn` (background 0.2 s; its color snaps) still faded from the old values: dark-on-dark for one transition (`button.lang-opt[lang=ru|en]` #241c16 on #111111 = 1.12:1; `.btn` #111111 on #8e3140 = 2.39:1). Only the dark theme passes through such a frame, and when the browser starts the transition decides whether axe sees it, hence intermittent. Fix: `ui/theme.tsx` turns CSS transitions off (`data-theme-switching`, `styles.css`) for every `data-theme` change until one frame with the new colours is drawn; motion animations untouched. Test `ui/theme.test.tsx`. Spec unchanged.
 Not done: the page-entrance fade (PageTransition, 0.5 s) can still be sampled mid-fade on a very slow machine in any theme (seen only with forced CPU throttling, gul/stone at opacity 0.91); the 1.7 s wait covered it in every normal run.
