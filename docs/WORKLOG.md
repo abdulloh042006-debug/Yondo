@@ -25,6 +25,29 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S50 — Open PRs merged into main; branch audit (2026-11-10/11) [cloud chat, yondo-43]
+Done:
+- Owner's instruction (yondo-43, 2026-11-06): merge the PRs if all is well, check every branch, add or remove.
+- Merged into `main` in order: #10, #11, #12, #13, #16, #14, #15, #17, #18, #21 (product decisions). Merge commits only, no force-push.
+  - Conflicts were resolved in one merge commit per PR branch; an independent verifier APPROVED them (remerge-diff, scope, secrets).
+  - Before merging: SQLite 381 passed / 9 skipped, PostgreSQL 390 passed, alembic head 0018 + check, web typecheck/lint/vitest 54/build, mobile tsc. CI green on every PR.
+  - `main` 46b6d3a has the same tree as the verified chain.
+- This PR adds two small unmerged branches:
+  - `codex/payment-webhook-concurrency-audit` 8044aa0: a PostgreSQL test for concurrent duplicate webhooks, now also in CI.
+  - `codex/phase6-postgres-validation-2026-10-17` ef9d05c: a validation record.
+- CLAUDE.md: ona now holds the owner's permission.
+Not done (BLOCKED):
+- Deleting branches and pushing archive tags: the session's git proxy refuses both (HTTP 403). The owner deletes them on GitHub.
+- Fully merged, safe to delete: `abdulloh042006-debug-development-infrastructure` 000fa41, `codex/manual-gifts-click-test` 27fdb07, `codex/mvp-safety-reconciliation` 1920505, `codex/notification-integration` 5fe6c18, `codex/phases-16-20` 70dc7aa, `codex/phases-7-10` 527dc0c, `docs/password-login-plan` 3f8c9a5, `docs/product-decisions` 852da87, `feat/admin-bootstrap` 5fba15a, `feat/agent-company` bcaae43, `feat/manual-payments` 5849c45, `fix/login-contrast-yondo-tun` b0e88c5, `port/gifts-vendor` 6733a0d, `port/identity-verification` c688854, `port/mobile-app` d1d3c39.
+- Also merged after this PR: the two branches above.
+- Keep: `main`, `design/prototype` (Render deploys it), `ccr-098c28d7-jr8exe` (yondo-43), and the branches of open PRs #19, #20, #22, #23.
+Next:
+- Open PRs #19, #20, #22 and #23 conflict with main only in docs/WORKLOG.md. Their own sessions merge origin/main, then yondo-43 merges.
+- Unmerged work to port in small PRs (do not delete these branches):
+  - `codex/scheduled-meeting-reminders` fee34c9: 24h/1h reminder worker; its migration must be renumbered after 0018.
+  - `ccr-15294129-n60ucy` b09c04b: S39, unverified, 223 files. Opening animation, warm skin, onboarding, cancellation tracking and abuse guards, companion stories.
+Evidence: test_payments.py on PostgreSQL 8 passed; ci.yml YAML valid; ruff PASS.
+
 ## S49 — Owner's approved product decisions recorded (2026-11-06) [cloud chat]
 Done:
 - `docs/product-decisions.md` is now the source of truth.
