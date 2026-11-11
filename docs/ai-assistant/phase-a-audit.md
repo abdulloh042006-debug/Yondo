@@ -3,7 +3,7 @@
 > **Qisqacha (egasi uchun):**
 > 1. AI yordamchi uchun mavjud backend (FastAPI, PostgreSQL, Redis, rollar, audit jurnali) qayta ishlatiladi; Internal rejim faqat server tomonidagi admin roli bilan ochiladi (alohida "dasturchi" roli hozircha yo‘q).
 > 2. Bilim bazasi faqat tasdiqlangan hujjatlardan iborat bo‘ladi; hujjatlarni mustaqil tekshiruvdan keyin CEO tasdiqlaydi. Boshlang‘ich manba — Yordam sahifasidagi 9 ta FAQ.
-> 3. v1 da tashqi AI provayder yo‘q: yordamchi tasdiqlangan hujjatlardan eng mos javobni so‘zma-so‘z manbasi bilan qaytaradi, topilmasa — Yordam sahifasiga yo‘naltiradi. Hech narsa serverdan tashqariga chiqmaydi, bepul. Savol-javoblar hisobga bog‘lanib, hisob o‘chirilguncha saqlanadi (Maxfiylik sahifasida ochiq yoziladi).
+> 3. v1 da tashqi AI provayder yo‘q: yordamchi tasdiqlangan hujjatlardan eng mos javobni so‘zma-so‘z manbasi bilan qaytaradi, topilmasa — Yordam sahifasiga yo‘naltiradi. Hech narsa serverdan tashqariga chiqmaydi, bepul. Savol-javoblar hisobga bog‘lanib, hisob o‘chirilguncha saqlanadi; ro‘yxatdan o‘tmaganlarniki IP va identifikatorsiz 90 kun saqlanib, o‘chiriladi (Maxfiylik sahifasida ochiq yoziladi).
 > 4. Mehmonlar ham (ro‘yxatdan o‘tmasdan) foydalana oladi, IP bo‘yicha cheklov bilan; tugma har sahifada o‘ng pastda va Yordam sahifasida; javob foydalanuvchi tanlagan alifboda (1995 yoki 2026).
 > 5. bymuslim ishlatilmaydi. AI provayder (masalan Gemini, Groq, Cloudflare — tekshirilmagan) keyinroq ixtiyoriy bosqich sifatida, shartlari tekshirilgandan so‘ng ko‘riladi (9-bo‘lim).
 
@@ -22,7 +22,7 @@ Spec note: the spec says "do not start discovery/booking". That line is outdated
 | Redis | `main.py:87` (`redis.from_url`, `app.state.redis`), used by chat pub/sub (`chat/service.py`, `chat/router.py`), with a health check in `main.py:101`. Without Redis the app still runs with no-op hooks. | Use it for the answer cache and counters. Redis is not configured in every deploy, so the cache must be optional. |
 | Settings pattern | `config.py`: `pydantic-settings`, `env_prefix='YONDO_'`, secrets as `SecretStr`, validators that reject dev defaults outside development. | Add `YONDO_AI_PROVIDER`, `YONDO_AI_BASE_URL`, `YONDO_AI_API_KEY: SecretStr`, limits, and a kill switch `YONDO_AI_ENABLED=false` by default. |
 | Errors | `api/errors.py`: `ApplicationError(code, message, status)` rendered as a problem response. Clients branch on `code` (CLAUDE.md §4). | New codes: `assistant_unavailable` 503, `assistant_rate_limited` 429, `assistant_forbidden` 403. |
-| Audit log | `admin/models.py::AdminAuditEvent` (`admin_audit_events`: admin_id, target_id, action, reason). It is user-targeted. | Not a fit for question logs (it needs a `target_id` user). Add a separate `assistant_usage` table (no message text by default, see §3). |
+| Audit log | `admin/models.py::AdminAuditEvent` (`admin_audit_events`: admin_id, target_id, action, reason). It is user-targeted. | Not a fit for question logs (it needs a `target_id` user). Add a separate table for assistant messages (retention in §9 Q6). |
 | i18n | The server returns English messages and the client translates by `code` (`apps/web/src/i18n/{uz,ru,en}.ts`). User locale lives in `users.ui_locale`: `uz-Latn-1995`, `uz-Latn-2026`, `ru` or `en` (`auth/schemas.py:48`, `models/user.py`). The two Uzbek alphabets are folded for search in `discovery/textfold.py`. | Answer language = request locale, falling back to `ui_locale`. Reuse `textfold` to normalise uz queries before retrieval. |
 | Request context | `api/middleware.py::RequestContextMiddleware` | Use its request id to tie usage rows to logs. |
 | Logging | `logging.py` (structlog JSON, no redaction processor) | Add a processor that drops prompt/answer/context keys (§3). |
@@ -74,7 +74,7 @@ Enforcement (taklif):
    - the user is told that personal data is removed;
    - question length is capped (taklif: 1 000 characters).
 3. **Output filter:** the same masks run on the answer, and a citation is required (§4).
-4. **Logs:** `assistant_usage` stores user_id, mode, locale, doc ids, token counts, latency and cache hit. **No question or answer text** unless the owner enables sampled retention (Q6). A structlog processor drops `question`/`answer`/`context`.
+4. **Logs:** `assistant_usage` stores user_id, mode, locale, doc ids, token counts, latency and cache hit. Question and answer text is kept only in the assistant messages table (§9 Q6), never in application logs: a structlog processor drops `question`/`answer`/`context`.
 5. **Account deletion** (`account/deletion.py`) must also delete `assistant_usage` rows for that user (added to its delete list).
 
 ## 4. Prompt-injection risks specific to Yondo
@@ -88,7 +88,7 @@ Enforcement (taklif):
 | Role escalation via cache | An Internal answer is cached and served to a Public user | The cache key includes mode + audience + locale + KB version. |
 | Safety misinformation | "Did SOS notify the police?" | A pinned approved answer: SOS is recorded for manual review only, no emergency service is contacted (`safety/router.py:262`), plus the 112 advice from the Help page. |
 | Dating/escort framing | Requests for romantic or escort services | A refusal template: Yondo is a companion service for conversation and walks, not dating/escort (CLAUDE.md §7). |
-| Provider-side | An unverified third party alters or stores prompts | §6 tests plus Q1/Q2. No personal data is ever sent (§3). |
+| Provider-side | An unverified third party alters or stores prompts | Not applicable in v1: no external provider (§9 Q1). For the optional provider phase: §6 tests, and no personal data is ever sent (§3). |
 
 ## 5. Retrieval: PostgreSQL full-text vs pgvector
 
@@ -137,10 +137,10 @@ Risks:
 Owner questions (each has a *taklif*):
 - **Q1** Is an unverified third-party provider acceptable for **Public** mode? *taklif:* Internal mode only until written terms exist (§6 #12).
 - **Q2** Budget: monthly cap and per-user daily limit? *taklif:* a hard monthly cap in settings; 20 questions/day per user (Public), 100 (Internal).
-- **Q3** Can anonymous visitors use Public mode? *taklif:* no, sign-in required.
+- **Q3** Can anonymous visitors use Public mode? (Decided in §9: yes, with a per-IP rate limit.)
 - **Q4** Who is a "developer" for Internal mode? *taklif:* admins only in v1; a separate role later via an admin-only grant.
 - **Q5** Who approves knowledge documents (status → approved)? *taklif:* the owner, through a PR that changes front-matter.
-- **Q6** May question/answer text be retained? *taklif:* no text by default; if needed, sampled with a 30-day TTL, Internal mode only.
+- **Q6** May question/answer text be retained? (Decided in §9: stored with the account until account deletion; anonymous visitors' questions and answers are kept 90 days.)
 - **Q7** Where does the assistant appear in the web app? *taklif:* the Help page (Public) and the admin console (Internal); no floating chat on every page.
 - **Q8** Should the assistant answer in Uzbek 1995 or 2026 spelling? *taklif:* follow the user's `ui_locale`.
 
@@ -149,14 +149,14 @@ Owner questions (each has a *taklif*):
 | Phase | Output | Size |
 |---|---|---|
 | B — KB schema | `knowledge/{public,internal,shared}/` with YAML front-matter (id, title, audience, languages, category, status, version, source, updated_at); a validator script and CI check; seed public FAQ (uz/ru/en) exported from i18n `help.*`; ADR | M |
-| C — Indexer + retrieval | `assistant_chunks` table (tsvector per language, trigram index), re-index only when a doc's hash changes, top-k + score threshold, "not found" path | M |
-| D — Permission modes | `/assistant/public` (any signed-in active user) and `/assistant/internal` (`Admin` dependency); audience filter before retrieval; tests for cross-mode leaks | S |
-| E — Provider adapter | `AIProvider` protocol, Fake/Unconfigured/ByMuslim adapters, contract tests §6 (live tests opt-in, env-gated), timeouts, kill switch | M |
-| F — API, cache, monitoring | OpenAPI ops, Redis cache (key = mode+audience+locale+KB version+normalised question), per-user/IP limits, `assistant_usage` table, latency/token metrics, deletion hook | M |
+| C — Indexer + retrieval answerer | `assistant_chunks` table (tsvector per language, trigram index), re-index only when a doc's hash changes, top-k + score threshold, verbatim answer with its source, "not found → Help page" path (§9 Q1) | L |
+| D — Permission modes | `/assistant/public` (anonymous or signed-in, per-IP limit; §9 Q3) and `/assistant/internal` (`Admin` dependency); audience filter before retrieval; tests for cross-mode leaks | S |
+| E — Provider adapter (**optional, deferred**, §9 Q1) | `AIProvider` protocol, Fake/Unconfigured adapters plus a provider chosen later, contract tests §6 (live tests opt-in, env-gated), timeouts, kill switch | M |
+| F — API, cache, monitoring | OpenAPI ops, Redis cache (key = mode+audience+locale+KB version+normalised question), per-user/IP limits, assistant messages table (§9 Q6), 90-day job for anonymous rows, latency metrics, deletion hook | M |
 | G — Security, regression, multilingual | Injection suite (§4), PII-redaction tests (§3), eval set ~60 questions × 3 languages with expected citations, "not found" cases for fee/refund/cancellation | L |
 | H — Docs and UI | Help-page widget + admin panel (i18n keys, a11y, brand rules), runbook, owner guide for approving docs | M |
 
-Dependencies: E's live tests and any public launch wait for Q1/Q2. B–D and F–G can run with `FakeProvider`.
+Dependencies: superseded by §9. v1 has no provider, so phase E is optional and deferred, and B–D and F–H need no provider.
 
 ## 9. Decisions (2026-11-10)
 
@@ -169,7 +169,7 @@ The owner answered Q1–Q8 in the CEO session and left the smaller ones to the C
 | Q3 | Anonymous access: **YES**, with a per-IP rate limit. | owner |
 | Q4 | Developer role: **not now**. Internal mode = the existing `Admin` dependency (`companions/dependencies.py:34`). | CEO |
 | Q5 | Knowledge docs are approved by **the CEO, after an independent verifier review**. | CEO (delegated by owner) |
-| Q6 | Retention: assistant questions and answers are **stored, linked to the account, until account deletion**. They are then erased within the existing 30-day deletion rule (`account/deletion.py`). The Privacy page must say so plainly. Never tell users this data is not stored. | owner |
+| Q6 | Retention: assistant questions and answers are **stored, linked to the account, until account deletion**. They are then erased within the existing 30-day deletion rule (`account/deletion.py`). The Privacy page must say so plainly. Never tell users this data is not stored. **Anonymous visitors:** questions and answers are kept **90 days**, stored **without an IP address or any identifier**, then deleted. Rate-limit counters stay in Redis only, with a short TTL. The Privacy page says so. | owner; anonymous part by CEO (delegated) |
 | Q7 | UI: a **visible floating button at the bottom right of every page**, plus an entry on the Help page. | CEO (delegated by owner) |
 | Q8 | Uzbek spelling: answers follow the **user's chosen alphabet (1995 or 2026)**, the same as the UI. | CEO |
 
@@ -178,6 +178,6 @@ What the plan now needs:
 - **Phase C:** the retrieval answerer, covering indexing, scoring, the threshold, a verbatim answer with its source, and the "not found → Help page" reply. Size M → L.
 - **Phase D:** Public mode accepts anonymous callers (per-IP limit) as well as signed-in ones.
 - **Phase E (provider adapter + contract tests):** **optional and deferred.** It starts only after a new owner decision on a provider and budget.
-- **Phase F:** API, cache and limits. An `assistant_messages` table holds question, answer, source doc ids and locale, linked to the user (nullable for anonymous visitors). It is kept until account deletion and added to the delete list in `account/deletion.py`. Retention for anonymous questions is not decided: **owner question**.
+- **Phase F:** API, cache and limits. An `assistant_messages` table holds question, answer, source doc ids and locale, linked to the user (nullable for anonymous visitors). It is kept until account deletion and added to the delete list in `account/deletion.py`. Anonymous visitors' questions and answers are kept 90 days, with no IP address or other identifier, and then deleted by a scheduled job. Rate-limit counters live in Redis only, with a short TTL.
 - **Phase G:** the injection suite shrinks, because nothing is generated. Tests focus on cross-mode leaks, "not found" behaviour and multilingual matching.
 - **Phase H:** a floating button plus a Help entry, and a Privacy-page update. The Privacy text is a legal draft, so the owner reviews the change.
