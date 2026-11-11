@@ -26,6 +26,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S51 — AI assistant Phase B: knowledge-base schema (2026-11-10) [cloud chat, backend worker]
+Done: `knowledge/{public,internal,shared}/` + README (TOML front-matter: id, title, audience, languages, category, status, version, source, updated_at); validator `apps/api/src/yondo_api/assistant/kb.py` (`python -m yondo_api.assistant.kb --check`; only `approved` is indexable; audience must equal folder; one `## uz|ru|en` section per language); seed = 9 Help FAQ docs in `knowledge/public/faq/` verbatim from `apps/web/src/i18n` (status `review`); tests `apps/api/tests/test_assistant_kb.py` (27, incl. verbatim check vs i18n).
+Not done: retrieval, provider, endpoints (phases C–F). config.py/main.py/jobs.py untouched.
+Next: CEO approves the FAQ docs (status → approved) after a verifier review; phase C. Note: `DEFAULT_ROOT` assumes a repo checkout (editable install, as in CI); the Docker image needs `--root` or a setting in phase C.
+Blockers: none.
+Evidence: pytest 363 passed + 9 skipped (SQLite; PostgreSQL not run, no DB change), new tests 27/27, `kb --check` 9 valid / 0 errors / indexable 0, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/ai-kb-schema).
 ## S50 — AI assistant Phase A audit + owner/CEO decisions (2026-11-10/11) [cloud chat, researcher worker]
 Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
 Not done: no code; provider unverified.
