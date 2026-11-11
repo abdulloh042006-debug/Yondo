@@ -25,7 +25,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S42 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
+## S51 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
 Done: 30 s 9:16 reel from owner script 2 (stitch/match-cut chain, kinetic words SUHBAT/SAYR/SHAHAR→KASHF, real `apps/web` screens, objects assemble the logo); breakdown `marketing/ad-video/scripts/02-bir-harakat.md`, sources `marketing/ad-video/reel2/`.
 Not done: VO — edge-tts blocked (WebSocket not passed by the sandbox proxy), other free TTS needs torch; kinetic type carries the lines. Media not committed; mp4 sent to the owner.
 Evidence: audio-ears on the final mp4: −13.9 LUFS, TP −2.5 dBTP, 0 clipped, hits within ±2 frames of most cuts.
