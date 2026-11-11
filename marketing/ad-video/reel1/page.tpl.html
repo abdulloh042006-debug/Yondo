@@ -1,0 +1,466 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Reel 1 "Shaharda yolg'iz emassan": deterministic render(t), 1080x1920. Built by build_reel.py (do not edit page.html). -->
+<link rel="stylesheet" href="{{FONTS}}/manrope/500.css"><link rel="stylesheet" href="{{FONTS}}/manrope/700.css">
+<link rel="stylesheet" href="{{FONTS}}/manrope/800.css"><link rel="stylesheet" href="{{FONTS}}/space-grotesk/700.css">
+<style>
+:root{--ink:#111111;--paper:#F5F2EC;--carrot:#E8501A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--ink)}
+#stage{position:absolute;inset:0;overflow:hidden;font-family:Manrope,sans-serif}
+#bg{position:absolute;inset:0}
+#sv{position:absolute;inset:0;width:1080px;height:1920px}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+.txt{position:absolute;left:70px;right:70px;text-align:center;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+.txt .w{display:inline-block;white-space:pre}
+#phone{position:absolute;left:238px;top:432px;width:604px;height:1256px;border-radius:84px;background:#111;
+  box-shadow:0 60px 120px rgba(17,17,17,.35),inset 0 0 0 3px #2a2a2a;transform-style:preserve-3d}
+#screen{position:absolute;left:22px;top:22px;width:560px;height:1212px;border-radius:64px;overflow:hidden;background:var(--paper)}
+#screen img{position:absolute;left:0;top:0;width:560px;height:1212px}
+#notch{position:absolute;left:232px;top:40px;width:140px;height:38px;border-radius:20px;background:#111;z-index:3}
+.pop{position:absolute;background-repeat:no-repeat;border-radius:28px;box-shadow:0 40px 80px rgba(17,17,17,.28),0 0 0 2px rgba(17,17,17,.06)}
+.pill{position:absolute;padding:14px 30px;border-radius:999px;background:var(--ink);color:var(--paper);font:700 36px Manrope;white-space:nowrap}
+.card{position:absolute;padding:22px 34px;border-radius:26px;background:var(--paper);color:var(--ink);font:800 44px Manrope;
+  box-shadow:0 30px 60px rgba(17,17,17,.22);border:3px solid var(--ink);white-space:nowrap}
+.card small{display:block;font:600 28px Manrope;opacity:.7;margin-top:4px}
+.digit{position:absolute;font:700 230px 'Space Grotesk';color:var(--paper);width:150px;text-align:center;line-height:1}
+</style></head><body><div id="stage">
+<div id="bg"></div>
+<svg id="sv" viewBox="0 0 1080 1920"></svg>
+<div id="phoneWrap" class="abs" style="width:1080px;height:1920px;perspective:2400px">
+  <div id="phone"><div id="notch"></div><div id="screen"></div></div>
+</div>
+<div id="pops" class="abs" style="width:1080px;height:1920px"></div>
+<div id="digits" class="abs" style="width:1080px;height:1920px;perspective:1600px"></div>
+<div id="texts" class="abs" style="width:1080px;height:1920px"></div>
+<svg id="fx" class="abs" viewBox="0 0 1080 1920" style="width:1080px;height:1920px"></svg>
+</div>
+<script>
+const SHOTS = '{{SHOTS}}';
+const WORDMARK = `{{WORDMARK}}`;
+const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
+window.TOTAL = 34;
+const $ = (id) => document.getElementById(id);
+const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eo = (k) => 1 - Math.pow(1 - cl(k), 3);              // ease out cubic
+const eio = (k) => { k = cl(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+const back = (k) => { k = cl(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+const P = (t, a, b) => cl((t - a) / (b - a));                 // linear progress
+const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+const mix = (c1, c2, k) => { const a = hex(c1), b = hex(c2); return 'rgb(' + a.map((v, i) => Math.round(lerp(v, b[i], cl(k)))).join(',') + ')'; };
+// deterministic pseudo-random
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/* ---------- line-art primitives (SVG strings) ---------- */
+// a person: x = feet centre, y = ground, s = scale, ph = walk phase (radians), walk = 0..1, col = stroke, fill = head fill
+function person(x, y, s, ph, walk, col, o = {}) {
+  const sw = (o.sw || 7) / s; const L = Math.sin(ph) * 22 * walk, A = Math.sin(ph) * 18 * walk;
+  const bob = Math.abs(Math.cos(ph)) * 4 * walk;
+  const sit = o.sit;
+  let g = `<g transform="translate(${x},${y - bob * s}) scale(${s})" stroke="${col}" stroke-width="${sw}" fill="none" stroke-linecap="round" stroke-linejoin="round">`;
+  if (sit) {
+    g += `<path d="M0 -150 L0 -70 L${sit * 46} -70 L${sit * 46} 0"/>`;
+    g += `<path d="M0 -130 L${sit * 30} -95 L${sit * 52} -100"/>`;
+  } else {
+    g += `<path d="M0 -150 L0 -70"/><path d="M0 -70 L${-L} 0"/><path d="M0 -70 L${L} 0"/>`;
+    g += `<path d="M0 -140 L${-A - 4} -88"/><path d="M0 -140 L${A + 4} -88"/>`;
+  }
+  g += `<circle cx="0" cy="-178" r="24" fill="${o.head || 'none'}"/></g>`;
+  return g;
+}
+function bubble(x, y, w, h, col, fill, tail = -1, sw = 6) {
+  return `<g stroke="${col}" stroke-width="${sw}" fill="${fill}" stroke-linejoin="round"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2.4}"/>` +
+    `<path d="M${x + w / 2 + tail * w * .25} ${y + h} l${tail * 18} 34 l${-tail * 34} -34" fill="${fill}"/></g>`;
+}
+function tree(x, y, s, col) {
+  return `<g stroke="${col}" stroke-width="6" fill="none" stroke-linecap="round"><path d="M${x} ${y} V${y - 120 * s}"/><circle cx="${x}" cy="${y - 170 * s}" r="${70 * s}"/><path d="M${x} ${y - 90 * s} l${-24 * s} ${-24 * s}"/></g>`;
+}
+function lamp(x, y, col, on) {
+  return `<g stroke="${col}" stroke-width="6" fill="none" stroke-linecap="round"><path d="M${x} ${y} V${y - 260}"/><path d="M${x} ${y - 260} q0 -20 22 -20"/>` +
+    `<circle cx="${x + 26}" cy="${y - 262}" r="12" fill="${on ? CAR : 'none'}" stroke="${on ? CAR : col}"/></g>`;
+}
+function bench(x, y, col) {
+  return `<g stroke="${col}" stroke-width="7" fill="none" stroke-linecap="round"><path d="M${x - 150} ${y - 70} H${x + 150}"/><path d="M${x - 150} ${y - 130} H${x + 150}"/>` +
+    `<path d="M${x - 130} ${y - 70} V${y}"/><path d="M${x + 130} ${y - 70} V${y}"/><path d="M${x - 140} ${y - 130} V${y - 70}"/><path d="M${x + 140} ${y - 130} V${y - 70}"/></g>`;
+}
+// Tashkent-like skyline (TV tower, dome, blocks); lit = 0..1 share of carrot windows
+function skyline(y, col, lit, sc = 1, seed = 1) {
+  let g = `<g stroke="${col}" stroke-width="5" fill="none" stroke-linejoin="round">`;
+  const B = [[-20, 160, 260], [150, 120, 380], [280, 150, 300], [700, 140, 340], [850, 110, 450], [970, 140, 280]];
+  let wi = 0;
+  for (const [bx, bw, bh] of B) {
+    g += `<rect x="${bx}" y="${y - bh * sc}" width="${bw}" height="${bh * sc}"/>`;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++) {
+      wi++; const on = rnd(wi * 7 + seed) < lit;
+      g += `<rect x="${bx + 24 + c * (bw / 2 - 6)}" y="${y - bh * sc + 30 + r * 52 * sc}" width="22" height="26" stroke-width="3" ${on ? `fill="${CAR}" stroke="${CAR}"` : ''}/>`;
+    }
+  }
+  // dome building + minarets
+  g += `<path d="M440 ${y} V${y - 150 * sc} H640 V${y}"/><path d="M450 ${y - 150 * sc} Q540 ${y - 300 * sc} 630 ${y - 150 * sc}"/>`;
+  g += `<path d="M420 ${y} V${y - 260 * sc}"/><path d="M660 ${y} V${y - 260 * sc}"/><circle cx="420" cy="${y - 272 * sc}" r="10"/><circle cx="660" cy="${y - 272 * sc}" r="10"/>`;
+  // TV tower
+  g += `<path d="M760 ${y - 340 * sc} L790 ${y - 720 * sc} L820 ${y - 340 * sc}"/><circle cx="790" cy="${y - 560 * sc}" r="22"/><path d="M790 ${y - 720 * sc} V${y - 800 * sc}"/>`;
+  g += `<path d="M-20 ${y} H1100"/></g>`;
+  return g;
+}
+function phoneOutline(cx, cy, w, h, col, sw = 6) {
+  return `<g stroke="${col}" stroke-width="${sw}" fill="none"><rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="${w * .14}"/>` +
+    `<rect x="${cx - 50}" y="${cy - h / 2 + 22}" width="100" height="22" rx="11" fill="${col}"/></g>`;
+}
+
+/* ---------- kinetic text ---------- */
+const TXT = {};
+function text(key, str, t, a, b, o = {}) {
+  let el = TXT[key];
+  if (!el) {
+    el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
+    el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
+    el._w = [...el.querySelectorAll('.w')];
+  }
+  const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) + 'px'; el.style.color = o.col || INK;
+  el.style.fontWeight = o.weight || 800;
+  const st = o.stagger || .07, dur = o.dur || .45, out = o.out ?? .3;
+  el._w.forEach((w, i) => {
+    const k = eo(P(t, a + i * st, a + i * st + dur)); const q = out ? eio(P(t, b - out, b)) : 0;
+    const mode = o.mode || 'up';
+    let tr = mode === 'up' ? `translateY(${(1 - k) * 60 - q * 40}px)` : mode === 'scale' ? `scale(${lerp(1.8, 1, k) * (1 - q * .3)})` : `translateX(${(1 - k) * 90}px)`;
+    w.style.transform = tr; w.style.opacity = k * (1 - q); w.style.filter = `blur(${(1 - k) * 10 + q * 8}px)`;
+  });
+  return el;
+}
+function hideTexts(except) { for (const k in TXT) if (!except.includes(k)) TXT[k].style.display = 'none'; }
+
+/* ---------- phone screens (real apps/web captures, yondo theme) ---------- */
+const S = 560 / 975;                     // screenshot px -> screen px
+const SHOT = ['m-list-1', 'm-list-2', 'm-profile', 'm-profile-services', 'm-booking-dialog', 'm-bookings'];
+const IMG = {};
+for (const n of SHOT) { const im = new Image(); im.src = `${SHOTS}/${n}.png`; im.style.opacity = 0; $('screen').appendChild(im); IMG[n] = im; }
+const POPS = {};
+// crop of a screenshot rect [x,y,w,h] (screenshot px) lifted out of the phone; k = 0..1 lift, (dx,dy) offset, sc extra scale
+function pop(key, shot, r, t, a, b, o = {}) {
+  let el = POPS[key];
+  if (!el) { el = document.createElement('div'); el.className = 'pop'; $('pops').appendChild(el); POPS[key] = el; }
+  const on = t >= a && t <= b; el.style.display = on ? 'block' : 'none'; if (!on) return;
+  const k = back(P(t, a, a + .55)), q = eio(P(t, b - .35, b));
+  const z = (o.sc || 1.25);
+  const w = r[2] * S, h = r[3] * S;
+  const x0 = 260 + r[0] * S, y0 = 454 + r[1] * S;
+  const sc = lerp(1, z, k) * (1 - q * .25);
+  el.style.width = w + 'px'; el.style.height = h + 'px';
+  el.style.backgroundImage = `url(${SHOTS}/${shot}.png)`; el.style.backgroundSize = `${975 * S}px ${2110 * S}px`;
+  el.style.backgroundPosition = `${-r[0] * S}px ${-r[1] * S}px`;
+  el.style.transform = `translate(${x0 + (o.dx || 0) * k}px,${y0 + (o.dy || 0) * k}px) rotate(${(o.rot || 0) * k}deg) scale(${sc})`;
+  el.style.transformOrigin = '50% 50%';
+  el.style.opacity = cl(k * 3) * (1 - q);
+}
+function hidePops(except = []) { for (const k in POPS) if (!except.includes(k)) POPS[k].style.display = 'none'; }
+const CARDS = {};
+function card(key, html, cls, t, a, b, x, y, o = {}) {
+  let el = CARDS[key];
+  if (!el) { el = document.createElement('div'); el.className = cls; el.innerHTML = html; $('pops').appendChild(el); CARDS[key] = el; }
+  const on = t >= a && t <= b; el.style.display = on ? 'block' : 'none'; if (!on) return;
+  const k = back(P(t, a, a + .5)), q = eio(P(t, b - .3, b));
+  const fx = o.fx ?? 540, fy = o.fy ?? 960;
+  el.style.transform = `translate(${lerp(fx, x, k)}px,${lerp(fy, y, k)}px) rotate(${(o.rot || 0) * (1 - k)}deg) scale(${lerp(.3, 1, k) * (1 - q * .4)})`;
+  el.style.opacity = cl(k * 2) * (1 - q);
+}
+
+/* ---------- scenes ---------- */
+function S1(t, sv) { // 0-3 hook: 19:42 -> digits fly -> dive into the second hand -> busy city, one person alone
+  $('bg').style.background = INK;
+  let g = '';
+  const dg = $('digits');
+  if (!dg._d) { dg._d = ['1', '9', ':', '4', '2'].map((c, i) => { const d = document.createElement('div'); d.className = 'digit'; d.textContent = c; dg.appendChild(d); return d; }); }
+  const ph = eo(P(t, 0, .45));
+  if (t < 1.95) {
+    // phone outline recedes while digits lift
+    const rec = eio(P(t, .55, 1.3));
+    const sc = lerp(.92, 1, ph) * lerp(1, .82, rec);
+    g += `<g opacity="${ph * (1 - rec * .65)}" transform="translate(540 960) scale(${sc}) translate(-540 -960)">${phoneOutline(540, 960, 560, 1140, PAPER, 6)}` +
+      `<text x="540" y="1180" fill="${PAPER}" opacity=".55" font-family="Manrope" font-weight="600" font-size="38" text-anchor="middle">Seshanba, kech</text></g>`;
+    // seconds dial with the carrot hand (ticks every 1/6 s)
+    const dive = eio(P(t, 1.25, 1.95));
+    const ang = Math.floor(t * 6) * 6 + 30;
+    const ds = lerp(1, 26, Math.pow(dive, 2.2));
+    // the dive zooms on the tip of the hand
+    const tipx = 540 + Math.sin(ang * Math.PI / 180) * 120, tipy = 1380 - Math.cos(ang * Math.PI / 180) * 120;
+    const cx = lerp(540, tipx, dive), cy = lerp(1380, tipy, dive);
+    const tx = lerp(0, 540 - tipx * ds, dive), ty = lerp(0, 960 - tipy * ds, dive);
+    g += `<g opacity="${ph}" transform="translate(${tx} ${ty}) scale(${ds})"><circle cx="540" cy="1380" r="140" stroke="${PAPER}" stroke-width="5" fill="none" opacity=".5"/>`;
+    for (let i = 0; i < 12; i++) { const a = i * 30 * Math.PI / 180; g += `<path d="M${540 + Math.sin(a) * 122} ${1380 - Math.cos(a) * 122} L${540 + Math.sin(a) * 136} ${1380 - Math.cos(a) * 136}" stroke="${PAPER}" stroke-width="4"/>`; }
+    g += `<path d="M540 1380 L${tipx} ${tipy}" stroke="${CAR}" stroke-width="9" stroke-linecap="round"/><circle cx="${tipx}" cy="${tipy}" r="${9 + dive * 6}" fill="${CAR}"/><circle cx="540" cy="1380" r="12" fill="${CAR}"/></g>`;
+    // carrot flood when the camera reaches the tip
+    if (dive > .75) g += `<circle cx="540" cy="960" r="${eo(P(t, 1.7, 1.95)) * 1200}" fill="${CAR}"/>`;
+    // digits: on screen -> jump out, 3D spin
+    dg.style.display = 'block';
+    dg._d.forEach((d, i) => {
+      const k = eo(P(t, .5 + i * .06, 1.15 + i * .06)); const fall = eio(P(t, 1.3, 1.8));
+      const x = 540 + (i - 2) * 132 - 75, y = 720;
+      const rx = (i - 2) * 160 * k, ry = -260 * k - Math.sin(i) * 80 * k;
+      d.style.transform = `translate(${x + rx * (1 + fall)}px,${y + ry + fall * -400}px) translateZ(${k * 420}px) rotateY(${k * 360 + i * 20 * k}deg) rotateX(${k * 25 * (i % 2 ? 1 : -1)}deg) scale(${lerp(.62, 1.1, k)})`;
+      d.style.opacity = ph * (1 - fall);
+    });
+  } else {
+    dg.style.display = 'none';
+    // busy city: crowd crossing in both directions, one carrot person standing still in the centre
+    const k = P(t, 1.95, 3), cam = lerp(1, 1.08, eio(k));
+    g += `<g transform="translate(540 1500) scale(${cam}) translate(-540 -1500)">`;
+    g += `<g opacity=".55">${skyline(1300, PAPER, .25, 1, 3)}</g>`;
+    g += `<path d="M0 1500 H1080" stroke="${PAPER}" stroke-width="5" opacity=".6"/>`;
+    for (let i = 0; i < 16; i++) {
+      const dir = i % 2 ? 1 : -1, sp = 260 + rnd(i) * 260, row = rnd(i + 9);
+      const x = ((rnd(i + 3) * 1400 + dir * sp * t) % 1400 + 1400) % 1400 - 160;
+      if (Math.abs(x - 540) < 70) continue;
+      g += `<g opacity="${.35 + row * .45}">${person(x, 1500 + row * 60, .62 + row * .35, t * 9 + i, 1, PAPER, { sw: 6 })}</g>`;
+    }
+    g += person(540, 1540, 1.1, 0, 0, CAR, { sw: 8 });
+    g += `</g>`;
+    // the carrot flood shrinks back into the lone person (iris close)
+    const ir = 1 - eio(P(t, 1.95, 2.35));
+    if (ir > 0) g += `<path fill-rule="evenodd" fill="${CAR}" d="M0 0H1080V1920H0Z M540 ${1350 - (1 - ir) * 1300} a${(1 - ir) * 1300} ${(1 - ir) * 1300} 0 1 0 0.1 0Z"/>`;
+  }
+  sv.innerHTML = g;
+  text('h1', 'Shahar to‘la odam...', t, 2.15, 3.0, { y: 300, size: 104, col: PAPER, stagger: .1, out: .2 });
+  text('vo1', 'Har kuni minglab insonlar\nyonimizdan o‘tadi...', t, 2.4, 3.0, { y: 560, size: 50, col: PAPER, weight: 600, stagger: .04, out: .2 });
+}
+
+function S2(t, sv) { // 3-8 problem: cafe, bench, ticking phone, words -> empty chat
+  $('bg').style.background = PAPER; let g = '';
+  const cut = (a) => (1 - eo(P(t, a, a + .22))) * 1080;   // whip-in offset for each cut
+  if (t < 4) {
+    const k = P(t, 3, 4);
+    g += `<g transform="translate(${cut(3)} 0)">`;
+    g += `<g stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"><path d="M240 1260 H840"/><path d="M540 1260 V1560"/><path d="M420 1560 H660"/></g>`;
+    g += person(250, 1560, 1.15, 0, 0, INK, { sit: 1, sw: 7 });
+    g += `<g stroke="${INK}" stroke-width="5" fill="none" stroke-dasharray="14 14" opacity=".45"><path d="M830 1100 V1560 M830 1380 H730 V1560"/></g>`;
+    g += `<g stroke="${INK}" stroke-width="7" fill="none"><path d="M480 1180 h90 l-8 80 h-74z"/><path d="M570 1200 q30 0 26 26 q-4 22 -30 20"/></g>`;
+    for (let i = 0; i < 3; i++) { const s = (k * 1.6 + i / 3) % 1; g += `<path d="M${505 + i * 20} ${1160 - s * 120} q14 -20 0 -40" stroke="${CAR}" stroke-width="6" fill="none" opacity="${1 - s}"/>`; }
+    g += `</g>`;
+  } else if (t < 5) {
+    const k = P(t, 4, 5);
+    g += `<g transform="translate(${cut(4)} 0) translate(540 1400) scale(${lerp(1, 1.06, k)}) translate(-540 -1400)">`;
+    g += `<path d="M0 1560 H1080" stroke="${INK}" stroke-width="6"/>` + bench(540, 1560, INK) + lamp(860, 1560, INK, false) + tree(200, 1560, 1.2, INK);
+    for (let i = 0; i < 5; i++) { const s = (k + rnd(i)) % 1; g += `<circle cx="${150 + rnd(i + 2) * 800 + Math.sin(s * 6 + i) * 30}" cy="${900 + s * 640}" r="10" fill="${CAR}" opacity="${1 - s * .6}"/>`; }
+    g += `</g>`;
+  } else if (t < 6) {
+    const k = P(t, 5, 6);
+    const times = ['19:42', '20:17', '21:03', '21:56', '22:40', '23:18'];
+    const tm = times[Math.min(5, Math.floor(k * 6))];
+    g += `<g transform="translate(${cut(5)} 0)">${phoneOutline(540, 1100, 560, 1140, INK, 7)}`;
+    g += `<text x="540" y="1080" fill="${INK}" font-family="Space Grotesk" font-weight="700" font-size="190" text-anchor="middle">${tm}</text>`;
+    g += `<text x="540" y="1180" fill="${INK}" opacity=".6" font-family="Manrope" font-weight="600" font-size="40" text-anchor="middle">Yangi xabar yo‘q</text>`;
+    g += `<circle cx="540" cy="1380" r="70" stroke="${INK}" stroke-width="5" fill="none"/><path d="M540 1380 L${540 + Math.sin(k * 12.6) * 58} ${1380 - Math.cos(k * 12.6) * 58}" stroke="${CAR}" stroke-width="8" stroke-linecap="round"/></g>`;
+  } else {
+    // words dissolve into the empty chat window
+    const m = eio(P(t, 6.75, 7.35));
+    const cw = 640, ch = 1000, cx = 540, cy = 1060;
+    g += `<g opacity="${m}">` + `<rect x="${cx - cw / 2}" y="${cy - ch / 2}" width="${cw}" height="${ch}" rx="56" fill="none" stroke="${INK}" stroke-width="7"/>` +
+      `<path d="M${cx - cw / 2} ${cy - ch / 2 + 130} H${cx + cw / 2}" stroke="${INK}" stroke-width="5"/>` +
+      `<circle cx="${cx - cw / 2 + 80}" cy="${cy - ch / 2 + 66}" r="32" fill="none" stroke="${INK}" stroke-width="5" stroke-dasharray="8 8"/>` +
+      `<rect x="${cx - cw / 2 + 130}" y="${cy - ch / 2 + 50}" width="170" height="30" rx="15" fill="${INK}" opacity=".18"/>` +
+      `<rect x="${cx - cw / 2 + 36}" y="${cy + ch / 2 - 110}" width="${cw - 72}" height="72" rx="36" fill="none" stroke="${INK}" stroke-width="5"/>` +
+      `<text x="${cx - cw / 2 + 72}" y="${cy + ch / 2 - 62}" fill="${INK}" opacity=".45" font-family="Manrope" font-weight="600" font-size="32">Xabar yozing...</text></g>`;
+    // typing bubble with 3 dots (ink bubble, paper dots)
+    const tb = eo(P(t, 7.35, 7.6));
+    if (tb > 0) {
+      g += `<g transform="translate(${cx - cw / 2 + 60} ${cy + ch / 2 - 270}) scale(${tb})">` + bubble(0, 0, 200, 96, INK, INK, -1, 4);
+      for (let i = 0; i < 3; i++) g += `<circle cx="${52 + i * 48}" cy="${48 - Math.max(0, Math.sin(t * 12 - i * 1.1)) * 12}" r="14" fill="${PAPER}"/>`;
+      g += `</g>`;
+    }
+  }
+  sv.innerHTML = g;
+  // big words that turn into the chat window outline
+  const el = text('h2', 'Suhbatlashadigan\nodam yo‘q', t, 6.0, 8.0, { y: 760, size: 112, out: 0, stagger: .12 });
+  if (t >= 6 && el) {
+    if (!el._chars) { // split words into letters once
+      el._w.forEach((w) => { w.innerHTML = [...w.textContent].map((c) => `<span style="display:inline-block;white-space:pre">${c}</span>`).join(''); });
+      el._chars = [...el.querySelectorAll('.w span')];
+    }
+    const d = P(t, 6.6, 7.4);
+    el._chars.forEach((c, i) => {
+      const kk = eio(cl(d * 1.6 - rnd(i) * .6));
+      const ang = rnd(i + 40) * Math.PI * 2;
+      c.style.transform = `translate(${Math.cos(ang) * 340 * kk}px,${Math.sin(ang) * 420 * kk}px) scale(${1 - kk * .8}) rotate(${(rnd(i) - .5) * 180 * kk}deg)`;
+      c.style.opacity = 1 - kk;
+    });
+  }
+  text('vo2', '...ammo ba’zan birga vaqt o‘tkazadigan\ninson topish qiyin.', t, 3.15, 5.95, { y: 300, size: 58, stagger: .1, out: .3 });
+}
+
+function S3(t, sv) { // 8-13 the typing dots fly out and each opens a scene
+  let g = '';
+  const z = eio(P(t, 8, 8.8));            // zoom into the typing bubble -> ink
+  const flood = eo(P(t, 8.0, 8.55));
+  $('bg').style.background = PAPER;
+  g += `<circle cx="540" cy="960" r="${flood * 1200}" fill="${INK}"/>`;
+  const glow = (x, y, r, a = 1) => `<circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="${CAR}" opacity="${.18 * a}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${CAR}" opacity="${a}"/>`;
+  const targets = [[300, 1380], [780, 954], [840, 560]];   // dot 2 = the carrot dot in the talk bubble, dot 3 = the sun in the park
+  // dot positions: centre row -> fly to targets
+  const fly = eio(P(t, 8.75, 9.25));
+  const dots = targets.map(([tx, ty], i) => [lerp(540 + (i - 1) * 190, tx, fly), lerp(960, ty, fly) - Math.sin(fly * Math.PI) * 120 * (i - 1)]);
+  const r0 = lerp(14, 58, z);
+  // scene openers
+  const iris = (i, a) => eio(P(t, a, a + .55)) * 2300;
+  const ir = [iris(0, 9.25), iris(1, 10.5), iris(2, 11.75)];
+  const scenes = [sceneTalk, sceneWalk, sceneCity];
+  let content = '';
+  for (let i = 0; i < 3; i++) if (ir[i] > 0) {
+    const [x, y] = dots[i];
+    content += `<clipPath id="c${i}"><circle cx="${x}" cy="${y}" r="${ir[i]}"/></clipPath><g clip-path="url(#c${i})"><rect width="1080" height="1920" fill="${PAPER}"/>${scenes[i](t, [9.25, 10.5, 11.75][i])}</g>`;
+  }
+  g += content;
+  // trails + dots still waiting
+  for (let i = 0; i < 3; i++) {
+    const done = ir[i] > 60; if (done) continue;
+    if (i > 0 && ir[0] > 60 && ir[i - 1] < 2200) continue;       // hidden until the previous scene is fully open (then it is part of it)
+    if (i > 0 && ir[0] > 60 && P(t, [10.5, 11.75][i - 1] - .35, [10.5, 11.75][i - 1]) <= 0) continue;
+    const [x, y] = dots[i];
+    if (fly > 0 && fly < 1) g += `<path d="M540 960 L${x} ${y}" stroke="${CAR}" stroke-width="${10 * (1 - fly)}" opacity=".5"/>`;
+    g += glow(x, y, r0 * (1 + Math.sin(t * 8 + i) * .06), 1);
+  }
+  sv.innerHTML = g;
+  text('h3', 'Endi buning uchun\nyechim bor.', t, 12.0, 13.0, { y: 260, size: 96, stagger: .1, mode: 'scale', out: .2 });
+}
+function sceneTalk(t, a) { // two people talking at a cafe table (public place)
+  const k = P(t, a, a + 1.4); let g = `<g stroke="${INK}" stroke-width="7" fill="none" stroke-linecap="round"><path d="M300 1260 H780"/><path d="M540 1260 V1560"/><path d="M430 1560 H650"/></g>`;
+  g += person(300, 1560, 1.15, 0, 0, INK, { sit: 1 }) + person(780, 1560, 1.15, 0, 0, INK, { sit: -1, head: CAR });
+  const b1 = eo(P(t, a + .2, a + .5)), b2 = eo(P(t, a + .6, a + .9));
+  g += `<g transform="translate(300 1050) scale(${b1})">${bubble(-40, -80, 220, 90, INK, PAPER, -1)}<path d="M0 -36 H140" stroke="${INK}" stroke-width="6" stroke-linecap="round"/></g>`;
+  g += `<g transform="translate(640 990) scale(${b2})">${bubble(-40, -80, 240, 90, INK, PAPER, 1)}<path d="M0 -36 H100" stroke="${INK}" stroke-width="6" stroke-linecap="round"/><circle cx="140" cy="-36" r="9" fill="${CAR}"/></g>`;
+  g += `<g stroke="${INK}" stroke-width="6" fill="none"><path d="M430 1200 h60 l-6 60 h-48z"/><path d="M600 1200 h60 l-6 60 h-48z"/></g>`;
+  return g;
+}
+function sceneWalk(t, a) { // walking side by side in a park
+  const k = t - a; let g = `<path d="M0 1560 H1080" stroke="${INK}" stroke-width="6"/>`;
+  for (let i = 0; i < 5; i++) { const x = ((i * 300 - k * 260) % 1500 + 1500) % 1500 - 200; g += tree(x, 1560, .9 + rnd(i) * .5, INK); }
+  g += `<circle cx="840" cy="560" r="70" fill="${CAR}"/>`;
+  g += person(450, 1560, 1.15, k * 8, 1, INK) + person(630, 1560, 1.15, k * 8 + 1.4, 1, INK, { head: CAR });
+  return g;
+}
+function sceneCity(t, a) { // exploring the city together: route on a map + skyline
+  const k = P(t, a, a + 1.2); let g = `<g transform="translate(0 260)">${skyline(1160, INK, .15 + k * .4, 1, 5)}</g>`;
+  const L = 900, dash = (1 - eo(k)) * L;
+  g += `<path d="M160 1720 C 360 1600, 520 1800, 700 1660 S 940 1560, 960 1480" stroke="${CAR}" stroke-width="10" fill="none" stroke-dasharray="${L}" stroke-dashoffset="${dash}" stroke-linecap="round"/>`;
+  g += `<path d="M960 1480 m0 -40 c-24 0 -40 18 -40 38 c0 30 40 62 40 62 s40 -32 40 -62 c0 -20 -16 -38 -40 -38z" fill="${INK}" opacity="${eo(P(t, a + .8, a + 1.1))}"/>`;
+  g += person(420, 1420, 1.0, 0, 0, INK) + person(560, 1420, 1.0, 0, 0, INK, { head: CAR });
+  g += `<path d="M560 1280 L660 1210" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>`;
+  return g;
+}
+
+function S4(t, sv) { // 13-22 product: real app screens on a phone, UI elements lifted out in 3D
+  $('bg').style.background = `radial-gradient(circle at 50% 55%, rgba(232,80,26,.16), rgba(232,80,26,0) 60%), ${PAPER}`;
+  sv.innerHTML = '';
+  const enter = eo(P(t, 13, 13.6)), leave = eio(P(t, 21.7, 22.2));
+  const ry = -14 + Math.sin(t * 1.1) * 7, rx = 5 + Math.sin(t * .7) * 2;
+  $('phone').style.transform = `translateY(${(1 - enter) * 1400 + leave * 0}px) rotateY(${ry * (1 - leave)}deg) rotateX(${rx * (1 - leave)}deg) rotateZ(${(1 - enter) * -12}deg) scale(${lerp(1, .02, leave)})`;
+  $('phoneWrap').style.display = 'block';
+  // screen sequence: [name, start, end, scrollFrom, scrollTo]
+  const seq = [['m-list-1', 13, 14.15], ['m-list-2', 14.0, 15.0], ['m-profile', 14.9, 16.4], ['m-profile-services', 16.3, 19.5], ['m-booking-dialog', 19.4, 20.95], ['m-bookings', 20.85, 22.3]];
+  for (const [n, a, b] of seq) {
+    const im = IMG[n]; const k = eo(P(t, a, a + .3)), q = P(t, b - .1, b);
+    im.style.opacity = (t >= a && t <= b) ? k * (1 - q) : 0;
+    im.style.transform = `translateY(${(1 - k) * 160}px)`;
+  }
+  // lifted UI elements (crops of the same captures)
+  hidePops();
+  pop('card', 'm-list-1', [42, 1290, 888, 375], t, 13.55, 14.85, { dx: -60, dy: 160, rot: -4, sc: 1.18 });
+  pop('photo', 'm-profile', [40, 152, 895, 1193], t, 15.15, 16.35, { dx: 0, dy: -40, rot: 3, sc: 1.12 });
+  pop('svc', 'm-profile-services', [39, 1350, 891, 294], t, 18.2, 19.45, { dx: 30, dy: -120, rot: -3, sc: 1.3 });
+  pop('toast', 'm-bookings', [30, 30, 915, 210], t, 21.05, 22.1, { dx: 0, dy: -60, sc: 1.2 });
+  // interests -> cards; languages -> cards that line up in order
+  for (const k in CARDS) CARDS[k].style.display = 'none';
+  card('i1', 'Kitob', 'card', t, 16.45, 17.5, 640, 860, { fx: 330, fy: 1010, rot: 30 });
+  card('i2', 'Sayr', 'card', t, 16.6, 17.5, 700, 1000, { fx: 400, fy: 1010, rot: -25 });
+  card('l1', 'UZ<small>o‘zbek tili</small>', 'card', t, 17.35, 18.25, 90, 760, { fx: 330, fy: 840, rot: -40 });
+  card('l2', 'RU<small>rus tili</small>', 'card', t, 17.5, 18.25, 90, 930, { fx: 400, fy: 840, rot: 40 });
+  // label pills
+  const pills = [['Hamrohlar', 13.5, 14.9, 70, 1500], ['Profil rasmi', 15.1, 16.4, 600, 1640], ['Qiziqishlar', 16.4, 17.4, 620, 740], ['Tillar', 17.3, 18.25, 90, 640],
+    ['Xizmatlar va narxlar', 18.2, 19.45, 330, 1560], ['Bron so‘rovi', 19.5, 21.0, 120, 1700], ['So‘rov yuborildi', 21.05, 22.0, 360, 1300]];
+  for (const [s, a, b, x, y] of pills) card('p' + s, s, 'pill', t, a, b, x, y, { fx: x, fy: y + 60 });
+  // tap on "So'rov yuborish" (screenshot ~ x 675, y 1956)
+  const tp = P(t, 20.35, 20.85);
+  const fx = $('fx'); let f = '';
+  if (tp > 0 && tp < 1) { const x = 260 + 675 * S, y = 454 + 1956 * S; f += `<circle cx="${x}" cy="${y}" r="${20 + tp * 90}" fill="none" stroke="${CAR}" stroke-width="${8 * (1 - tp)}" opacity="${1 - tp}"/><circle cx="${x}" cy="${y}" r="26" fill="${INK}" opacity="${.35 * (1 - tp)}"/>`; }
+  fx.innerHTML = f;
+  text('h4a', 'YONDO orqali o‘zingizga\nmos hamrohni toping.', t, 13.2, 17.3, { y: 150, size: 70, stagger: .07 });
+  text('h4b', 'Suhbatlashing, sayr qiling\nyoki shaharni\nbirga kashf eting.', t, 17.45, 21.9, { y: 120, size: 62, stagger: .07 });
+}
+
+function S5(t, sv) { // 22-29 the same person now walks in the park with someone; camera rises, city brightens
+  const k = P(t, 22, 29);
+  const light = eio(P(t, 23.2, 28.2));                      // night -> bright
+  const bgc = mix(INK, PAPER, light), lc = mix(PAPER, INK, cl((light - .35) * 2.2));
+  $('bg').style.background = bgc;
+  const rise = eio(P(t, 23, 28.5));
+  const camY = rise * 520, camS = lerp(1.15, .86, rise);
+  let g = `<g transform="translate(540 1500) scale(${camS}) translate(-540 ${-1500 + camY})">`;
+  g += `<g opacity="${.5 + light * .5}">${skyline(1250, lc, cl((t - 22.6) / 4), 1.1, 11)}</g>`;
+  const w = t - 22;
+  g += `<path d="M-400 1560 H1480" stroke="${lc}" stroke-width="6"/>`;
+  for (let i = 0; i < 6; i++) { const x = ((i * 330 - w * 200) % 1980 + 1980) % 1980 - 450; g += tree(x, 1560, .9 + rnd(i + 5) * .4, lc); }
+  for (let i = 0; i < 3; i++) { const x = ((i * 660 + 200 - w * 200) % 1980 + 1980) % 1980 - 450; g += lamp(x, 1560, lc, light < .6); }
+  g += person(470, 1560, 1.15, w * 7, 1, CAR, { sw: 8 }) + person(640, 1560, 1.15, w * 7 + 1.5, 1, lc, { sw: 7 });
+  g += `</g>`;
+  // the phone collapses into a carrot dot that rises to become the sun
+  const sd = eo(P(t, 22, 23.4));
+  const sx = lerp(540, 820, sd), sy = lerp(1060, 760, sd) - rise * 60, sr = lerp(10, 80, sd) + light * 20;
+  g = `<circle cx="${sx}" cy="${sy}" r="${sr * 1.8}" fill="${CAR}" opacity="${.1 + light * .08}"/><circle cx="${sx}" cy="${sy}" r="${sr}" fill="${CAR}"/>` + g;
+  sv.innerHTML = g;
+  const tc = mix(PAPER, INK, cl((light - .3) * 2.5));
+  text('h5', 'Ba’zan kuningizni\no‘zgartirish uchun\nbir insonning o‘zi kifoya.', t, 23.3, 28.85, { y: 230, size: 72, col: tc, stagger: .16, dur: .6, out: .45 });
+}
+
+function S6(t, sv) { // 29-34 logo assembles from the pieces of earlier scenes
+  $('bg').style.background = PAPER;
+  const U = 9;                                            // logo unit scale (symbol 64 -> 576 px)
+  const ox = 540 - 32 * U, oy = 780 - 32 * U;
+  const slide = eio(P(t, 31.1, 31.9));
+  const lw = 219 * 3.9, lx = 540 - lw / 2, ly = 820 - 32 * 3.9;           // final horizontal lockup
+  const sx = lerp(ox, lx, slide), sy = lerp(oy, ly, slide), su = lerp(U, 3.9, slide);
+  let g = '';
+  // pieces fly in: 3 carrot dots, clock digits, chips, bubble
+  const pieces = [['dot', 50, 12, CAR, -200, 300], ['dot', 14, 12, INK, 1200, 200], ['dot', 32, 55, INK, 540, 2100]];
+  const asm = eio(P(t, 29.1, 30.2));
+  const deb = [['1', 120, 300], ['9', 950, 420], ['4', 160, 1600], ['2', 900, 1700], ['…', 540, 200]];
+  deb.forEach(([c, x, y], i) => {
+    const k = eio(P(t, 29 + i * .05, 30 + i * .05));
+    const tx = lerp(x, 540, k), ty = lerp(y, 780, k);
+    g += `<text x="${tx}" y="${ty}" font-family="Space Grotesk" font-weight="700" font-size="${lerp(150, 10, k)}" fill="${INK}" opacity="${1 - k}" text-anchor="middle">${c}</text>`;
+  });
+  for (let i = 0; i < 10; i++) {
+    const k = eio(P(t, 29 + rnd(i) * .3, 30.1));
+    const a = rnd(i + 20) * Math.PI * 2, R = 900;
+    g += `<rect x="${540 + Math.cos(a) * R * (1 - k) - 40}" y="${780 + Math.sin(a) * R * (1 - k) - 18}" width="80" height="36" rx="18" fill="none" stroke="${INK}" stroke-width="4" opacity="${(1 - k) * .8}" transform="rotate(${(1 - k) * 200} 540 780)"/>`;
+  }
+  const draw = eio(P(t, 29.9, 30.9));
+  g += `<g transform="translate(${sx} ${sy}) scale(${su})">`;
+  g += `<path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - draw}"/>`;
+  for (const [, cx, cy, col, fx0, fy0] of pieces) {
+    const lx0 = (fx0 - sx) / su, ly0 = (fy0 - sy) / su;
+    const r = cx === 32 ? 5.5 : 7;
+    g += `<circle cx="${lerp(lx0, cx, asm)}" cy="${lerp(ly0, cy, asm)}" r="${r * lerp(2.5, 1, asm)}" fill="${col}"/>`;
+  }
+  const wm = eio(P(t, 31.4, 32.2));
+  g += `<clipPath id="wmc"><rect x="70" y="0" width="${160 * wm}" height="64"/></clipPath><g clip-path="url(#wmc)" style="color:${INK}" opacity="${wm}">${WORDMARK}</g>`;
+  g += `</g>`;
+  // carrot underline graphic under the tagline
+  const ul = eo(P(t, 32.6, 33.2));
+  g += `<path d="M${540 - 170 * ul} 1218 H${540 + 170 * ul}" stroke="${CAR}" stroke-width="10" stroke-linecap="round"/>`;
+  sv.innerHTML = g;
+  text('h6a', 'Doim yoningda.', t, 32.1, 34.2, { y: 1060, size: 92, stagger: .12, out: 0 });
+  text('h6b', 'Tez kunda.', t, 32.9, 34.2, { y: 1290, size: 58, weight: 700, stagger: .12, out: 0 });
+}
+
+window.render = (t) => {
+  const sv = $('sv');
+  const scene = t < 3 ? 1 : t < 8 ? 2 : t < 13 ? 3 : t < 22 ? 4 : t < 29 ? 5 : 6;
+  const keep = { 1: ['h1', 'vo1'], 2: ['h2', 'vo2'], 3: ['h3'], 4: ['h4a', 'h4b'], 5: ['h5'], 6: ['h6a', 'h6b'] }[scene];
+  hideTexts(keep);
+  if (scene !== 4) { $('phoneWrap').style.display = 'none'; hidePops(); for (const k in CARDS) CARDS[k].style.display = 'none'; $('fx').innerHTML = ''; }
+  if (scene !== 1) $('digits').style.display = 'none';
+  [null, S1, S2, S3, S4, S5, S6][scene](t, sv);
+};
+window.ready = Promise.all([document.fonts.ready, ...Object.values(IMG).map((i) => i.decode().catch(() => 0))]).then(() => { window.render(0); return true; });
+</script></body></html>
