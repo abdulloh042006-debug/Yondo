@@ -18,7 +18,7 @@ python -m yondo_api.doctor --env-file /path/to/.env
   - URLs as scheme and host only.
 - **Which values it sees:** the same sources as the API, i.e. `YONDO_*` environment variables, which override the `.env` file in the current directory.
 - **What is required** depends on `YONDO_ENVIRONMENT`. In `development`/`test` the local defaults are enough; in `staging`/`production` the rows marked "yes" below are needed.
-- **API start-up errors:** the doctor also runs the API's own settings validation and lists every reason the API would refuse to start.
+- **API start-up errors:** the doctor also runs the API's own settings validation and shows why the API would refuse to start. That validation stops at the first failing rule, so fix the shown reason and run the doctor again.
 
 ## Safe fallbacks (verified in code)
 

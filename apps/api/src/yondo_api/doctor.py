@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ from urllib.parse import urlsplit
 
 from dotenv import dotenv_values
 from pydantic import ValidationError
+from pydantic_settings import SettingsError
 
 from yondo_api.config import ManualPaymentCard, Settings
 
@@ -230,9 +232,15 @@ class Doctor:
         problems = []
         endpoint = self.get('YONDO_STORAGE_ENDPOINT') or 'http://localhost:9000'
         public = self.get('YONDO_STORAGE_PUBLIC_ENDPOINT') or endpoint
-        for var in ('YONDO_STORAGE_BUCKET', 'YONDO_STORAGE_ACCESS_KEY', 'YONDO_STORAGE_SECRET_KEY'):
-            if not self.get(var):
-                problems.append(f'{var} missing')
+        # Like config.py: bucket and keys are enforced in staging/production only.
+        if self.prod:
+            for var in (
+                'YONDO_STORAGE_BUCKET',
+                'YONDO_STORAGE_ACCESS_KEY',
+                'YONDO_STORAGE_SECRET_KEY',
+            ):
+                if not self.get(var):
+                    problems.append(f'{var} missing')
         if self.prod:
             for var, url in (
                 ('YONDO_STORAGE_ENDPOINT', endpoint),
@@ -428,6 +436,12 @@ def settings_errors(env_file: Path | None) -> list[str]:
             f'{".".join(str(p) for p in err["loc"]) or "settings"}: {err["msg"]}'
             for err in exc.errors(include_input=False, include_url=False)
         ]
+    except SettingsError as exc:
+        # Raised before validation, e.g. a JSON-valued variable that is not valid JSON. Name the
+        # field only: never echo the message, which could carry part of the value.
+        field = re.search(r'field "([a-z0-9_]+)"', str(exc))
+        name = f'YONDO_{field.group(1).upper()}' if field else 'a JSON-valued YONDO_* variable'
+        return [f'{name} could not be parsed (it must be valid JSON)']
     return []
 
 

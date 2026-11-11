@@ -151,3 +151,19 @@ def test_cli_exit_codes(env, capsys):
     assert doctor.main(['--env-file', '/nonexistent/.env']) == 0
     assert doctor.main(['--strict', '--env-file', '/nonexistent/.env']) == 1
     assert 'Result:' in capsys.readouterr().out
+
+
+def test_malformed_json_is_reported_not_crashed(env):
+    raw = '[{"label": "Visa", "number": "4111 1111 1111 9876", "holder": "Test Holder"'  # no ]
+    env({**PRODUCTION, 'YONDO_MANUAL_PAYMENT_CARDS': raw})
+    code, out, checks = run()
+    assert code == 1
+    assert checks['Manual payment cards'].status == doctor.INVALID
+    assert 'YONDO_MANUAL_PAYMENT_CARDS could not be parsed' in out
+    for value in ('4111 1111 1111 9876', '9876', HOLDER):
+        assert value not in out, value
+
+
+def test_s3_in_development_does_not_require_bucket_or_keys(env):
+    env({'YONDO_STORAGE_BACKEND': 's3'})
+    assert run()[2]['S3 photo/ID storage'].status == doctor.OK
