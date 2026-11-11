@@ -567,7 +567,7 @@ export const en: Record<Key, string> = {
   'help.faq.book.q': 'How do I book?',
   'help.faq.book.a': 'On a companion’s profile choose a service, a time and a meeting place and send a request. Once the companion accepts it, payment opens; after payment the booking is confirmed.',
   'help.faq.pay.q': 'How does payment work?',
-  'help.faq.pay.a': 'Payment is only possible after the companion accepts the booking. No payment provider is connected yet and the app takes no real money; fees and refund rules are not defined yet.',
+  'help.faq.pay.a': 'Payment is only possible after the companion accepts the booking. You pay only the service price: the Yondo commission comes out of the companion share. An admin reviews refunds by hand. No payment provider is connected yet and the app takes no real money.',
   'help.faq.cancel.q': 'Can I cancel a booking?',
   'help.faq.cancel.a': 'Yes: in Bookings you can cancel a pending, accepted or confirmed booking. Cancellation terms and refund amounts are not defined yet.',
   'help.faq.verified.q': 'What does “Identity verified” mean?',
