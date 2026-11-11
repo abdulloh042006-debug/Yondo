@@ -10,6 +10,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Next steps (priority order)
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
+00f. **AI assistant (2026-11-10):** Phase A audit in `docs/ai-assistant/phase-a-audit.md`; decisions recorded in its §9 (no external AI provider in v1, retrieval-only answerer; retention: account rows until deletion, anonymous 90 days). Phase B = PR #23; next phase C (retrieval answerer).
 00a. ~~Password login plan~~ **superseded by the owner's decisions of 2026-11-06** (`docs/product-decisions.md` §3/§6): the password is mandatory, 8–128 characters, scrypt; 5 misses lock for 15 minutes; 20 attempts per minute per IP; **no extra code on a new device**; codes for sign-up and reset come from the Telegram bot. Build it per that file (backlog item 2 of S49).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
@@ -25,11 +26,32 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S51 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
+## S53 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
 Done: 30 s 9:16 reel from owner script 2 (stitch/match-cut chain, kinetic words SUHBAT/SAYR/SHAHAR→KASHF, real `apps/web` screens, objects assemble the logo); breakdown `marketing/ad-video/scripts/02-bir-harakat.md`, sources `marketing/ad-video/reel2/`.
 Not done: VO — edge-tts blocked (WebSocket not passed by the sandbox proxy), other free TTS needs torch; kinetic type carries the lines. Media not committed; mp4 sent to the owner.
 Evidence: audio-ears on the final mp4: −13.9 LUFS, TP −2.5 dBTP, 0 clipped, hits within ±2 frames of most cuts.
 Branch: `feat/ad-video-2` (PR to main; depends on PR #20 for `reel1/capture_list.mjs`).
+## S52 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
+Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
+Next: script 2 from session yondo-43.
+Evidence: audio-ears on the final mp4: −13.8 LUFS, TP −1.8 dBTP, 0 clipped, hits within ±2 frames of the cuts.
+Branch: `feat/ad-video-1` (PR to main).
+## S51 — AI assistant Phase B: knowledge-base schema (2026-11-10) [cloud chat, backend worker]
+Done: `knowledge/{public,internal,shared}/` + README (TOML front-matter: id, title, audience, languages, category, status, version, source, updated_at); validator `apps/api/src/yondo_api/assistant/kb.py` (`python -m yondo_api.assistant.kb --check`; only `approved` is indexable; audience must equal folder; one `## uz|ru|en` section per language); seed = 9 Help FAQ docs in `knowledge/public/faq/` verbatim from `apps/web/src/i18n` (status `review`); tests `apps/api/tests/test_assistant_kb.py` (27, incl. verbatim check vs i18n).
+Not done: retrieval, provider, endpoints (phases C–F). config.py/main.py/jobs.py untouched.
+Next: CEO approves the FAQ docs (status → approved) after a verifier review; phase C. Note: `DEFAULT_ROOT` assumes a repo checkout (editable install, as in CI); the Docker image needs `--root` or a setting in phase C.
+Blockers: none.
+Evidence: pytest 363 passed + 9 skipped (SQLite; PostgreSQL not run, no DB change), new tests 27/27, `kb --check` 9 valid / 0 errors / indexable 0, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/ai-kb-schema).
+## S50 — AI assistant Phase A audit + owner/CEO decisions (2026-11-10/11) [cloud chat, researcher worker]
+Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
+Not done: no code; provider unverified.
+Decisions (§9): no external AI provider in v1 (retrieval-only, verbatim answers with source); retention = until account deletion, anonymous 90 days without identifiers; anonymous access yes; no developer role; CEO approves KB docs.
+Next: phase B (PR #23), then phase C.
+Blockers: none.
+Evidence: docs only; independent verifier review before push (see PR).
+Commit: see PR (docs/ai-assistant-phase-a).
 ## S49 — Owner's approved product decisions recorded (2026-11-06) [cloud chat]
 Done:
 - `docs/product-decisions.md` is now the source of truth.
