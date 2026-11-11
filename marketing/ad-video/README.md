@@ -86,3 +86,4 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
   (`page.tpl.html` → `build_reel.py` → `render.mjs`, `audio.py` → `mux.sh`; extra list shots `reel1/capture_list.mjs`).
 - Reel 2 «Bir harakat — bir nechta imkoniyat» (9:16, 30 s, no VO): breakdown `scripts/02-bir-harakat.md`, sources `reel2/`. Uses the reel 1 captures
   (`reel1/capture_list.mjs`, PR #20).
+- Reel 3 «Birinchi qadam» (9:16, 34 s, no VO): breakdown `scripts/03-birinchi-qadam.md`, sources `reel3/`. Uses the reel 1 captures (PR #20).
