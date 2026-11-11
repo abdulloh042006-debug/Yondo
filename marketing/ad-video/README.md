@@ -81,5 +81,9 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
   No air-kiss or other romantic gesture (product rule).
 - RU cut: the app's own RU locale (top-bar switch before each shot); `ru-dict.json` only translates seed data.
 
-## Reel 3 (2026-11-11, VIDEOCHI)
-- «Birinchi qadam» (9:16, 34 s, no VO): breakdown `scripts/03-birinchi-qadam.md`, sources `reel3/`. Uses the reel 1 captures (PR #20).
+## Reels 2026-11 (VIDEOCHI)
+- Reel 1 «Shaharda yolg‘iz emassan» (9:16, 34 s, no VO): breakdown `scripts/01-shaharda-yolgiz-emassan.md`, sources `reel1/`
+  (`page.tpl.html` → `build_reel.py` → `render.mjs`, `audio.py` → `mux.sh`; extra list shots `reel1/capture_list.mjs`).
+- Reel 2 «Bir harakat — bir nechta imkoniyat» (9:16, 30 s, no VO): breakdown `scripts/02-bir-harakat.md`, sources `reel2/`. Uses the reel 1 captures
+  (`reel1/capture_list.mjs`, PR #20).
+- Reel 3 «Birinchi qadam» (9:16, 34 s, no VO): breakdown `scripts/03-birinchi-qadam.md`, sources `reel3/`. Uses the reel 1 captures (PR #20).

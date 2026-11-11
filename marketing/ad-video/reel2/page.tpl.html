@@ -1,0 +1,362 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Reel 2 "Bir harakat - bir nechta imkoniyat": deterministic render(t), 1080x1920. Built by build_reel.py (do not edit page.html). -->
+<link rel="stylesheet" href="{{FONTS}}/manrope/600.css"><link rel="stylesheet" href="{{FONTS}}/manrope/700.css">
+<link rel="stylesheet" href="{{FONTS}}/manrope/800.css"><link rel="stylesheet" href="{{FONTS}}/space-grotesk/700.css">
+<style>
+:root{--ink:#111111;--paper:#F5F2EC;--carrot:#E8501A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--paper)}
+#stage{position:absolute;inset:0;overflow:hidden;font-family:Manrope,sans-serif}
+#bg{position:absolute;inset:0}
+.abs{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.txt{position:absolute;left:60px;right:60px;text-align:center;font-weight:800;letter-spacing:-.02em;line-height:1.06}
+.txt .w{display:inline-block;white-space:pre}
+#phone{position:absolute;left:238px;top:470px;width:604px;height:1256px;border-radius:84px;background:#111;box-shadow:0 60px 120px rgba(17,17,17,.35)}
+#screen{position:absolute;left:22px;top:22px;width:560px;height:1212px;border-radius:64px;overflow:hidden;background:var(--paper)}
+#screen img{position:absolute;left:0;top:0;width:560px;height:1212px}
+#notch{position:absolute;left:232px;top:40px;width:140px;height:38px;border-radius:20px;background:#111;z-index:3}
+.pill{position:absolute;padding:14px 30px;border-radius:999px;background:var(--ink);color:var(--paper);font:700 36px Manrope;white-space:nowrap}
+.big{position:absolute;font:800 250px 'Space Grotesk';line-height:1;letter-spacing:-.03em;white-space:nowrap}
+.big span{position:absolute;top:0;display:block}
+</style></head><body><div id="stage">
+<div id="bg"></div>
+<svg id="sv" class="abs" viewBox="0 0 1080 1920"></svg>
+<div id="phoneWrap" class="abs" style="perspective:2400px"><div id="phone"><div id="notch"></div><div id="screen"></div></div></div>
+<div id="hl" class="abs"></div>
+<div id="kin" class="abs" style="perspective:1400px"></div>
+<div id="texts" class="abs"></div>
+<svg id="fx" class="abs" viewBox="0 0 1080 1920"></svg>
+</div>
+<script>
+const SHOTS = '{{SHOTS}}';
+const WORDMARK = `{{WORDMARK}}`;
+const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
+window.TOTAL = 30;
+const $ = (id) => document.getElementById(id);
+const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eo = (k) => 1 - Math.pow(1 - cl(k), 3);
+const ei = (k) => Math.pow(cl(k), 3);
+const eio = (k) => { k = cl(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+const back = (k) => { k = cl(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+const P = (t, a, b) => cl((t - a) / (b - a));
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const D2R = Math.PI / 180;
+
+/* ---------- objects (each returns an SVG string centred on 0,0) ---------- */
+function ball(r, rot) {          // ink football with paper panels
+  let g = `<g transform="rotate(${rot})"><circle r="${r}" fill="${INK}"/>`;
+  const pent = (cx, cy, s, a) => { let d = ''; for (let i = 0; i < 5; i++) { const q = (a + i * 72 - 90) * D2R; d += (i ? 'L' : 'M') + (cx + Math.cos(q) * s) + ' ' + (cy + Math.sin(q) * s); } return d + 'Z'; };
+  g += `<path d="${pent(0, 0, r * .3, 0)}" fill="${PAPER}"/>`;
+  for (let i = 0; i < 5; i++) { const q = (i * 72 - 90) * D2R; g += `<path d="${pent(Math.cos(q) * r * .78, Math.sin(q) * r * .78, r * .2, i * 72 + 36)}" fill="${PAPER}"/>`; g += `<path d="M${Math.cos(q) * r * .3} ${Math.sin(q) * r * .3} L${Math.cos(q) * r * .6} ${Math.sin(q) * r * .6}" stroke="${PAPER}" stroke-width="${r * .03}"/>`; }
+  return g + `</g>`;
+}
+function cupSide(s) {
+  return `<g transform="scale(${s})" stroke="${INK}" stroke-width="7" fill="none" stroke-linejoin="round" stroke-linecap="round"><path d="M-70 -110 H70 L58 0 H-58Z" fill="${PAPER}"/><path d="M70 -86 q46 0 40 36 q-6 30 -48 30"/><path d="M-110 4 H110"/></g>`;
+}
+function cupTop(r, rot) {        // top view: saucer, cup ring, coffee, handle
+  return `<g transform="rotate(${rot})" stroke="${INK}" stroke-width="7" fill="none"><circle r="${r * 1.55}"/><circle r="${r}" fill="${PAPER}"/><circle r="${r * .72}" fill="${INK}"/>` +
+    `<path d="M${r} -${r * .22} h${r * .45} a${r * .22} ${r * .22} 0 0 1 0 ${r * .44} h-${r * .45}" fill="${PAPER}"/><circle cx="${-r * .25}" cy="${-r * .25}" r="${r * .12}" fill="${CAR}" stroke="none"/></g>`;
+}
+function ringPath(r, rot, k) {    // circular park path seen from above, trees around, walkers on the path
+  let g = `<g transform="rotate(${rot})"><circle r="${r}" stroke="${INK}" stroke-width="${r * .28}" fill="none" opacity=".12"/><circle r="${r * 1.14}" stroke="${INK}" stroke-width="6" fill="none"/><circle r="${r * .86}" stroke="${INK}" stroke-width="6" fill="none"/>`;
+  for (let i = 0; i < 10; i++) { const q = i * 36 * D2R; const R = r * (1.45 + rnd(i) * .2); g += `<circle cx="${Math.cos(q) * R}" cy="${Math.sin(q) * R}" r="${r * (.16 + rnd(i + 3) * .08)}" stroke="${INK}" stroke-width="6" fill="${PAPER}" opacity="${k}"/>`; }
+  for (let i = 0; i < 3; i++) { const q = (i * 120 + 20) * D2R; g += `<circle cx="${Math.cos(q) * r}" cy="${Math.sin(q) * r}" r="${r * .06}" fill="${i === 0 ? CAR : INK}"/>`; }
+  return g + `</g>`;
+}
+function wheel(r, rot, spokes = 1, clock = 0, h = [0, 0]) {
+  let g = `<g><circle r="${r}" stroke="${INK}" stroke-width="${lerp(26, 10, clock)}" fill="${clock ? PAPER : 'none'}" fill-opacity="${clock}"/>`;
+  g += `<g transform="rotate(${rot})" opacity="${spokes}">`;
+  for (let i = 0; i < 16; i++) { const q = i * 22.5 * D2R; g += `<path d="M0 0 L${Math.cos(q) * r * .94} ${Math.sin(q) * r * .94}" stroke="${INK}" stroke-width="3"/>`; }
+  g += `</g>`;
+  if (clock > 0) {
+    for (let i = 0; i < 12; i++) { const q = i * 30 * D2R; g += `<path d="M${Math.cos(q) * r * .78} ${Math.sin(q) * r * .78} L${Math.cos(q) * r * .9} ${Math.sin(q) * r * .9}" stroke="${INK}" stroke-width="${i % 3 ? 5 : 10}" opacity="${clock}"/>`; }
+    g += `<path d="M0 0 L${Math.sin(h[0] * D2R) * r * .5} ${-Math.cos(h[0] * D2R) * r * .5}" stroke="${INK}" stroke-width="14" stroke-linecap="round" opacity="${clock}"/>`;
+    g += `<path d="M0 0 L${Math.sin(h[1] * D2R) * r * .74} ${-Math.cos(h[1] * D2R) * r * .74}" stroke="${CAR}" stroke-width="9" stroke-linecap="round" opacity="${clock}"/>`;
+  }
+  return g + `<circle r="${r * .08}" fill="${CAR}"/></g>`;
+}
+function chatBubble(w, h, fill, tail) {
+  return `<g><rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${h * .42}" fill="${fill}" stroke="${INK}" stroke-width="6"/><path d="M${tail * w * .25} ${h / 2 - 3} l${tail * 20} 34 l${-tail * 40} -34z" fill="${fill}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/></g>`;
+}
+
+/* ---------- kinetic text ---------- */
+const TXT = {};
+function text(key, str, t, a, b, o = {}) {
+  let el = TXT[key];
+  if (!el) {
+    el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
+    el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
+    el._w = [...el.querySelectorAll('.w')];
+  }
+  const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) + 'px'; el.style.color = o.col || INK; el.style.fontWeight = o.weight || 800;
+  const st = o.stagger ?? .06, dur = o.dur || .35, out = o.out ?? .2;
+  el._w.forEach((w, i) => {
+    const k = eo(P(t, a + i * st, a + i * st + dur)); const q = out ? eio(P(t, b - out, b)) : 0;
+    w.style.transform = o.mode === 'x' ? `translateX(${(1 - k) * 120 - q * 120}px)` : `translateY(${(1 - k) * 70 - q * 50}px) scale(${lerp(1.25, 1, k)})`;
+    w.style.opacity = k * (1 - q); w.style.filter = `blur(${(1 - k) * 8 + q * 8}px)`;
+  });
+  return el;
+}
+
+/* ---------- big kinetic words (letters as objects) ---------- */
+const BIG = {};
+function big(key, word, size) {
+  if (BIG[key]) return BIG[key];
+  const el = document.createElement('div'); el.className = 'big'; el.style.fontSize = size + 'px'; $('kin').appendChild(el);
+  const m = document.createElement('span'); m.style.position = 'static'; m.style.visibility = 'hidden'; el.appendChild(m);
+  const L = []; let x = 0;
+  for (const c of word) { m.textContent = c; const w = m.getBoundingClientRect().width; const s = document.createElement('span'); s.textContent = c; el.appendChild(s); L.push({ s, x, w }); x += w; }
+  m.remove(); el._L = L; el._W = x; BIG[key] = el; return el;
+}
+function hideBig(except = []) { for (const k in BIG) if (!except.includes(k)) BIG[k].style.display = 'none'; }
+
+/* ---------- phone screens (real apps/web captures, yondo theme) ---------- */
+const S = 560 / 975, SX = 260, SY = 492;
+const SHOT = ['m-list-1', 'm-profile', 'm-profile-services', 'm-booking-dialog', 'm-bookings'];
+const IMG = {};
+for (const n of SHOT) { const im = new Image(); im.src = `${SHOTS}/${n}.png`; im.style.opacity = 0; $('screen').appendChild(im); IMG[n] = im; }
+const PILL = {};
+function pill(s, t, a, b, x, y) {
+  let el = PILL[s]; if (!el) { el = document.createElement('div'); el.className = 'pill'; el.textContent = s; $('hl').appendChild(el); PILL[s] = el; }
+  const on = t >= a && t <= b; el.style.display = on ? 'block' : 'none'; if (!on) return;
+  const k = back(P(t, a, a + .4)), q = eio(P(t, b - .2, b));
+  el.style.transform = `translate(${x}px,${y + (1 - k) * 50}px) scale(${lerp(.5, 1, k)})`; el.style.opacity = cl(k * 2) * (1 - q);
+}
+
+/* ---------- scenes ---------- */
+function S1(t) { // 0-3 ball flies at the camera, covers the screen; a paper sphere rises and becomes the sun
+  let g = '';
+  if (t < 1.0) {
+    $('bg').style.background = PAPER;
+    const k = ei(P(t, 0, 1.0));                    // accelerating towards the camera
+    const r = lerp(60, 1500, k), y = lerp(1240, 960, k), x = lerp(420, 540, k);
+    g += `<ellipse cx="${x}" cy="1500" rx="${90 * (1 - k)}" ry="${14 * (1 - k)}" fill="${INK}" opacity="${.18 * (1 - k)}"/>`;
+    g += `<g transform="translate(${x} ${y})">${ball(r, t * 540)}</g>`;
+    // speed lines
+    for (let i = 0; i < 8; i++) { const q = (i * 45 + 20) * D2R, L0 = r * 1.05, L1 = L0 + 120 * k; g += `<path d="M${x + Math.cos(q) * L0} ${y + Math.sin(q) * L0} L${x + Math.cos(q) * L1} ${y + Math.sin(q) * L1}" stroke="${INK}" stroke-width="8" stroke-linecap="round" opacity="${k * .6}"/>`; }
+  } else {
+    // inside the ball = ink night; a paper sphere rises over a horizon and turns into the carrot sun
+    $('bg').style.background = INK;
+    const k = eo(P(t, 1.0, 2.2)), sun = eio(P(t, 1.7, 2.6));
+    const y = lerp(1700, 760, k), r = lerp(70, 130, k);
+    const col = sun > .5 ? CAR : PAPER;
+    g += `<circle cx="540" cy="${y}" r="${r * (2.2 + sun)}" fill="${CAR}" opacity="${.16 * sun}"/>`;
+    g += `<circle cx="540" cy="${y}" r="${r}" fill="${col}"/>`;
+    // horizon + simple skyline drawn in paper
+    g += `<g stroke="${PAPER}" stroke-width="6" fill="none" opacity="${.4 + sun * .6}"><path d="M0 1260 H1080"/>`;
+    for (const [bx, bw, bh] of [[40, 130, 220], [190, 110, 330], [320, 140, 180], [640, 120, 260], [780, 150, 360], [950, 110, 200]]) g += `<rect x="${bx}" y="${1260 - bh}" width="${bw}" height="${bh}"/>`;
+    g += `<path d="M500 1260 V1110 H580 V1260"/><path d="M500 1110 Q540 1040 580 1110"/></g>`;
+    // rays
+    for (let i = 0; i < 12; i++) { const q = (i * 30 + t * 30) * D2R; g += `<path d="M${540 + Math.cos(q) * (r + 30)} ${y + Math.sin(q) * (r + 30)} L${540 + Math.cos(q) * (r + 30 + 60 * sun)} ${y + Math.sin(q) * (r + 30 + 60 * sun)}" stroke="${CAR}" stroke-width="8" stroke-linecap="round" opacity="${sun}"/>`; }
+    // the ink wipes away as the ball passes the camera
+    const pass = P(t, 1.0, 1.35);
+    if (pass < 1) g += `<circle cx="540" cy="960" r="${1500 * (1 - eo(pass))}" fill="${INK}"/>`;
+  }
+  $('sv').innerHTML = g;
+  text('h1', 'Bir kun.\nMinglab imkoniyat.', t, 1.5, 3.0, { y: 300, size: 104, col: PAPER, stagger: .12 });
+  text('q1', 'Bugun nima qilishni xohlaysiz?', t, 2.1, 3.0, { y: 560, size: 50, col: PAPER, weight: 600, stagger: .05 });
+}
+
+function S2(t) { // 3-7 stitch chain: cup -> park ring path -> bicycle wheel -> clock
+  $('bg').style.background = PAPER; let g = '';
+  // pan in from the sun: the scene drops from above (tilt down)
+  const tilt = (1 - eo(P(t, 3, 3.3))) * -900;
+  const w = 210;                                         // shared radius: every object turns at the same centre
+  const ang = (t - 3) * 260;                              // shared rotation (deg) for the match cuts
+  if (t < 3.75) {
+    const drop = back(P(t, 3.05, 3.45));
+    g += `<g transform="translate(0 ${tilt})"><path d="M120 1180 H960" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M220 1180 V1560 M860 1180 V1560" stroke="${INK}" stroke-width="8" stroke-linecap="round"/>`;
+    // side view cup lands, then the camera swings over it (squash into the top view)
+    const over = eio(P(t, 3.45, 3.75));
+    g += `<g transform="translate(540 ${lerp(600, 1176, drop)}) scale(1 ${lerp(1, .35, over)})" opacity="${1 - over}">${cupSide(1.3)}</g>`;
+    if (over > 0) g += `<g transform="translate(540 ${lerp(1100, 960, over)}) scale(${over})">${cupTop(w * .62, ang)}</g>`;
+    g += `</g>`;
+  } else if (t < 4.6) {
+    // match cut 1: the turning cup becomes the turning ring path of a park (same centre, radius and speed)
+    const m = eio(P(t, 3.75, 4.15));
+    if (m < 1) g += `<g transform="translate(540 960)" opacity="${1 - m}">${cupTop(w * .62, ang)}</g>`;
+    g += `<g transform="translate(540 960) scale(${lerp(.6, 1, m)})" opacity="${m}">${ringPath(w, ang, m)}</g>`;
+  } else if (t < 5.75) {
+    // match cut 2: the ring path's rim becomes a bicycle wheel rolling along the park path
+    const m = eio(P(t, 4.6, 5.0));
+    const roll = eio(P(t, 5.0, 5.75));
+    const cx = 540 + roll * 0, cy = lerp(960, 1080, m);
+    g += `<g opacity="${1 - m}" transform="translate(540 960)">${ringPath(w, ang, 1 - m)}</g>`;
+    g += `<path d="M${lerp(540, -100, m)} ${cy + w * 1.25} H${lerp(540, 1180, m)}" stroke="${INK}" stroke-width="8"/>`;
+    for (let i = 0; i < 8; i++) { const x = ((i * 170 - (t - 4.6) * 900) % 1360 + 1360) % 1360 - 140; g += `<path d="M${x} ${cy + w * 1.25 + 30} h70" stroke="${INK}" stroke-width="6" stroke-linecap="round" opacity="${m * .5}"/>`; }
+    // frame stub of the bicycle (fork + chain stay) so it reads as a bicycle wheel
+    g += `<g stroke="${INK}" stroke-width="10" stroke-linecap="round" fill="none" opacity="${m}"><path d="M${cx} ${cy} L${cx - 160} ${cy - 330} L${cx - 260} ${cy - 330}"/><path d="M${cx} ${cy} L${cx + 260} ${cy - 40}"/></g>`;
+    g += `<g transform="translate(${cx} ${cy}) scale(${lerp(.86, 1.25, m)})">${wheel(w, ang, m)}</g>`;
+  } else {
+    // match cut 3: the wheel's rim becomes a clock face; spokes fade, hands spin and settle
+    const m = eio(P(t, 5.75, 6.15)); const cy = lerp(1080, 960, m), sc = lerp(1.25, 1.6, m);
+    const spin = 1 - eo(P(t, 5.9, 7.0));
+    const hh = 300 + spin * 720, mm = 0 + spin * 4320 + (1 - spin) * 0;
+    g += `<g stroke="${INK}" stroke-width="10" stroke-linecap="round" fill="none" opacity="${1 - m}"><path d="M540 ${cy} L380 ${cy - 330} L280 ${cy - 330}"/><path d="M540 ${cy} L800 ${cy - 40}"/></g>`;
+    g += `<g transform="translate(540 ${cy}) scale(${sc})">${wheel(w, ang, 1 - m, m, [hh, mm])}</g>`;
+  }
+  $('sv').innerHTML = g;
+  text('q2a', 'Suhbatlashishmi?', t, 3.25, 4.4, { y: 260, size: 86, stagger: .04, mode: 'x' });
+  text('q2b', 'Sayr qilishmi?', t, 4.45, 5.6, { y: 260, size: 86, stagger: .04, mode: 'x' });
+  text('q2c', 'Yoki shaharni\nbirga kashf qilishmi?', t, 5.65, 6.95, { y: 230, size: 80, stagger: .05, mode: 'x' });
+}
+
+function S3(t) { // 7-13 kinetic words: SUHBAT -> chat bubbles; SAYR -> road line; SHAHAR -> splits and becomes KASHF
+  let g = '';
+  hideBig(t < 9 ? ['suh'] : t < 11 ? ['sayr'] : ['sha', 'kas']);
+  if (t < 9) {
+    $('bg').style.background = INK;
+    const el = big('suh', 'SUHBAT', 230); el.style.display = 'block'; el.style.color = PAPER;
+    const x0 = 540 - el._W / 2, y0 = 820;
+    const m = eio(P(t, 7.7, 8.3));                    // letters -> bubbles
+    el._L.forEach((L, i) => {
+      const k = back(P(t, 7.0 + i * .05, 7.4 + i * .05));
+      const side = i % 2 ? 1 : -1;
+      const bx = 540 + side * 150 - L.w / 2, by = 520 + i * 190;    // chat column
+      const x = lerp(x0 + L.x, bx, m), y = lerp(y0 + (1 - k) * 200, by - 60, m);
+      L.s.style.transform = `translate(${x}px,${y}px) scale(${lerp(1, .42, m)})`; L.s.style.transformOrigin = '50% 50%';
+      L.s.style.opacity = cl(k * 2); L.s.style.color = m > .5 ? INK : PAPER;
+      if (m > 0) {
+        const bw = lerp(L.w * .9, 300, m), bh = lerp(200, 130, m);
+        g += `<g transform="translate(${x + L.w / 2} ${y + 125}) scale(${m})">${chatBubble(bw, bh, i % 2 ? PAPER : PAPER, side)}</g>`;
+      }
+    });
+    // typing dots under the last bubble
+    const tp = P(t, 8.4, 9);
+    if (tp > 0) for (let i = 0; i < 3; i++) g += `<circle cx="${430 + i * 40}" cy="${1720 - Math.max(0, Math.sin(t * 14 - i)) * 14}" r="13" fill="${CAR}" opacity="${eo(tp * 3)}"/>`;
+  } else if (t < 11) {
+    $('bg').style.background = PAPER;
+    const el = big('sayr', 'SAYR', 300); el.style.display = 'block'; el.style.color = INK;
+    // road in perspective, vanishing point at (540, 700)
+    const vx = 540, vy = 700, lay = eio(P(t, 9.55, 10.2)), go = P(t, 10.0, 11.0);
+    g += `<path d="M${vx - 20} ${vy} L-200 1920 M${vx + 20} ${vy} L1280 1920" stroke="${INK}" stroke-width="8" opacity="${eo(P(t, 9.2, 9.6))}"/>`;
+    // carrot centre line stretching into the screen (dashes move towards the viewer)
+    for (let i = 0; i < 9; i++) {
+      const z0 = ((i / 9) + (t - 9) * .9) % 1, z1 = z0 + .05;
+      const p = (z) => Math.pow(z, 2.2);
+      g += `<path d="M${vx} ${lerp(vy, 1920, p(z0))} L${vx} ${lerp(vy, 1920, p(z1))}" stroke="${CAR}" stroke-width="${lerp(4, 46, p(z0))}" opacity="${eo(P(t, 9.3, 9.6))}"/>`;
+    }
+    const x0 = 540 - el._W / 2;
+    el._L.forEach((L, i) => {
+      const k = back(P(t, 9.0 + i * .06, 9.4 + i * .06));
+      // the letters lie down on the road and slide away into the distance
+      const away = ei(go);
+      const y = lerp(380 + (1 - k) * -200, 1080, lay) - away * 380;
+      const sc = lerp(1, .9, lay) * lerp(1, .05, away);
+      L.s.style.transform = `translate(${lerp(x0 + L.x, 540 - el._W / 2 + L.x, lay) + (540 - (x0 + L.x + L.w / 2)) * away}px,${y}px) rotateX(${lay * 68}deg) scale(${sc})`;
+      L.s.style.transformOrigin = '50% 100%'; L.s.style.opacity = cl(k * 2) * (1 - P(t, 10.8, 11));
+    });
+  } else {
+    $('bg').style.background = INK;
+    const a = big('sha', 'SHAHAR', 220), b = big('kas', 'KASHF', 240);
+    a.style.display = 'block'; b.style.display = 'block'; a.style.color = PAPER; b.style.color = PAPER;
+    const split = eio(P(t, 11.6, 12.05)), join = eio(P(t, 12.0, 12.55));
+    const ax = 540 - a._W / 2, bx = 540 - b._W / 2, y = 840;
+    // each letter is cut in two halves (top / bottom clips) that fly apart; KASHF halves fly in and lock
+    const halves = (el, x0, k, inward, seed) => el._L.forEach((L, i) => {
+      if (!L.h) { L.h = [L.s, L.s.cloneNode(true)]; el.appendChild(L.h[1]); L.h[0].style.clipPath = 'inset(0 0 50% 0)'; L.h[1].style.clipPath = 'inset(50% 0 0 0)'; }
+      L.h.forEach((h, j) => {
+        const r = rnd(i * 2 + j + seed), dx = (r - .5) * 900, dy = (j ? 1 : -1) * (240 + r * 400), rot = (r - .5) * 160;
+        const kk = inward ? 1 - k : k;
+        h.style.transform = `translate(${x0 + L.x + dx * kk}px,${y + dy * kk + (inward ? 0 : 0)}px) rotate(${rot * kk}deg)`;
+        h.style.opacity = inward ? cl((1 - kk) * 1.6) : 1 - cl(kk * 1.4);
+      });
+    });
+    const intro = back(P(t, 11.0, 11.35));
+    halves(a, ax, split, false, 1); a.style.transform = `scale(${lerp(.6, 1, intro)})`; a.style.transformOrigin = '540px 950px';
+    halves(b, bx, join, true, 7);
+    // little carrot shards between the two words
+    for (let i = 0; i < 14; i++) { const k = P(t, 11.6, 12.5); const q = rnd(i + 30) * Math.PI * 2, R = 120 + Math.sin(k * Math.PI) * 520; g += `<rect x="${540 + Math.cos(q) * R}" y="${950 + Math.sin(q) * R}" width="26" height="10" fill="${CAR}" opacity="${Math.sin(k * Math.PI)}" transform="rotate(${i * 37 + k * 300} ${540 + Math.cos(q) * R} ${950 + Math.sin(q) * R})"/>`; }
+    // underline that becomes the road line leading into the phone (12.6-13)
+    const ul = eo(P(t, 12.55, 12.85)), run = eio(P(t, 12.8, 13.0));
+    g += `<path d="M${540 - 300 * ul} 1150 H${540 + 300 * ul}" stroke="${CAR}" stroke-width="16" stroke-linecap="round" opacity="${1 - run}"/>`;
+    if (run > 0) g += `<path d="M540 ${lerp(1150, 1920, run)} V1920" stroke="${CAR}" stroke-width="16" stroke-linecap="round"/>`;
+  }
+  $('sv').innerHTML = g;
+}
+
+function S4(t) { // 13-21 the camera follows the road line into the phone; real UI: discover, profile, interests, booking
+  $('bg').style.background = `radial-gradient(circle at 50% 55%, rgba(232,80,26,.14), rgba(232,80,26,0) 60%), ${PAPER}`;
+  let g = ''; $('sv').innerHTML = '';
+  // the road line runs up the screen and dives into the phone's screen
+  const run = P(t, 13.0, 13.55), open = eio(P(t, 13.35, 13.8));
+  const lineTop = lerp(1920, 1100, eo(run));
+  if (open < 1) g += `<path d="M540 1920 V${lineTop}" stroke="${CAR}" stroke-width="16" stroke-linecap="round" opacity="${1 - open}"/>`;
+  $('phoneWrap').style.display = 'block';
+  const ry = Math.sin(t * 1.3) * 5;
+  $('phone').style.transform = `translateY(${(1 - eo(P(t, 13.0, 13.45))) * 1100}px) rotateY(${ry}deg) rotateX(4deg)`;
+  $('screen').style.clipPath = `circle(${open * 140}% at 50% 100%)`;
+  // fast, precise horizontal pushes between screens
+  const seq = [['m-list-1', 13.35, 15.25], ['m-profile', 15.2, 16.85], ['m-profile-services', 16.8, 18.55], ['m-booking-dialog', 18.5, 20.25], ['m-bookings', 20.2, 21.2]];
+  for (const [n, a, b] of seq) {
+    const im = IMG[n]; const kin = eo(P(t, a, a + .3)), kout = ei(P(t, b - .3, b));
+    const on = t >= a && t <= b;
+    im.style.opacity = on ? 1 : 0;
+    im.style.transform = `translateX(${(1 - kin) * 560 - kout * 560}px)`;
+    im.style.zIndex = Math.round(a * 10);
+  }
+  // discover: slow scroll feel; interests: carrot focus frame (screenshot px y 954..1200)
+  const fr = eo(P(t, 17.2, 17.5)) * (1 - P(t, 18.3, 18.5));
+  if (fr > 0) { const x = SX + 30 * S, y = SY + 940 * S, w = 915 * S, h = 270 * S; g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="22" fill="none" stroke="${CAR}" stroke-width="8" opacity="${fr}" transform="translate(${540} ${y + h / 2}) scale(${lerp(1.3, 1, fr)}) translate(${-540} ${-(y + h / 2)})"/>`; }
+  // tap on "So'rov yuborish" (screenshot ~ x 675, y 1956)
+  const tp = P(t, 19.7, 20.2);
+  if (tp > 0 && tp < 1) { const x = SX + 675 * S, y = SY + 1956 * S; g += `<circle cx="${x}" cy="${y}" r="${20 + tp * 90}" fill="none" stroke="${CAR}" stroke-width="${8 * (1 - tp)}" opacity="${1 - tp}"/><circle cx="${x}" cy="${y}" r="26" fill="${INK}" opacity="${.35 * (1 - tp)}"/>`; }
+  // phone leaves upwards into the final stitch
+  const leave = eio(P(t, 20.9, 21.2));
+  if (leave > 0) $('phone').style.transform += ` translateY(${-leave * 300}px) scale(${1 - leave * .9})`;
+  $('fx').innerHTML = g;
+  pill('Hamrohlar', t, 13.8, 15.2, 90, 1770); pill('Profil', t, 15.4, 16.8, 700, 1770); pill('Qiziqishlar', t, 17.2, 18.5, 380, 1770); pill('Bron so‘rovi', t, 18.7, 20.9, 330, 1770);
+  text('h4', 'YONDO — o‘zingizga mos\nhamrohni topishning yangi usuli.', t, 13.5, 20.9, { y: 170, size: 62, stagger: .06 });
+}
+
+function S5(t) { // 21-30 final stitch: earlier objects return, join and become the logo; branding
+  $('bg').style.background = PAPER; let g = '';
+  const U = 9, ox = 540 - 32 * U, oy = 760 - 32 * U;
+  const slide = eio(P(t, 26.0, 26.8));
+  const lw = 219 * 3.9, lx = 540 - lw / 2, ly = 800 - 32 * 3.9;
+  const sx = lerp(ox, lx, slide), sy = lerp(oy, ly, slide), su = lerp(U, 3.9, slide);
+  const L2 = (x, y) => [sx + x * su, sy + y * su];         // logo coords -> page
+  // objects orbit the centre (21-23.2), then each flies to its role in the logo (23.2-24.6)
+  const orbit = eo(P(t, 21.0, 21.8)), go = eio(P(t, 23.2, 24.5));
+  const rot = (t - 21) * 40;
+  const objs = [
+    ['ball', 0, L2(14, 12), 7], ['clock', 72, L2(50, 12), 7], ['bubble', 144, L2(32, 55), 5.5], ['cup', 216, L2(32, 40), 0], ['road', 288, L2(32, 40), 0]];
+  for (const [n, a0, [tx, ty], r] of objs) {
+    const q = (a0 + rot) * D2R, R = lerp(1400, 400, orbit);
+    const px = lerp(540 + Math.cos(q) * R, tx, go), py = lerp(960 + Math.sin(q) * R * 1.1, ty, go);
+    const s = lerp(1.5, r ? (r * su) / 110 : 0.05, go);
+    const fade = r ? 1 : 1 - go;
+    let o = '';
+    if (n === 'ball') o = go > .85 ? `<circle r="110" fill="${INK}"/>` : ball(110, t * 200);
+    if (n === 'clock') o = go > .85 ? `<circle r="110" fill="${CAR}"/>` : `<g transform="scale(.52)">${wheel(210, 0, 0, 1, [t * 200, t * 1400])}</g>`;
+    if (n === 'bubble') o = go > .85 ? `<circle r="110" fill="${INK}"/>` : `<g transform="scale(1.1)">${chatBubble(170, 110, PAPER, 1)}</g>`;
+    if (n === 'cup') o = cupSide(.8);
+    if (n === 'road') o = `<path d="M0 -130 V130" stroke="${CAR}" stroke-width="22" stroke-linecap="round" stroke-dasharray="40 30"/>`;
+    g += `<g transform="translate(${px} ${py}) scale(${s}) rotate(${n === 'road' ? (1 - go) * 90 : 0})" opacity="${fade}">${o}</g>`;
+  }
+  // Y-fork strokes draw between the nodes once they have landed
+  const draw = eio(P(t, 24.3, 25.3));
+  g += `<g transform="translate(${sx} ${sy}) scale(${su})"><path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - draw}"/>`;
+  if (go >= 1) g += `<circle cx="14" cy="12" r="7" fill="${INK}"/><circle cx="50" cy="12" r="7" fill="${CAR}"/><circle cx="32" cy="55" r="5.5" fill="${INK}"/>`;
+  const wm = eio(P(t, 26.3, 27.1));
+  g += `<clipPath id="wmc"><rect x="70" y="0" width="${160 * wm}" height="64"/></clipPath><g clip-path="url(#wmc)" style="color:${INK}" opacity="${wm}">${WORDMARK}</g></g>`;
+  const ul = eo(P(t, 27.7, 28.2));
+  g += `<path d="M${540 - 170 * ul} 1188 H${540 + 170 * ul}" stroke="${CAR}" stroke-width="10" stroke-linecap="round"/>`;
+  $('sv').innerHTML = g;
+  text('h6a', 'Doim yoningda.', t, 27.2, 30.2, { y: 1030, size: 92, stagger: .12, out: 0 });
+  text('h6b', 'Tez kunda.', t, 27.9, 30.2, { y: 1260, size: 58, weight: 700, stagger: .12, out: 0 });
+}
+
+window.render = (t) => {
+  const sc = t < 3 ? 1 : t < 7 ? 2 : t < 13 ? 3 : t < 21 ? 4 : 5;
+  const keep = { 1: ['h1', 'q1'], 2: ['q2a', 'q2b', 'q2c'], 3: [], 4: ['h4'], 5: ['h6a', 'h6b'] }[sc];
+  for (const k in TXT) if (!keep.includes(k)) TXT[k].style.display = 'none';
+  if (sc !== 3) hideBig();
+  if (sc !== 4) { $('phoneWrap').style.display = 'none'; $('fx').innerHTML = ''; for (const k in PILL) PILL[k].style.display = 'none'; }
+  [null, S1, S2, S3, S4, S5][sc](t);
+};
+window.ready = Promise.all([document.fonts.ready, ...Object.values(IMG).map((i) => i.decode().catch(() => 0))]).then(() => { window.render(0); return true; });
+</script></body></html>
