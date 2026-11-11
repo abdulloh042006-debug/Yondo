@@ -31,7 +31,7 @@ Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_
 Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).
 Next: build the companion-side fee deduction; owner tasks in `docs/configuration.md`.
 Blockers: none.
-Evidence: pytest 389 passed + 9 skipped (SQLite), doctor tests 10/10, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Evidence: pytest 391 passed + 9 skipped (SQLite, after merging main), doctor tests 10/10, ruff PASS, `export_openapi.py --check` PASS (unchanged).
 Commit: see PR (feat/config-doctor).
 ## S50 — AI assistant Phase A audit + owner/CEO decisions (2026-11-10/11) [cloud chat, researcher worker]
 Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
