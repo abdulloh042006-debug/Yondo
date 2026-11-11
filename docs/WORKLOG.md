@@ -26,6 +26,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S52 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
+Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
+Next: script 2 from session yondo-43.
+Evidence: audio-ears on the final mp4: −13.8 LUFS, TP −1.8 dBTP, 0 clipped, hits within ±2 frames of the cuts.
+Branch: `feat/ad-video-1` (PR to main).
 ## S51 — AI assistant Phase B: knowledge-base schema (2026-11-10) [cloud chat, backend worker]
 Done: `knowledge/{public,internal,shared}/` + README (TOML front-matter: id, title, audience, languages, category, status, version, source, updated_at); validator `apps/api/src/yondo_api/assistant/kb.py` (`python -m yondo_api.assistant.kb --check`; only `approved` is indexable; audience must equal folder; one `## uz|ru|en` section per language); seed = 9 Help FAQ docs in `knowledge/public/faq/` verbatim from `apps/web/src/i18n` (status `review`); tests `apps/api/tests/test_assistant_kb.py` (27, incl. verbatim check vs i18n).
 Not done: retrieval, provider, endpoints (phases C–F). config.py/main.py/jobs.py untouched.
