@@ -25,6 +25,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S52 — Configuration doctor + setup guide (2026-11-11) [cloud chat, backend worker]
+Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_api/doctor.py`): every integration as ok / missing / invalid / disabled; format checks only, no network calls; secrets as "set (N chars)", cards as last 4, URLs as scheme+host; also runs the API's own settings validation. `docs/configuration.md`: every env var, verified safe fallbacks, owner-only tasks. `.env.example`: manual-payment placeholders added. Tests `apps/api/tests/test_doctor.py` (8, incl. secret-absence asserts).
+Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).
+Next: build the companion-side fee deduction; owner tasks in `docs/configuration.md`.
+Blockers: none.
+Evidence: pytest 389 passed + 9 skipped (SQLite), doctor tests 8/8, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/config-doctor).
 ## S49 — Owner's approved product decisions recorded (2026-11-06) [cloud chat]
 Done:
 - `docs/product-decisions.md` is now the source of truth.
