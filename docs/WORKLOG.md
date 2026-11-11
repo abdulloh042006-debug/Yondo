@@ -10,6 +10,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Next steps (priority order)
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
+00g. **Branches (S55, 2026-11-11):** the owner deletes the merged branches listed in S55 on GitHub (the session cannot). Port `codex/scheduled-meeting-reminders` and `ccr-15294129-n60ucy` in small PRs.
 00f. **AI assistant (2026-11-10):** Phase A audit in `docs/ai-assistant/phase-a-audit.md`; decisions recorded in its §9 (no external AI provider in v1, retrieval-only answerer; retention: account rows until deletion, anonymous 90 days). Phase B = PR #23; next phase C (retrieval answerer).
 00a. ~~Password login plan~~ **superseded by the owner's decisions of 2026-11-06** (`docs/product-decisions.md` §3/§6): the password is mandatory, 8–128 characters, scrypt; 5 misses lock for 15 minutes; 20 attempts per minute per IP; **no extra code on a new device**; codes for sign-up and reset come from the Telegram bot. Build it per that file (backlog item 2 of S49).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
@@ -26,6 +27,30 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S55 — Open PRs merged into main; branch audit (2026-11-10/11) [cloud chat, yondo-43]
+Done:
+- Owner's instruction (yondo-43, 2026-11-06): merge the PRs if all is well, check every branch, add or remove.
+- Merged into `main` in order: #10, #11, #12, #13, #16, #14, #15, #17, #18, #21 (product decisions), #19. Merge commits only, no force-push.
+  - Conflicts were resolved in one merge commit per PR branch; an independent verifier APPROVED them (remerge-diff, scope, secrets).
+  - Before merging: SQLite 381 passed / 9 skipped, PostgreSQL 390 passed, alembic head 0018 + check, web typecheck/lint/vitest 54/build, mobile tsc. CI green on every PR.
+- Second chain, in order: #23, #20, #22, #24, then this PR.
+  - Every PR adds a WORKLOG entry at the top, so yondo-43 resolved them in one chain: one merge commit per branch, fast-forward pushes.
+  - Video entries renumbered S52–S54; `marketing/ad-video/README.md` lists all three reels.
+- This PR adds two small unmerged branches:
+  - `codex/payment-webhook-concurrency-audit` 8044aa0: a PostgreSQL test for concurrent duplicate webhooks, now also in CI.
+  - `codex/phase6-postgres-validation-2026-10-17` ef9d05c: a validation record.
+- CLAUDE.md: ona now holds the owner's permission (old line marked superseded).
+Not done (BLOCKED):
+- Deleting branches and pushing archive tags: the session's git proxy refuses both (HTTP 403). The owner deletes them on GitHub.
+- Fully merged, safe to delete: `abdulloh042006-debug-development-infrastructure` 000fa41, `codex/manual-gifts-click-test` 27fdb07, `codex/mvp-safety-reconciliation` 1920505, `codex/notification-integration` 5fe6c18, `codex/phases-16-20` 70dc7aa, `codex/phases-7-10` 527dc0c, `docs/password-login-plan` 3f8c9a5, `docs/product-decisions` 852da87, `feat/admin-bootstrap` 5fba15a, `feat/agent-company` bcaae43, `feat/manual-payments` 5849c45, `fix/login-contrast-yondo-tun` b0e88c5, `port/gifts-vendor` 6733a0d, `port/identity-verification` c688854, `port/mobile-app` d1d3c39, `docs/ai-assistant-phase-a` c89fe97.
+- Also safe to delete once this chain is merged: `feat/ai-kb-schema`, `feat/ad-video-1`, `feat/ad-video-2`, `feat/ad-video-3`, and the two cherry-picked branches above.
+- Keep: `main`, `design/prototype` (Render deploys it), `ccr-098c28d7-jr8exe` (yondo-43).
+Next:
+- Unmerged work to port in small PRs (do not delete these branches):
+  - `codex/scheduled-meeting-reminders` fee34c9: 24h/1h reminder worker; its migration must be renumbered after 0018.
+  - `ccr-15294129-n60ucy` b09c04b: S39, unverified, 223 files. Opening animation, warm skin, onboarding, cancellation tracking and abuse guards, companion stories.
+Evidence: test_payments.py on PostgreSQL 8 passed; the CI PostgreSQL list 7 passed; SQLite 381 passed / 10 skipped; ruff and openapi check PASS (verifier APPROVE on the cherry-picks).
+
 ## S54 — Reel 3 «Birinchi qadam» (2026-11-11) [cloud chat, VIDEOCHI]
 Done: 34 s 9:16 cinematic reel from owner script 3 (point of light → one step → roads to cafe/park/street/square, 3D "1 + 1 = YANGI TAJRIBA", friendly meeting, 180° orbit to real `apps/web` screens, walk from behind, logo on ink); breakdown `marketing/ad-video/scripts/03-birinchi-qadam.md`, sources `marketing/ad-video/reel3/`.
 Not done: VO (same blocker as reel 2). Media not committed; mp4 sent to the owner.

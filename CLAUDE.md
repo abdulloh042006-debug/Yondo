@@ -88,7 +88,7 @@ Keep this list current: when the owner states a preference or decision, add one 
 - **Payments for the first month (owner, 2026-11-05; superseded on 2026-11-06 by the product decisions line below: simulator until a separate permission):** no payment API at the start. Customers transfer to the owner's cards (Uzcard, Humo, Visa/Uzum) and the owner confirms each payment by hand (few users, no extra cost). Built as `YONDO_PAYMENT_PROVIDER=manual` (`docs/payments-manual.md`). Switching to TezCheck when users grow = one setting. **The card numbers and the holder's name are set ONLY in the host's environment, never in the repository, chat logs, commits or PRs (the repo is public).**
 - **Agent company (owner, 2026-11-05):** the owner delegated day-to-day direction to an agent team so he can step away:
   - **CEO "ota"**: the cloud session "Yondo CEO — boshliq". It plans, assigns tasks and reviews, and it sets the Agent Creator's policy.
-  - **Agent Creator "ona"**: creates worker sessions on request. Its technical create_session permission needs an owner permission rule; until then the lead session yondo-43 creates the workers.
+  - **Agent Creator "ona"**: creates worker sessions on request. Its technical create_session permission needs an owner permission rule; until then the lead session yondo-43 creates the workers. *(Superseded 2026-11-10: the owner granted the permission; worker requests go to ona again, and yondo-43 creates workers only if ona cannot.)*
   - **Workers and verifiers.**
 
   Shared rules, brief template and board protocol: `.claude/skills/yondo-team/SKILL.md`. Live board (owner-visible): https://claude.ai/artifact/4Dz26J77E3eVNfrSPuWt2u. Owner-only items stay with the owner: merging, keys, money, legal, and `docs/owner-todo.md` §3.
