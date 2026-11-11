@@ -164,7 +164,7 @@ async def test_admin_cannot_confirm_own_payment_and_late_money_is_flagged_for_re
         headers={**e['customer'], 'Idempotency-Key': 'manual-payment-0002'},
     )
     payment = created.json()
-    assert payment['platform_fee_minor'] == 2500 and payment['amount_minor'] == 52500
+    assert payment['platform_fee_minor'] == 2500 and payment['amount_minor'] == 50000
     reference = payment['checkout_url'].rsplit('/', 1)[1]
 
     # The customer is also an admin: a second person has to confirm the money.

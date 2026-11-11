@@ -18,6 +18,20 @@ def platform_fee(subtotal_minor: int, fee_bps: int) -> int:
     return (subtotal_minor * fee_bps + 5_000) // 10_000
 
 
+def companion_commission(payment: Payment) -> int:
+    """Commission deducted from the companion's payout for this payment.
+
+    Owner decision (docs/product-decisions.md): the commission is deducted from the companion's
+    side and the customer pays only the service amount (amount_minor == subtotal_minor). Payments
+    created under the earlier rule charged the fee to the customer on top
+    (amount_minor == subtotal_minor + platform_fee_minor); for those the commission was already
+    paid by the customer, so nothing is deducted again.
+    """
+    if payment.amount_minor == payment.subtotal_minor:
+        return payment.platform_fee_minor
+    return 0
+
+
 async def release_payout_for_completed_booking(
     session: AsyncSession, booking: Booking, companion: User
 ) -> CompanionPayout | None:
@@ -36,10 +50,16 @@ async def release_payout_for_completed_booking(
     )
     if existing is not None:
         return existing
+    gross = payment.subtotal_minor
+    commission = companion_commission(payment)
+    deductions = 0  # not defined by the owner yet (docs/product-decisions.md)
     payout = CompanionPayout(
         booking_id=booking.id,
         companion_user_id=companion.id,
-        amount_minor=payment.subtotal_minor,
+        gross_minor=gross,
+        commission_minor=commission,
+        deductions_minor=deductions,
+        amount_minor=gross - commission - deductions,
         currency=payment.currency,
         status='ready',
         released_at=datetime.now(UTC),

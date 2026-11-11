@@ -201,7 +201,8 @@ async def test_fee_is_computed_by_backend_in_integer_tiyin(prepared):
     r = await client.post(f'/api/v1/payments/bookings/{booking_id}', headers={**e['customer'], 'Idempotency-Key': 'fee-integer-001'})
     assert r.status_code == 201, r.text
     p = r.json()
-    assert (p['subtotal_minor'], p['platform_fee_minor'], p['amount_minor']) == (50000, 2500, 52500)
+    # Owner decision 2026-11-06: the commission comes off the companion's payout; the customer pays the subtotal.
+    assert (p['subtotal_minor'], p['platform_fee_minor'], p['amount_minor']) == (50000, 2500, 50000)
     assert all(isinstance(p[k], int) for k in ('subtotal_minor', 'platform_fee_minor', 'amount_minor'))
 
 
