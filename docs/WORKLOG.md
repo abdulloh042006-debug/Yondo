@@ -25,7 +25,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S41 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
+## S50 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
 Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
 Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
 Next: script 2 from session yondo-43.
