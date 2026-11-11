@@ -52,7 +52,8 @@ async def test_checkout_idempotency_verified_webhook_and_payout(prepared):
     payment = created.json()
     assert payment['subtotal_minor'] == 50000
     assert payment['platform_fee_minor'] == 2500
-    assert payment['amount_minor'] == 52500
+    # The customer pays the service amount only; the commission comes off the companion's payout.
+    assert payment['amount_minor'] == 50000
     assert payment['status'] == 'pending'
     assert payment['checkout_url'].startswith('https://')
     repeated = await client.post(f'/api/v1/payments/bookings/{booking_id}', headers=headers)
@@ -80,7 +81,12 @@ async def test_checkout_idempotency_verified_webhook_and_payout(prepared):
         payout = await release_payout_for_completed_booking(session, stored_booking, companion)
         await session.commit()
         assert payout.status == 'ready'
-        assert payout.amount_minor == 50000
+        assert (payout.gross_minor, payout.commission_minor, payout.deductions_minor) == (
+            50000,
+            2500,
+            0,
+        )
+        assert payout.amount_minor == 47500  # net = gross - commission
         assert await session.scalar(
             select(CompanionPayout.id).where(CompanionPayout.booking_id == stored_booking.id)
         )

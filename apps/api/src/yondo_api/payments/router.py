@@ -70,9 +70,9 @@ async def create_checkout(
             raise ApplicationError(
                 'payment_configuration_unavailable', 'Platform fee is not configured', 503
             )
+        # The commission is deducted from the companion's payout, not added to the customer's
+        # total (docs/product-decisions.md): the customer pays the service amount only.
         fee = platform_fee(booking.price_minor, fee_bps)
-        if booking.price_minor + fee > 9_223_372_036_854_775_807:
-            raise ApplicationError('payment_amount_overflow', 'Payment amount is too large', 422)
         payment = Payment(
             booking_id=booking.id,
             customer_id=customer_id,
@@ -80,7 +80,7 @@ async def create_checkout(
             status=PaymentStatus.CREATING,
             subtotal_minor=booking.price_minor,
             platform_fee_minor=fee,
-            amount_minor=booking.price_minor + fee,
+            amount_minor=booking.price_minor,
             currency=booking.currency,
         )
         session.add(payment)

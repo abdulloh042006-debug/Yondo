@@ -78,6 +78,13 @@ class CompanionPayout(TimestampMixin, Base):
     __tablename__ = 'companion_payouts'
     __table_args__ = (
         CheckConstraint('amount_minor >= 0', name='ck_companion_payout_amount'),
+        # amount_minor is the companion's net: gross - commission - deductions (all integer minor
+        # units). Deductions are not defined by the owner yet and stay 0.
+        CheckConstraint(
+            'gross_minor >= 0 AND commission_minor >= 0 AND deductions_minor >= 0 '
+            'AND amount_minor = gross_minor - commission_minor - deductions_minor',
+            name='ck_companion_payout_breakdown',
+        ),
         CheckConstraint("status IN ('held', 'ready', 'paid')", name='ck_companion_payout_status'),
         UniqueConstraint('booking_id', name='uq_companion_payout_booking'),
     )
@@ -85,7 +92,11 @@ class CompanionPayout(TimestampMixin, Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     booking_id: Mapped[UUID] = mapped_column(ForeignKey('bookings.id', ondelete='RESTRICT'))
     companion_user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='RESTRICT'))
+    # Net amount the companion receives (= gross - commission - deductions).
     amount_minor: Mapped[int] = mapped_column(BigInteger)
+    gross_minor: Mapped[int] = mapped_column(BigInteger, server_default='0')
+    commission_minor: Mapped[int] = mapped_column(BigInteger, server_default='0')
+    deductions_minor: Mapped[int] = mapped_column(BigInteger, server_default='0')
     currency: Mapped[str] = mapped_column(String(3))
     status: Mapped[str] = mapped_column(String(16), default='held')
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

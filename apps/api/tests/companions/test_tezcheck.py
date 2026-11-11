@@ -267,7 +267,7 @@ async def test_real_adapter_through_checkout_and_signed_webhook(prepared):
     )
     assert created.status_code == 201, created.text
     assert created.json()['checkout_url'] == 'https://pay.tezcheck.uz/p/77'
-    assert bills[0]['amount_minor'] == 52500  # 50 000 + 5 % fee, integer tiyin
+    assert bills[0]['amount_minor'] == 50000  # the service amount; the 5 % comes off the payout
     body = event(bill='bill_77', environment='test')
     unsigned = await client.post('/api/v1/payments/webhook', content=body)
     assert unsigned.status_code == 401

@@ -130,10 +130,10 @@ def test_tezcheck_is_reported_active_when_auto_uses_its_token(env):
     assert TEZ_TOKEN not in out and TEZ_WEBHOOK not in out
 
 
-def test_platform_fee_warns_that_the_code_differs_from_the_decision(env):
+def test_platform_fee_is_described_as_deducted_from_the_companion(env):
     env({'YONDO_PLATFORM_FEE_BPS': '500'})
     check = run()[2]['Platform fee']
-    assert check.status == doctor.OK and 'WARNING' in check.detail
+    assert check.status == doctor.OK and 'deducted from the companion' in check.detail
 
 
 def test_env_file_is_read_and_the_environment_wins(env, tmp_path):

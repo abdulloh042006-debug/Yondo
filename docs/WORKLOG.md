@@ -27,6 +27,14 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S57 — Platform commission deducted from the companion's side (2026-11-11) [cloud chat, backend worker]
+Done: owner rule (`docs/product-decisions.md`): customer pays the subtotal (`payments.amount_minor = subtotal_minor`, no fee on top); `platform_fee_minor` still records the commission. `companion_payouts` + `gross_minor`, `commission_minor`, `deductions_minor` (0: not defined) with net = gross − commission − deductions in `amount_minor` (check constraint). Migration 0019 additive, backfills old rows (gross = amount). Old fee-on-top payments are not deducted again (`payments/service.py::companion_commission`). Rate still `YONDO_PLATFORM_FEE_BPS`, unset = 503. OpenAPI field descriptions + `schema.d.ts` regenerated; web/mobile show `amount_minor` only (no UI change).
+Also: after #26 merged, the doctor's fee message and `docs/configuration.md` now describe the companion-side deduction.
+Not done: no API endpoint shows the payout breakdown yet; FAQ `help.faq.pay.a` is updated in a separate PR (docs/faq-pay-commission).
+Next: companion finances view (gross / deductions / commission / net).
+Blockers: none.
+Evidence: pytest (after merging main 26fcc95) SQLite 431 passed + 10 skipped, PostgreSQL 16 441 passed + 0 skipped; migration up/down/up on PG + backfill checked; design-prototype backend 50 passed; demo harness 8; web typecheck, lint, build PASS, vitest 54/54; ruff PASS; `export_openapi.py --check` PASS. Verifier APPROVE.
+Commit: see PR (fix/commission-companion-side).
 ## S56 — Configuration doctor + setup guide (2026-11-11) [cloud chat, backend worker]
 Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_api/doctor.py`): every integration as ok / missing / invalid / disabled; format checks only, no network calls; secrets as "set (N chars)", cards as last 4, URLs as scheme+host; also runs the API's own settings validation. `docs/configuration.md`: every env var, verified safe fallbacks, owner-only tasks. `.env.example`: manual-payment placeholders added. Tests `apps/api/tests/test_doctor.py` (10, incl. secret-absence asserts and malformed JSON).
 Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).

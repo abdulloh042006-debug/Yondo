@@ -329,8 +329,8 @@ class Doctor:
                 MISSING,
                 False,
                 'YONDO_PLATFORM_FEE_BPS missing: payment creation answers 503 "not configured". '
-                'Owner decision: 5% from the companion side; the code still adds the fee '
-                'to the customer total, so do not set it until that is built',
+                'Owner decision: 5% (500), deducted from the companion payout; '
+                'setting it is an owner step',
             )
         if not raw.isdigit() or not 0 <= int(raw) <= 10_000:
             return Check(
@@ -343,8 +343,8 @@ class Doctor:
             'Platform fee',
             OK,
             False,
-            f'YONDO_PLATFORM_FEE_BPS={int(raw)} basis points. WARNING: the code adds the fee '
-            'to the customer total; the owner decision is to deduct it from the companion side',
+            f'YONDO_PLATFORM_FEE_BPS={int(raw)} basis points, deducted from the companion '
+            'payout; the customer pays the service price only',
         )
 
     def tezcheck(self) -> Check:
