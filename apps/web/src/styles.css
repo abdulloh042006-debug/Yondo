@@ -1212,6 +1212,13 @@ table.data td {
   }
 }
 
+/* A theme change is atomic: no CSS transition runs until the new colours have been drawn once (ui/theme.tsx). */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
 /* ---------- Yondo themes: ONLY the logo's three colours ----------
    ink #111111, paper #F5F2EC (+ pure white), carrot accent #E8501A. Greys are ink/paper mixes,
    nothing else. Day = paper ground, ink actions. Night = ink ground, paper actions.

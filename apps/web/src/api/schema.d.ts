@@ -146,6 +146,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/payments/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Manual Queue
+         * @description Open manual transfers to look for in the bank; oldest first so nothing waits forever.
+         */
+        get: operations["manual_queue_api_v1_admin_payments_manual_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/payments/manual/{reference}/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Received
+         * @description The admin saw the exact amount with this reference arrive on a configured card.
+         */
+        post: operations["mark_received_api_v1_admin_payments_manual__reference__received_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/reports": {
         parameters: {
             query?: never;
@@ -327,6 +367,40 @@ export interface paths {
         put?: never;
         /** Set Account Status */
         post: operations["set_account_status_api_v1_admin_users__user_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Queue */
+        get: operations["queue_api_v1_admin_verifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/verifications/{verification_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide */
+        post: operations["decide_api_v1_admin_verifications__verification_id__decision_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1250,6 +1324,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gifts/admin/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Products
+         * @description Moderation list: unlike the public catalog it includes unpublished and sold-out products.
+         */
+        get: operations["admin_products_api_v1_gifts_admin_products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gifts/admin/products/{product_id}/publish": {
         parameters: {
             query?: never;
@@ -1716,6 +1810,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/manual/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Manual Payment
+         * @description Transfer instructions, for the customer who has to pay (anyone else gets 404).
+         */
+        get: operations["manual_payment_api_v1_payments_manual__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/webhook": {
         parameters: {
             query?: never;
@@ -1961,7 +2075,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Product
+         * @description Remove an own product that was never ordered; ordered products can only be unpublished.
+         */
+        delete: operations["delete_product_api_v1_vendor_products__product_id__delete"];
         options?: never;
         head?: never;
         /** Update Product */
@@ -1996,6 +2114,81 @@ export interface paths {
         get: operations["summary_api_v1_vendor_summary_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Verification */
+        get: operations["my_verification_api_v1_verification_me_get"];
+        put?: never;
+        /** Start */
+        post: operations["start_api_v1_verification_me_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification/me/document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Document
+         * @description Raw JPEG/PNG/WebP photo of the identity document.
+         */
+        post: operations["upload_document_api_v1_verification_me_document_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification/me/selfie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Selfie
+         * @description Raw JPEG/PNG/WebP selfie for comparison with the document photo.
+         */
+        post: operations["upload_selfie_api_v1_verification_me_selfie_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification/me/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["submit_api_v1_verification_me_submit_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2206,6 +2399,41 @@ export interface components {
              */
             user_id: string;
         };
+        /** AdminManualPaymentRead */
+        AdminManualPaymentRead: {
+            /** Amount Minor */
+            amount_minor: number;
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /** Booking Status */
+            booking_status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /**
+             * Payment Id
+             * Format: uuid
+             */
+            payment_id: string;
+            /** Reference */
+            reference: string;
+            /** Refund Required */
+            refund_required: boolean;
+            /** Status */
+            status: string;
+        };
         /** AdminReportRead */
         AdminReportRead: {
             /** Acknowledged */
@@ -2317,6 +2545,40 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /** AdminVerificationRead */
+        AdminVerificationRead: {
+            /** Document Type */
+            document_type: string;
+            /** Document Url */
+            document_url: string | null;
+            /** Has Document */
+            has_document: boolean;
+            /** Has Selfie */
+            has_selfie: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Selfie Url */
+            selfie_url: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "pending" | "verified" | "rejected";
+            /** Submitted At */
+            submitted_at: string | null;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /** ApplicationResponse */
         ApplicationResponse: {
@@ -2870,6 +3132,47 @@ export interface components {
             status: string;
             /** Version */
             version: string;
+        };
+        /** ManualCardRead */
+        ManualCardRead: {
+            /** Holder */
+            holder: string;
+            /** Label */
+            label: string;
+            /** Number */
+            number: string;
+        };
+        /** ManualPaymentRead */
+        ManualPaymentRead: {
+            /** Amount Minor */
+            amount_minor: number;
+            /**
+             * Booking Id
+             * Format: uuid
+             */
+            booking_id: string;
+            /**
+             * Cards
+             * @description Only while the state is "open".
+             */
+            cards: components["schemas"]["ManualCardRead"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Reference */
+            reference: string;
+            /**
+             * State
+             * @description open: transfer now; confirmed: money recorded and booking confirmed; refund_required: money recorded for a cancelled/expired booking; closed: do not pay.
+             * @enum {string}
+             */
+            state: "open" | "confirmed" | "refund_required" | "closed";
+            /** Status */
+            status: string;
         };
         /** MeetingState */
         MeetingState: {
@@ -3474,6 +3777,52 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VerificationDecision */
+        VerificationDecision: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "reject";
+            /**
+             * Note
+             * @description Shown to the user in GET /verification/me; erased with the account.
+             */
+            note: string;
+        };
+        /** VerificationRead */
+        VerificationRead: {
+            /** Document Type */
+            document_type: string;
+            /** Has Document */
+            has_document: boolean;
+            /** Has Selfie */
+            has_selfie: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "pending" | "verified" | "rejected";
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** VerificationStart */
+        VerificationStart: {
+            /**
+             * Document Type
+             * @enum {string}
+             */
+            document_type: "passport" | "id_card" | "driver_license";
+        };
     };
     responses: never;
     parameters: never;
@@ -3766,6 +4115,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TestOrderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    manual_queue_api_v1_admin_payments_manual_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "succeeded";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminManualPaymentRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_received_api_v1_admin_payments_manual__reference__received_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminManualPaymentRead"];
                 };
             };
             /** @description Validation Error */
@@ -4108,6 +4520,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminUserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_api_v1_admin_verifications_get: {
+        parameters: {
+            query?: {
+                status?: "pending" | "verified" | "rejected";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminVerificationRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_api_v1_admin_verifications__verification_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                verification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminVerificationRead"];
                 };
             };
             /** @description Validation Error */
@@ -6050,6 +6529,39 @@ export interface operations {
             };
         };
     };
+    admin_products_api_v1_gifts_admin_products_get: {
+        parameters: {
+            query?: {
+                published?: boolean | null;
+                vendor_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     publish_product_api_v1_gifts_admin_products__product_id__publish_post: {
         parameters: {
             query?: never;
@@ -6916,6 +7428,37 @@ export interface operations {
             };
         };
     };
+    manual_payment_api_v1_payments_manual__reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualPaymentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     payment_webhook_api_v1_payments_webhook_post: {
         parameters: {
             query?: never;
@@ -7417,6 +7960,35 @@ export interface operations {
             };
         };
     };
+    delete_product_api_v1_vendor_products__product_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_product_api_v1_vendor_products__product_id__patch: {
         parameters: {
             query?: never;
@@ -7499,6 +8071,131 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    my_verification_api_v1_verification_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRead"] | null;
+                };
+            };
+        };
+    };
+    start_api_v1_verification_me_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_document_api_v1_verification_me_document_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRead"];
+                };
+            };
+        };
+    };
+    upload_selfie_api_v1_verification_me_selfie_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRead"];
+                };
+            };
+        };
+    };
+    submit_api_v1_verification_me_submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRead"];
                 };
             };
         };
