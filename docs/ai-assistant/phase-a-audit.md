@@ -15,12 +15,12 @@ Spec note: the spec says "do not start discovery/booking". That line is outdated
 
 | Need | Existing piece (path) | Reuse note |
 |---|---|---|
-| Authenticated user | `auth/dependencies.py` (`get_authenticated_user` → `AuthenticatedUser`). Opaque tokens are stored as SHA-256 hashes (`auth/service.py`, `models/auth.py`). | Both modes require sign-in (taklif; Public could also allow anonymous use, see Q3). |
+| Authenticated user | `auth/dependencies.py` (`get_authenticated_user` → `AuthenticatedUser`). Opaque tokens are stored as SHA-256 hashes (`auth/service.py`, `models/auth.py`). | Public mode accepts anonymous callers (per-IP limit) as well as signed-in users; Internal mode requires sign-in and the admin role (§9 Q3, Q4). |
 | Internal-mode gate | `companions/dependencies.py:34` defines `Admin = Annotated[User, Depends(companion_admin)]`. `companions/service.py::require_role` checks the `user_roles` row **and** `AccountStatus.ACTIVE` for admin, and raises `companion_forbidden` 403. The admin role cannot be self-assigned (`auth/router.py`, `invalid_role`). | Internal mode = `Admin` dependency on the server. The client never sends a mode flag that the server trusts. **There is no "developer" role**: `UserRoleType` has customer/companion/vendor/admin only (`models/user.py`, `security/permissions.py`). See Q4. |
 | Permissions map | `security/permissions.py` (`Permission`, `ROLE_PERMISSIONS`, `has_permission`) | Add `ASSISTANT_INTERNAL = 'assistant:internal'` mapped to admin (taklif). |
 | Rate limiting | Only for OTP: `auth/providers.py::RedisOtpRateLimitHook` (a global per-minute counter, off when the limit is 0) and the per-phone counters in `auth/service.py`. Nothing else returns 429 (grep `, 429`). | Copy the Redis hook pattern for per-user and per-IP assistant limits. |
 | Redis | `main.py:87` (`redis.from_url`, `app.state.redis`), used by chat pub/sub (`chat/service.py`, `chat/router.py`), with a health check in `main.py:101`. Without Redis the app still runs with no-op hooks. | Use it for the answer cache and counters. Redis is not configured in every deploy, so the cache must be optional. |
-| Settings pattern | `config.py`: `pydantic-settings`, `env_prefix='YONDO_'`, secrets as `SecretStr`, validators that reject dev defaults outside development. | Add `YONDO_AI_PROVIDER`, `YONDO_AI_BASE_URL`, `YONDO_AI_API_KEY: SecretStr`, limits, and a kill switch `YONDO_AI_ENABLED=false` by default. |
+| Settings pattern | `config.py`: `pydantic-settings`, `env_prefix='YONDO_'`, secrets as `SecretStr`, validators that reject dev defaults outside development. | v1: limits and a kill switch `YONDO_AI_ENABLED=false` by default. Provider settings (`YONDO_AI_PROVIDER`, `YONDO_AI_BASE_URL`, `YONDO_AI_API_KEY: SecretStr`) only in the optional provider phase (§9 Q1). |
 | Errors | `api/errors.py`: `ApplicationError(code, message, status)` rendered as a problem response. Clients branch on `code` (CLAUDE.md §4). | New codes: `assistant_unavailable` 503, `assistant_rate_limited` 429, `assistant_forbidden` 403. |
 | Audit log | `admin/models.py::AdminAuditEvent` (`admin_audit_events`: admin_id, target_id, action, reason). It is user-targeted. | Not a fit for question logs (it needs a `target_id` user). Add a separate table for assistant messages (retention in §9 Q6). |
 | i18n | The server returns English messages and the client translates by `code` (`apps/web/src/i18n/{uz,ru,en}.ts`). User locale lives in `users.ui_locale`: `uz-Latn-1995`, `uz-Latn-2026`, `ru` or `en` (`auth/schemas.py:48`, `models/user.py`). The two Uzbek alphabets are folded for search in `discovery/textfold.py`. | Answer language = request locale, falling back to `ui_locale`. Reuse `textfold` to normalise uz queries before retrieval. |
@@ -74,7 +74,7 @@ Enforcement (taklif):
    - the user is told that personal data is removed;
    - question length is capped (taklif: 1 000 characters).
 3. **Output filter:** the same masks run on the answer, and a citation is required (§4).
-4. **Logs:** `assistant_usage` stores user_id, mode, locale, doc ids, token counts, latency and cache hit. Question and answer text is kept only in the assistant messages table (§9 Q6), never in application logs: a structlog processor drops `question`/`answer`/`context`.
+4. **Logs:** `assistant_usage` stores user_id, mode, locale, doc ids, latency and cache hit (token counts only in the optional provider phase). Question and answer text is kept only in the assistant messages table (§9 Q6), never in application logs: a structlog processor drops `question`/`answer`/`context`.
 5. **Account deletion** (`account/deletion.py`) must also delete `assistant_usage` rows for that user (added to its delete list).
 
 ## 4. Prompt-injection risks specific to Yondo
@@ -103,7 +103,7 @@ Enforcement (taklif):
 
 ## 6. Contract-test plan for the bymuslim endpoint (NOT called in phase A)
 
-The provider is "ByMuslim DeepSeek V4.1 Flash" on `bymuslim.shop`, reached by HTTP GET. **UNVERIFIED:** I have checked nothing about it, and nothing here asserts how it behaves. The tests run in phase E, only after the owner answers Q1/Q2, against a test key, from a sandbox with the host allowed.
+The provider is "ByMuslim DeepSeek V4.1 Flash" on `bymuslim.shop`, reached by HTTP GET. **UNVERIFIED:** I have checked nothing about it, and nothing here asserts how it behaves. **Not used in v1 (§9 Q1: no external provider; bymuslim is not used).** The plan below is kept only as a template for evaluating a future provider in the optional phase E.
 
 | # | Check | Pass criterion |
 |---|---|---|
@@ -134,15 +134,15 @@ Risks:
 - **R6 — GET puts prompts in URLs and logs** (§6 #1).
 - **R7 — compliance.** Sending user questions to a foreign provider may be a cross-border transfer. The same question is open for Telegram (WORKLOG Next step 0a: "settle the cross-border question with a lawyer").
 
-Owner questions (each has a *taklif*):
-- **Q1** Is an unverified third-party provider acceptable for **Public** mode? *taklif:* Internal mode only until written terms exist (§6 #12).
-- **Q2** Budget: monthly cap and per-user daily limit? *taklif:* a hard monthly cap in settings; 20 questions/day per user (Public), 100 (Internal).
+Owner questions (all now decided; see §9):
+- **Q1** Is an unverified third-party provider acceptable for **Public** mode? (Decided in §9: no external provider in v1; bymuslim is not used.)
+- **Q2** Budget: monthly cap and per-user daily limit? (Decided in §9: no budget needed for v1. Request limits are set in phase F.)
 - **Q3** Can anonymous visitors use Public mode? (Decided in §9: yes, with a per-IP rate limit.)
-- **Q4** Who is a "developer" for Internal mode? *taklif:* admins only in v1; a separate role later via an admin-only grant.
-- **Q5** Who approves knowledge documents (status → approved)? *taklif:* the owner, through a PR that changes front-matter.
+- **Q4** Who is a "developer" for Internal mode? (Decided in §9: no developer role now; Internal = the existing `Admin` dependency.)
+- **Q5** Who approves knowledge documents (status → approved)? (Decided in §9: the CEO, after an independent verifier review.)
 - **Q6** May question/answer text be retained? (Decided in §9: stored with the account until account deletion; anonymous visitors' questions and answers are kept 90 days.)
-- **Q7** Where does the assistant appear in the web app? *taklif:* the Help page (Public) and the admin console (Internal); no floating chat on every page.
-- **Q8** Should the assistant answer in Uzbek 1995 or 2026 spelling? *taklif:* follow the user's `ui_locale`.
+- **Q7** Where does the assistant appear in the web app? (Decided in §9: a floating button at the bottom right of every page, plus a Help-page entry.)
+- **Q8** Should the assistant answer in Uzbek 1995 or 2026 spelling? (Decided in §9: the user's chosen alphabet, as in the UI.)
 
 ## 8. Proposed plan B–H (sizes: S ≤ 1 day, M 2–3 days, L 4–5 days)
 
@@ -160,7 +160,7 @@ Dependencies: superseded by §9. v1 has no provider, so phase E is optional and 
 
 ## 9. Decisions (2026-11-10)
 
-The owner answered Q1–Q8 in the CEO session and left the smaller ones to the CEO. Recorded as received (Q1, Q2 and Q6 as updated by the owner later the same day). These decisions replace the *taklif* defaults in §3, §5, §6, §7 and §8 where they differ.
+The owner answered Q1–Q8 in the CEO session and left the smaller ones to the CEO. Recorded as received (Q1, Q2 and Q6 as updated by the owner later the same day). These decisions replace any earlier *taklif* in §1–§8 where they differ.
 
 | Q | Decision | By |
 |---|---|---|
