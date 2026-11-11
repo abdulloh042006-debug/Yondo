@@ -3251,7 +3251,10 @@ export interface components {
         };
         /** PaymentResponse */
         PaymentResponse: {
-            /** Amount Minor */
+            /**
+             * Amount Minor
+             * @description What the customer pays, in minor units. Equals subtotal_minor: no fee is added on top (payments created before 2026-11-11 may include the fee).
+             */
             amount_minor: number;
             /**
              * Booking Id
@@ -3272,12 +3275,18 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Platform Fee Minor */
+            /**
+             * Platform Fee Minor
+             * @description Platform commission in minor units. It is deducted from the companion's payout and is NOT charged to the customer.
+             */
             platform_fee_minor: number;
             /** Refund Required */
             refund_required: boolean;
             status: components["schemas"]["PaymentStatus"];
-            /** Subtotal Minor */
+            /**
+             * Subtotal Minor
+             * @description Service amount in integer minor units (tiyin).
+             */
             subtotal_minor: number;
         };
         /**

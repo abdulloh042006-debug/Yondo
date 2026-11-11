@@ -31,7 +31,7 @@ python -m yondo_api.doctor --env-file /path/to/.env
 | Manual payments | The API refuses to start with `YONDO_PAYMENT_PROVIDER=manual` but no cards or no https `YONDO_PUBLIC_WEB_URL`, so it fails fast instead of failing silently. | `config.py::validate_payment_provider` |
 | Database, Redis, OTP pepper | No fallback, by design: required in production. The API refuses the default pepper outside development. | `config.py` |
 
-**Finding (platform fee):** the owner decided on a 5% fee **deducted from the companion's side** (`docs/product-decisions.md`). The code today **adds** the fee to the customer's total (`payments/router.py`, `platform_fee()`). Leave `YONDO_PLATFORM_FEE_BPS` unset until the deduction is built. The doctor warns when it is set.
+**Platform fee:** the owner decided on a 5% fee **deducted from the companion's side** (`docs/product-decisions.md`). The code does this: the customer pays the service price (`payments.amount_minor = subtotal_minor`) and the payout records gross, commission and net (`payments/service.py`). The rate is `YONDO_PLATFORM_FEE_BPS` (500 = 5%); unset, payment creation answers 503. Setting it is an owner step.
 
 ## Every variable
 
@@ -60,7 +60,7 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_PAYMENT_PROVIDER` | `auto` (TezCheck if token, else 503), `manual`, `tezcheck` | no | `manual` | Owner decision |
 | `YONDO_MANUAL_PAYMENT_CARDS` | JSON list of cards shown to the payer | with manual | `[{"label":"Uzcard","number":"<16 digits>","holder":"<Name S.>"}]` | Owner's own cards; set only in the host env (the repo is public) |
 | `YONDO_PUBLIC_WEB_URL` | https origin of the web app (manual pay page) | with manual | `https://yondo.example` | Owner's domain |
-| `YONDO_PLATFORM_FEE_BPS` | Fee in basis points (500 = 5%) | no; **leave unset** (finding above) | `500` | Owner decision |
+| `YONDO_PLATFORM_FEE_BPS` | Fee in basis points (500 = 5%) | no (unset = payments answer 503) | `500` | Owner decision (5%) |
 | `YONDO_TEZCHECK_TOKEN`, `_CASH_DESK_CODE`, `_WEBHOOK_SECRET` (16+), `_API_URL`, `_RETURN_URL` | TezCheck aggregator. **Not used in the beta** (the doctor shows "disabled (beta)") | no | `<token>` … | tezcheck.uz cabinet (owner) |
 | `YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS` | Accept TezCheck test payments; refused in production | no | `false` | — |
 | `YONDO_CLICK_TEST_ENABLED`, `_SERVICE_ID`, `_SECRET` | Offline CLICK emulator, local only | no | `false` | — |
