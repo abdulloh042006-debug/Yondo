@@ -10,6 +10,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Next steps (priority order)
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
+00g. **Branches (S55, 2026-11-11):** the owner deletes the merged branches listed in S55 on GitHub (the session cannot). Port `codex/scheduled-meeting-reminders` and `ccr-15294129-n60ucy` in small PRs.
 00f. **AI assistant (2026-11-10):** Phase A audit in `docs/ai-assistant/phase-a-audit.md`; decisions recorded in its §9 (no external AI provider in v1, retrieval-only answerer; retention: account rows until deletion, anonymous 90 days). Phase B = PR #23; next phase C (retrieval answerer).
 00a. ~~Password login plan~~ **superseded by the owner's decisions of 2026-11-06** (`docs/product-decisions.md` §3/§6): the password is mandatory, 8–128 characters, scrypt; 5 misses lock for 15 minutes; 20 attempts per minute per IP; **no extra code on a new device**; codes for sign-up and reset come from the Telegram bot. Build it per that file (backlog item 2 of S49).
 00b. ~~Verifier review of `47e1bd7`, `814684f` and the S37 notes~~ **done in S38: APPROVE**. CLAUDE.md follow-up done at the owner's word (generic memory path, handoff line updated).
@@ -28,11 +29,66 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 ## Session log
 ## S57 — Platform commission deducted from the companion's side (2026-11-11) [cloud chat, backend worker]
 Done: owner rule (`docs/product-decisions.md`): customer pays the subtotal (`payments.amount_minor = subtotal_minor`, no fee on top); `platform_fee_minor` still records the commission. `companion_payouts` + `gross_minor`, `commission_minor`, `deductions_minor` (0: not defined) with net = gross − commission − deductions in `amount_minor` (check constraint). Migration 0019 additive, backfills old rows (gross = amount). Old fee-on-top payments are not deducted again (`payments/service.py::companion_commission`). Rate still `YONDO_PLATFORM_FEE_BPS`, unset = 503. OpenAPI field descriptions + `schema.d.ts` regenerated; web/mobile show `amount_minor` only (no UI change).
-Not done: no API endpoint shows the payout breakdown yet; the doctor warning (PR #26, not on main) still says the code adds the fee — update it after #26 merges; FAQ `help.faq.pay.a` ("xizmat haqi … belgilanmagan") is out of date (owner text, not changed).
-Next: companion finances view (gross / deductions / commission / net); update the doctor warning and the FAQ.
+Also: after #26 merged, the doctor's fee message and `docs/configuration.md` now describe the companion-side deduction.
+Not done: no API endpoint shows the payout breakdown yet; FAQ `help.faq.pay.a` is updated in a separate PR (docs/faq-pay-commission).
+Next: companion finances view (gross / deductions / commission / net).
 Blockers: none.
-Evidence: pytest SQLite 394 passed + 9 skipped, PostgreSQL 16 403 passed + 0 skipped; migration up/down/up on PG + backfill checked; design-prototype backend 50 passed; demo harness 8; web typecheck, lint, build PASS, vitest 54/54; ruff PASS; `export_openapi.py --check` PASS. Verifier APPROVE.
+Evidence: pytest (after merging main 26fcc95) SQLite 431 passed + 10 skipped, PostgreSQL 16 441 passed + 0 skipped; migration up/down/up on PG + backfill checked; design-prototype backend 50 passed; demo harness 8; web typecheck, lint, build PASS, vitest 54/54; ruff PASS; `export_openapi.py --check` PASS. Verifier APPROVE.
 Commit: see PR (fix/commission-companion-side).
+## S56 — Configuration doctor + setup guide (2026-11-11) [cloud chat, backend worker]
+Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_api/doctor.py`): every integration as ok / missing / invalid / disabled; format checks only, no network calls; secrets as "set (N chars)", cards as last 4, URLs as scheme+host; also runs the API's own settings validation. `docs/configuration.md`: every env var, verified safe fallbacks, owner-only tasks. `.env.example`: manual-payment placeholders added. Tests `apps/api/tests/test_doctor.py` (10, incl. secret-absence asserts and malformed JSON).
+Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).
+Next: build the companion-side fee deduction; owner tasks in `docs/configuration.md`.
+Blockers: none.
+Evidence: pytest 391 passed + 9 skipped (SQLite, after merging main), doctor tests 10/10, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/config-doctor).
+## S55 — Open PRs merged into main; branch audit (2026-11-10/11) [cloud chat, yondo-43]
+Done:
+- Owner's instruction (yondo-43, 2026-11-06): merge the PRs if all is well, check every branch, add or remove.
+- Merged into `main` in order: #10, #11, #12, #13, #16, #14, #15, #17, #18, #21 (product decisions), #19. Merge commits only, no force-push.
+  - Conflicts were resolved in one merge commit per PR branch; an independent verifier APPROVED them (remerge-diff, scope, secrets).
+  - Before merging: SQLite 381 passed / 9 skipped, PostgreSQL 390 passed, alembic head 0018 + check, web typecheck/lint/vitest 54/build, mobile tsc. CI green on every PR.
+- Second chain, in order: #23, #20, #22, #24, then this PR.
+  - Every PR adds a WORKLOG entry at the top, so yondo-43 resolved them in one chain: one merge commit per branch, fast-forward pushes.
+  - Video entries renumbered S52–S54; `marketing/ad-video/README.md` lists all three reels.
+- This PR adds two small unmerged branches:
+  - `codex/payment-webhook-concurrency-audit` 8044aa0: a PostgreSQL test for concurrent duplicate webhooks, now also in CI.
+  - `codex/phase6-postgres-validation-2026-10-17` ef9d05c: a validation record.
+- CLAUDE.md: ona now holds the owner's permission (old line marked superseded).
+Not done (BLOCKED):
+- Deleting branches and pushing archive tags: the session's git proxy refuses both (HTTP 403). The owner deletes them on GitHub.
+- Fully merged, safe to delete: `abdulloh042006-debug-development-infrastructure` 000fa41, `codex/manual-gifts-click-test` 27fdb07, `codex/mvp-safety-reconciliation` 1920505, `codex/notification-integration` 5fe6c18, `codex/phases-16-20` 70dc7aa, `codex/phases-7-10` 527dc0c, `docs/password-login-plan` 3f8c9a5, `docs/product-decisions` 852da87, `feat/admin-bootstrap` 5fba15a, `feat/agent-company` bcaae43, `feat/manual-payments` 5849c45, `fix/login-contrast-yondo-tun` b0e88c5, `port/gifts-vendor` 6733a0d, `port/identity-verification` c688854, `port/mobile-app` d1d3c39, `docs/ai-assistant-phase-a` c89fe97.
+- Also safe to delete once this chain is merged: `feat/ai-kb-schema`, `feat/ad-video-1`, `feat/ad-video-2`, `feat/ad-video-3`, and the two cherry-picked branches above.
+- Keep: `main`, `design/prototype` (Render deploys it), `ccr-098c28d7-jr8exe` (yondo-43).
+Next:
+- Unmerged work to port in small PRs (do not delete these branches):
+  - `codex/scheduled-meeting-reminders` fee34c9: 24h/1h reminder worker; its migration must be renumbered after 0018.
+  - `ccr-15294129-n60ucy` b09c04b: S39, unverified, 223 files. Opening animation, warm skin, onboarding, cancellation tracking and abuse guards, companion stories.
+Evidence: test_payments.py on PostgreSQL 8 passed; the CI PostgreSQL list 7 passed; SQLite 381 passed / 10 skipped; ruff and openapi check PASS (verifier APPROVE on the cherry-picks).
+
+## S54 — Reel 3 «Birinchi qadam» (2026-11-11) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 cinematic reel from owner script 3 (point of light → one step → roads to cafe/park/street/square, 3D "1 + 1 = YANGI TAJRIBA", friendly meeting, 180° orbit to real `apps/web` screens, walk from behind, logo on ink); breakdown `marketing/ad-video/scripts/03-birinchi-qadam.md`, sources `marketing/ad-video/reel3/`.
+Not done: VO (same blocker as reel 2). Media not committed; mp4 sent to the owner.
+Evidence: audio-ears: −13.8 LUFS, TP −2.4 dBTP, 0 clipped, key hits within ±2 frames.
+Branch: `feat/ad-video-3` (PR to main; uses reel 1 captures from PR #20).
+## S53 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 30 s 9:16 reel from owner script 2 (stitch/match-cut chain, kinetic words SUHBAT/SAYR/SHAHAR→KASHF, real `apps/web` screens, objects assemble the logo); breakdown `marketing/ad-video/scripts/02-bir-harakat.md`, sources `marketing/ad-video/reel2/`.
+Not done: VO — edge-tts blocked (WebSocket not passed by the sandbox proxy), other free TTS needs torch; kinetic type carries the lines. Media not committed; mp4 sent to the owner.
+Evidence: audio-ears on the final mp4: −13.9 LUFS, TP −2.5 dBTP, 0 clipped, hits within ±2 frames of most cuts.
+Branch: `feat/ad-video-2` (PR to main; depends on PR #20 for `reel1/capture_list.mjs`).
+## S52 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
+Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
+Next: script 2 from session yondo-43.
+Evidence: audio-ears on the final mp4: −13.8 LUFS, TP −1.8 dBTP, 0 clipped, hits within ±2 frames of the cuts.
+Branch: `feat/ad-video-1` (PR to main).
+## S51 — AI assistant Phase B: knowledge-base schema (2026-11-10) [cloud chat, backend worker]
+Done: `knowledge/{public,internal,shared}/` + README (TOML front-matter: id, title, audience, languages, category, status, version, source, updated_at); validator `apps/api/src/yondo_api/assistant/kb.py` (`python -m yondo_api.assistant.kb --check`; only `approved` is indexable; audience must equal folder; one `## uz|ru|en` section per language); seed = 9 Help FAQ docs in `knowledge/public/faq/` verbatim from `apps/web/src/i18n` (status `review`); tests `apps/api/tests/test_assistant_kb.py` (27, incl. verbatim check vs i18n).
+Not done: retrieval, provider, endpoints (phases C–F). config.py/main.py/jobs.py untouched.
+Next: CEO approves the FAQ docs (status → approved) after a verifier review; phase C. Note: `DEFAULT_ROOT` assumes a repo checkout (editable install, as in CI); the Docker image needs `--root` or a setting in phase C.
+Blockers: none.
+Evidence: pytest 363 passed + 9 skipped (SQLite; PostgreSQL not run, no DB change), new tests 27/27, `kb --check` 9 valid / 0 errors / indexable 0, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/ai-kb-schema).
 ## S50 — AI assistant Phase A audit + owner/CEO decisions (2026-11-10/11) [cloud chat, researcher worker]
 Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
 Not done: no code; provider unverified.
