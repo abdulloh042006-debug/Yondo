@@ -3,9 +3,9 @@
 > **Qisqacha (egasi uchun):**
 > 1. AI yordamchi uchun mavjud backend (FastAPI, PostgreSQL, Redis, rollar, audit jurnali) qayta ishlatiladi; Internal rejim faqat server tomonidagi admin roli bilan ochiladi (alohida "dasturchi" roli hozircha yo‘q).
 > 2. Bilim bazasi faqat tasdiqlangan hujjatlardan iborat bo‘ladi; hujjatlarni mustaqil tekshiruvdan keyin CEO tasdiqlaydi. Boshlang‘ich manba — Yordam sahifasidagi 9 ta FAQ.
-> 3. Telefon, ism, to‘lov, chat, SOS, joylashuv kabi ma’lumotlar AI provayderga hech qachon yuborilmaydi; savol-javoblar telefon/ismsiz 30 kun saqlanib, keyin o‘chiriladi (Maxfiylik sahifasida yoziladi).
+> 3. v1 da tashqi AI provayder yo‘q: yordamchi tasdiqlangan hujjatlardan eng mos javobni so‘zma-so‘z manbasi bilan qaytaradi, topilmasa — Yordam sahifasiga yo‘naltiradi. Hech narsa serverdan tashqariga chiqmaydi, bepul. Savol-javoblar hisobga bog‘lanib, hisob o‘chirilguncha saqlanadi (Maxfiylik sahifasida ochiq yoziladi).
 > 4. Mehmonlar ham (ro‘yxatdan o‘tmasdan) foydalana oladi, IP bo‘yicha cheklov bilan; tugma har sahifada o‘ng pastda va Yordam sahifasida; javob foydalanuvchi tanlagan alifboda (1995 yoki 2026).
-> 5. Ochiq savollar (sizga): bymuslim provayderini Public rejimda ishlatish (Q1) va byudjet (Q2). Taklif: bymuslim faqat Internal rejimda sinov uchun; Public rejim ishonchli provayder va byudjetni kutadi (9-bo‘lim).
+> 5. bymuslim ishlatilmaydi. AI provayder (masalan Gemini, Groq, Cloudflare — tekshirilmagan) keyinroq ixtiyoriy bosqich sifatida, shartlari tekshirilgandan so‘ng ko‘riladi (9-bo‘lim).
 
 Status: **Phase A report.** No endpoint was called and no code was written. Base: `origin/main` @ `f4c6e7a`.
 Labels: **taklif** = a proposal the owner decides. PASS / FAIL / BLOCKED / NOT IMPLEMENTED are used as in CLAUDE.md.
@@ -160,21 +160,24 @@ Dependencies: E's live tests and any public launch wait for Q1/Q2. B–D and F�
 
 ## 9. Decisions (2026-11-10)
 
-The owner answered Q1–Q8 in the CEO session and left the smaller ones to the CEO. Recorded as received. These decisions replace the *taklif* defaults in §3, §7 and §8 where they differ.
+The owner answered Q1–Q8 in the CEO session and left the smaller ones to the CEO. Recorded as received (Q1, Q2 and Q6 as updated by the owner later the same day). These decisions replace the *taklif* defaults in §3, §5, §6, §7 and §8 where they differ.
 
 | Q | Decision | By |
 |---|---|---|
-| Q1 | **OPEN** (public use of the unverified bymuslim provider). Asked to the owner. CEO proposal: use bymuslim **only in Internal mode, for contract tests**; Public mode waits for a trusted provider and a budget. | owner (open) |
-| Q2 | **OPEN** (budget). Asked to the owner. | owner (open) |
+| Q1 | **No external AI provider in v1; bymuslim is not used.** v1 is a retrieval-only answerer: it finds the best-matching **approved** knowledge doc (PostgreSQL FTS + `pg_trgm`, uz normalised with `discovery/textfold.py`) and returns that doc's answer **verbatim, with its source**. Below a score threshold it answers "not found" and points to the Help page. Nothing is generated and nothing leaves our server. The `AIProvider` abstraction stays as an optional later phase. Candidates to evaluate then, all **unverified**: Gemini free tier, Groq, Cloudflare Workers AI. Their terms and use of prompts for training must be checked first. | owner |
+| Q2 | Budget: **none needed for v1** (no provider, no paid API). It is decided again if the optional provider phase starts. | owner |
 | Q3 | Anonymous access: **YES**, with a per-IP rate limit. | owner |
 | Q4 | Developer role: **not now**. Internal mode = the existing `Admin` dependency (`companions/dependencies.py:34`). | CEO |
 | Q5 | Knowledge docs are approved by **the CEO, after an independent verifier review**. | CEO (delegated by owner) |
-| Q6 | Retention: assistant questions and answers are **kept 30 days, with no phone number or name stored, then deleted**. The Privacy page must say so. | CEO (delegated by owner) |
+| Q6 | Retention: assistant questions and answers are **stored, linked to the account, until account deletion**. They are then erased within the existing 30-day deletion rule (`account/deletion.py`). The Privacy page must say so plainly. Never tell users this data is not stored. | owner |
 | Q7 | UI: a **visible floating button at the bottom right of every page**, plus an entry on the Help page. | CEO (delegated by owner) |
 | Q8 | Uzbek spelling: answers follow the **user's chosen alphabet (1995 or 2026)**, the same as the UI. | CEO |
 
 What the plan now needs:
+- **§3 and §6 (provider data safety, bymuslim contract tests):** not needed for v1, because no question leaves the server. They stay as input for the optional provider phase. The never-index list in §3 still applies to the knowledge base.
+- **Phase C:** the retrieval answerer, covering indexing, scoring, the threshold, a verbatim answer with its source, and the "not found → Help page" reply. Size M → L.
 - **Phase D:** Public mode accepts anonymous callers (per-IP limit) as well as signed-in ones.
-- **Phase F:** `assistant_usage` stores question and answer text, redacted per §3, with a 30-day deletion job. It still stores no phone number or name. The deletion hook stays.
+- **Phase E (provider adapter + contract tests):** **optional and deferred.** It starts only after a new owner decision on a provider and budget.
+- **Phase F:** API, cache and limits. An `assistant_messages` table holds question, answer, source doc ids and locale, linked to the user (nullable for anonymous visitors). It is kept until account deletion and added to the delete list in `account/deletion.py`. Retention for anonymous questions is not decided: **owner question**.
+- **Phase G:** the injection suite shrinks, because nothing is generated. Tests focus on cross-mode leaks, "not found" behaviour and multilingual matching.
 - **Phase H:** a floating button plus a Help entry, and a Privacy-page update. The Privacy text is a legal draft, so the owner reviews the change.
-- **Phase E:** live provider calls are limited to Internal mode until Q1 and Q2 are answered.
