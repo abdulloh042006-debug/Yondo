@@ -28,7 +28,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 
 ## Session log
 ## S58 — Help FAQ payment answer: commission from the companion side (2026-11-11) [cloud chat, worker]
-Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand, no real money moves yet. No percentage shown (not decided for customer display).
+Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand. No sentence about real money (it would turn false once manual card payments are enabled). No percentage shown (not decided for customer display).
 Not done: the server rule itself is PR #27 (fix/commission-companion-side); merge #27 before any fee is set.
 Next: CEO approves the KB doc after review.
 Blockers: none.
