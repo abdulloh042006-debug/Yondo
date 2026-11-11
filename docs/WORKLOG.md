@@ -27,6 +27,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S58 — Help FAQ payment answer: commission from the companion side (2026-11-11) [cloud chat, worker]
+Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand. No sentence about real money (it would turn false once manual card payments are enabled). No percentage shown (not decided for customer display).
+Not done: nothing; the server rule is PR #27, already on main.
+Next: CEO approves the KB doc after review.
+Blockers: none.
+Evidence: KB tests 27/27, `kb --check` 9 valid; web typecheck, lint PASS, vitest 54/54. Verifier APPROVE.
+Commit: see PR (docs/faq-pay-commission).
 ## S57 — Platform commission deducted from the companion's side (2026-11-11) [cloud chat, backend worker]
 Done: owner rule (`docs/product-decisions.md`): customer pays the subtotal (`payments.amount_minor = subtotal_minor`, no fee on top); `platform_fee_minor` still records the commission. `companion_payouts` + `gross_minor`, `commission_minor`, `deductions_minor` (0: not defined) with net = gross − commission − deductions in `amount_minor` (check constraint). Migration 0019 additive, backfills old rows (gross = amount). Old fee-on-top payments are not deducted again (`payments/service.py::companion_commission`). Rate still `YONDO_PLATFORM_FEE_BPS`, unset = 503. OpenAPI field descriptions + `schema.d.ts` regenerated; web/mobile show `amount_minor` only (no UI change).
 Also: after #26 merged, the doctor's fee message and `docs/configuration.md` now describe the companion-side deduction.

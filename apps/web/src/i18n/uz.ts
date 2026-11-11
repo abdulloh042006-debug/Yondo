@@ -566,7 +566,7 @@ export const uz = {
   'help.faq.book.q': 'Qanday bron qilaman?',
   'help.faq.book.a': 'Hamroh profilida xizmat, vaqt va uçraşuv joyini tanlab sörov yuborasiz. Hamroh sörovni qabul qilgaç tölov bosqiçi oçiladi; tölovdan keyin bron tasdiqlanadi.',
   'help.faq.pay.q': 'Tölov qanday amalga oşiriladi?',
-  'help.faq.pay.a': 'Tölov faqat hamroh bronni qabul qilgandan keyin mumkin. Hozirça tölov provayderi ulanmagan va ilova haqiqiy pul yeçmaydi; xizmat haqi va pul qaytariş qoidalari hali belgilanmagan.',
+  'help.faq.pay.a': 'Tölov faqat hamroh bronni qabul qilgandan keyin mumkin. Siz faqat xizmat narxini tölaysiz: Yondo komissiyasi hamroh ulushidan olinadi. Pul qaytarişni administrator qölda körib çiqadi.',
   'help.faq.cancel.q': 'Bronni bekor qiliş mumkinmi?',
   'help.faq.cancel.a': 'Ha: «Bronlar» bölimida kutilayotgan, qabul qilingan yoki tasdiqlangan bronni bekor qiliş mumkin. Bekor qiliş şartlari va pul qaytariş miqdori hali belgilanmagan.',
   'help.faq.verified.q': '«Şaxsi tasdiqlangan» belgisi nimani bildiradi?',
