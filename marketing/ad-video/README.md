@@ -80,3 +80,6 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
   animatable SVG, and the page lays a live copy over the photo: the arm rises and waves hello, the head sways (line 4).
   No air-kiss or other romantic gesture (product rule).
 - RU cut: the app's own RU locale (top-bar switch before each shot); `ru-dict.json` only translates seed data.
+
+## Reel 3 (2026-11-11, VIDEOCHI)
+- «Birinchi qadam» (9:16, 34 s, no VO): breakdown `scripts/03-birinchi-qadam.md`, sources `reel3/`. Uses the reel 1 captures (PR #20).

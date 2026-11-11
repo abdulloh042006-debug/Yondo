@@ -25,6 +25,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S43 — Reel 3 «Birinchi qadam» (2026-11-11) [cloud chat, VIDEOCHI]
+Done: 34 s 9:16 cinematic reel from owner script 3 (point of light → one step → roads to cafe/park/street/square, 3D "1 + 1 = YANGI TAJRIBA", friendly meeting, 180° orbit to real `apps/web` screens, walk from behind, logo on ink); breakdown `marketing/ad-video/scripts/03-birinchi-qadam.md`, sources `marketing/ad-video/reel3/`.
+Not done: VO (same blocker as reel 2). Media not committed; mp4 sent to the owner.
+Evidence: audio-ears: −13.8 LUFS, TP −2.4 dBTP, 0 clipped, key hits within ±2 frames.
+Branch: `feat/ad-video-3` (PR to main; uses reel 1 captures from PR #20).
 ## S40 — `main` switched to the owner-reviewed line; PR #8 reverted (2026-11-05) [cloud chat]
 Done: found that `main` (old Phase 6) had received PR #8, a parallel implementation (Phases 7-18, `apps/admin`, Expo `apps/mobile`) built without knowledge of `design/prototype`. Owner chose this line as the main one. Branch `ccr-098c28d7-jr8exe` was reset to `main`, `git revert -m 1 ea8f549` (tree == pre-PR #8 `main`), then `origin/design/prototype` merged (tree == `design/prototype` except this WORKLOG). No force-push of shared branches; `design/prototype` untouched.
 Not done: porting the four missing parts (Next steps 000a); `ccr-15294129-n60ucy` WIP not merged (unverified).

@@ -1,0 +1,276 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Reel 3 "Birinchi qadam": deterministic render(t), 1080x1920. Built by build_reel.py (do not edit page.html). -->
+<link rel="stylesheet" href="{{FONTS}}/manrope/600.css"><link rel="stylesheet" href="{{FONTS}}/manrope/700.css">
+<link rel="stylesheet" href="{{FONTS}}/manrope/800.css"><link rel="stylesheet" href="{{FONTS}}/space-grotesk/700.css">
+<style>
+:root{--ink:#111111;--paper:#F5F2EC;--carrot:#E8501A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--ink)}
+#stage{position:absolute;inset:0;overflow:hidden;font-family:Manrope,sans-serif}
+#bg{position:absolute;inset:0}
+.abs{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.txt{position:absolute;left:70px;right:70px;text-align:center;font-weight:700;letter-spacing:-.01em;line-height:1.12}
+.txt .w{display:inline-block;white-space:pre}
+#phone{position:absolute;left:238px;top:520px;width:604px;height:1256px;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:84px;backface-visibility:hidden}
+#front{background:#111;box-shadow:0 0 0 3px rgba(245,242,236,.18),0 60px 140px rgba(232,80,26,.18)}
+#backf{background:#111;transform:rotateY(180deg);box-shadow:0 0 0 3px rgba(245,242,236,.18)}
+#screen{position:absolute;left:22px;top:22px;width:560px;height:1212px;border-radius:64px;overflow:hidden;background:var(--paper)}
+#screen img{position:absolute;left:0;top:0;width:560px;height:1212px}
+#notch{position:absolute;left:232px;top:40px;width:140px;height:38px;border-radius:20px;background:#111;z-index:3}
+#eq{position:absolute;left:0;top:0;width:1080px;height:1920px;perspective:1600px}
+.ch{position:absolute;font:700 250px 'Space Grotesk';color:var(--paper);line-height:1;text-align:center;transform-style:preserve-3d}
+</style></head><body><div id="stage">
+<div id="bg"></div>
+<svg id="sv" class="abs" viewBox="0 0 1080 1920"></svg>
+<div id="eq"></div>
+<div id="phoneWrap" class="abs" style="perspective:2600px"><div id="phone">
+  <div class="face" id="front"><div id="notch"></div><div id="screen"></div></div>
+  <div class="face" id="backf"><svg viewBox="0 0 604 1256" width="604" height="1256"><g transform="translate(222 520) scale(2.5)">
+    <path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12" stroke="#F5F2EC" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="14" cy="12" r="7" fill="#F5F2EC"/><circle cx="50" cy="12" r="7" fill="#E8501A"/><circle cx="32" cy="55" r="5.5" fill="#F5F2EC"/></g>
+    <rect x="44" y="44" width="150" height="150" rx="40" fill="none" stroke="#F5F2EC" stroke-opacity=".25" stroke-width="4"/></svg></div>
+</div></div>
+<svg id="fx" class="abs" viewBox="0 0 1080 1920"></svg>
+<div id="texts" class="abs"></div>
+</div>
+<script>
+const SHOTS = '{{SHOTS}}';
+const WORDMARK = `{{WORDMARK}}`;
+const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
+window.TOTAL = 34;
+const $ = (id) => document.getElementById(id);
+const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eo = (k) => 1 - Math.pow(1 - cl(k), 3);
+const eio = (k) => { k = cl(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+const P = (t, a, b) => cl((t - a) / (b - a));
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+const mix = (c1, c2, k) => { const a = hex(c1), b = hex(c2); return 'rgb(' + a.map((v, i) => Math.round(lerp(v, b[i], cl(k)))).join(',') + ')'; };
+const glow = (x, y, r, a) => `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#gl)" opacity="${a}"/>`;
+const DEFS = `<defs><radialGradient id="gl"><stop offset="0" stop-color="${CAR}" stop-opacity=".55"/><stop offset=".45" stop-color="${CAR}" stop-opacity=".16"/><stop offset="1" stop-color="${CAR}" stop-opacity="0"/></radialGradient>` +
+  `<radialGradient id="gp"><stop offset="0" stop-color="${PAPER}" stop-opacity=".9"/><stop offset=".3" stop-color="${PAPER}" stop-opacity=".25"/><stop offset="1" stop-color="${PAPER}" stop-opacity="0"/></radialGradient></defs>`;
+
+// a filled silhouette (feet at x,y); step = 0..1 one stride of the right leg; arm = greeting wave 0..1
+function figure(x, y, s, col, o = {}) {
+  const ph = o.ph || 0, walk = o.walk || 0;
+  const L = Math.sin(ph) * 20 * walk, A = Math.sin(ph) * 14 * walk;
+  const st = o.step || 0, lift = Math.sin(st * Math.PI) * 24, fwd = st * 30;
+  let g = `<g transform="translate(${x},${y}) scale(${s})" fill="${col}" stroke="${col}" stroke-linecap="round" stroke-width="16">`;
+  g += `<circle cx="0" cy="-178" r="22" stroke="none"/><path d="M0 -146 L0 -76" stroke-width="30"/>`;
+  g += `<path d="M-5 -76 L${-6 - L} 0" /><path d="M5 -76 L${6 + L + fwd} ${-lift}"/>`;
+  const wave = o.wave || 0;
+  g += `<path d="M-8 -138 L${-14 - A} -84"/>`;
+  g += wave ? `<path d="M8 -138 L${30} ${-138 - 56 * wave} " /><path d="M30 ${-138 - 56 * wave} L${30 + Math.sin(o.t * 12) * 10 * wave} ${-138 - 96 * wave}"/>` : `<path d="M8 -138 L${14 + A} -84"/>`;
+  return g + `</g>`;
+}
+const TXT = {};
+function text(key, str, t, a, b, o = {}) {
+  let el = TXT[key];
+  if (!el) {
+    el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
+    el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
+    el._w = [...el.querySelectorAll('.w')];
+  }
+  const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 76) + 'px'; el.style.color = o.col || PAPER; el.style.fontWeight = o.weight || 700;
+  const st = o.stagger ?? .14, dur = o.dur || .9, out = o.out ?? .6;
+  el._w.forEach((w, i) => {
+    const k = eo(P(t, a + i * st, a + i * st + dur)); const q = out ? eio(P(t, b - out, b)) : 0;
+    w.style.transform = `translateY(${(1 - k) * 30}px)`; w.style.opacity = k * (1 - q); w.style.filter = `blur(${(1 - k) * 12 + q * 10}px)`;
+  });
+  return el;
+}
+// starfield / dust in the void
+function dust(t, n, a) { let g = ''; for (let i = 0; i < n; i++) { const x = rnd(i) * 1080, y = rnd(i + 99) * 1920, tw = .4 + .6 * Math.sin(t * (.6 + rnd(i + 7)) + i); g += `<circle cx="${x}" cy="${y}" r="${1.5 + rnd(i + 3) * 2.5}" fill="${PAPER}" opacity="${a * tw * .5}"/>`; } return g; }
+
+/* ---------- screens ---------- */
+const SHOT = ['m-list-1', 'm-profile-services', 'm-booking-dialog', 'm-bookings'];
+const IMG = {};
+for (const n of SHOT) { const im = new Image(); im.src = `${SHOTS}/${n}.png`; im.style.opacity = 0; $('screen').appendChild(im); IMG[n] = im; }
+const S = 560 / 975;
+
+/* ---------- 3D formula ---------- */
+const EQ = {};
+function eqChar(key, c, size) {
+  if (EQ[key]) return EQ[key];
+  const d = document.createElement('div'); d.className = 'ch'; d.textContent = c; d.style.fontSize = size + 'px';
+  // extruded look: stacked text-shadows from paper to ink
+  d.style.textShadow = Array.from({ length: 14 }, (_, i) => `${i * .8}px ${i * 1.4}px 0 ${mix('#F5F2EC', '#111111', .25 + i * .05)}`).join(',');
+  $('eq').appendChild(d); EQ[key] = d; return d;
+}
+
+/* ---------- scenes ---------- */
+function S1(t) { // 0-4 a point of light -> camera closes in -> a tiny person before a huge void
+  $('bg').style.background = INK;
+  const z = eio(P(t, .6, 3.6)), sc = lerp(.06, 1, z);
+  let g = DEFS + dust(t, 70, eo(P(t, .3, 1.5)));
+  g += `<g transform="translate(540 1250) scale(${sc}) translate(-540 -1250)">`;
+  g += `<path d="M-2000 1250 H3080" stroke="${PAPER}" stroke-width="${3 / sc}" opacity="${.25 * z}"/>`;
+  g += glow(540, 1150, 420, .9) + figure(540, 1250, 1, PAPER);
+  g += `</g>`;
+  // the point of light (before it resolves into the person)
+  const pt = 1 - P(t, 1.6, 2.6);
+  g += `<circle cx="540" cy="${lerp(1250, 1240, z)}" r="${10 + Math.sin(t * 3) * 2}" fill="${PAPER}" opacity="${pt}"/>` + `<circle cx="540" cy="1245" r="90" fill="url(#gp)" opacity="${pt}"/>`;
+  $('sv').innerHTML = g;
+  text('h1', 'Ba’zan hammasi\nbitta qarordan boshlanadi.', t, 1.0, 3.95, { y: 360, size: 76 });
+}
+
+function S2(t) { // 4-10 one step -> light wave -> roads to places
+  $('bg').style.background = INK;
+  const step = eio(P(t, 4.2, 4.8));
+  const hit = P(t, 4.75, 6.4);
+  let g = DEFS + dust(t, 70, 1);
+  const hy = 1250, vx = 540;
+  // ground grid in perspective appears with the wave
+  const gk = eo(P(t, 4.8, 6.0));
+  for (let i = -6; i <= 6; i++) g += `<path d="M${vx} 900 L${vx + i * 420} 1920" stroke="${PAPER}" stroke-width="2" opacity="${.12 * gk}"/>`;
+  for (let j = 1; j < 8; j++) { const y = 900 + Math.pow(j / 8, 2) * 1020; g += `<path d="M0 ${y} H1080" stroke="${PAPER}" stroke-width="2" opacity="${.1 * gk}"/>`; }
+  // light waves from the footstep (perspective ellipses)
+  for (let w = 0; w < 3; w++) { const k = P(t, 4.75 + w * .35, 6.4 + w * .35); if (k > 0 && k < 1) g += `<ellipse cx="${vx + 30}" cy="${hy}" rx="${eo(k) * 900}" ry="${eo(k) * 210}" fill="none" stroke="${CAR}" stroke-width="${10 * (1 - k)}" opacity="${1 - k}"/>`; }
+  g += glow(vx, hy - 100, lerp(420, 620, hit), 1);
+  // four roads grow from the foot to four places on the horizon
+  const places = [[150, 900, 'Kafe', cafe], [390, 860, 'Park', park], [690, 860, 'Ko‘cha', street], [930, 900, 'Maydon', square]];
+  places.forEach(([px, py, name, draw], i) => {
+    const k = eio(P(t, 5.3 + i * .45, 6.3 + i * .45));
+    const x1 = lerp(vx + 30, px, k), y1 = lerp(hy, py + 30, k);
+    g += `<path d="M${vx + 30} ${hy} L${x1} ${y1}" stroke="${CAR}" stroke-width="6" stroke-linecap="round" opacity=".9"/>`;
+    g += `<path d="M${vx + 30} ${hy} L${x1} ${y1}" stroke="${PAPER}" stroke-width="18" stroke-linecap="round" opacity=".08"/>`;
+    const lit = eo(P(t, 6.1 + i * .45, 6.8 + i * .45));
+    if (lit > 0) g += `<g transform="translate(${px} ${py}) scale(${lerp(.6, 1, lit)})" opacity="${lit}">${glow(0, -60, 150, .7)}${draw()}</g>` +
+      `<text x="${px}" y="${py + 80}" fill="${PAPER}" opacity="${lit * .85}" font-family="Manrope" font-weight="700" font-size="38" text-anchor="middle">${name}</text>`;
+  });
+  g += figure(vx, hy, 1, PAPER, { step });
+  $('sv').innerHTML = g;
+  text('h2', 'Yangi kun, yangi tajriba yoki\nyangi suhbat uchun faqat\nbirinchi qadam kerak.', t, 6.6, 9.95, { y: 300, size: 64, stagger: .12 });
+  text('h1', 'Ba’zan hammasi\nbitta qarordan boshlanadi.', t, 1.0, 4.6, { y: 360, size: 76 });
+}
+// little line-art places (centred at 0,0 baseline)
+const LA = (d) => `<g stroke="${PAPER}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">${d}</g>`;
+function cafe() { return LA(`<path d="M-60 0 V-80 H60 V0"/><path d="M-72 -80 L-60 -120 H60 L72 -80Z"/><path d="M-20 -40 h30 l-4 30 h-22z"/><path d="M10 -34 q14 0 12 12"/>`); }
+function park() { return LA(`<path d="M-30 0 V-60"/><circle cx="-30" cy="-95" r="40"/><path d="M10 -26 H70 M10 -44 H70 M18 -26 V0 M62 -26 V0"/>`); }
+function street() { return LA(`<rect x="-70" y="-120" width="50" height="120"/><rect x="-14" y="-160" width="56" height="160"/><rect x="48" y="-100" width="36" height="100"/><path d="M-60 -100 h30 M-60 -80 h30 M-4 -140 h36 M-4 -120 h36"/>`); }
+function square() { return LA(`<path d="M-80 0 H80 M-70 -16 H70 M-70 -100 H70 M-80 -100 L0 -140 L80 -100"/><path d="M-52 -16 V-100 M-18 -16 V-100 M18 -16 V-100 M52 -16 V-100"/>`); }
+
+function S3(t) { // 10-17 1 + 1 = ? -> 1 + 1 = YANGI TAJRIBA -> two people meet (friendly)
+  $('bg').style.background = INK;
+  let g = DEFS + dust(t, 60, 1);
+  const out = eio(P(t, 14.3, 15.0));
+  const chars = [['a', '1', 260, 210], ['p', '+', 240, 390], ['b', '1', 260, 570], ['e', '=', 240, 750], ['q', '?', 300, 900]];
+  const intro = eo(P(t, 10.0, 11.0));
+  const flip = eio(P(t, 12.6, 13.2));
+  chars.forEach(([k, c, size, x], i) => {
+    const d = eqChar(k, c, size); d.style.display = 'block';
+    const ry = Math.sin(t * .8 + i * .7) * 22, rx = Math.sin(t * .6 + i) * 8;
+    let y = 600, op = eo(P(t, 10.0 + i * .12, 10.8 + i * .12));
+    let extra = '';
+    if (k === 'q') { extra = ` rotateX(${flip * 90}deg)`; op *= 1 - flip; }
+    d.style.left = (x - 110) + 'px'; d.style.width = '220px';
+    d.style.transform = `translateY(${y + (1 - intro) * 80 - out * 300}px) translateZ(${(1 - intro) * -600}px) rotateY(${ry}deg) rotateX(${rx}deg)${extra} scale(${1 - out * .3})`;
+    d.style.opacity = op * (1 - out);
+  });
+  // light between the two ones
+  const li = eo(P(t, 11.3, 12.4)) * (1 - out);
+  g += glow(390, 730, 360 * li + 1, li);
+  g += `<circle cx="390" cy="730" r="${14 * li}" fill="${PAPER}" opacity="${li}"/>`;
+  // a beam from the light down to the answer line
+  if (flip > 0) g += `<path d="M390 760 L540 ${lerp(760, 1040, flip)}" stroke="${CAR}" stroke-width="5" opacity="${.7 * (1 - out)}"/>`;
+  $('sv').innerHTML = g;
+  text('ans', 'YANGI\nTAJRIBA', t, 12.85, 14.9, { y: 960, size: 150, stagger: .12, dur: .6, out: .5, weight: 800 });
+  // two people approach each other on the ground (friendly distance, a wave hello)
+  if (t > 14.6) {
+    const k = eio(P(t, 14.8, 16.4));
+    const hy = 1500;
+    let h = `<path d="M0 ${hy} H1080" stroke="${PAPER}" stroke-width="3" opacity=".3"/>` + glow(540, hy - 120, lerp(150, 420, k), eo(P(t, 15.5, 16.6)));
+    const walk = k < 1 ? 1 : 0;
+    h += figure(lerp(-80, 420, k), hy, 1.3, PAPER, { ph: t * 8, walk });
+    h += figure(lerp(1160, 660, k), hy, 1.3, PAPER, { ph: t * 8 + 1.5, walk, wave: eo(P(t, 16.2, 16.6)), t });
+    $('sv').innerHTML += h;
+  }
+}
+
+function S4(t) { // 17-25 the light flows into the phone; the camera orbits 180 deg around it; real app screens
+  $('bg').style.background = INK;
+  let g = DEFS + dust(t, 50, 1);
+  // the light point travels from between the two people up into the phone
+  const fl = eio(P(t, 17.0, 17.8));
+  if (fl < 1) g += glow(540, lerp(1380, 1150, fl), lerp(420, 260, fl), 1 - fl * .5) + `<circle cx="540" cy="${lerp(1380, 1150, fl)}" r="16" fill="${PAPER}" opacity="${1 - fl}"/>`;
+  g += glow(540, 1150, 700, .55 * eo(P(t, 17.4, 18.6)));
+  $('sv').innerHTML = g;
+  $('phoneWrap').style.display = 'block';
+  const appear = eo(P(t, 17.0, 17.6));
+  // camera orbit: from the back of the phone (180 deg) round to the front, then a slow drift
+  const orbit = 180 * (1 - eio(P(t, 17.2, 18.8))) + Math.sin((t - 18.8) * .45) * 10 * P(t, 18.8, 19.5);
+  $('phone').style.transform = `translateZ(${(1 - appear) * -900}px) rotateY(${orbit}deg) rotateX(${3 + Math.sin(t * .5) * 2}deg)`;
+  // screens: calm crossfade with a slight upward drift (the UI lives on the screen)
+  const seq = [['m-list-1', 18.0, 20.4, 0, -60], ['m-profile-services', 20.3, 22.6, 0, -260], ['m-booking-dialog', 22.5, 24.0, 0, 0], ['m-bookings', 23.9, 25.3, 0, 0]];
+  for (const [n, a, b, y0, y1] of seq) {
+    const im = IMG[n]; const k = eo(P(t, a, a + .4)), q = P(t, b - .25, b);
+    im.style.opacity = (t >= a && t <= b) ? k * (1 - q) : 0;
+    im.style.transform = `translateY(${lerp(y0, y1, eio(P(t, a, b))) * .4 + (1 - k) * 30}px)`;
+  }
+  // tap on "So'rov yuborish" (screenshot ~ x 675, y 1956)
+  const tp = P(t, 23.4, 23.9); let f = '';
+  if (tp > 0 && tp < 1) { const x = 260 + 675 * S, y = 542 + 1956 * S; f += `<circle cx="${x}" cy="${y}" r="${20 + tp * 90}" fill="none" stroke="${CAR}" stroke-width="${8 * (1 - tp)}" opacity="${1 - tp}"/>`; }
+  // leave: the phone light blooms into the next scene
+  const bloom = eio(P(t, 24.7, 25.2));
+  if (bloom > 0) f += `<rect width="1080" height="1920" fill="${INK}" opacity="${bloom}"/>`;
+  $('fx').innerHTML = f;
+  text('h4', 'YONDO sizga o‘zingizga mos insonni\ntopish va vaqtingizni mazmunli\no‘tkazish imkonini beradi.', t, 18.6, 24.9, { y: 170, size: 54, stagger: .08, dur: .7 });
+}
+
+function S5(t) { // 25-31 two people walk away from the camera in a public square; the light slowly grows
+  const k = P(t, 25, 31);
+  const light = eio(P(t, 25.3, 30.5));
+  $('bg').style.background = mix(INK, '#2a2826', light * .9);
+  let g = DEFS + dust(t, 40, 1 - light);
+  const vx = 540, vy = 980;
+  g += glow(vx, vy, lerp(300, 1100, light), .9);
+  // path to the vanishing point, lamps on both sides, a square with trees ahead
+  g += `<path d="M${vx - 30} ${vy} L120 1920 M${vx + 30} ${vy} L960 1920" stroke="${PAPER}" stroke-width="5" opacity=".55"/>`;
+  for (let i = 0; i < 7; i++) {
+    const z = ((i / 7) + (t - 25) * .06) % 1, p = Math.pow(1 - z, 2.4);
+    const y = lerp(vy, 1920, p), dx = lerp(40, 520, p), h = lerp(20, 520, p);
+    for (const sgn of [-1, 1]) { const x = vx + sgn * (dx + 30 * p + 60 * p); g += `<path d="M${x} ${y} V${y - h}" stroke="${PAPER}" stroke-width="${lerp(2, 7, p)}" opacity="${.6 * p + .1}"/><circle cx="${x}" cy="${y - h}" r="${lerp(3, 16, p)}" fill="${CAR}" opacity="${.5 + .5 * p}"/>`; }
+  }
+  // distant square: trees + a public building
+  g += `<g transform="translate(${vx} ${vy}) scale(.55)" opacity=".8">${square()}</g>`;
+  g += `<g transform="translate(${vx - 170} ${vy + 10}) scale(.45)" opacity=".7">${park()}</g><g transform="translate(${vx + 190} ${vy + 10}) scale(.45)" opacity=".7">${cafe()}</g>`;
+  // the two, seen from behind, walking away (friendly distance), shrinking slowly with depth
+  const d = lerp(1.6, 1.25, eio(k)), y = lerp(1780, 1640, eio(k));
+  g += figure(vx - 120 * d / 1.6, y, d, PAPER, { ph: t * 6, walk: 1 }) + figure(vx + 120 * d / 1.6, y, d, PAPER, { ph: t * 6 + 1.6, walk: 1 });
+  $('sv').innerHTML = g;
+  text('h5', 'Ba’zi uchrashuvlar\noddiy kunni\nunutilmas qiladi.', t, 26.0, 30.9, { y: 300, size: 70, stagger: .16 });
+}
+
+function S6(t) { // 31-34 logo on ink: the first point of light returns and becomes the carrot node
+  $('bg').style.background = INK;
+  const su = 3.9, lw = 219 * su, sx = 540 - lw / 2, sy = 780 - 32 * su;
+  const pt = eio(P(t, 31.0, 31.8));
+  let g = DEFS + dust(t, 40, .6);
+  const nx = sx + 50 * su, ny = sy + 12 * su;
+  g += glow(lerp(540, nx, pt), lerp(1250, ny, pt), lerp(200, 120, pt), 1 - P(t, 32.4, 33.4) * .6);
+  const draw = eio(P(t, 31.6, 32.4)), nodes = eo(P(t, 31.6, 32.0)), wm = eio(P(t, 32.1, 32.9));
+  g += `<g transform="translate(${sx} ${sy}) scale(${su})"><path d="M14 12 28 33Q31 37 32 40M50 12 36 33Q33 37 32 40M32 40v12" stroke="${PAPER}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - draw}"/>`;
+  g += `<circle cx="14" cy="12" r="${7 * nodes}" fill="${PAPER}"/><circle cx="32" cy="55" r="${5.5 * nodes}" fill="${PAPER}"/>`;
+  g += `<clipPath id="wmc"><rect x="70" y="0" width="${160 * wm}" height="64"/></clipPath><g clip-path="url(#wmc)" style="color:${PAPER}" opacity="${wm}">${WORDMARK}</g></g>`;
+  g += `<circle cx="${lerp(540, nx, pt)}" cy="${lerp(1250, ny, pt)}" r="${lerp(10, 7 * su, pt)}" fill="${pt > .6 ? CAR : PAPER}"/>`;
+  const ul = eo(P(t, 33.0, 33.5));
+  g += `<path d="M${540 - 160 * ul} 1188 H${540 + 160 * ul}" stroke="${CAR}" stroke-width="8" stroke-linecap="round"/>`;
+  $('sv').innerHTML = g;
+  text('h6a', 'Doim yoningda.', t, 32.5, 34.2, { y: 1030, size: 88, stagger: .14, out: 0, weight: 800 });
+  text('h6b', 'Tez kunda.', t, 33.0, 34.2, { y: 1240, size: 56, stagger: .14, out: 0 });
+}
+
+window.render = (t) => {
+  const sc = t < 4 ? 1 : t < 10 ? 2 : t < 17 ? 3 : t < 25 ? 4 : t < 31 ? 5 : 6;
+  const keep = { 1: ['h1'], 2: ['h1', 'h2'], 3: ['ans'], 4: ['h4'], 5: ['h5'], 6: ['h6a', 'h6b'] }[sc];
+  for (const k in TXT) if (!keep.includes(k)) TXT[k].style.display = 'none';
+  if (sc !== 3) for (const k in EQ) EQ[k].style.display = 'none';
+  if (sc !== 4) { $('phoneWrap').style.display = 'none'; $('fx').innerHTML = ''; }
+  [null, S1, S2, S3, S4, S5, S6][sc](t);
+};
+window.ready = Promise.all([document.fonts.ready, ...Object.values(IMG).map((i) => i.decode().catch(() => 0))]).then(() => { window.render(0); return true; });
+</script></body></html>
