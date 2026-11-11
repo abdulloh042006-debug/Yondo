@@ -26,6 +26,11 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S53 — Reel 2 «Bir harakat — bir nechta imkoniyat» (2026-11-10) [cloud chat, VIDEOCHI]
+Done: 30 s 9:16 reel from owner script 2 (stitch/match-cut chain, kinetic words SUHBAT/SAYR/SHAHAR→KASHF, real `apps/web` screens, objects assemble the logo); breakdown `marketing/ad-video/scripts/02-bir-harakat.md`, sources `marketing/ad-video/reel2/`.
+Not done: VO — edge-tts blocked (WebSocket not passed by the sandbox proxy), other free TTS needs torch; kinetic type carries the lines. Media not committed; mp4 sent to the owner.
+Evidence: audio-ears on the final mp4: −13.9 LUFS, TP −2.5 dBTP, 0 clipped, hits within ±2 frames of most cuts.
+Branch: `feat/ad-video-2` (PR to main; depends on PR #20 for `reel1/capture_list.mjs`).
 ## S52 — Reel 1 «Shaharda yolg‘iz emassan» (2026-11-10) [cloud chat, VIDEOCHI]
 Done: 34 s 9:16 reel from owner script 1 (language practice → exploring the city): deterministic HTML render + real `apps/web` screens (yondo theme) + original synthesized music/SFX; breakdown `marketing/ad-video/scripts/01-shaharda-yolgiz-emassan.md`, sources `marketing/ad-video/reel1/`.
 Not done: VO (no voice actor; kinetic type carries the lines). Video/audio not committed (README rule); mp4 sent to the owner in chat.
