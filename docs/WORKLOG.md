@@ -27,6 +27,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S56 — Configuration doctor + setup guide (2026-11-11) [cloud chat, backend worker]
+Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_api/doctor.py`): every integration as ok / missing / invalid / disabled; format checks only, no network calls; secrets as "set (N chars)", cards as last 4, URLs as scheme+host; also runs the API's own settings validation. `docs/configuration.md`: every env var, verified safe fallbacks, owner-only tasks. `.env.example`: manual-payment placeholders added. Tests `apps/api/tests/test_doctor.py` (10, incl. secret-absence asserts and malformed JSON).
+Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).
+Next: build the companion-side fee deduction; owner tasks in `docs/configuration.md`.
+Blockers: none.
+Evidence: pytest 391 passed + 9 skipped (SQLite, after merging main), doctor tests 10/10, ruff PASS, `export_openapi.py --check` PASS (unchanged).
+Commit: see PR (feat/config-doctor).
 ## S55 — Open PRs merged into main; branch audit (2026-11-10/11) [cloud chat, yondo-43]
 Done:
 - Owner's instruction (yondo-43, 2026-11-06): merge the PRs if all is well, check every branch, add or remove.
