@@ -36,6 +36,7 @@ const ACTIONS = [
   ['safety_sos', 'admin.audit.safety_sos'],
   ['support_reply', 'admin.audit.support_reply'],
   ['account_erased', 'admin.audit.account_erased'],
+  ['manual_payment', 'admin.audit.manual_payment'],
 ] as const satisfies ReadonlyArray<readonly [string, Key]>;
 
 export function AuditLog() {
