@@ -27,6 +27,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S58 — Help FAQ payment answer: commission from the companion side (2026-11-11) [cloud chat, worker]
+Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand, no real money moves yet. No percentage shown (not decided for customer display).
+Not done: the server rule itself is PR #27 (fix/commission-companion-side); merge #27 before any fee is set.
+Next: CEO approves the KB doc after review.
+Blockers: none.
+Evidence: KB tests 27/27, `kb --check` 9 valid; web typecheck, lint PASS, vitest 54/54. Verifier APPROVE.
+Commit: see PR (docs/faq-pay-commission).
 ## S56 — Configuration doctor + setup guide (2026-11-11) [cloud chat, backend worker]
 Done: `python -m yondo_api.doctor [--strict] [--env-file]` (`apps/api/src/yondo_api/doctor.py`): every integration as ok / missing / invalid / disabled; format checks only, no network calls; secrets as "set (N chars)", cards as last 4, URLs as scheme+host; also runs the API's own settings validation. `docs/configuration.md`: every env var, verified safe fallbacks, owner-only tasks. `.env.example`: manual-payment placeholders added. Tests `apps/api/tests/test_doctor.py` (10, incl. secret-absence asserts and malformed JSON).
 Finding: owner decision = 5% fee deducted from the companion side, but the code adds the fee to the customer total; keep `YONDO_PLATFORM_FEE_BPS` unset until that is built (the doctor warns). No integration without a safe fallback found (DB/Redis/pepper are required by design).
