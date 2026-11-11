@@ -26,6 +26,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S57 — Platform commission deducted from the companion's side (2026-11-11) [cloud chat, backend worker]
+Done: owner rule (`docs/product-decisions.md`): customer pays the subtotal (`payments.amount_minor = subtotal_minor`, no fee on top); `platform_fee_minor` still records the commission. `companion_payouts` + `gross_minor`, `commission_minor`, `deductions_minor` (0: not defined) with net = gross − commission − deductions in `amount_minor` (check constraint). Migration 0019 additive, backfills old rows (gross = amount). Old fee-on-top payments are not deducted again (`payments/service.py::companion_commission`). Rate still `YONDO_PLATFORM_FEE_BPS`, unset = 503. OpenAPI field descriptions + `schema.d.ts` regenerated; web/mobile show `amount_minor` only (no UI change).
+Not done: no API endpoint shows the payout breakdown yet; the doctor warning (PR #26, not on main) still says the code adds the fee — update it after #26 merges; FAQ `help.faq.pay.a` ("xizmat haqi … belgilanmagan") is out of date (owner text, not changed).
+Next: companion finances view (gross / deductions / commission / net); update the doctor warning and the FAQ.
+Blockers: none.
+Evidence: pytest SQLite 394 passed + 9 skipped, PostgreSQL 16 403 passed + 0 skipped; migration up/down/up on PG + backfill checked; design-prototype backend 50 passed; demo harness 8; web typecheck, lint, build PASS, vitest 54/54; ruff PASS; `export_openapi.py --check` PASS. Verifier APPROVE.
+Commit: see PR (fix/commission-companion-side).
 ## S50 — AI assistant Phase A audit + owner/CEO decisions (2026-11-10/11) [cloud chat, researcher worker]
 Done: `docs/ai-assistant/phase-a-audit.md`: reusable backend parts (Admin gate, Redis, settings, errors, i18n), knowledge-source inventory with audience/status, data-safety never-send list + enforcement, injection risks, FTS-vs-pgvector (taklif: Postgres FTS + pg_trgm), bymuslim contract-test plan (endpoint NOT called), risks, owner questions Q1–Q8, phase B–H plan.
 Not done: no code; provider unverified.
