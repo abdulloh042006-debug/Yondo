@@ -18,6 +18,8 @@ from yondo_api.payments.schemas import PaymentResponse
 from yondo_api.payments.service import apply_payment_event, platform_fee
 
 router = APIRouter(prefix='/payments', tags=['payments'])
+# Manual card-transfer payments (payments/manual.py); only an admin confirms them, never a webhook.
+MANUAL_REFERENCE_PREFIX = 'YND-'
 
 
 @router.post('/bookings/{booking_id}', response_model=PaymentResponse, status_code=201)
@@ -158,6 +160,13 @@ async def payment_webhook(request: Request, session: Session):
         ) from exc
     if event.status not in {'succeeded', 'failed'}:
         raise ApplicationError('invalid_payment_event', 'Payment event status is invalid', 422)
+    if event.provider_reference.startswith(MANUAL_REFERENCE_PREFIX):
+        raise ApplicationError('invalid_payment_event', 'Payment event could not be verified', 401)
+    await apply_verified_event(request, session, event)
+
+
+async def apply_verified_event(request: Request, session: Session, event: PaymentEvent) -> None:
+    """Apply a verified provider event (webhook) or an admin's manual confirmation, idempotently."""
     booking_id = await session.scalar(
         select(Payment.booking_id).where(Payment.provider_reference == event.provider_reference)
     )
@@ -175,11 +184,11 @@ async def payment_webhook(request: Request, session: Session):
     )
     if payment is None or payment.booking_id != booking.id:
         raise ApplicationError('payment_not_found', 'Payment not found', 404)
+    system_message = None  # also defined when a duplicate delivery raises below
     try:
         was_confirmed = booking.status == BookingStatus.CONFIRMED
         already_paid = payment.status == PaymentStatus.SUCCEEDED
         applied = await apply_payment_event(session, payment, booking, event.event_id, event.status)
-        system_message = None
         if (
             applied
             and not already_paid

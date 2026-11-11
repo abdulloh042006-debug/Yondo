@@ -21,12 +21,42 @@ function saved(): ThemeId {
   return 'gul';
 }
 
+/* A theme change must be atomic. Without this, colours with a CSS transition (language switch, buttons) fade from
+   the old theme's values while the page ground snaps to the new one, so switching from a light theme to `yondo-tun`
+   showed dark-on-dark text (measured 1.12:1 on the language buttons, 2.39:1 on the primary button) for the length of
+   the transition — and axe could sample that frame. Every change of `data-theme` (Settings, start-up, tests, devtools)
+   therefore turns transitions off until one frame with the new colours has been drawn (styles.css: data-theme-switching).
+   Motion animations are not CSS transitions and are unaffected. */
+const SWITCHING = 'themeSwitching';
+let pending = 0;
+function holdTransitions() {
+  const root = document.documentElement;
+  root.dataset[SWITCHING] = '';
+  const id = ++pending;
+  // Two frames: the first draws the new theme without transitions, the second re-enables them. A page that draws no
+  // frames keeps transitions off, which is harmless (colours just change instantly).
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      if (id === pending) delete root.dataset[SWITCHING];
+    }),
+  );
+}
+let watching = false;
+function watchThemeChanges() {
+  if (watching || typeof MutationObserver === 'undefined') return;
+  watching = true;
+  // Mutation callbacks run as a microtask, i.e. before the browser recalculates styles for the change.
+  new MutationObserver(holdTransitions).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
 /** Applied once at start-up (main.tsx), so the chosen look is active on every page, not only in Settings. */
 export function applySavedTheme() {
   document.documentElement.dataset.theme = saved();
+  watchThemeChanges();
 }
 
 function setTheme(id: ThemeId) {
+  holdTransitions();
   document.documentElement.dataset.theme = id;
   try {
     localStorage.setItem(KEY, id);

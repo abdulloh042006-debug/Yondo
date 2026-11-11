@@ -28,7 +28,7 @@ from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
 from yondo_api.chat.router import router as chat_router
 from yondo_api.companions.admin import router as companion_admin_router
-from yondo_api.companions.integrations import IdentityEligibility, UnconfiguredIdentityEligibility
+from yondo_api.companions.integrations import IdentityEligibility
 from yondo_api.companions.photos import router as companion_photos_router
 from yondo_api.companions.resources import router as companion_resources_router
 from yondo_api.companions.router import router as companion_router
@@ -40,16 +40,23 @@ from yondo_api.gifts.router import router as gifts_router
 from yondo_api.gifts.test_orders import router as gift_test_orders_router
 from yondo_api.gifts.vendor import router as vendor_router
 from yondo_api.integration.router import router as integration_router
+from yondo_api.integrations.s3 import build_object_storage
 from yondo_api.integrations.storage import ObjectStorage
 from yondo_api.logging import configure_logging
 from yondo_api.meetings.router import router as meetings_router
 from yondo_api.notifications.router import router as notifications_router
+from yondo_api.payments.manual import ManualTransferPaymentProvider
+from yondo_api.payments.manual import admin_router as manual_payments_admin_router
+from yondo_api.payments.manual import router as manual_payments_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
 from yondo_api.payments.tezcheck import TezCheckPaymentProvider
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
+from yondo_api.verification.router import admin_router as verification_admin_router
+from yondo_api.verification.router import router as verification_router
+from yondo_api.verification.service import DatabaseIdentityEligibility
 
 
 def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
@@ -63,6 +70,15 @@ def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
     if settings.environment in {'development', 'test'}:
         return DevelopmentOtpProvider()
     return UnconfiguredOtpProvider()
+
+
+def select_payment_provider(settings: Settings) -> PaymentProvider:
+    """YONDO_PAYMENT_PROVIDER picks it; "auto" = TezCheck when its token is set, else none."""
+    if settings.payment_provider == 'manual':
+        return ManualTransferPaymentProvider(settings.public_web_url)
+    if settings.tezcheck_token.get_secret_value():
+        return TezCheckPaymentProvider.from_settings(settings)
+    return UnconfiguredPaymentProvider()
 
 
 def create_application(
@@ -105,6 +121,9 @@ def create_application(
         finally:
             await redis_client.aclose()
             await engine.dispose()
+            storage = getattr(app.state, 'object_storage', None)
+            if hasattr(storage, 'aclose'):
+                await storage.aclose()
 
     app = FastAPI(
         title=app_settings.app_name,
@@ -115,13 +134,12 @@ def create_application(
         redoc_url=None,
     )
     app.state.settings = app_settings
-    app.state.object_storage = object_storage
-    app.state.identity_eligibility = identity_eligibility or UnconfiguredIdentityEligibility()
-    app.state.payment_provider = payment_provider or (
-        TezCheckPaymentProvider.from_settings(app_settings)
-        if app_settings.tezcheck_token.get_secret_value()
-        else UnconfiguredPaymentProvider()
+    app.state.object_storage = (
+        object_storage if object_storage is not None else build_object_storage(app_settings)
     )
+    # Trust & Safety verification records are the identity source (ID + selfie review).
+    app.state.identity_eligibility = identity_eligibility or DatabaseIdentityEligibility()
+    app.state.payment_provider = payment_provider or select_payment_provider(app_settings)
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
@@ -135,6 +153,8 @@ def create_application(
         discovery_router,
         bookings_router,
         payments_router,
+        manual_payments_router,
+        manual_payments_admin_router,
         chat_router,
         gifts_router,
         gift_test_orders_router,
@@ -151,6 +171,8 @@ def create_application(
         legal_router,
         reviews_router,
         meetings_router,
+        verification_router,
+        verification_admin_router,
     ):
         app.include_router(companion_routes, prefix=app_settings.api_v1_prefix)
     return app
