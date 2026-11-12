@@ -27,6 +27,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S59 — Russian cuts of reels 1–3 + universal caption (2026-11-12) [cloud chat, VIDEOCHI]
+Done: RU on-screen copy for the three reels (`RU` table per template, `?lang=ru` / `REEL_LANG=ru`, auto-fit for long lines, Cyrillic font for reel 2's big words); RU app captures via the app's own RU locale (`capture_list.mjs` got an `APP_LANG=ru` mode); `marketing/social/caption.md` (one caption + hashtags, UZ and RU). Three RU mp4s rendered and sent to the owner (not committed).
+Not done: Higgsfield ad (owner asked for it; the connector is not attached to the session, see Blockers); owner's request to use six real people's photos as profile pictures was declined (no consent, two are minors): illustrated portraits stay.
+Blockers: BLOCKED (Higgsfield) until the owner adds the connector at claude.ai/customize/connectors.
+Next: Higgsfield ad when connected; then the CEO's app-opening animation brief.
+Evidence: RU stills checked (all lines fit, app fully in Russian, no Verified badge, no DEMO); same audio mixes as the UZ cuts (−13.8/−13.9 LUFS).
 ## S58 — Help FAQ payment answer: commission from the companion side (2026-11-11) [cloud chat, worker]
 Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand. No sentence about real money (it would turn false once manual card payments are enabled). No percentage shown (not decided for customer display).
 Not done: nothing; the server rule is PR #27, already on main.

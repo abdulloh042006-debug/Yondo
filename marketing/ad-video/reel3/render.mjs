@@ -5,7 +5,8 @@ const [pagePath, out, mode, ...ts] = process.argv.slice(2);
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-await page.goto('file://' + pagePath); await page.evaluate(() => window.ready);
+// REEL_LANG=ru -> Russian cut (?lang=ru)
+await page.goto('file://' + pagePath + (process.env.REEL_LANG ? '?lang=' + process.env.REEL_LANG : '')); await page.evaluate(() => window.ready);
 const total = await page.evaluate(() => window.TOTAL);
 if (mode === 'stills') {
   for (const t of ts.map(Number)) { await page.evaluate((x) => window.render(x), t); await page.screenshot({ path: `${out}/s-${t.toFixed(2)}.jpg`, type: 'jpeg', quality: 80 }); }
