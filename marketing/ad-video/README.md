@@ -87,3 +87,16 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
 - Reel 2 «Bir harakat — bir nechta imkoniyat» (9:16, 30 s, no VO): breakdown `scripts/02-bir-harakat.md`, sources `reel2/`. Uses the reel 1 captures
   (`reel1/capture_list.mjs`, PR #20).
 - Reel 3 «Birinchi qadam» (9:16, 34 s, no VO): breakdown `scripts/03-birinchi-qadam.md`, sources `reel3/`. Uses the reel 1 captures (PR #20).
+
+## Russian cuts of reels 1–3 (2026-11-12, owner request)
+- On-screen copy: each `reelN/page.tpl.html` has a `RU` table keyed by the Uzbek source string; `?lang=ru` (env `REEL_LANG=ru` for `render.mjs`)
+  switches it. Russian lines keep their own line breaks and shrink to the safe width. Reel 2's big words are set in Manrope for Cyrillic
+  (БЕСЕДА / ПРОГУЛКА / ГОРОД → ОТКРОЙ). End card: «Всегда рядом.» / «Скоро.». No "языковая практика".
+- App screens: the app's own RU locale plus `ru-dict.json` for seed data:
+  `APP_LANG=ru THEME=yondo OUT=$W/shots-ru … node e2e/.tmp/capture.mjs` and `APP_LANG=ru OUT=$W/shots-ru … node e2e/.tmp/capture_list.mjs`
+  (copy `ru-dict.json` next to the capture scripts). In RU the list order differs: for reels 2 and 3 use the Madina card as `m-list-1`.
+- Render: `SHOTS=$W/shots-ru OUT=$W/ru1 python3 build_reel.py && REEL_LANG=ru node render.mjs $W/ru1/page.html $W/ru1/video.mp4`, then the
+  same `audio.py` mix (timings are identical) and `mux.sh`.
+- Posting text: `marketing/social/caption.md` (one universal caption + hashtags, UZ and RU).
+- Real people's photos are never used as profile pictures in the videos without their written consent (and never minors): the illustrated
+  portraits in `photos/` stay.

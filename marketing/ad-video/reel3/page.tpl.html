@@ -40,6 +40,22 @@ const SHOTS = '{{SHOTS}}';
 const WORDMARK = `{{WORDMARK}}`;
 const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
 window.TOTAL = 34;
+const LANG = new URLSearchParams(location.search).get('lang') || 'uz';
+// Russian cut: on-screen copy keyed by the Uzbek source string (render with ?lang=ru and Russian app captures).
+const RU = {
+ "Ba’zan hammasi\nbitta qarordan boshlanadi.": "Иногда всё начинается\nс одного решения.",
+ "Yangi kun, yangi tajriba yoki\nyangi suhbat uchun faqat\nbirinchi qadam kerak.": "Для нового дня, нового опыта\nили новой беседы нужен\nтолько первый шаг.",
+ "Kafe": "Кафе",
+ "Park": "Парк",
+ "Ko‘cha": "Улица",
+ "Maydon": "Площадь",
+ "YANGI\nTAJRIBA": "НОВЫЙ\nОПЫТ",
+ "YONDO sizga o‘zingizga mos insonni\ntopish va vaqtingizni mazmunli\no‘tkazish imkonini beradi.": "YONDO помогает найти\nподходящего человека и провести\nвремя с пользой.",
+ "Ba’zi uchrashuvlar\noddiy kunni\nunutilmas qiladi.": "Некоторые встречи\nделают обычный день\nнезабываемым.",
+ "Doim yoningda.": "Всегда рядом.",
+ "Tez kunda.": "Скоро."
+};
+const tr = (s) => (LANG === 'ru' && RU[s]) || s;
 const $ = (id) => document.getElementById(id);
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -68,14 +84,16 @@ function figure(x, y, s, col, o = {}) {
 }
 const TXT = {};
 function text(key, str, t, a, b, o = {}) {
-  let el = TXT[key];
+  str = tr(str); let el = TXT[key];
   if (!el) {
     el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
     el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
     el._w = [...el.querySelectorAll('.w')];
+    // Russian lines are longer: keep the given line breaks and shrink the block to the safe width
+    if (LANG === 'ru') { el.style.whiteSpace = 'nowrap'; el.style.fontSize = (o.size || 76) * (el._fit || 1) + 'px'; el.style.display = 'block'; el._fit = Math.min(1, 940 / el.scrollWidth); }
   }
   const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
-  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 76) + 'px'; el.style.color = o.col || PAPER; el.style.fontWeight = o.weight || 700;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 76) * (el._fit || 1) + 'px'; el.style.color = o.col || PAPER; el.style.fontWeight = o.weight || 700;
   const st = o.stagger ?? .14, dur = o.dur || .9, out = o.out ?? .6;
   el._w.forEach((w, i) => {
     const k = eo(P(t, a + i * st, a + i * st + dur)); const q = out ? eio(P(t, b - out, b)) : 0;
@@ -140,7 +158,7 @@ function S2(t) { // 4-10 one step -> light wave -> roads to places
     g += `<path d="M${vx + 30} ${hy} L${x1} ${y1}" stroke="${PAPER}" stroke-width="18" stroke-linecap="round" opacity=".08"/>`;
     const lit = eo(P(t, 6.1 + i * .45, 6.8 + i * .45));
     if (lit > 0) g += `<g transform="translate(${px} ${py}) scale(${lerp(.6, 1, lit)})" opacity="${lit}">${glow(0, -60, 150, .7)}${draw()}</g>` +
-      `<text x="${px}" y="${py + 80}" fill="${PAPER}" opacity="${lit * .85}" font-family="Manrope" font-weight="700" font-size="38" text-anchor="middle">${name}</text>`;
+      `<text x="${px}" y="${py + 80}" fill="${PAPER}" opacity="${lit * .85}" font-family="Manrope" font-weight="700" font-size="38" text-anchor="middle">${tr(name)}</text>`;
   });
   g += figure(vx, hy, 1, PAPER, { step });
   $('sv').innerHTML = g;
