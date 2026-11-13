@@ -40,6 +40,35 @@ const SHOTS = '{{SHOTS}}';
 const WORDMARK = `{{WORDMARK}}`;
 const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
 window.TOTAL = 34;
+const LANG = new URLSearchParams(location.search).get('lang') || 'uz';
+// Russian cut: on-screen copy keyed by the Uzbek source string (render with ?lang=ru and Russian app captures).
+const RU = {
+ "Seshanba, kech": "Вторник, вечер",
+ "Shahar to‘la odam...": "Город полон людей...",
+ "Har kuni minglab insonlar\nyonimizdan o‘tadi...": "Каждый день мимо нас\nпроходят тысячи людей...",
+ "Yangi xabar yo‘q": "Новых сообщений нет",
+ "Xabar yozing...": "Напишите сообщение...",
+ "Suhbatlashadigan\nodam yo‘q": "Не с кем\nпоговорить",
+ "...ammo ba’zan birga vaqt o‘tkazadigan\ninson topish qiyin.": "...но иногда трудно найти того,\nс кем провести время.",
+ "Endi buning uchun\nyechim bor.": "Теперь для этого\nесть решение.",
+ "YONDO orqali o‘zingizga\nmos hamrohni toping.": "Найдите в YONDO\nподходящего компаньона.",
+ "Suhbatlashing, sayr qiling\nyoki shaharni\nbirga kashf eting.": "Общайтесь, гуляйте\nили открывайте\nгород вместе.",
+ "Kitob": "Книги",
+ "Sayr": "Прогулка",
+ "UZ<small>o‘zbek tili</small>": "UZ<small>узбекский</small>",
+ "RU<small>rus tili</small>": "RU<small>русский</small>",
+ "Hamrohlar": "Компаньоны",
+ "Profil rasmi": "Фото профиля",
+ "Qiziqishlar": "Интересы",
+ "Tillar": "Языки",
+ "Xizmatlar va narxlar": "Услуги и цены",
+ "Bron so‘rovi": "Запрос на бронь",
+ "So‘rov yuborildi": "Запрос отправлен",
+ "Ba’zan kuningizni\no‘zgartirish uchun\nbir insonning o‘zi kifoya.": "Иногда, чтобы\nизменить ваш день,\nдостаточно одного человека.",
+ "Doim yoningda.": "Всегда рядом.",
+ "Tez kunda.": "Скоро."
+};
+const tr = (s) => (LANG === 'ru' && RU[s]) || s;
 const $ = (id) => document.getElementById(id);
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -112,14 +141,16 @@ function phoneOutline(cx, cy, w, h, col, sw = 6) {
 /* ---------- kinetic text ---------- */
 const TXT = {};
 function text(key, str, t, a, b, o = {}) {
-  let el = TXT[key];
+  str = tr(str); let el = TXT[key];
   if (!el) {
     el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
     el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
     el._w = [...el.querySelectorAll('.w')];
+    // Russian lines are longer: keep the given line breaks and shrink the block to the safe width
+    if (LANG === 'ru') { el.style.whiteSpace = 'nowrap'; el.style.fontSize = (o.size || 84) * (el._fit || 1) + 'px'; el.style.display = 'block'; el._fit = Math.min(1, 940 / el.scrollWidth); }
   }
   const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
-  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) + 'px'; el.style.color = o.col || INK;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) * (el._fit || 1) + 'px'; el.style.color = o.col || INK;
   el.style.fontWeight = o.weight || 800;
   const st = o.stagger || .07, dur = o.dur || .45, out = o.out ?? .3;
   el._w.forEach((w, i) => {
@@ -159,7 +190,7 @@ function hidePops(except = []) { for (const k in POPS) if (!except.includes(k)) 
 const CARDS = {};
 function card(key, html, cls, t, a, b, x, y, o = {}) {
   let el = CARDS[key];
-  if (!el) { el = document.createElement('div'); el.className = cls; el.innerHTML = html; $('pops').appendChild(el); CARDS[key] = el; }
+  if (!el) { el = document.createElement('div'); el.className = cls; el.innerHTML = tr(html); $('pops').appendChild(el); CARDS[key] = el; }
   const on = t >= a && t <= b; el.style.display = on ? 'block' : 'none'; if (!on) return;
   const k = back(P(t, a, a + .5)), q = eio(P(t, b - .3, b));
   const fx = o.fx ?? 540, fy = o.fy ?? 960;
@@ -179,7 +210,7 @@ function S1(t, sv) { // 0-3 hook: 19:42 -> digits fly -> dive into the second ha
     const rec = eio(P(t, .55, 1.3));
     const sc = lerp(.92, 1, ph) * lerp(1, .82, rec);
     g += `<g opacity="${ph * (1 - rec * .65)}" transform="translate(540 960) scale(${sc}) translate(-540 -960)">${phoneOutline(540, 960, 560, 1140, PAPER, 6)}` +
-      `<text x="540" y="1180" fill="${PAPER}" opacity=".55" font-family="Manrope" font-weight="600" font-size="38" text-anchor="middle">Seshanba, kech</text></g>`;
+      `<text x="540" y="1180" fill="${PAPER}" opacity=".55" font-family="Manrope" font-weight="600" font-size="38" text-anchor="middle">${tr('Seshanba, kech')}</text></g>`;
     // seconds dial with the carrot hand (ticks every 1/6 s)
     const dive = eio(P(t, 1.25, 1.95));
     const ang = Math.floor(t * 6) * 6 + 30;
@@ -250,7 +281,7 @@ function S2(t, sv) { // 3-8 problem: cafe, bench, ticking phone, words -> empty 
     const tm = times[Math.min(5, Math.floor(k * 6))];
     g += `<g transform="translate(${cut(5)} 0)">${phoneOutline(540, 1100, 560, 1140, INK, 7)}`;
     g += `<text x="540" y="1080" fill="${INK}" font-family="Space Grotesk" font-weight="700" font-size="190" text-anchor="middle">${tm}</text>`;
-    g += `<text x="540" y="1180" fill="${INK}" opacity=".6" font-family="Manrope" font-weight="600" font-size="40" text-anchor="middle">Yangi xabar yo‘q</text>`;
+    g += `<text x="540" y="1180" fill="${INK}" opacity=".6" font-family="Manrope" font-weight="600" font-size="40" text-anchor="middle">${tr('Yangi xabar yo‘q')}</text>`;
     g += `<circle cx="540" cy="1380" r="70" stroke="${INK}" stroke-width="5" fill="none"/><path d="M540 1380 L${540 + Math.sin(k * 12.6) * 58} ${1380 - Math.cos(k * 12.6) * 58}" stroke="${CAR}" stroke-width="8" stroke-linecap="round"/></g>`;
   } else {
     // words dissolve into the empty chat window
@@ -261,7 +292,7 @@ function S2(t, sv) { // 3-8 problem: cafe, bench, ticking phone, words -> empty 
       `<circle cx="${cx - cw / 2 + 80}" cy="${cy - ch / 2 + 66}" r="32" fill="none" stroke="${INK}" stroke-width="5" stroke-dasharray="8 8"/>` +
       `<rect x="${cx - cw / 2 + 130}" y="${cy - ch / 2 + 50}" width="170" height="30" rx="15" fill="${INK}" opacity=".18"/>` +
       `<rect x="${cx - cw / 2 + 36}" y="${cy + ch / 2 - 110}" width="${cw - 72}" height="72" rx="36" fill="none" stroke="${INK}" stroke-width="5"/>` +
-      `<text x="${cx - cw / 2 + 72}" y="${cy + ch / 2 - 62}" fill="${INK}" opacity=".45" font-family="Manrope" font-weight="600" font-size="32">Xabar yozing...</text></g>`;
+      `<text x="${cx - cw / 2 + 72}" y="${cy + ch / 2 - 62}" fill="${INK}" opacity=".45" font-family="Manrope" font-weight="600" font-size="32">${tr('Xabar yozing...')}</text></g>`;
     // typing bubble with 3 dots (ink bubble, paper dots)
     const tb = eo(P(t, 7.35, 7.6));
     if (tb > 0) {

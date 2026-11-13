@@ -33,6 +33,25 @@ const SHOTS = '{{SHOTS}}';
 const WORDMARK = `{{WORDMARK}}`;
 const INK = '#111111', PAPER = '#F5F2EC', CAR = '#E8501A';
 window.TOTAL = 30;
+const LANG = new URLSearchParams(location.search).get('lang') || 'uz';
+// Russian cut: on-screen copy keyed by the Uzbek source string (render with ?lang=ru and Russian app captures).
+const RU = {
+ "Bir kun.\nMinglab imkoniyat.": "Один день.\nТысячи возможностей.",
+ "Bugun nima qilishni xohlaysiz?": "Чем хотите заняться сегодня?",
+ "Suhbatlashishmi?": "Поговорить?",
+ "Sayr qilishmi?": "Прогуляться?",
+ "Yoki shaharni\nbirga kashf qilishmi?": "Или вместе\nоткрыть город?",
+ "Hamrohlar": "Компаньоны",
+ "Profil": "Профиль",
+ "Qiziqishlar": "Интересы",
+ "Bron so‘rovi": "Запрос на бронь",
+ "YONDO — o‘zingizga mos\nhamrohni topishning yangi usuli.": "YONDO — новый способ найти\nподходящего компаньона.",
+ "Doim yoningda.": "Всегда рядом.",
+ "Tez kunda.": "Скоро."
+};
+const tr = (s) => (LANG === 'ru' && RU[s]) || s;
+// big kinetic words: [Russian word, size] (Space Grotesk has no Cyrillic, so the Russian cut sets them in Manrope 800)
+const RUBIG = { SUHBAT: ['БЕСЕДА', 200], SAYR: ['ПРОГУЛКА', 150], SHAHAR: ['ГОРОД', 220], KASHF: ['ОТКРОЙ', 190] };
 const $ = (id) => document.getElementById(id);
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -84,14 +103,16 @@ function chatBubble(w, h, fill, tail) {
 /* ---------- kinetic text ---------- */
 const TXT = {};
 function text(key, str, t, a, b, o = {}) {
-  let el = TXT[key];
+  str = tr(str); let el = TXT[key];
   if (!el) {
     el = document.createElement('div'); el.className = 'txt'; $('texts').appendChild(el); TXT[key] = el;
     el.innerHTML = str.split('\n').map((ln) => ln.split(' ').map((w) => `<span class="w">${w} </span>`).join('')).join('<br>');
     el._w = [...el.querySelectorAll('.w')];
+    // Russian lines are longer: keep the given line breaks and shrink the block to the safe width
+    if (LANG === 'ru') { el.style.whiteSpace = 'nowrap'; el.style.fontSize = (o.size || 84) * (el._fit || 1) + 'px'; el.style.display = 'block'; el._fit = Math.min(1, 940 / el.scrollWidth); }
   }
   const on = t >= a - .01 && t <= b + .01; el.style.display = on ? 'block' : 'none'; if (!on) return el;
-  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) + 'px'; el.style.color = o.col || INK; el.style.fontWeight = o.weight || 800;
+  el.style.top = (o.y || 300) + 'px'; el.style.fontSize = (o.size || 84) * (el._fit || 1) + 'px'; el.style.color = o.col || INK; el.style.fontWeight = o.weight || 800;
   const st = o.stagger ?? .06, dur = o.dur || .35, out = o.out ?? .2;
   el._w.forEach((w, i) => {
     const k = eo(P(t, a + i * st, a + i * st + dur)); const q = out ? eio(P(t, b - out, b)) : 0;
@@ -105,7 +126,8 @@ function text(key, str, t, a, b, o = {}) {
 const BIG = {};
 function big(key, word, size) {
   if (BIG[key]) return BIG[key];
-  const el = document.createElement('div'); el.className = 'big'; el.style.fontSize = size + 'px'; $('kin').appendChild(el);
+  const ru = LANG === 'ru' && RUBIG[word]; if (ru) [word, size] = ru;
+  const el = document.createElement('div'); el.className = 'big'; el.style.fontSize = size + 'px'; if (ru) el.style.fontFamily = 'Manrope'; $('kin').appendChild(el);
   const m = document.createElement('span'); m.style.position = 'static'; m.style.visibility = 'hidden'; el.appendChild(m);
   const L = []; let x = 0;
   for (const c of word) { m.textContent = c; const w = m.getBoundingClientRect().width; const s = document.createElement('span'); s.textContent = c; el.appendChild(s); L.push({ s, x, w }); x += w; }
@@ -120,7 +142,7 @@ const IMG = {};
 for (const n of SHOT) { const im = new Image(); im.src = `${SHOTS}/${n}.png`; im.style.opacity = 0; $('screen').appendChild(im); IMG[n] = im; }
 const PILL = {};
 function pill(s, t, a, b, x, y) {
-  let el = PILL[s]; if (!el) { el = document.createElement('div'); el.className = 'pill'; el.textContent = s; $('hl').appendChild(el); PILL[s] = el; }
+  let el = PILL[s]; if (!el) { el = document.createElement('div'); el.className = 'pill'; el.textContent = tr(s); $('hl').appendChild(el); PILL[s] = el; }
   const on = t >= a && t <= b; el.style.display = on ? 'block' : 'none'; if (!on) return;
   const k = back(P(t, a, a + .4)), q = eio(P(t, b - .2, b));
   el.style.transform = `translate(${x}px,${y + (1 - k) * 50}px) scale(${lerp(.5, 1, k)})`; el.style.opacity = cl(k * 2) * (1 - q);
