@@ -64,6 +64,8 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_TEZCHECK_TOKEN`, `_CASH_DESK_CODE`, `_WEBHOOK_SECRET` (16+), `_API_URL`, `_RETURN_URL` | TezCheck aggregator. **Not used in the beta** (the doctor shows "disabled (beta)") | no | `<token>` … | tezcheck.uz cabinet (owner) |
 | `YONDO_TEZCHECK_ACCEPT_TEST_PAYMENTS` | Accept TezCheck test payments; refused in production | no | `false` | — |
 | `YONDO_CLICK_TEST_ENABLED`, `_SERVICE_ID`, `_SECRET` | Offline CLICK emulator, local only | no | `false` | — |
+| `YONDO_ASSISTANT_KB_ROOT` | Folder of the assistant knowledge base (`knowledge/`); empty = the repository folder | no (yes where there is no checkout) | `/app/knowledge` | — |
+| `YONDO_ASSISTANT_MIN_SCORE` | Minimum match score (0..1) for an assistant answer; below it = "not found" | no | `0.55` | Default |
 | `YONDO_FCM_PROJECT_ID` | Reserved for push; not used by the code yet | no | — | — |
 | `YONDO_LOG_LEVEL`, `YONDO_DEBUG` | Logging | no | `INFO`, `false` | Defaults |
 | `YONDO_COMPANION_*`, `YONDO_IDENTITY_*` | Technical limits (photo size/count, ID submissions, retention days) | no | defaults | Defaults; retention days is a proposal, not an owner decision |

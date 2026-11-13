@@ -27,12 +27,26 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S60 — PR #29 CI fix: assistant GIN indexes declared in the model (2026-11-13) [cloud chat, backend worker]
+Done: `ix_assistant_sections_trgm` (gin, gin_trgm_ops) and `ix_assistant_sections_fts` (gin on `to_tsvector('simple', search_text)`) declared in `AssistantSection.__table_args__` with `.ddl_if(dialect='postgresql')` (same pattern as the booking exclusion constraints); SQLite create_all unaffected. No behaviour, threshold or scorer change. Merged origin/main (WORKLOG conflict: both S59 entries kept).
+Not done: nothing.
+Next: CEO review of PR #29; phase D.
+Blockers: none.
+Evidence: fresh PG 16: `alembic upgrade head` + `alembic check` = "No new upgrade operations detected" (dropping the two indexes makes check fail, so they are really compared); pytest SQLite 468 passed + 10 skipped, PostgreSQL 16 478 passed; ruff PASS; `export_openapi.py --check` PASS.
+Commit: see PR #29 (feat/ai-retrieval).
 ## S59 — Russian cuts of reels 1–3 + universal caption (2026-11-12) [cloud chat, VIDEOCHI]
 Done: RU on-screen copy for the three reels (`RU` table per template, `?lang=ru` / `REEL_LANG=ru`, auto-fit for long lines, Cyrillic font for reel 2's big words); RU app captures via the app's own RU locale (`capture_list.mjs` got an `APP_LANG=ru` mode); `marketing/social/caption.md` (one caption + hashtags, UZ and RU). Three RU mp4s rendered and sent to the owner (not committed).
 Not done: Higgsfield ad (owner asked for it; the connector is not attached to the session, see Blockers); owner's request to use six real people's photos as profile pictures was declined (no consent, two are minors): illustrated portraits stay.
 Blockers: BLOCKED (Higgsfield) until the owner adds the connector at claude.ai/customize/connectors.
 Next: Higgsfield ad when connected; then the CEO's app-opening animation brief.
 Evidence: RU stills checked (all lines fit, app fully in Russian, no Verified badge, no DEMO); same audio mixes as the UZ cuts (−13.8/−13.9 LUFS).
+## S59 — AI assistant Phase C: indexer + retrieval-only answers (2026-11-11) [cloud chat, backend worker]
+Done: 9 Help FAQ knowledge docs `approved` (CEO, owner-delegated). Migration 0020 `assistant_sections` (one row per approved doc and language, content hash; PG: pg_trgm + trigram/FTS indexes). `python -m yondo_api.assistant.index` (approved only, rewrites changed rows, removes unapproved, refuses on validator errors; root `YONDO_ASSISTANT_KB_ROOT`). `assistant/retrieval.py::answer(question, language, mode)` returns the best section verbatim with its source, else not found below `YONDO_ASSISTANT_MIN_SCORE` = 0.55 (correct matches ≥ 0.59, unrelated/injection ≤ 0.12, closest wrong top 0.50). PG narrows candidates with FTS + pg_trgm; the final score is a shared Python scorer, so SQLite and PG answer identically. Public mode = public + shared only. No endpoint, no question storage, no UI.
+Not done: HTTP endpoint, cache, storage, UI (phases D/F/H). Verifier quality notes for phase G: "Bron qanday qilinadi?" → faq.cancel (wrong); "Buyurtmani qanday bekor qilaman?" (0.33) and "is my data safe" (0.50) not found. The Docker image does not copy `knowledge/` yet (set `YONDO_ASSISTANT_KB_ROOT` when it does).
+Next: phase D (modes + endpoint), phase G eval set.
+Blockers: none.
+Evidence: pytest SQLite 468 passed + 10 skipped, PostgreSQL 16 478 passed + 0 skipped (new tests 37); design-prototype backend 50; ruff PASS; `export_openapi.py --check` PASS; single alembic head 0020. Verifier APPROVE.
+Commit: see PR (feat/ai-retrieval).
 ## S58 — Help FAQ payment answer: commission from the companion side (2026-11-11) [cloud chat, worker]
 Done: `help.faq.pay.a` in `apps/web/src/i18n/{uz,ru,en}.ts` and `knowledge/public/faq/pay.md` (version 2, still `review`): the customer pays only the service price, the Yondo commission comes out of the companion share, an admin reviews refunds by hand. No sentence about real money (it would turn false once manual card payments are enabled). No percentage shown (not decided for customer display).
 Not done: nothing; the server rule is PR #27, already on main.

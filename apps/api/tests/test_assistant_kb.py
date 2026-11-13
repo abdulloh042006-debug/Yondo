@@ -136,14 +136,14 @@ def i18n_faq(lang: str) -> dict[str, dict[str, str]]:
     return found
 
 
-def test_seed_faq_is_verbatim_from_the_web_app_and_not_yet_approved():
+def test_seed_faq_is_verbatim_from_the_web_app_and_approved():
     docs = {doc.id: doc for doc in kb.load(kb.DEFAULT_ROOT)[0]}
     strings = {lang: i18n_faq(lang) for lang in kb.LANGUAGES}
     assert set(strings['uz']) == set(FAQ_KEYS)
     for key in FAQ_KEYS:
         doc = docs[f'faq.{key}']
         assert doc.audience == 'public' and doc.category == 'faq'
-        assert doc.status == 'review'  # the CEO approves later (decision Q5)
+        assert doc.status == 'approved'  # CEO approval (decision Q5), after the verifier review
         for lang in kb.LANGUAGES:
             entry = strings[lang][key]
             assert doc.sections[lang] == f'### {entry["q"]}\n\n{entry["a"]}', (key, lang)

@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     manual_payment_cards: tuple[ManualPaymentCard, ...] = ()
     # https origin of the web app; the manual payment page is <public_web_url>/pay/<reference>.
     public_web_url: str = ''
+    # AI assistant (retrieval only, no external AI). Empty = the repository's knowledge/ folder;
+    # set it where the code runs without a repository checkout (e.g. the Docker image).
+    assistant_kb_root: str = ''
+    # Minimum match score (0..1) for returning a document; below it the answer is "not found".
+    assistant_min_score: float = Field(default=0.55, ge=0, le=1)
 
     # Technical resource limits, configurable independently of business policy.
     companion_max_photos: int = Field(default=20, gt=0, le=1000)
