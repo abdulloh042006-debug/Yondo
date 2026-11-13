@@ -1,0 +1,60 @@
+# Builds an installable Android APK of apps/mobile, so the app can be tried on a phone without a laptop,
+# Expo Go or an Expo account. Download it from the run's "Artifacts" section (yondo-android-apk).
+# The API/web URLs below are public addresses (no secrets); the APK points at the public demo.
+name: Mobile APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'apps/web/src/**'
+      - '.github/workflows/mobile-apk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'apps/web/src/**'
+      - '.github/workflows/mobile-apk.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-apk:
+    name: Android APK (preview)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      EXPO_PUBLIC_API_URL: https://yondo-demo.onrender.com
+      EXPO_PUBLIC_WEB_URL: https://yondo-demo.onrender.com
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: 'Build the release APK (debug-key signed, for testing only, not for the Play Store)'
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yondo-android-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          retention-days: 14
