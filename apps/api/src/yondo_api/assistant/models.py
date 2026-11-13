@@ -2,7 +2,7 @@
 
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from yondo_api.db.base import Base, TimestampMixin
@@ -16,6 +16,18 @@ class AssistantSection(TimestampMixin, Base):
             "audience IN ('public', 'internal', 'shared')", name='ck_assistant_sections_audience'
         ),
         Index('ix_assistant_sections_language_audience', 'language', 'audience'),
+        # PostgreSQL-only search indexes, created by migration 0020 (pg_trgm + full text).
+        Index(
+            'ix_assistant_sections_trgm',
+            'search_text',
+            postgresql_using='gin',
+            postgresql_ops={'search_text': 'gin_trgm_ops'},
+        ).ddl_if(dialect='postgresql'),
+        Index(
+            'ix_assistant_sections_fts',
+            func.to_tsvector(text("'simple'"), text('search_text')),
+            postgresql_using='gin',
+        ).ddl_if(dialect='postgresql'),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

@@ -27,6 +27,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S60 — PR #29 CI fix: assistant GIN indexes declared in the model (2026-11-13) [cloud chat, backend worker]
+Done: `ix_assistant_sections_trgm` (gin, gin_trgm_ops) and `ix_assistant_sections_fts` (gin on `to_tsvector('simple', search_text)`) declared in `AssistantSection.__table_args__` with `.ddl_if(dialect='postgresql')` (same pattern as the booking exclusion constraints); SQLite create_all unaffected. No behaviour, threshold or scorer change. Merged origin/main (WORKLOG conflict: both S59 entries kept).
+Not done: nothing.
+Next: CEO review of PR #29; phase D.
+Blockers: none.
+Evidence: fresh PG 16: `alembic upgrade head` + `alembic check` = "No new upgrade operations detected" (dropping the two indexes makes check fail, so they are really compared); pytest SQLite 468 passed + 10 skipped, PostgreSQL 16 478 passed; ruff PASS; `export_openapi.py --check` PASS.
+Commit: see PR #29 (feat/ai-retrieval).
 ## S59 — Russian cuts of reels 1–3 + universal caption (2026-11-12) [cloud chat, VIDEOCHI]
 Done: RU on-screen copy for the three reels (`RU` table per template, `?lang=ru` / `REEL_LANG=ru`, auto-fit for long lines, Cyrillic font for reel 2's big words); RU app captures via the app's own RU locale (`capture_list.mjs` got an `APP_LANG=ru` mode); `marketing/social/caption.md` (one caption + hashtags, UZ and RU). Three RU mp4s rendered and sent to the owner (not committed).
 Not done: Higgsfield ad (owner asked for it; the connector is not attached to the session, see Blockers); owner's request to use six real people's photos as profile pictures was declined (no consent, two are minors): illustrated portraits stay.
