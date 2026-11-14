@@ -77,7 +77,10 @@ describe('Login: Telegram bot', () => {
     expect(screen.getByText(t('login.bot.steps'))).toBeInTheDocument();
     expect(screen.getByText(t('login.bot.waiting'))).toBeInTheDocument();
     await tick();
-    expect(get).toHaveBeenCalledWith('/auth/telegram/link/status', { anonymous: true, headers: { 'X-Yondo-Link-Poll': 'poll-1' } });
+    expect(get).toHaveBeenCalledWith(
+      '/auth/telegram/link/status',
+      expect.objectContaining({ anonymous: true, headers: { 'X-Yondo-Link-Poll': 'poll-1' } }),
+    );
     await tick();
     expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
     expect(screen.getByText(t('login.bot.codeHint'))).toBeInTheDocument();
@@ -135,6 +138,49 @@ describe('Login: Telegram bot', () => {
     });
     expect(post).toHaveBeenCalledTimes(2);
     expect(screen.getByText(t('login.bot.waiting'))).toBeInTheDocument();
+  });
+
+  it('a status request that hangs is dropped and polling goes on (phone browser paused the page)', async () => {
+    let first = true;
+    get.mockImplementation(async (path: string, opts?: { signal?: AbortSignal }) => {
+      if (path === '/auth/telegram/link/config') return { enabled: true, bot_username: 'YondoTestBot' };
+      if (path !== '/auth/telegram/link/status') throw new Error(`unexpected GET ${path}`);
+      if (first) {
+        first = false;
+        return new Promise((_, reject) => opts?.signal?.addEventListener('abort', () => reject(new DOMException('x', 'AbortError'))));
+      }
+      return { status: 'otp_sent', expires_in_seconds: 500 };
+    });
+    mount();
+    await continueWithTelegram();
+    await tick(); // first poll starts and hangs
+    expect(screen.getByText(t('login.bot.waiting'))).toBeInTheDocument();
+    await tick(8000); // dropped after the timeout
+    await tick(); // the next poll answers
+    expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
+  });
+
+  it('coming back to the page checks the status at once', async () => {
+    routeGet(true);
+    statuses = [{ status: 'otp_sent' }];
+    mount();
+    await continueWithTelegram();
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+    });
+    await tick(10);
+    expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
+  });
+
+  it('"I have the code" opens the code field without waiting for the status', async () => {
+    routeGet(true);
+    mount();
+    await continueWithTelegram();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: t('login.bot.haveCode') }));
+    });
+    expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
+    expect(screen.getByText(t('login.bot.codeHint'))).toBeInTheDocument();
   });
 
   it('an expired link is recoverable', async () => {

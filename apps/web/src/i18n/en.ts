@@ -246,6 +246,7 @@ export const en: Record<Key, string> = {
   'login.bot.open': 'Open the Telegram bot',
   'login.bot.steps': 'In the bot, tap “Start”, then the button that shares your phone number. The code arrives in that bot.',
   'login.bot.waiting': 'Waiting for confirmation from Telegram…',
+  'login.bot.haveCode': 'I have the code',
   'login.bot.expired': 'The link has expired.',
   'login.bot.newLink': 'Get a new link',
   'login.bot.codeHint': 'The code is in your chat with the Yondo bot. Enter the 6 digits.',
