@@ -34,6 +34,26 @@ the `motion` library (spring dialogs, shared-layout nav/filter pills, scroll rev
 cursor spotlight, pointer parallax) and honours `prefers-reduced-motion` globally
 (`<MotionConfig reducedMotion="user">` + a CSS fallback).
 
+**Opening animation** (owner rule: the user must not feel they are waiting, and the app must not make them wait on
+purpose). It is part of `index.html` (markup, CSS, two small inline scripts), so it is on screen from the first paint,
+while the app's code and first data load; `src/ui/Intro.tsx` then drives it and lets it leave as soon as the first
+screen is ready (`introReady()`: the home page calls it when its first list request settles; pictures and secondary
+data are not waited for).
+- Mode, chosen by `index.html` before the first paint (`<html data-intro>`): only at `/`; first visit = the full piece
+  (the symbol grows from its nodes, the wordmark slides out, the slogan; about 2.5 s, then a slow pulse for as long as
+  the app is still loading); later visits = the finished mark with the pulse; `prefers-reduced-motion` = one still
+  frame, once; deep links = nothing.
+- Leaving: the mark flies onto the header logo. Ready early = at once (a first visit waits only for the mark to form,
+  0.7 s); not ready after 6 s = it leaves anyway and the page shows its own loading state; a tap or Escape = it leaves.
+  There is no skip button.
+- No connection: once the app runs, the page shows its own "no connection" message with retry. If the app's code never
+  arrives, `index.html` shows that message and a retry button itself (script error, `offline`, or 12 s without the
+  app); its two texts are written in from the dictionaries by `vite.config.ts` (`src/i18n/introText.ts`).
+- State: `src/lib/firstRun.ts` (`localStorage['yondo.intro.v1']`, a flag only; bump the version there **and in
+  `index.html`** to show the full piece again; a unit test keeps the two in step). `localStorage['yondo.intro.off'] = '1'`
+  switches it off (the e2e harness sets it for every context except the opening-animation steps).
+- The inline scripts would need a hash or nonce if a Content-Security-Policy is added later (there is none today).
+
 ## Languages (uz / ru / en)
 
 The UI is Uzbek (Latin) by default and also available in Russian and English. Choose it in **Settings**

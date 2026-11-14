@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { acceptLegal } from '../legal/consent';
 import { useResource } from '../lib/useResource';
+import { introReady } from './Intro';
 
 /** Explicit, unticked-by-default consent box with links to both documents. */
 export function ConsentCheck({ checked, onChange, error }: { checked: boolean; onChange: (v: boolean) => void; error?: string }) {
@@ -39,7 +40,12 @@ export function ConsentGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>();
   const required = res.data?.required ?? [];
-  if (!user || required.length === 0 || ['/terms', '/privacy'].includes(location.pathname)) return <>{children}</>;
+  const open = !user || required.length === 0 || ['/terms', '/privacy'].includes(location.pathname);
+  // The gate replaces the page, so the page will not report itself ready: the opening animation must not wait for it.
+  useEffect(() => {
+    if (!open) introReady();
+  }, [open]);
+  if (open) return <>{children}</>;
 
   const accept = async () => {
     setTouched(true);
