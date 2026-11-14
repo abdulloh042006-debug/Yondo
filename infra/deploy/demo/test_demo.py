@@ -170,3 +170,27 @@ async def test_demo_shows_the_code_on_screen_even_if_a_telegram_token_is_set(tmp
         await _tables(app)
         async with AsyncClient(transport=ASGITransport(app=app), base_url='http://s') as client:
             await demo_app.login(client, '+998909990005')  # logs in through `development_otp`
+
+
+@loop
+async def test_demo_with_the_telegram_bot_keeps_demo_accounts_and_sends_real_numbers_to_the_bot(tmp_path, monkeypatch):
+    monkeypatch.setenv('YONDO_OTP_PROVIDER', 'telegram_bot')
+    monkeypatch.setenv('YONDO_TELEGRAM_BOT_TOKEN', '123:not-a-real-token')
+    monkeypatch.setenv('YONDO_TELEGRAM_BOT_USERNAME', 'YondoTestBot')
+    app = demo_app.build_app(f'sqlite+aiosqlite:///{tmp_path / "bot.db"}', 0, None)
+    async with app.router.lifespan_context(app):
+        assert isinstance(app.state.otp_provider, demo_app.DemoOtpProvider)
+        await _tables(app)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url='http://s') as client:
+            config = (await client.get('/api/v1/auth/telegram/link/config')).json()
+            assert config == {'enabled': True, 'bot_username': 'YondoTestBot'}
+            # The harness signs any number in by itself (seed, the owner's admin number on every start).
+            await demo_app.login(client, '+998935550001')
+            # A visitor with a seeded DEMO number still gets the on-screen code.
+            demo = await client.post('/api/v1/auth/otp/request', json={'phone_number': demo_app.CUSTOMER})
+            assert demo.status_code == 202 and demo.json()['development_otp']
+            # A visitor with a real number is sent to the bot: no code on screen, nothing sent to Telegram yet.
+            real = await client.post('/api/v1/auth/otp/request', json={'phone_number': '+998935550002'})
+            assert real.status_code >= 400 and real.json()['code'] == 'telegram_link_required'
+            start = await client.post('/api/v1/auth/telegram/link/start', json={'phone_number': '+998935550002'})
+            assert start.status_code == 201 and 't.me/YondoTestBot?start=' in start.json()['deep_link']

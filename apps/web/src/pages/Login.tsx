@@ -142,8 +142,10 @@ export function Login() {
     setBusy(true);
     setError(undefined);
     try {
-      // Bot login: a phone without a verified chat links first; a linked phone just gets a code.
-      if (botEnabled && step.kind === 'phone' && (await startLink(number))) return;
+      // Bot login: ask for the code first. A linked phone gets it in Telegram; a phone without a
+      // verified chat answers telegram_link_required and starts the link (catch below). Asking first
+      // creates no link challenge for linked phones and lets the demo's sample numbers keep their
+      // on-screen code.
       const res = await requestCode(number);
       const prev = step.kind === 'code' ? step : null;
       setStep({

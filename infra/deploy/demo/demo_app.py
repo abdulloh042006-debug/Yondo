@@ -6,7 +6,10 @@ Used three ways: the e2e suite (`apps/web/e2e/server.py` is a thin entry point),
 TEST DOUBLES (never used outside the demo, and only because no external service exists yet):
   * object storage  -> in-memory (photos cannot be uploaded to MinIO in this environment)
   * identity check  -> always "verified" (the real provider is not integrated yet)
-  * OTP delivery    -> the development provider, which returns the code in the response
+  * OTP delivery    -> the development provider, which returns the code in the response. With
+                       YONDO_OTP_PROVIDER=telegram_bot (+ token and username) real numbers get their code through
+                       the Telegram bot instead; the seeded DEMO numbers and the harness's own logins keep the
+                       on-screen code (DemoOtpProvider below)
   * payment         -> optional DEMO provider (demo_payment.py), no money moves
 
 Everything else (authz, state machines, audit trail, discovery rules) is the production code.
@@ -26,6 +29,7 @@ Optional environment (see infra/deploy/README.md):
 """
 
 import asyncio
+import contextvars
 import os
 import secrets
 import sys
@@ -43,7 +47,8 @@ from demo_persist import (
 )
 from yondo_api.api.errors import ApplicationError
 from yondo_api.auth.phone import normalize_uzbekistan_phone
-from yondo_api.auth.providers import DevelopmentOtpProvider
+from yondo_api.auth.providers import DevelopmentOtpProvider, OtpDelivery
+from yondo_api.auth.telegram_bot import TelegramBotOtpProvider
 from yondo_api.companions.integrations import IdentityStatus
 from yondo_api.config import Settings
 from yondo_api.db.base import Base
@@ -81,6 +86,34 @@ JASUR = '+998901110012'
 SEVARA = '+998901110013'
 PENDING_USER = '+998901110004'
 OTHER_ADMIN_TARGET = '+998901110005'
+# The fake DEMO accounts: they have no Telegram, so they always keep the on-screen code.
+DEMO_PHONES = frozenset({WELL_KNOWN_ADMIN, CUSTOMER, MADINA, JASUR, SEVARA, PENDING_USER, OTHER_ADMIN_TARGET})
+# Set while the harness signs a user in by itself (seed, admin refresh, maintenance): those logins read the code
+# from the response, whatever the number.
+_HARNESS_LOGIN = contextvars.ContextVar('demo_harness_login', default=False)
+
+
+class DemoOtpProvider(TelegramBotOtpProvider):
+    """Demo only, with YONDO_OTP_PROVIDER=telegram_bot: real numbers get the code from the Telegram bot.
+
+    The seeded DEMO numbers and the harness's own logins keep the on-screen code, so the demo still seeds and the
+    sample accounts stay usable. It is a TelegramBotOtpProvider, so the /auth/telegram/link/* endpoints work.
+    """
+
+    async def deliver(self, phone_number: str, code: str) -> OtpDelivery:
+        if _HARNESS_LOGIN.get() or phone_number in DEMO_PHONES:
+            return OtpDelivery(development_code=code)
+        return await super().deliver(phone_number, code)
+
+
+def demo_otp_provider(settings: Settings):
+    if settings.otp_provider == 'telegram_bot':
+        return DemoOtpProvider(
+            settings.telegram_bot_token.get_secret_value(),
+            base_url=settings.telegram_bot_base_url,
+            timeout_seconds=settings.telegram_bot_timeout_seconds,
+        )
+    return DevelopmentOtpProvider()
 
 
 class MemoryStorage:
@@ -104,11 +137,15 @@ class AlwaysVerified:
 
 
 async def login(client, phone):
-    issued = await client.post('/api/v1/auth/otp/request', json={'phone_number': phone})
-    verified = await client.post(
-        '/api/v1/auth/otp/verify',
-        json={'phone_number': phone, 'code': issued.json()['development_otp']},
-    )
+    token = _HARNESS_LOGIN.set(True)
+    try:
+        issued = await client.post('/api/v1/auth/otp/request', json={'phone_number': phone})
+        verified = await client.post(
+            '/api/v1/auth/otp/verify',
+            json={'phone_number': phone, 'code': issued.json()['development_otp']},
+        )
+    finally:
+        _HARNESS_LOGIN.reset(token)
     headers = {'Authorization': f'Bearer {verified.json()["access_token"]}'}
     me = (await client.get('/api/v1/auth/me', headers=headers)).json()
     return headers, me['id']
@@ -234,11 +271,12 @@ class SpaFiles(StaticFiles):
 def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None):
     settings = Settings(environment='test', database_url=db_url,
                         **({'platform_fee_bps': 0} if demo_pay else {}))  # labelled DEMO fee, the real policy is the owner's
-    # The demo always shows the code on screen and seeds users through it, so pin the OTP provider:
-    # without this a stray YONDO_TELEGRAM_GATEWAY_TOKEN would make the app send real Telegram codes
-    # to the fake seeded phone numbers and drop `development_otp` from the responses.
+    # The demo seeds users through the on-screen code, so pin the OTP provider: without this a stray
+    # YONDO_TELEGRAM_GATEWAY_TOKEN would make the app send real (paid) Telegram codes to the fake seeded numbers and
+    # drop `development_otp` from the responses. Only an explicit YONDO_OTP_PROVIDER=telegram_bot turns on the free
+    # bot, and then only for real numbers (DemoOtpProvider).
     app = create_application(settings, object_storage=MemoryStorage(port), identity_eligibility=AlwaysVerified(),
-                             payment_provider=demo_pay, otp_provider=DevelopmentOtpProvider())
+                             payment_provider=demo_pay, otp_provider=demo_otp_provider(settings))
     if demo_pay:
         install_demo_payment_routes(app, demo_pay)
     if WEB_DIST:
