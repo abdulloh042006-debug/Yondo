@@ -4,10 +4,10 @@ title = "Can others see my phone number?"
 audience = "public"
 languages = ["uz", "ru", "en"]
 category = "faq"
-status = "review"
+status = "approved"
 version = 1
 source = "apps/web/src/i18n/{uz,ru,en}.ts: help.faq.privacy.q / help.faq.privacy.a"
-updated_at = 2026-11-10
+updated_at = 2026-11-11
 +++
 
 ## uz
