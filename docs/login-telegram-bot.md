@@ -41,7 +41,9 @@ Rules the code enforces:
 - Account deletion removes the phone's Telegram link and challenges.
 - `GET /auth/telegram/link/config` tells the web app whether to show the Telegram button.
 
-`/auth/telegram/link/start` returns `already_linked` so the client can go straight to "send code".
+The web login first calls `POST /auth/otp/request`. A linked phone gets its code in Telegram; an
+unlinked one answers `telegram_link_required` and the page then calls `/auth/telegram/link/start`.
+`/auth/telegram/link/start` also returns `already_linked`, so other clients can go straight to "send code".
 That tells a caller whether a number has linked Telegram (accepted trade-off, rate-limited).
 
 ## 2. Contract for the bot service: `POST /api/v1/auth/telegram/link/complete`
@@ -101,7 +103,10 @@ Note: the on-screen code exists only with `YONDO_OTP_PROVIDER=auto` (the default
 development/test environment, as the public demo runs today; nothing about it changed. Setting
 `YONDO_OTP_PROVIDER=telegram_bot` on the demo host switches **real numbers** to the bot, while the
 seeded DEMO numbers and the demo harness's own logins keep the on-screen code (`DemoOtpProvider` in
-`infra/deploy/demo/demo_app.py`), so the demo still seeds and its sample accounts stay usable.
+`infra/deploy/demo/demo_app.py`), so the demo still seeds and its sample accounts stay usable. The web login asks
+for the code first and opens the bot link only when the server answers `telegram_link_required`. On the
+demo with the bot on, the owner links his own number once through the bot before he can sign in as admin,
+and the VPS bot needs the same `YONDO_BOT_SHARED_SECRET` (otherwise `/link/complete` answers 503).
 
 ## 3a. VPS bot `.env` (the owner's aiogram service, not in this repo)
 
