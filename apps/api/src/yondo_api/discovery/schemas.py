@@ -39,6 +39,11 @@ class CompanionCard(BaseModel):
     verified: bool = True
     rating: float | None = None
     review_count: int = 0
+    # Completed bookings of this profile (a count only, no personal data).
+    meeting_count: int = 0
+    # Public like count; liked_by_me is null for anonymous callers.
+    like_count: int = 0
+    liked_by_me: bool | None = None
     services: list[DiscoveryService]
     photos: list[DiscoveryPhoto]
 
@@ -61,3 +66,9 @@ class DiscoveryPage(BaseModel):
     limit: int
     offset: int = Field(ge=0)
     has_more: bool
+
+
+class LikeState(BaseModel):
+    profile_id: UUID
+    like_count: int
+    liked_by_me: bool
