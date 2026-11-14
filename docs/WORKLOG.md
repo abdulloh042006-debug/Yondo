@@ -27,6 +27,14 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S61 — Photos for every user, public likes, discovery sort, card fields (2026-11-14) [cloud chat, backend worker]
+Done: owner decisions A–E (`docs/product-decisions.md` §8, CLAUDE.md §7). New `user_photos` table + `/user-photos` routes (me CRUD/order/download; `/bookings/{booking_id}` list + download for the booking's companion or customer; admin list/download/remove, audited). Max 6 visible photos per user, companions included. `companion_likes` + `PUT/DELETE /discovery/companions/{id}/like` (idempotent, own profile 409). Cards: `like_count`, `meeting_count`, `liked_by_me` (null when anonymous). `sort=default|rating|meetings|likes` (ties by profile id), `rating_min` now a float. Stars come only from reviews of completed bookings of that profile about its owner. Account erasure removes user photos and likes. Migration 0021 (additive).
+Not done: web/mobile UI (card feed, likes, customer photos) is for the frontend worker. Verifier notes, non-blocking: a suspended customer's photos stay visible to the companion of the booking; likes do not check blocks; deleted photos count toward the retained cap (20).
+Next: frontend worker builds the card feed and the photo/like UI from the regenerated `apps/web/src/api/schema.d.ts`.
+Blockers: none.
+Evidence: pytest SQLite 475 passed + 10 skipped; PG 16 485 passed; ruff PASS; `export_openapi --check` PASS; fresh PG16 `alembic upgrade head` + `alembic check` "No new upgrade operations detected", downgrade/upgrade of 0021 OK; web typecheck PASS; verifier APPROVE (ba563e4).
+Commit: branch `feat/photos-likes-filters`, PR to `main`.
+
 ## S60 — PR #29 CI fix: assistant GIN indexes declared in the model (2026-11-13) [cloud chat, backend worker]
 Done: `ix_assistant_sections_trgm` (gin, gin_trgm_ops) and `ix_assistant_sections_fts` (gin on `to_tsvector('simple', search_text)`) declared in `AssistantSection.__table_args__` with `.ddl_if(dialect='postgresql')` (same pattern as the booking exclusion constraints); SQLite create_all unaffected. No behaviour, threshold or scorer change. Merged origin/main (WORKLOG conflict: both S59 entries kept).
 Not done: nothing.
