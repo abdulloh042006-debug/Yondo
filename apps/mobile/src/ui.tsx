@@ -139,8 +139,13 @@ export function Field({ label, error, hint, ...input }: TextInputProps & { label
         aria-label={label}
         aria-invalid={!!error}
         placeholderTextColor={palette.muted}
-        style={[styles.input, { color: palette.fg, backgroundColor: palette.glass, borderColor: error ? palette.accent : palette.glassLine }]}
         {...input}
+        style={[
+          styles.input,
+          { color: palette.fg, backgroundColor: palette.glass, borderColor: error ? palette.accent : palette.glassLine },
+          // Multi-line fields (support message) grow from the top, as a textarea on the web.
+          input.multiline && { minHeight: 96, textAlignVertical: 'top', paddingTop: 10 },
+        ]}
       />
       {hint && !error && <Text style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.body }}>{hint}</Text>}
       {error && <ErrorText text={error} />}
