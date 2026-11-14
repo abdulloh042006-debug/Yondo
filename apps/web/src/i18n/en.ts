@@ -855,6 +855,7 @@ export const en: Record<Key, string> = {
   'mobile.enableCustomer': 'Turn on the customer role',
   'mobile.themeSystem': 'Same as the device',
   'mobile.webMissing': 'The web app address is not configured (EXPO_PUBLIC_WEB_URL).',
+  'intro.slogan': 'always by your side',
   'mobile.loginForBookings': 'Sign in to see your bookings.',
   'mobile.documents': 'Documents',
   'mobile.opensInWeb': 'Opens in the web app',

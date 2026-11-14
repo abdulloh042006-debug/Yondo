@@ -854,6 +854,7 @@ export const uz = {
   'mobile.enableCustomer': 'Mijoz rolini yoqiş',
   'mobile.themeSystem': 'Qurilma böyiça',
   'mobile.webMissing': 'Veb-ilova manzili sozlanmagan (EXPO_PUBLIC_WEB_URL).',
+  'intro.slogan': 'doim yoningda',
   'mobile.loginForBookings': 'Bronlaringizni köriş uçun hisobingizga kiring.',
   'mobile.documents': 'Hujjatlar',
   'mobile.opensInWeb': 'Veb-ilovada oçiladi',
