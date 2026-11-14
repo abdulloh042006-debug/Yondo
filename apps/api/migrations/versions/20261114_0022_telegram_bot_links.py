@@ -4,7 +4,7 @@ Additive: two new tables. Only SHA-256 hashes of the deep-link token and of the 
 token are stored.
 
 Revision ID: 20261114_0022
-Revises: 20261111_0020
+Revises: 20261114_0021
 Create Date: 2026-11-14 18:00:00
 """
 
@@ -14,8 +14,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = '20261114_0022'
-# NOTE: re-chain onto 20261114_0021 if PR #34 (user photos and likes) merges first.
-down_revision: str | None = '20261111_0020'
+down_revision: str | None = '20261114_0021'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

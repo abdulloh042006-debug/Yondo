@@ -57,6 +57,7 @@ from yondo_api.payments.tezcheck import TezCheckPaymentProvider
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
+from yondo_api.userphotos.router import router as user_photos_router
 from yondo_api.verification.router import admin_router as verification_admin_router
 from yondo_api.verification.router import router as verification_router
 from yondo_api.verification.service import DatabaseIdentityEligibility
@@ -160,6 +161,7 @@ def create_application(
         companion_router,
         companion_resources_router,
         companion_photos_router,
+        user_photos_router,
         companion_admin_router,
         discovery_router,
         bookings_router,

@@ -19,3 +19,16 @@ class CompanionFavorite(TimestampMixin, Base):
     profile_id: Mapped[UUID] = mapped_column(
         ForeignKey('companion_profiles.id', ondelete='CASCADE'), index=True
     )
+
+
+class CompanionLike(TimestampMixin, Base):
+    """Public like of a companion profile. Separate from (private) favourites."""
+
+    __tablename__ = 'companion_likes'
+    __table_args__ = (UniqueConstraint('user_id', 'profile_id', name='uq_companion_like'),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey('companion_profiles.id', ondelete='CASCADE'), index=True
+    )

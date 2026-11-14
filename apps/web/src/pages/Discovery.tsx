@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { t } from '../i18n';
 import { toMinor } from '../lib/format';
 import { SERVICE_LABELS } from '../lib/labels';
 import { Empty, ErrorState } from '../ui/feedback';
+import { introReady } from '../ui/Intro';
 import { useResource } from '../lib/useResource';
 import { Select } from '../ui/form';
 import { Item } from '../ui/motion';
@@ -133,6 +134,10 @@ function Results({ params, hasFilters, onClear }: { params: URLSearchParams; has
     limit: PAGE,
   };
   const first = useResource((signal) => api.get<Page>('/discovery/companions', { query: { ...base, offset: 0 }, anonymous: true, signal }), []);
+  // The opening animation leaves when the first list has arrived or failed; pictures are not waited for.
+  useEffect(() => {
+    if (!first.loading) introReady();
+  }, [first.loading]);
   const [extra, setExtra] = useState<Page['items']>([]);
   const [hasMore, setHasMore] = useState<boolean | null>(null);
   const [more, setMore] = useState(false);

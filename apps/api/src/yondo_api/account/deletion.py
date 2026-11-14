@@ -30,12 +30,13 @@ from yondo_api.companions.models import (
     CompanionProfile,
     CompanionService,
 )
-from yondo_api.discovery.models import CompanionFavorite
+from yondo_api.discovery.models import CompanionFavorite, CompanionLike
 from yondo_api.gifts.models import GiftCartItem
 from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
 from yondo_api.safety.models import TrustedContact, UserBlock
+from yondo_api.userphotos.models import UserPhoto
 from yondo_api.verification.service import erase_verification_images
 
 logger = logging.getLogger(__name__)
@@ -138,12 +139,24 @@ async def erase_account(
         await session.execute(
             delete(CompanionFavorite).where(CompanionFavorite.profile_id.in_(profile_ids))
         )
+        await session.execute(
+            delete(CompanionLike).where(CompanionLike.profile_id.in_(profile_ids))
+        )
+    for photo in await session.scalars(select(UserPhoto).where(UserPhoto.user_id == uid)):
+        if storage is not None:
+            try:
+                await storage.delete(photo.storage_key)
+            except Exception:  # keep the tombstone; storage GC can retry from it
+                logger.exception('Photo object could not be deleted: photo_id=%s', photo.id)
+        photo.deleted_at = photo.deleted_at or now
+        photo.position = None
     for application in await session.scalars(
         select(CompanionApplication).where(CompanionApplication.user_id == uid)
     ):
         application.statement = ''
     for model, column in (
         (CompanionFavorite, CompanionFavorite.customer_id),
+        (CompanionLike, CompanionLike.user_id),
         (TrustedContact, TrustedContact.owner_id),
         (UserBlock, UserBlock.blocker_id),
         (GiftCartItem, GiftCartItem.customer_id),

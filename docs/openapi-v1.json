@@ -1436,6 +1436,27 @@
             "title": "Languages",
             "type": "array"
           },
+          "like_count": {
+            "default": 0,
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "liked_by_me": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liked By Me"
+          },
+          "meeting_count": {
+            "default": 0,
+            "title": "Meeting Count",
+            "type": "integer"
+          },
           "photos": {
             "items": {
               "$ref": "#/components/schemas/DiscoveryPhoto"
@@ -2076,6 +2097,30 @@
           "privacy"
         ],
         "title": "LegalVersions",
+        "type": "object"
+      },
+      "LikeState": {
+        "properties": {
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "liked_by_me": {
+            "title": "Liked By Me",
+            "type": "boolean"
+          },
+          "profile_id": {
+            "format": "uuid",
+            "title": "Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_id",
+          "like_count",
+          "liked_by_me"
+        ],
+        "title": "LikeState",
         "type": "object"
       },
       "LinkComplete": {
@@ -3749,6 +3794,70 @@
           "expires_in"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "UserPhotoOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "photo_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Photo Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "photo_ids"
+        ],
+        "title": "UserPhotoOrder",
+        "type": "object"
+      },
+      "UserPhotoResponse": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "content_type",
+          "size_bytes",
+          "width",
+          "height",
+          "position",
+          "created_at"
+        ],
+        "title": "UserPhotoResponse",
         "type": "object"
       },
       "UserProfileUpdate": {
@@ -8427,7 +8536,7 @@
                 {
                   "maximum": 5,
                   "minimum": 1,
-                  "type": "integer"
+                  "type": "number"
                 },
                 {
                   "type": "null"
@@ -8556,6 +8665,24 @@
             }
           },
           {
+            "description": "Descending by rating, completed meetings or likes; ties by profile id.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "default",
+              "description": "Descending by rating, completed meetings or likes; ties by profile id.",
+              "enum": [
+                "default",
+                "rating",
+                "meetings",
+                "likes"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "limit",
             "required": false,
@@ -8601,6 +8728,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Search Companions",
         "tags": [
           "discovery"
@@ -8644,7 +8776,107 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Companion",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/api/v1/discovery/companions/{profile_id}/like": {
+      "delete": {
+        "operationId": "unlike_companion_api_v1_discovery_companions__profile_id__like_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlike Companion",
+        "tags": [
+          "discovery"
+        ]
+      },
+      "put": {
+        "description": "Like a visible companion profile. Idempotent; separate from private favourites.",
+        "operationId": "like_companion_api_v1_discovery_companions__profile_id__like_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Like Companion",
         "tags": [
           "discovery"
         ]
@@ -10927,6 +11159,496 @@
         "summary": "Create Support Request",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/api/v1/user-photos/admin/users/{user_id}": {
+      "get": {
+        "operationId": "admin_list_photos_api_v1_user_photos_admin_users__user_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserPhotoResponse"
+                  },
+                  "title": "Response Admin List Photos Api V1 User Photos Admin Users  User Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin List Photos",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/admin/users/{user_id}/{photo_id}": {
+      "delete": {
+        "description": "Moderation: hide an inappropriate photo (tombstoned, audited).",
+        "operationId": "admin_remove_photo_api_v1_user_photos_admin_users__user_id___photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Remove Photo",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/admin/users/{user_id}/{photo_id}/download": {
+      "get": {
+        "operationId": "admin_download_photo_api_v1_user_photos_admin_users__user_id___photo_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoDownload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Download Photo",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/bookings/{booking_id}": {
+      "get": {
+        "description": "The booking customer's photos, for the companion who received the request.",
+        "operationId": "list_booking_customer_photos_api_v1_user_photos_bookings__booking_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserPhotoResponse"
+                  },
+                  "title": "Response List Booking Customer Photos Api V1 User Photos Bookings  Booking Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Booking Customer Photos",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/bookings/{booking_id}/{photo_id}/download": {
+      "get": {
+        "operationId": "download_booking_customer_photo_api_v1_user_photos_bookings__booking_id___photo_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoDownload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Booking Customer Photo",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/me": {
+      "get": {
+        "operationId": "list_my_photos_api_v1_user_photos_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserPhotoResponse"
+                  },
+                  "title": "Response List My Photos Api V1 User Photos Me Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List My Photos",
+        "tags": [
+          "user photos"
+        ]
+      },
+      "post": {
+        "description": "Upload raw JPEG/PNG/WebP bytes (re-encoded to JPEG without EXIF). At most 6 photos.",
+        "operationId": "upload_my_photo_api_v1_user_photos_me_post",
+        "requestBody": {
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPhotoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload My Photo",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/me/order": {
+      "put": {
+        "operationId": "reorder_my_photos_api_v1_user_photos_me_order_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPhotoOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserPhotoResponse"
+                  },
+                  "title": "Response Reorder My Photos Api V1 User Photos Me Order Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reorder My Photos",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/me/{photo_id}": {
+      "delete": {
+        "operationId": "delete_my_photo_api_v1_user_photos_me__photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete My Photo",
+        "tags": [
+          "user photos"
+        ]
+      }
+    },
+    "/api/v1/user-photos/me/{photo_id}/download": {
+      "get": {
+        "operationId": "download_my_photo_api_v1_user_photos_me__photo_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoDownload"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download My Photo",
+        "tags": [
+          "user photos"
         ]
       }
     },
