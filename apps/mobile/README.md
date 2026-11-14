@@ -12,7 +12,15 @@ One app for every role: a customer books, a companion accepts the booking in the
 | Bookings | list and detail; a companion accepts or declines; cancel | |
 | Payment | "Go to payment" only for `accepted`, opens the provider's `checkout_url` | one `Idempotency-Key` per booking, kept on the device; 503 is shown as "unavailable", never as "declined"; no money logic in the app |
 | Safety | report and block **via `booking_id`** (the app never sees the other side's user id); SOS dialog | SOS offers 112 and trusted contacts through the phone's own dialer and SMS app, plus a moderator signal for an active meeting; it never claims help was sent |
-| Settings | language uz / ru / en, Uzbek alphabet 1995 / 2026, theme | the language follows the account (`users.ui_locale`) |
+| Favourites | heart on cards and profiles, the Sevimlilar tab | customers only; the same `GET/PUT/DELETE /discovery/favorites` endpoints as the web; every change waits for the server |
+| Profil hub | the web's `/account` menu in the same order: Bronlar, Bildirishnomalar, Sevimlilar, Hamroh studiyasi (companions), Yordam, Sozlamalar; personal data; "Men kimman" roles; sign out; account deletion, Terms, Privacy | rows whose screen exists only on the web say "Veb-ilovada ochiladi" and open that page in the browser |
+| Settings | language uz / ru / en, Uzbek alphabet 1995 / 2026, theme; opened from Profil (and from Kirish when signed out), never a tab | the language follows the account (`users.ui_locale`) |
+
+**Navigation = the web dock** (`apps/web/src/ui/Layout.tsx`): signed in **Kashf · Sevimlilar · Bronlar · Profil**, signed out **Kashf · Kirish**, the same icons, order and `nav.*` labels. A glass top bar holds the official Y symbol, SOS (signed in) and the UZ | RU | EN switch. Safe areas come from `react-native-safe-area-context` (Android 15 draws edge to edge).
+
+**Look = the web's Yondo themes**: Space Grotesk headings and Manrope text (SIL OFL, bundled from `@expo-google-fonts`, as the web loads them), glass cards (translucent fill + hairline border), pill buttons and chips, a soft carrot glow behind the page, gentle press/enter motion that turns off with the OS "reduce motion" setting.
+
+**Launcher icon**: `assets/adaptive-icon.png` (foreground) and `assets/adaptive-monochrome.png` keep the official symbol inside the Android safe zone (≈ 58 % of the canvas, centred) on paper; `assets/icon.png` is the legacy/iOS icon. Before/after: `docs/parity/launcher-icon-before-after.png`. Web ↔ mobile screenshots: `docs/parity/side-by-side-*.jpg` (`e2e/parity.mjs`); owner walkthrough video: `e2e/walkthrough.mjs`.
 
 **Brand.** Only paper `#F5F2EC`, ink `#111111` and carrot `#E8501A`, in the themes `yondo` (day) and `yondo-tun` (night), or following the phone's setting. Carrot never carries small text: it is used for borders, dots and fills with ink text. The icons are copied from `design-prototype/brand/logo/png`.
 
@@ -25,12 +33,11 @@ One app for every role: a customer books, a companion accepts the booking in the
 
 `metro.config.js` makes those shared files use this app's React. New mobile texts are the `mobile.*` keys in the web dictionaries.
 
-**Not in the mobile app yet** (they work in the web app; Settings links there when `EXPO_PUBLIC_WEB_URL` is set):
+**Not in the mobile app yet** (they work in the web app; the Profil hub links there when `EXPO_PUBLIC_WEB_URL` is set):
 - chat;
 - meeting check-in;
 - reviews;
-- favourites;
-- notifications and push;
+- notifications (the Profil row opens the web page) and push;
 - the companion studio (profile, services, photos, availability);
 - trusted-contact editing;
 - support;

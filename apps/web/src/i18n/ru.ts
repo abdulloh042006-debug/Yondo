@@ -851,9 +851,11 @@ export const ru: Record<Key, string> = {
   // --- mobile app (apps/mobile shares these dictionaries)
   'mobile.day': 'День',
   'mobile.time': 'Время (чч:мм)',
-  'mobile.webOnly': 'Чат, встреча, отзывы, избранное и студия компаньона пока есть только в веб-версии.',
+  'mobile.webOnly': 'Чат, встреча и отзывы пока есть только в веб-версии.',
   'mobile.enableCustomer': 'Включить роль клиента',
   'mobile.themeSystem': 'Как на устройстве',
   'mobile.webMissing': 'Адрес веб-версии не настроен (EXPO_PUBLIC_WEB_URL).',
   'mobile.loginForBookings': 'Войдите, чтобы увидеть свои брони.',
+  'mobile.documents': 'Документы',
+  'mobile.opensInWeb': 'Откроется в веб-версии',
 };

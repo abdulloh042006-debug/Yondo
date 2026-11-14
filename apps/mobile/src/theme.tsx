@@ -31,7 +31,22 @@ export interface Palette {
   line: string;
   chip: string;
   accent: string;
+  /** Glass surfaces (apps/web .glass / .glass-bar in the Yondo themes): translucent fill + hairline border. */
+  glass: string;
+  glassLine: string;
+  bar: string;
+  /** Active tab / chip pill: carrot at low opacity (glow, never text). */
+  pill: string;
+  glowOpacity: number;
 }
+
+/** Fonts of the web's Yondo themes (styles.css): Space Grotesk for headings, Manrope for text (both SIL OFL). */
+export const FONT = {
+  display: 'SpaceGrotesk_600SemiBold',
+  body: 'Manrope_400Regular',
+  medium: 'Manrope_600SemiBold',
+  bold: 'Manrope_700Bold',
+} as const;
 
 export const PALETTES: Record<ThemeId, Palette> = {
   yondo: {
@@ -46,6 +61,11 @@ export const PALETTES: Record<ThemeId, Palette> = {
     line: mix(INK, PAPER, 0.14),
     chip: mix(INK, PAPER, 0.06),
     accent: CARROT,
+    glass: 'rgba(255,255,255,0.72)',
+    glassLine: 'rgba(17,17,17,0.09)',
+    bar: 'rgba(245,242,236,0.9)',
+    pill: 'rgba(232,80,26,0.16)',
+    glowOpacity: 0.2,
   },
   'yondo-tun': {
     id: 'yondo-tun',
@@ -59,6 +79,11 @@ export const PALETTES: Record<ThemeId, Palette> = {
     line: mix(PAPER, INK, 0.16),
     chip: mix(PAPER, INK, 0.1),
     accent: CARROT,
+    glass: 'rgba(245,242,236,0.07)',
+    glassLine: 'rgba(245,242,236,0.14)',
+    bar: 'rgba(17,17,17,0.88)',
+    pill: 'rgba(232,80,26,0.22)',
+    glowOpacity: 0.22,
   },
 };
 

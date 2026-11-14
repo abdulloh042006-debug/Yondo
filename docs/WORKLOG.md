@@ -27,6 +27,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S61 — Mobile app = the web app's navigation and Yondo look (2026-11-14) [cloud worker, mobile + designer]
+Done: `apps/mobile` dock = the web's (signed in Kashf · Sevimlilar · Bronlar · Profil, signed out Kashf · Kirish; same icons/order/`nav.*` labels); Settings is no longer a tab (opens from Profil and from Kirish). Profil hub = the web `/account` menu in order (Bronlar, Bildirishnomalar*, Sevimlilar, Hamroh studiyasi*, Yordam*, Sozlamalar; personal data; roles; sign out; account deletion*, Terms*, Privacy*; *=labelled "Veb-ilovada ochiladi", opens the web page). New Sevimlilar screen + heart (same favourites API). Launcher icon rebuilt from the official symbol inside the adaptive-icon safe zone (+ monochrome, legacy icon). Safe areas (`react-native-safe-area-context`), Space Grotesk/Manrope (OFL), glass cards, pill dock, logo top bar with SOS + UZ|RU|EN, photos from the API, reduce-motion-aware motion. i18n: `mobile.opensInWeb`, `mobile.documents`, `mobile.webOnly` reworded (uz 2026 / ru / en). No apps/api change.
+Not done: web default theme PR (dropped from this task by the CEO). Native notifications/studio/help/account deletion (web rows for now).
+Next: owner reviews PR + the APK from its "Android APK (preview)" run; merge is his.
+Evidence: mobile typecheck PASS, `expo export` web + android PASS, mobile smoke e2e 12/12 (real API, SQLite; booking slot now derived from the seed window, the fixed 18:30 slot collided with the seed booking at some hours). Web typecheck/lint PASS, vitest 54/54, build PASS. Screens: `apps/mobile/docs/parity/`.
+Commit: branch `fix/mobile-brand-parity`.
+
 ## S60 — PR #29 CI fix: assistant GIN indexes declared in the model (2026-11-13) [cloud chat, backend worker]
 Done: `ix_assistant_sections_trgm` (gin, gin_trgm_ops) and `ix_assistant_sections_fts` (gin on `to_tsvector('simple', search_text)`) declared in `AssistantSection.__table_args__` with `.ddl_if(dialect='postgresql')` (same pattern as the booking exclusion constraints); SQLite create_all unaffected. No behaviour, threshold or scorer change. Merged origin/main (WORKLOG conflict: both S59 entries kept).
 Not done: nothing.

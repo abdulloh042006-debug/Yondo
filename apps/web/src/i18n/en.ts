@@ -851,9 +851,11 @@ export const en: Record<Key, string> = {
   // --- mobile app (apps/mobile shares these dictionaries)
   'mobile.day': 'Day',
   'mobile.time': 'Time (hh:mm)',
-  'mobile.webOnly': 'Chat, meeting check-in, reviews, favourites and the companion studio are in the web app for now.',
+  'mobile.webOnly': 'Chat, meeting check-in and reviews are in the web app for now.',
   'mobile.enableCustomer': 'Turn on the customer role',
   'mobile.themeSystem': 'Same as the device',
   'mobile.webMissing': 'The web app address is not configured (EXPO_PUBLIC_WEB_URL).',
   'mobile.loginForBookings': 'Sign in to see your bookings.',
+  'mobile.documents': 'Documents',
+  'mobile.opensInWeb': 'Opens in the web app',
 };
