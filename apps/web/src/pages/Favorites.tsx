@@ -11,7 +11,7 @@ export function Favorites() {
   const fav = useFavorites(res.reload);
   if (res.loading && !res.data) return <Loading />;
   if (res.error?.status === 403)
-    return <Empty title={t('favorites.customersOnly')} action={<Link className="btn" to="/account">{t('favorites.chooseCustomer')}</Link>}>{t('favorites.customersOnlyBody')}</Empty>;
+    return <Empty title={t('favorites.customersOnly')} action={<Link className="btn" to="/settings">{t('favorites.chooseCustomer')}</Link>}>{t('favorites.customersOnlyBody')}</Empty>;
   if (res.error) return <ErrorState error={res.error} onRetry={res.reload} />;
   const items = res.data ?? [];
   return (

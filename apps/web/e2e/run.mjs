@@ -301,6 +301,7 @@ try {
   });
   await step('account profile validates age and saves via server', async () => {
     await cp.goto(`${WEB}/account`);
+    await cp.getByRole('button', { name: 'Tahrirlaş' }).click(); // Profil shows the data; the form opens on "Tahrirlash"
     await cp.getByLabel('Yoş').fill('12');
     await cp.getByText('Yoş 18 dan 120 gaça bölişi kerak.').waitFor();
     await cp.getByLabel('Yoş').fill('29');
@@ -309,7 +310,9 @@ try {
   });
   await step('profile hub → help: trusted contact add/remove, report a booking (server derives the companion), my reports', async () => {
     await cp.goto(`${WEB}/account`);
-    await cp.getByRole('navigation', { name: 'Bölimlar' }).getByRole('link', { name: /Yordam va xavfsizlik/ }).click();
+    await cp.getByRole('link', { name: /Sozlamalar/ }).first().click(); // Profil → Sozlamalar → Yordam (owner, 2026-11-14)
+    await cp.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
+    await cp.getByRole('main').getByRole('link', { name: 'Yordam va xavfsizlik' }).first().click();
     await cp.getByRole('heading', { name: 'Yordam va xavfsizlik', level: 1 }).waitFor();
     assert((await cp.getByRole('link', { name: /112/ }).getAttribute('href')) === 'tel:112', 'emergency number link');
     await cp.getByLabel('Ism', { exact: true }).fill('E2E Ona');
@@ -358,7 +361,7 @@ try {
   watch(kp, 'companion');
   await step('new user becomes companion, applies, builds profile, submits for review', async () => {
     await otpLogin(kp, '+998907770001');
-    await kp.goto(`${WEB}/account`);
+    await kp.goto(`${WEB}/settings`); // "Men kimman" moved from Profil to Sozlamalar → Hisob
     await kp.getByRole('button', { name: 'Hamroh', exact: true }).click();
     await kp.getByText('Rollar yangilandi.').waitFor();
     await kp.getByRole('link', { name: 'Hamroh studiyasi' }).first().click();
@@ -613,7 +616,7 @@ try {
     } finally {
       await m.close();
     }
-    await cp.goto(`${WEB}/account`);
+    await cp.goto(`${WEB}/settings`);
     await cp.getByRole('link', { name: /Bildirişnomalar/ }).click();
     await cp.getByText('Bron qabul qilindi').first().waitFor();
     await cp.goto(`${WEB}/bookings`);
@@ -670,7 +673,7 @@ try {
     await cp.getByText('Bron yopilgan: çat faqat öqiş uçun.').waitFor();
   });
   await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
-    await cp.goto(`${WEB}/account#delete`);
+    await cp.goto(`${WEB}/settings#delete`);
     await cp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
     await cp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
     await cp.getByRole('button', { name: 'Öçirişni tasdiqlaş' }).click();
@@ -681,8 +684,7 @@ try {
     watch(dp, 'deletion');
     try {
       await otpLogin(dp, '+998907770088');
-      await dp.goto(`${WEB}/settings`);
-      await dp.getByRole('link', { name: 'Hisobni öçiriş' }).click();
+      await dp.goto(`${WEB}/settings`); // account deletion is a section of Sozlamalar
       await dp.getByRole('heading', { name: 'Hisobni öçiriş', level: 2 }).waitFor();
       await dp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
       const confirm = dp.getByRole('button', { name: 'Öçirişni tasdiqlaş' });

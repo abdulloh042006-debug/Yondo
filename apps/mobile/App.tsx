@@ -19,7 +19,9 @@ import { BookingDetailScreen } from './src/screens/BookingDetail';
 import { BookingsScreen } from './src/screens/Bookings';
 import { DiscoverScreen } from './src/screens/Discover';
 import { FavoritesScreen } from './src/screens/Favorites';
+import { HelpScreen } from './src/screens/Help';
 import { ConsentCheck, LoginScreen } from './src/screens/Login';
+import { NotificationsScreen } from './src/screens/Notifications';
 import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
 import { SosButton } from './src/screens/Sos';
@@ -90,6 +92,8 @@ function Shell() {
   else if (r.name === 'favorites') screen = <FavoritesScreen />;
   else if (r.name === 'account') screen = <AccountScreen />;
   else if (r.name === 'settings') screen = <SettingsScreen />;
+  else if (r.name === 'notifications') screen = <NotificationsScreen />;
+  else if (r.name === 'help') screen = <HelpScreen />;
   else screen = <DiscoverScreen />;
   // The web dock (apps/web/src/ui/Layout.tsx): same items, order, icons and labels.
   const tabs: { id: Tab; label: string; icon: string }[] = user

@@ -20,7 +20,7 @@ export function DeleteAccount() {
   const ref = useRef<HTMLElement>(null);
   const loaded = res.data !== undefined;
   useEffect(() => {
-    // Settings links here as /account#delete; the router does not scroll to hashes by itself.
+    // Lives in Settings (/settings#delete); the router does not scroll to hashes by itself.
     if (loaded && location.hash === '#delete') ref.current?.scrollIntoView({ block: 'start' });
   }, [loaded, location.hash]);
 

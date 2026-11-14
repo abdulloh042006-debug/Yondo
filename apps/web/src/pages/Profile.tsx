@@ -122,7 +122,7 @@ export function Profile() {
             ) : isCustomer ? (
               <button className="btn" disabled={!c.services.length} onClick={() => setBooking(true)}>{t('profile.book')}</button>
             ) : (
-              <Link className="btn ghost" to="/account">{t('profile.chooseCustomer')}</Link>
+              <Link className="btn ghost" to="/settings">{t('profile.chooseCustomer')}</Link>
             )}
           </motion.div>
         </div>,
