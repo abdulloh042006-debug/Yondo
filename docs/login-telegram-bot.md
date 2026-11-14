@@ -99,7 +99,9 @@ then everything is tested with mocked Telegram responses.
 
 Note: the on-screen code exists only with `YONDO_OTP_PROVIDER=auto` (the default) in a
 development/test environment, as the public demo runs today; nothing about it changed. Setting
-`YONDO_OTP_PROVIDER=telegram_bot` on the demo host would switch the demo login to the bot.
+`YONDO_OTP_PROVIDER=telegram_bot` on the demo host switches **real numbers** to the bot, while the
+seeded DEMO numbers and the demo harness's own logins keep the on-screen code (`DemoOtpProvider` in
+`infra/deploy/demo/demo_app.py`), so the demo still seeds and its sample accounts stay usable.
 
 ## 3a. VPS bot `.env` (the owner's aiogram service, not in this repo)
 
