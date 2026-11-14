@@ -526,6 +526,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/telegram/link/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete Link
+         * @description Called only by the Yondo bot service after it verified the shared contact.
+         */
+        post: operations["complete_link_api_v1_auth_telegram_link_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/telegram/link/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Link Config */
+        get: operations["link_config_api_v1_auth_telegram_link_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/telegram/link/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Link */
+        post: operations["start_link_api_v1_auth_telegram_link_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/telegram/link/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Link Status */
+        get: operations["link_status_api_v1_auth_telegram_link_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/beta/admin/enrollments": {
         parameters: {
             query?: never;
@@ -3124,6 +3195,65 @@ export interface components {
             /** Terms */
             terms: string;
         };
+        /** LinkComplete */
+        LinkComplete: {
+            /** Challenge */
+            challenge: string;
+            /** Phone Number */
+            phone_number: string;
+            /** Telegram Chat Id */
+            telegram_chat_id: number;
+            /** Telegram User Id */
+            telegram_user_id: number;
+        };
+        /** LinkCompleted */
+        LinkCompleted: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "linked";
+        };
+        /** LinkConfig */
+        LinkConfig: {
+            /** Bot Username */
+            bot_username: string | null;
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** LinkStart */
+        LinkStart: {
+            /** Phone Number */
+            phone_number: string;
+        };
+        /** LinkStarted */
+        LinkStarted: {
+            /** Already Linked */
+            already_linked: boolean;
+            /** Deep Link */
+            deep_link: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Poll Token */
+            poll_token: string;
+            /**
+             * Status
+             * @constant
+             */
+            status: "initiated";
+        };
+        /** LinkStatus */
+        LinkStatus: {
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Failure Code */
+            failure_code?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "awaiting_contact" | "linked" | "otp_sent" | "expired" | "failed";
+        };
         /** LivenessResponse */
         LivenessResponse: {
             /** Service */
@@ -4799,6 +4929,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserRoleType"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_link_api_v1_auth_telegram_link_complete_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-yondo-bot-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkComplete"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkCompleted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_config_api_v1_auth_telegram_link_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkConfig"];
+                };
+            };
+        };
+    };
+    start_link_api_v1_auth_telegram_link_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkStarted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_status_api_v1_auth_telegram_link_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-yondo-link-poll"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkStatus"];
                 };
             };
             /** @description Validation Error */

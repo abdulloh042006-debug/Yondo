@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlsplit
@@ -63,6 +64,18 @@ class Settings(BaseSettings):
     telegram_gateway_token: SecretStr | None = None
     telegram_gateway_base_url: str = 'https://gatewayapi.telegram.org'
     telegram_gateway_timeout_seconds: float = Field(default=10.0, gt=0)
+    # Which login-code channel is used. "auto" keeps the earlier behaviour (Telegram Gateway when
+    # its token is set, else the on-screen code in development/test, else 503). "telegram_bot" =
+    # the free Yondo bot (docs/login-telegram-bot.md). A paid channel is never a fallback.
+    otp_provider: Literal['auto', 'telegram_bot', 'telegram_gateway'] = 'auto'
+    # Free Telegram bot (Bot API). Token and shared secret are never logged or echoed.
+    telegram_bot_token: SecretStr | None = None
+    telegram_bot_username: str | None = None
+    # Shared secret with the separate bot service (header X-Yondo-Bot-Secret on /link/complete).
+    telegram_bot_secret: SecretStr | None = None
+    telegram_bot_base_url: str = 'https://api.telegram.org'
+    telegram_bot_timeout_seconds: float = Field(default=10.0, gt=0)
+    telegram_link_lifetime_seconds: int = Field(default=600, ge=60, le=3600)
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
     # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
@@ -138,6 +151,46 @@ class Settings(BaseSettings):
             raise ValueError(
                 'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
             )
+        return self
+
+    @field_validator('telegram_bot_token', 'telegram_bot_secret')
+    @classmethod
+    def empty_telegram_bot_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None and not value.get_secret_value().strip():
+            return None
+        return value
+
+    @field_validator('telegram_bot_username')
+    @classmethod
+    def valid_bot_username(cls, value: str | None) -> str | None:
+        value = (value or '').strip().removeprefix('@')
+        if not value:
+            return None
+        if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{3,31}', value):
+            raise ValueError('YONDO_TELEGRAM_BOT_USERNAME must be a Telegram bot username')
+        return value
+
+    @model_validator(mode='after')
+    def validate_otp_provider(self) -> Settings:
+        if self.otp_provider == 'telegram_gateway' and self.telegram_gateway_token is None:
+            raise ValueError(
+                'YONDO_OTP_PROVIDER=telegram_gateway needs YONDO_TELEGRAM_GATEWAY_TOKEN'
+            )
+        if self.otp_provider != 'telegram_bot':
+            return self
+        if (
+            self.telegram_bot_token is None
+            or self.telegram_bot_username is None
+            or self.telegram_bot_secret is None
+        ):
+            raise ValueError(
+                'YONDO_OTP_PROVIDER=telegram_bot needs YONDO_TELEGRAM_BOT_TOKEN, '
+                'YONDO_TELEGRAM_BOT_USERNAME and YONDO_TELEGRAM_BOT_SECRET'
+            )
+        if len(self.telegram_bot_secret.get_secret_value()) < 32:
+            raise ValueError('YONDO_TELEGRAM_BOT_SECRET needs 32+ characters')
+        if not self.telegram_bot_base_url.startswith('https://'):
+            raise ValueError('YONDO_TELEGRAM_BOT_BASE_URL must be an https URL')
         return self
 
     @field_validator('telegram_gateway_token')

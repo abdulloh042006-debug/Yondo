@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.account.legal import DELETION_DUE_AFTER_DAYS
 from yondo_api.account.models import AccountDeletionRequest, SupportRequest
+from yondo_api.auth.telegram_models import TelegramLink, TelegramLinkChallenge
 from yondo_api.beta.models import BetaEnrollment
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.chat.models import ChatAccessTicket, ChatReadCursor
@@ -158,6 +159,8 @@ async def erase_account(
     await session.execute(
         delete(OtpChallenge).where(OtpChallenge.phone_number == user.phone_number)
     )
+    for model in (TelegramLink, TelegramLinkChallenge):  # Telegram ids are personal data
+        await session.execute(delete(model).where(model.phone_number == user.phone_number))
     user.phone_number = f'deleted-{uid.hex[:24]}'
     user.age = None
     user.gender = None

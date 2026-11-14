@@ -90,6 +90,7 @@ class Doctor:
             self.redis,
             self.otp_pepper,
             self.telegram_gateway,
+            self.telegram_bot,
             self.object_storage,
             self.public_web_url,
             self.payment_provider,
@@ -215,6 +216,40 @@ class Doctor:
             self.prod,
             f'YONDO_TELEGRAM_GATEWAY_TOKEN {secret(token)}, {origin(base)}; '
             'balance is not checked (no network calls)',
+        )
+
+    def telegram_bot(self) -> Check:
+        name = 'Telegram bot (login codes, free)'
+        provider = self.get('YONDO_OTP_PROVIDER').lower() or 'auto'
+        if provider not in {'auto', 'telegram_bot', 'telegram_gateway'}:
+            return Check(name, INVALID, True, 'YONDO_OTP_PROVIDER must be auto, telegram_bot '
+                         'or telegram_gateway')
+        token = self.get('YONDO_TELEGRAM_BOT_TOKEN')
+        username = self.get('YONDO_TELEGRAM_BOT_USERNAME').removeprefix('@')
+        shared = self.get('YONDO_TELEGRAM_BOT_SECRET')
+        if provider != 'telegram_bot':
+            return Check(
+                name,
+                MISSING,
+                False,
+                f'YONDO_OTP_PROVIDER={provider}: the bot is off '
+                '(set telegram_bot with the three YONDO_TELEGRAM_BOT_* values)',
+            )
+        problems = []
+        if not token:
+            problems.append('YONDO_TELEGRAM_BOT_TOKEN missing')
+        if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{3,31}', username):
+            problems.append('YONDO_TELEGRAM_BOT_USERNAME missing or invalid')
+        if len(shared) < 32:
+            problems.append('YONDO_TELEGRAM_BOT_SECRET needs 32+ characters')
+        if problems:
+            return Check(name, INVALID, True, '; '.join(problems))
+        return Check(
+            name,
+            OK,
+            True,
+            f'@{username}, YONDO_TELEGRAM_BOT_TOKEN {secret(token)}, '
+            f'YONDO_TELEGRAM_BOT_SECRET {secret(shared)}; no network calls',
         )
 
     def object_storage(self) -> Check:
