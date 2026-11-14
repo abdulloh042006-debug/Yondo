@@ -23,7 +23,10 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.auth.telegram_bot import TelegramBotOtpProvider
 from yondo_api.auth.telegram_gateway import TelegramGatewayOtpProvider
+from yondo_api.auth.telegram_link import attach_chat_lookup
+from yondo_api.auth.telegram_link import router as telegram_link_router
 from yondo_api.beta.router import router as beta_router
 from yondo_api.bookings.router import router as bookings_router
 from yondo_api.chat.router import router as chat_router
@@ -62,6 +65,12 @@ from yondo_api.verification.service import DatabaseIdentityEligibility
 
 def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
     """Pick the OTP provider: a configured real provider wins in every environment."""
+    if settings.otp_provider == 'telegram_bot':
+        return TelegramBotOtpProvider(
+            settings.telegram_bot_token.get_secret_value(),
+            base_url=settings.telegram_bot_base_url,
+            timeout_seconds=settings.telegram_bot_timeout_seconds,
+        )
     if settings.telegram_gateway_token is not None:
         return TelegramGatewayOtpProvider(
             settings.telegram_gateway_token.get_secret_value(),
@@ -106,6 +115,7 @@ def create_application(
         app.state.db_session_factory = create_session_factory(engine)
         app.state.redis = redis_client
         app.state.otp_provider = selected_otp_provider
+        attach_chat_lookup(selected_otp_provider, app.state.db_session_factory)
         app.state.otp_rate_limit_hook = (
             RedisOtpRateLimitHook(
                 redis_client, app_settings.auth_otp_provider_rate_limit_per_minute
@@ -146,6 +156,7 @@ def create_application(
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
     app.include_router(auth_router, prefix=app_settings.api_v1_prefix)
+    app.include_router(telegram_link_router, prefix=app_settings.api_v1_prefix)
     for companion_routes in (
         companion_router,
         companion_resources_router,

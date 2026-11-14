@@ -2123,6 +2123,171 @@
         "title": "LikeState",
         "type": "object"
       },
+      "LinkComplete": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Challenge",
+            "type": "string"
+          },
+          "phone_number": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Phone Number",
+            "type": "string"
+          },
+          "telegram_chat_id": {
+            "exclusiveMaximum": 9.223372036854776e+18,
+            "exclusiveMinimum": 0.0,
+            "title": "Telegram Chat Id",
+            "type": "integer"
+          },
+          "telegram_user_id": {
+            "exclusiveMaximum": 9.223372036854776e+18,
+            "exclusiveMinimum": 0.0,
+            "title": "Telegram User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "phone_number",
+          "telegram_user_id",
+          "telegram_chat_id"
+        ],
+        "title": "LinkComplete",
+        "type": "object"
+      },
+      "LinkCompleted": {
+        "properties": {
+          "status": {
+            "enum": [
+              "linked",
+              "already_linked"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "LinkCompleted",
+        "type": "object"
+      },
+      "LinkConfig": {
+        "properties": {
+          "bot_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bot Username"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "bot_username"
+        ],
+        "title": "LinkConfig",
+        "type": "object"
+      },
+      "LinkStart": {
+        "additionalProperties": false,
+        "properties": {
+          "phone_number": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Phone Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone_number"
+        ],
+        "title": "LinkStart",
+        "type": "object"
+      },
+      "LinkStarted": {
+        "properties": {
+          "already_linked": {
+            "title": "Already Linked",
+            "type": "boolean"
+          },
+          "deep_link": {
+            "title": "Deep Link",
+            "type": "string"
+          },
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          },
+          "poll_token": {
+            "title": "Poll Token",
+            "type": "string"
+          },
+          "status": {
+            "const": "initiated",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "deep_link",
+          "poll_token",
+          "expires_in_seconds",
+          "already_linked"
+        ],
+        "title": "LinkStarted",
+        "type": "object"
+      },
+      "LinkStatus": {
+        "properties": {
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Code"
+          },
+          "status": {
+            "enum": [
+              "awaiting_contact",
+              "linked",
+              "otp_sent",
+              "expired",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "expires_in_seconds"
+        ],
+        "title": "LinkStatus",
+        "type": "object"
+      },
       "LivenessResponse": {
         "properties": {
           "service": {
@@ -5675,6 +5840,179 @@
           }
         ],
         "summary": "Select Roles",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/telegram/link/complete": {
+      "post": {
+        "description": "Called only by the Yondo bot service after it verified the shared contact.",
+        "operationId": "complete_link_api_v1_auth_telegram_link_complete_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-yondo-bot-secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Yondo-Bot-Secret"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkCompleted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Link",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/telegram/link/config": {
+      "get": {
+        "operationId": "link_config_api_v1_auth_telegram_link_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Link Config",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/telegram/link/start": {
+      "post": {
+        "operationId": "start_link_api_v1_auth_telegram_link_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Link",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/telegram/link/status": {
+      "get": {
+        "operationId": "link_status_api_v1_auth_telegram_link_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-yondo-link-poll",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Yondo-Link-Poll"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Link Status",
         "tags": [
           "authentication"
         ]

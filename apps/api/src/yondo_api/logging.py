@@ -7,6 +7,10 @@ import structlog
 def configure_logging(log_level: str) -> None:
     level = getattr(logging, log_level.upper(), logging.INFO)
     logging.basicConfig(format='%(message)s', stream=sys.stdout, level=level, force=True)
+    # httpx/httpcore log every request URL at INFO. The Telegram Bot API puts the bot token in the
+    # URL path (/bot<token>/...), so those loggers must never go below WARNING.
+    for name in ('httpx', 'httpcore'):
+        logging.getLogger(name).setLevel(max(level, logging.WARNING))
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,

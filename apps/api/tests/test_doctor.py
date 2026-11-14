@@ -167,3 +167,23 @@ def test_malformed_json_is_reported_not_crashed(env):
 def test_s3_in_development_does_not_require_bucket_or_keys(env):
     env({'YONDO_STORAGE_BACKEND': 's3'})
     assert run()[2]['S3 photo/ID storage'].status == doctor.OK
+
+
+def test_telegram_bot_check_needs_all_values_and_prints_no_secret(env):
+    bot_token, shared = '123:bot-token-fake-ABCDEFGHIJ', 'bot-shared-secret-fake-' + 's' * 20
+    env({**PRODUCTION, 'YONDO_OTP_PROVIDER': 'telegram_bot'})
+    _, out, checks = run()
+    assert checks['Telegram bot (login codes, free)'].status == doctor.INVALID
+    env({
+        **PRODUCTION,
+        'YONDO_OTP_PROVIDER': 'telegram_bot',
+        'YONDO_TELEGRAM_BOT_TOKEN': bot_token,
+        'YONDO_TELEGRAM_BOT_USERNAME': '@YondoTestBot',
+        'YONDO_BOT_SHARED_SECRET': shared,
+    })
+    _, out, checks = run()
+    assert checks['Telegram bot (login codes, free)'].status == doctor.OK
+    assert bot_token not in out and shared not in out and '@YondoTestBot' in out
+    env({**PRODUCTION, 'YONDO_OTP_PROVIDER': 'auto'})
+    _, _, checks = run()
+    assert checks['Telegram bot (login codes, free)'].required is False

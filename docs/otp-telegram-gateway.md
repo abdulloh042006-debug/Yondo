@@ -76,12 +76,8 @@ Researched 2026-10-28 (research only; nothing was called against the live API; n
 - Uzbek rules on personal data and cross-border transfer for this flow: not researched `[unverified]` (add to `docs/legal/pre-publication-checklist.md`).
 - Never put PII in `payload`; never log the token, full phone numbers or codes; token only in the server env.
 
-## 10. "What about WhatsApp?" (WhatsApp Business Platform, authentication templates)
-All from third-party BSP docs `[search]`; Meta pages were unreachable. Nothing verified.
-- Needs a Meta Business portfolio, a WhatsApp Business Account, a phone number dedicated to the API, and a Meta-**approved template of category Authentication**: fixed body "<CODE> is your verification code.", mandatory OTP button (copy code / one-tap Android / zero-tap), no URLs/media/emoji, code <=15 chars.
-- Without Meta Business Verification the account is capped (reported: 250 business-initiated conversations per 24 h); verification (via a BSP) asks for legal-entity documents (registration certificate, licence, tax certificate) → an unregistered individual is likely **not** eligible (`[unverified]`; sole-trader registrations are accepted in some countries).
-- Price: per delivered authentication message, set by recipient country (Meta rate card, some countries have special "authentication-international" rates) plus BSP markup. **Uzbekistan rate not found** `[unverified]`.
-- Compared with Telegram Gateway: heavier onboarding (business verification, template approval, BSP), unknown price; Telegram: $0.01 and a simple token, but unverified for +998 and for individuals.
+## 10. WhatsApp
+Out of scope (owner decision, 2026-11-14).
 
 ## 11. Adapter checklist (summary)
 `POST https://gatewayapi.telegram.org/sendVerificationMessage`, header `Authorization: Bearer $YONDO_TELEGRAM_GATEWAY_TOKEN`, JSON `{"phone_number":"+998…","code":"<our digits>","ttl":300,"payload":"<opaque id>"}` (+ `callback_url` only if we implement the receiver). Timeout ~10 s; do not auto-retry a send; map `ok:false` strings (§3/§7) to internal reasons; `FLOOD_WAIT_n` → 429-style; `BALANCE_NOT_ENOUGH`/`ACCESS_TOKEN_*` → 503 "provider unavailable" + alert (never show as "wrong code"). **Update 2026-10-28:** the implemented flow is two-step: `checkSendAbility` first, then this send with the check's `request_id` (at most two requests, no retry); see §14.
@@ -106,7 +102,6 @@ All from third-party BSP docs `[search]`; Meta pages were unreachable. Nothing v
 8. Does sending to your own number work with a zero balance? Unit of "credits" vs USD?
 9. `ttl` range: 30–3600 (changelog) vs 60–86400 (older SDK) — confirm on the live page. *(2026-10-28 live: `ttl` 300 is accepted; the allowed range is still unconfirmed.)*
 10. Uzbek personal-data / cross-border transfer rules for sending phone numbers to Telegram.
-11. WhatsApp: Uzbekistan authentication price, individual eligibility, BSP options.
 
 ## 14. Implementation (2026-10-28, part 2)
 Code: `apps/api/src/yondo_api/auth/telegram_gateway.py` (adapter), selection in `main.select_otp_provider` (a configured token wins in every environment; the public demo harness pins the on-screen provider and ignores it), tests in `apps/api/tests/test_telegram_gateway.py` and `test_otp_delivery.py` (MockTransport only: **nothing was called against the live API**).
