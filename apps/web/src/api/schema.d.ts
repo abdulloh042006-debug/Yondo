@@ -3210,9 +3210,9 @@ export interface components {
         LinkCompleted: {
             /**
              * Status
-             * @constant
+             * @enum {string}
              */
-            status: "linked";
+            status: "linked" | "already_linked";
         };
         /** LinkConfig */
         LinkConfig: {

@@ -2118,7 +2118,10 @@
       "LinkCompleted": {
         "properties": {
           "status": {
-            "const": "linked",
+            "enum": [
+              "linked",
+              "already_linked"
+            ],
             "title": "Status",
             "type": "string"
           }

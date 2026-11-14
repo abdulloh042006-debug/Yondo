@@ -226,14 +226,14 @@ class Doctor:
                          'or telegram_gateway')
         token = self.get('YONDO_TELEGRAM_BOT_TOKEN')
         username = self.get('YONDO_TELEGRAM_BOT_USERNAME').removeprefix('@')
-        shared = self.get('YONDO_TELEGRAM_BOT_SECRET')
+        shared = self.get('YONDO_BOT_SHARED_SECRET')
         if provider != 'telegram_bot':
             return Check(
                 name,
                 MISSING,
                 False,
                 f'YONDO_OTP_PROVIDER={provider}: the bot is off '
-                '(set telegram_bot with the three YONDO_TELEGRAM_BOT_* values)',
+                '(set telegram_bot, YONDO_TELEGRAM_BOT_TOKEN/_USERNAME, YONDO_BOT_SHARED_SECRET)',
             )
         problems = []
         if not token:
@@ -241,7 +241,7 @@ class Doctor:
         if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{3,31}', username):
             problems.append('YONDO_TELEGRAM_BOT_USERNAME missing or invalid')
         if len(shared) < 32:
-            problems.append('YONDO_TELEGRAM_BOT_SECRET needs 32+ characters')
+            problems.append('YONDO_BOT_SHARED_SECRET needs 32+ characters (else 503)')
         if problems:
             return Check(name, INVALID, True, '; '.join(problems))
         return Check(
@@ -249,7 +249,7 @@ class Doctor:
             OK,
             True,
             f'@{username}, YONDO_TELEGRAM_BOT_TOKEN {secret(token)}, '
-            f'YONDO_TELEGRAM_BOT_SECRET {secret(shared)}; no network calls',
+            f'YONDO_BOT_SHARED_SECRET {secret(shared)}; no network calls',
         )
 
     def object_storage(self) -> Check:

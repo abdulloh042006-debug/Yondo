@@ -179,7 +179,7 @@ def test_telegram_bot_check_needs_all_values_and_prints_no_secret(env):
         'YONDO_OTP_PROVIDER': 'telegram_bot',
         'YONDO_TELEGRAM_BOT_TOKEN': bot_token,
         'YONDO_TELEGRAM_BOT_USERNAME': '@YondoTestBot',
-        'YONDO_TELEGRAM_BOT_SECRET': shared,
+        'YONDO_BOT_SHARED_SECRET': shared,
     })
     _, out, checks = run()
     assert checks['Telegram bot (login codes, free)'].status == doctor.OK

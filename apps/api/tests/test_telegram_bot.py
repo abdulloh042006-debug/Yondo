@@ -63,7 +63,7 @@ def bot_settings(**extra):
         'otp_provider': 'telegram_bot',
         'telegram_bot_token': TOKEN,
         'telegram_bot_username': 'YondoTestBot',
-        'telegram_bot_secret': SECRET,
+        'bot_shared_secret': SECRET,
     }
     return Settings(**{**values, **extra})
 
@@ -207,7 +207,7 @@ async def test_expired_reused_and_mismatched_challenges(monkeypatch):
         token, body = await start(client)
         assert (await complete(client, token)).status_code == 200
         retried = await complete(client, token)
-        assert retried.status_code == 200 and retried.json() == {'status': 'linked'}
+        assert retried.status_code == 200 and retried.json() == {'status': 'already_linked'}
         assert len(api.sent) == 1  # a retried completion never sends a second code
         stolen = await complete(client, token, user_id=999)
         assert stolen.status_code == 409 and stolen.json()['code'] == 'telegram_link_used'
@@ -308,12 +308,54 @@ async def test_start_rate_limit_and_disabled_bot():
 
 def test_settings_require_complete_bot_configuration():
     with pytest.raises(ValidationError):
-        Settings(otp_provider='telegram_bot', telegram_bot_token=TOKEN, telegram_bot_secret=SECRET)
-    with pytest.raises(ValidationError):
-        bot_settings(telegram_bot_secret='short')
+        Settings(otp_provider='telegram_bot', telegram_bot_token=TOKEN, bot_shared_secret=SECRET)
     with pytest.raises(ValidationError):
         Settings(otp_provider='telegram_gateway', telegram_gateway_token=None)
     assert bot_settings(telegram_bot_username='@YondoTestBot').telegram_bot_username == (
         'YondoTestBot'
     )
     assert TOKEN not in repr(bot_settings()) and SECRET not in repr(bot_settings())
+
+
+@pytest.mark.parametrize('shared', [None, 'x' * 31])
+async def test_complete_is_503_without_a_long_enough_shared_secret(shared):
+    async with bot_client(bot_settings(bot_shared_secret=shared)) as (client, app, api):
+        token, _ = await start(client)
+        for secret in (None, shared or ''):
+            response = await complete(client, token, secret=secret)
+            assert response.status_code == 503
+            assert response.json()['code'] == 'telegram_bot_secret_unset'
+        assert api.sent == []
+
+
+async def test_contract_replay_of_the_vps_bot_request():
+    """The owner's aiogram bot: exact headers, normalised +998 phone, no redirects followed."""
+    async with bot_client() as (client, app, api):
+        token, body = await start(client)
+        request = dict(
+            headers={
+                'X-Yondo-Bot-Secret': SECRET,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            content=json.dumps({
+                'challenge': token,
+                'phone_number': PHONE,
+                'telegram_user_id': 424242,
+                'telegram_chat_id': 424242,
+            }),
+            follow_redirects=False,
+        )
+        first = await client.post('/api/v1/auth/telegram/link/complete', **request)
+        assert first.status_code == 200 and first.json() == {'status': 'linked'}
+        repeat = await client.post('/api/v1/auth/telegram/link/complete', **request)
+        assert repeat.status_code == 200 and repeat.json() == {'status': 'already_linked'}
+        assert len(api.sent) == 1
+        assert (await status(client, body['poll_token']))['status'] == 'otp_sent'
+        # Rejections are 4xx with only a stable code (nothing for the bot to log but the code).
+        bad = await client.post(
+            '/api/v1/auth/telegram/link/complete',
+            **{**request, 'headers': {**request['headers'], 'X-Yondo-Bot-Secret': 'nope'}},
+        )
+        assert bad.status_code == 401 and set(bad.json()) <= {'code', 'message', 'request_id'}
+        assert TOKEN not in bad.text and SECRET not in bad.text

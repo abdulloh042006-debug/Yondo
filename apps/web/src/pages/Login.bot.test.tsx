@@ -94,13 +94,30 @@ describe('Login: Telegram bot', () => {
     expect(screen.getByText(t('login.bot.codeHint'))).toBeInTheDocument();
   });
 
-  it('bot blocked: explains it and offers a new link', async () => {
+  it('bot blocked: the link is done, so it explains and offers to request the code again', async () => {
     routeGet(true);
     statuses = [{ status: 'failed', failure_code: 'telegram_bot_unreachable' }];
+    auth.requestCode.mockResolvedValue({ message: 'x', expires_in_seconds: 300, resend_after_seconds: 60, delivery_channel: 'telegram' });
     mount();
     await continueWithTelegram();
     await tick();
     expect(screen.getByText(t('err.telegram_bot_unreachable'))).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('login.bot.newLink') })).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: t('login.resend') }));
+    });
+    expect(auth.requestCode).toHaveBeenCalledWith('+998901234567');
+    expect(post).toHaveBeenCalledTimes(1); // no second link
+    expect(screen.getByText(t('login.bot.codeHint'))).toBeInTheDocument();
+  });
+
+  it('a phone mismatch is a failed link: offers a new link', async () => {
+    routeGet(true);
+    statuses = [{ status: 'failed', failure_code: 'telegram_phone_mismatch' }];
+    mount();
+    await continueWithTelegram();
+    await tick();
+    expect(screen.getByText(t('err.telegram_phone_mismatch'))).toBeInTheDocument();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: t('login.bot.newLink') }));
     });

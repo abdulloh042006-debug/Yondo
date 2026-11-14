@@ -33,6 +33,8 @@ type LinkStep = {
 };
 type Step = { kind: 'phone' } | CodeStep | LinkStep;
 const POLL_MS = 2000;
+/** Failures of the link itself; any other failure means the link is done and only the code was not sent. */
+const LINK_FAILURES = new Set(['telegram_phone_mismatch', 'telegram_account_linked_elsewhere']);
 
 const CODE_LENGTH = 6;
 /** Errors about the number itself are shown under the phone field. */
@@ -273,7 +275,11 @@ export function Login() {
               </p>
             )}
             {error && <p className="err" role="alert">{error.message}</p>}
-            {step.state !== 'waiting' && (
+            {step.state === 'failed' && !LINK_FAILURES.has(step.failure ?? '') ? (
+              <button type="button" className="btn" disabled={busy} onClick={() => void send()}>
+                {busy && <span className="spinner" aria-hidden="true" />}{t('login.resend')}
+              </button>
+            ) : step.state !== 'waiting' && (
               <button type="button" className="btn" disabled={busy} onClick={() => void newLink()}>
                 {busy && <span className="spinner" aria-hidden="true" />}{t('login.bot.newLink')}
               </button>

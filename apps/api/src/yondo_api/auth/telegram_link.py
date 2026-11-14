@@ -42,6 +42,7 @@ from yondo_api.config import Settings
 router = APIRouter(prefix='/auth/telegram/link', tags=['authentication'])
 Session = Annotated[AsyncSession, Depends(get_db_session)]
 MAX_STARTS_PER_PHONE = 5
+MIN_SHARED_SECRET = 32
 START_WINDOW = timedelta(minutes=10)
 _CHALLENGE = re.compile(r'[A-Za-z0-9_-]{16,64}')
 
@@ -117,7 +118,8 @@ class LinkComplete(BaseModel):
 
 
 class LinkCompleted(BaseModel):
-    status: Literal['linked']
+    # 'already_linked' = an identical repeat of a completed challenge (no second code is sent).
+    status: Literal['linked', 'already_linked']
 
 
 class _ChatProvider:
@@ -228,8 +230,12 @@ async def complete_link(
 ) -> LinkCompleted:
     """Called only by the Yondo bot service after it verified the shared contact."""
     settings, bot = _bot(request)
-    expected = settings.telegram_bot_secret.get_secret_value().encode()
-    if not hmac.compare_digest((x_yondo_bot_secret or '').encode(), expected):
+    shared = settings.bot_shared_secret.get_secret_value() if settings.bot_shared_secret else ''
+    if len(shared) < MIN_SHARED_SECRET:
+        raise ApplicationError(
+            'telegram_bot_secret_unset', 'Telegram bot login is not enabled', 503
+        )
+    if not hmac.compare_digest((x_yondo_bot_secret or '').encode(), shared.encode()):
         raise ApplicationError('invalid_bot_secret', 'Not allowed', 401)
     if not _CHALLENGE.fullmatch(payload.challenge):
         raise ApplicationError('telegram_link_invalid', 'Unknown or expired link', 404)
@@ -254,7 +260,7 @@ async def complete_link(
             and challenge.phone_number == phone_number
         )
         if same:
-            return LinkCompleted(status='linked')  # retried call: no second code
+            return LinkCompleted(status='already_linked')  # retried call: no second code
         raise ApplicationError('telegram_link_used', 'This link was already used', 409)
     if now >= _as_utc(challenge.expires_at):
         challenge.status = LinkChallengeStatus.EXPIRED
@@ -312,7 +318,7 @@ async def complete_link(
     )
     if claimed.rowcount != 1:
         await session.rollback()
-        return LinkCompleted(status='linked') if await _same_completion(
+        return LinkCompleted(status='already_linked') if await _same_completion(
             session, challenge_id, payload.telegram_user_id, phone_number
         ) else _raise_used()
     try:

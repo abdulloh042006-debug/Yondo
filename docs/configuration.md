@@ -51,9 +51,9 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_OTP_PROVIDER` | Login-code channel: `auto` (Gateway if its token is set, else on-screen code in dev/test), `telegram_bot` (free bot), `telegram_gateway` (paid) | no | `telegram_bot` | Owner decision |
 | `YONDO_TELEGRAM_BOT_TOKEN` | Free Yondo bot token (Bot API) | with `telegram_bot` | `<token>` | @BotFather (owner) |
 | `YONDO_TELEGRAM_BOT_USERNAME` | Bot username for the deep link (no @) | with `telegram_bot` | `YondoBot` | @BotFather |
-| `YONDO_TELEGRAM_BOT_SECRET` | Shared secret with the VPS bot service (32+ chars) | with `telegram_bot` | `<random>` | Owner generates; same value on the VPS |
+| `YONDO_BOT_SHARED_SECRET` | Shared secret with the VPS bot service (32+ chars; unset/short = `/link/complete` answers 503) | with `telegram_bot` | `<random>` | Owner generates; same value on the VPS |
 | `YONDO_TELEGRAM_BOT_BASE_URL` | Bot API origin (https) | no | `https://api.telegram.org` | Default |
-| `YONDO_TELEGRAM_BOT_TIMEOUT_SECONDS` | sendMessage timeout | no | `10` | Default |
+| `YONDO_TELEGRAM_BOT_TIMEOUT_SECONDS` | sendMessage timeout (≤ 15; the bot waits 30 s) | no | `5` | Default |
 | `YONDO_TELEGRAM_LINK_LIFETIME_SECONDS` | Bot link lifetime (60–3600) | no | `600` | Default |
 | `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` | Global cap on code sends per minute (0 = off) | recommended | `30` | Owner/CEO decides |
 | `YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` / `..._REFRESH_...` | Session lifetimes | no | `900` / `2592000` | Defaults |

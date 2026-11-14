@@ -71,10 +71,13 @@ class Settings(BaseSettings):
     # Free Telegram bot (Bot API). Token and shared secret are never logged or echoed.
     telegram_bot_token: SecretStr | None = None
     telegram_bot_username: str | None = None
-    # Shared secret with the separate bot service (header X-Yondo-Bot-Secret on /link/complete).
-    telegram_bot_secret: SecretStr | None = None
+    # Shared secret with the separate bot service (header X-Yondo-Bot-Secret on /link/complete),
+    # env YONDO_BOT_SHARED_SECRET (same name as in the bot's .env). Unset or < 32 characters:
+    # /link/complete answers 503 telegram_bot_secret_unset.
+    bot_shared_secret: SecretStr | None = None
     telegram_bot_base_url: str = 'https://api.telegram.org'
-    telegram_bot_timeout_seconds: float = Field(default=10.0, gt=0)
+    # Short: /link/complete sends the code inside the bot's 30-second call.
+    telegram_bot_timeout_seconds: float = Field(default=5.0, gt=0, le=15)
     telegram_link_lifetime_seconds: int = Field(default=600, ge=60, le=3600)
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
@@ -153,7 +156,7 @@ class Settings(BaseSettings):
             )
         return self
 
-    @field_validator('telegram_bot_token', 'telegram_bot_secret')
+    @field_validator('telegram_bot_token', 'bot_shared_secret')
     @classmethod
     def empty_telegram_bot_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
         if value is not None and not value.get_secret_value().strip():
@@ -178,17 +181,11 @@ class Settings(BaseSettings):
             )
         if self.otp_provider != 'telegram_bot':
             return self
-        if (
-            self.telegram_bot_token is None
-            or self.telegram_bot_username is None
-            or self.telegram_bot_secret is None
-        ):
+        if self.telegram_bot_token is None or self.telegram_bot_username is None:
             raise ValueError(
-                'YONDO_OTP_PROVIDER=telegram_bot needs YONDO_TELEGRAM_BOT_TOKEN, '
-                'YONDO_TELEGRAM_BOT_USERNAME and YONDO_TELEGRAM_BOT_SECRET'
+                'YONDO_OTP_PROVIDER=telegram_bot needs YONDO_TELEGRAM_BOT_TOKEN and '
+                'YONDO_TELEGRAM_BOT_USERNAME'
             )
-        if len(self.telegram_bot_secret.get_secret_value()) < 32:
-            raise ValueError('YONDO_TELEGRAM_BOT_SECRET needs 32+ characters')
         if not self.telegram_bot_base_url.startswith('https://'):
             raise ValueError('YONDO_TELEGRAM_BOT_BASE_URL must be an https URL')
         return self
