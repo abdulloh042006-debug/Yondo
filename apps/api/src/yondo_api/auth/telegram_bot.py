@@ -32,12 +32,15 @@ ChatLookup = Callable[[str], Awaitable[int | None]]
 # Bot API descriptions that mean "this chat cannot get messages from the bot".
 _UNREACHABLE = ('bot was blocked', 'chat not found', 'user is deactivated', 'bot can\'t initiate')
 
+# HTML parse mode: <code> makes the digits tap-to-copy in Telegram. The code is 6 digits and the
+# rest is fixed text, so nothing here needs escaping.
 MESSAGE = (
-    'Yondo kirish kodi: {code}\n'
+    'Yondo kirish kodi: <code>{code}</code>\n'
     'Kodni hech kimga bermang. U 5 daqiqa amal qiladi.\n\n'
-    'Код входа Yondo: {code}\n'
+    'Код входа Yondo: <code>{code}</code>\n'
     'Никому не сообщайте код. Он действует 5 минут.'
 )
+COPY_BUTTON = '📋 Kodni nusxalash / Скопировать код'
 
 
 def telegram_link_required() -> ApplicationError:
@@ -82,11 +85,13 @@ class TelegramBotOtpProvider:
         return OtpDelivery(channel='telegram')
 
     async def send_code(self, chat_id: int, code: str) -> None:
-        error = await self._send(chat_id, MESSAGE.format(code=code))
+        error = await self._send(chat_id, MESSAGE.format(code=code), copy_text=code)
         if error is not None:
             raise error
 
-    async def _send(self, chat_id: int, text: str) -> ApplicationError | None:
+    async def _send(
+        self, chat_id: int, text: str, copy_text: str | None = None
+    ) -> ApplicationError | None:
         logger = _logger()
         failure: str | None = None
         response: httpx.Response | None = None
@@ -94,9 +99,22 @@ class TelegramBotOtpProvider:
             async with httpx.AsyncClient(
                 timeout=httpx.Timeout(self._timeout_seconds), transport=self._transport
             ) as client:
+                payload: dict = {
+                    'chat_id': chat_id,
+                    'text': text,
+                    'parse_mode': 'HTML',
+                    # Not protect_content: Telegram then blocks copying the text, and the owner
+                    # asked for tap-to-copy (2026-11-15). The code still expires in 5 minutes.
+                }
+                if copy_text is not None:
+                    # Bot API copy_text button: one tap puts the code on the clipboard.
+                    payload['reply_markup'] = {
+                        'inline_keyboard': [
+                            [{'text': COPY_BUTTON, 'copy_text': {'text': copy_text}}]
+                        ]
+                    }
                 response = await client.post(
-                    f'{self._base_url}/bot{self._token}/sendMessage',
-                    json={'chat_id': chat_id, 'text': text, 'protect_content': True},
+                    f'{self._base_url}/bot{self._token}/sendMessage', json=payload
                 )
         except Exception as exc:  # noqa: BLE001 - never chain: the request carries the token
             failure = type(exc).__name__

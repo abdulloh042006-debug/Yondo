@@ -246,6 +246,7 @@ export const ru: Record<Key, string> = {
   'login.bot.open': 'Открыть Telegram-бот',
   'login.bot.steps': 'В боте нажмите «Start», затем кнопку, которая отправляет ваш номер. Код придёт в этот бот.',
   'login.bot.waiting': 'Ждём подтверждения из Telegram…',
+  'login.bot.haveCode': 'Код пришёл — ввести',
   'login.bot.expired': 'Срок действия ссылки истёк.',
   'login.bot.newLink': 'Получить новую ссылку',
   'login.bot.codeHint': 'Код пришёл в чат с ботом Yondo. Введите 6 цифр.',

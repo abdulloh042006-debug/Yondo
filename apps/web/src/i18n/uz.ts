@@ -245,6 +245,7 @@ export const uz = {
   'login.bot.open': 'Telegram botni oçiş',
   'login.bot.steps': 'Botda «Start» tugmasini bosing, keyin raqamingizni ulaşiş tugmasini bosing. Kod şu botga keladi.',
   'login.bot.waiting': 'Telegramʼdan tasdiq kutilmoqda…',
+  'login.bot.haveCode': 'Kod keldi — kiritiş',
   'login.bot.expired': 'Havolaning muddati tugadi.',
   'login.bot.newLink': 'Yangi havola oliş',
   'login.bot.codeHint': 'Kod Yondo boti bilan çatga keldi. 6 xonali kodni kiriting.',
