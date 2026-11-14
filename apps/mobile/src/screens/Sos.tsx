@@ -4,7 +4,7 @@ import { Linking, Text, View } from 'react-native';
 import { api, errorText, type Schemas } from '../api';
 import { useAuth } from '../auth';
 import { serviceLabel, t } from '../shared';
-import { useTheme } from '../theme';
+import { FONT, useTheme } from '../theme';
 import { Banner, Button, ErrorText, H2, P, Row, Sheet } from '../ui';
 import { useResource } from '../useResource';
 
@@ -13,11 +13,12 @@ import { useResource } from '../useResource';
  * phone's own dialer/SMS app; the moderator signal is recorded for manual review and is never presented as
  * "help was sent". Location sharing is not in the mobile app yet.
  */
-export function SosButton() {
+/** `ghost` = the outlined SOS pill of the web header; inside a booking it stays the carrot-filled button. */
+export function SosButton({ kind = 'danger' }: { kind?: 'danger' | 'ghost' }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button kind="danger" small label={t('sos.button')} accessibilityLabel={t('sos.buttonAria')} onPress={() => setOpen(true)} />
+      <Button kind={kind} small label={t('sos.button')} accessibilityLabel={t('sos.buttonAria')} onPress={() => setOpen(true)} />
       {open && <SosSheet onClose={() => setOpen(false)} />}
     </>
   );
@@ -52,7 +53,7 @@ function TrustedContacts() {
       {res.data && res.data.length === 0 && <P muted>{t('sos.noContacts')}</P>}
       {res.data?.map((c) => (
         <View key={c.id} style={{ gap: 6 }}>
-          <Text style={{ color: palette.fg, fontWeight: '700' }}>{c.name}</Text>
+          <Text style={{ color: palette.fg, fontFamily: FONT.bold }}>{c.name}</Text>
           <Row>
             <Button small label={t('sos.sms')} accessibilityLabel={t('sos.smsAria', { name: c.name })} onPress={() => void Linking.openURL(`sms:${c.phone_number}?&body=${body}`)} />
             <Button small kind="ghost" label={t('sos.callContact')} accessibilityLabel={t('sos.callAria', { name: c.name })} onPress={() => void Linking.openURL(`tel:${c.phone_number}`)} />

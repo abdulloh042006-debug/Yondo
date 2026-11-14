@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
 
 import { api, errorText, type Schemas } from '../api';
 import { useNav } from '../nav';
 import { serviceLabel, t } from '../shared';
-import { useTheme } from '../theme';
-import { Button, Card as Box, Chip, ChipGroup, ErrorText, Field, H1, Loading, P, Row, Screen } from '../ui';
+import { Button, Card, Chip, ChipGroup, ErrorText, Field, H1, Loading, P, Row, Screen, Tag } from '../ui';
 import { useResource } from '../useResource';
-import { CompanionImage, VerifiedTag, priceFrom, type Card } from './companion';
+import { CompanionRow, type Card as CompanionCard } from './companion';
 
 type Page = Schemas['DiscoveryPage'];
 const SERVICES = ['coffee', 'walking', 'cinema', 'shopping', 'event', 'city_friend', 'conversation', 'study'];
@@ -15,11 +13,10 @@ const LIMIT = 20;
 
 export function DiscoverScreen() {
   const nav = useNav();
-  const { palette } = useTheme();
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
   const [service, setService] = useState<string>();
-  const [extra, setExtra] = useState<Card[]>([]);
+  const [extra, setExtra] = useState<CompanionCard[]>([]);
   const [more, setMore] = useState<{ busy: boolean; done: boolean; err?: string }>({ busy: false, done: false });
   const base = { q: query, service_code: service, limit: LIMIT };
   const first = useResource(() => {
@@ -43,12 +40,17 @@ export function DiscoverScreen() {
 
   return (
     <Screen>
-      <H1>{t('discovery.h1')}</H1>
-      <P muted>{t('discovery.lead')}</P>
-      <Field label={t('discovery.searchLabel')} value={q} onChangeText={setQ} returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())} />
-      <Row>
-        <Button small label={t('discovery.search')} onPress={() => setQuery(q.trim())} />
-      </Row>
+      <Card style={{ gap: 12, padding: 20 }}>
+        <Row>
+          <Tag text={t('discovery.tag')} />
+        </Row>
+        <H1>{t('discovery.h1')}</H1>
+        <P muted>{t('discovery.lead')}</P>
+        <Field label={t('discovery.searchLabel')} value={q} onChangeText={setQ} returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())} />
+        <Row>
+          <Button small label={t('discovery.search')} onPress={() => setQuery(q.trim())} />
+        </Row>
+      </Card>
       <ChipGroup label={t('discovery.serviceType')}>
         <Chip label={t('discovery.all')} selected={!service} onPress={() => setService(undefined)} />
         {SERVICES.map((code) => (
@@ -64,24 +66,7 @@ export function DiscoverScreen() {
       )}
       {first.data && items.length === 0 && <P muted>{query || service ? t('discovery.noMatch') : t('discovery.noneVisible')}</P>}
       {items.map((card) => (
-        <Pressable
-          key={card.id}
-          role="button"
-          aria-label={t('card.open', { name: card.display_name })}
-          onPress={() => nav.push({ name: 'profile', id: card.id })}
-        >
-          <Box style={{ flexDirection: 'row', gap: 12 }}>
-            <CompanionImage card={card} size={84} />
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ color: palette.fg, fontSize: 18, fontWeight: '700' }}>{card.display_name}</Text>
-              <Text style={{ color: palette.muted }}>
-                {[card.city, card.age ? t('profile.ageYears', { n: card.age }) : null].filter(Boolean).join(' · ')}
-              </Text>
-              <VerifiedTag card={card} />
-              <Text style={{ color: palette.fg }}>{priceFrom(card)}</Text>
-            </View>
-          </Box>
-        </Pressable>
+        <CompanionRow key={card.id} card={card} onOpen={() => nav.push({ name: 'profile', id: card.id })} />
       ))}
       {more.err && <ErrorText text={more.err} />}
       {hasMore && <Button kind="ghost" label={t('discovery.more')} busy={more.busy} onPress={() => void loadMore()} />}

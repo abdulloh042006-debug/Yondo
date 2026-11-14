@@ -12,6 +12,8 @@
     "export:web": "expo export --platform web"
   },
   "dependencies": {
+    "@expo-google-fonts/manrope": "^0.4.3",
+    "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/metro-runtime": "~58.0.17",
     "expo": "~58.0.23",
     "expo-asset": "~58.0.20",
@@ -22,6 +24,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-svg": "15.16.0",
     "react-native-web": "^0.21.4"
   },
   "devDependencies": {

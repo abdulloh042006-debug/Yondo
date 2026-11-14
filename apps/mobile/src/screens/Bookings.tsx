@@ -4,7 +4,7 @@ import { api, errorText, type Schemas } from '../api';
 import { useAuth } from '../auth';
 import { useNav } from '../nav';
 import { BOOKING_STATUS, formatInstant, formatMoney, serviceLabel, t } from '../shared';
-import { useTheme } from '../theme';
+import { FONT, useTheme } from '../theme';
 import { Banner, Button, Card, ErrorText, H1, Loading, P, Row, Screen, Tag } from '../ui';
 import { useResource } from '../useResource';
 
@@ -53,7 +53,7 @@ export function BookingsScreen() {
         >
           <Card>
             <Row style={{ justifyContent: 'space-between' }}>
-              <Text style={{ color: palette.fg, fontWeight: '700', fontSize: 16 }}>{serviceLabel(b.service_code)}</Text>
+              <Text style={{ color: palette.fg, fontFamily: FONT.bold, fontSize: 16 }}>{serviceLabel(b.service_code)}</Text>
               <Tag text={BOOKING_STATUS[b.status]?.label ?? b.status} attention={ATTENTION.has(b.status)} />
             </Row>
             <P muted>{formatInstant(b.starts_at)}</P>
