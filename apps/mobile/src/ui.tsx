@@ -13,18 +13,21 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { Enter, ICONS, Icon, useReducedMotion } from './brand';
 import { t } from './shared';
-import { useTheme } from './theme';
+import { FONT, useTheme } from './theme';
 
 /** Minimum touch target (WCAG 2.5.5 / platform guidelines). */
 export const TOUCH = 44;
 
 export function Screen({ children, refresh }: { children: ReactNode; refresh?: ReactNode }) {
-  const { palette } = useTheme();
+  // Transparent: the app shell paints the paper/ink ground and the carrot aurora behind every screen.
   return (
-    <ScrollView style={{ backgroundColor: palette.bg }} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: 'transparent' }} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
       {refresh}
-      {children}
+      <Enter>
+        <View style={styles.screenInner}>{children}</View>
+      </Enter>
     </ScrollView>
   );
 }
@@ -46,7 +49,7 @@ export function P({ children, muted, style }: { children: ReactNode; muted?: boo
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   const { palette } = useTheme();
-  return <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.line }, style]}>{children}</View>;
+  return <View style={[styles.card, { backgroundColor: palette.glass, borderColor: palette.glassLine }, style]}>{children}</View>;
 }
 
 export function Row({ children, style }: { children: ReactNode; style?: ViewStyle }) {
@@ -76,6 +79,7 @@ export function Button({
   // Danger = carrot fill with INK text (carrot never carries small text on paper).
   const fg = kind === 'primary' ? palette.onPrimary : kind === 'danger' ? '#111111' : palette.fg;
   const off = disabled || busy;
+  const reduced = useReducedMotion();
   return (
     <Pressable
       role="button"
@@ -87,7 +91,8 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         small && styles.buttonSmall,
-        { backgroundColor: bg, borderColor: kind === 'ghost' ? palette.line : bg, opacity: off ? 0.5 : pressed ? 0.8 : 1 },
+        { backgroundColor: kind === 'ghost' ? palette.glass : bg, borderColor: kind === 'ghost' ? palette.glassLine : bg, opacity: off ? 0.5 : pressed ? 0.85 : 1 },
+        pressed && !reduced && { transform: [{ scale: 0.97 }] },
       ]}
     >
       {busy && <ActivityIndicator color={fg} style={{ marginRight: 8 }} />}
@@ -105,20 +110,22 @@ export function ChipGroup({ label, children }: { label: string; children: ReactN
   );
 }
 
-export function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+/** `toggle` = an on/off chip outside a radio group (role checkbox), e.g. the account's roles. */
+export function Chip({ label, selected, onPress, toggle }: { label: string; selected: boolean; onPress: () => void; toggle?: boolean }) {
   const { palette } = useTheme();
   return (
     <Pressable
-      role="radio"
+      role={toggle ? 'checkbox' : 'radio'}
       aria-checked={selected}
       aria-label={label}
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.chip,
-        { backgroundColor: selected ? palette.primary : palette.chip, borderColor: selected ? palette.accent : palette.line },
+        pressed && { opacity: 0.85 },
+        { backgroundColor: selected ? palette.primary : palette.glass, borderColor: selected ? palette.accent : palette.glassLine },
       ]}
     >
-      <Text style={{ color: selected ? palette.onPrimary : palette.fg, fontWeight: '600' }}>{label}</Text>
+      <Text style={{ color: selected ? palette.onPrimary : palette.fg, fontFamily: FONT.medium }}>{label}</Text>
     </Pressable>
   );
 }
@@ -132,10 +139,10 @@ export function Field({ label, error, hint, ...input }: TextInputProps & { label
         aria-label={label}
         aria-invalid={!!error}
         placeholderTextColor={palette.muted}
-        style={[styles.input, { color: palette.fg, backgroundColor: palette.surface, borderColor: error ? palette.accent : palette.line }]}
+        style={[styles.input, { color: palette.fg, backgroundColor: palette.glass, borderColor: error ? palette.accent : palette.glassLine }]}
         {...input}
       />
-      {hint && !error && <Text style={{ color: palette.muted, fontSize: 13 }}>{hint}</Text>}
+      {hint && !error && <Text style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.body }}>{hint}</Text>}
       {error && <ErrorText text={error} />}
     </View>
   );
@@ -146,7 +153,7 @@ export function ErrorText({ text }: { text: string }) {
   const { palette } = useTheme();
   return (
     <View role="alert" style={[styles.note, { borderLeftColor: palette.accent }]}>
-      <Text style={{ color: palette.fg }}>{text}</Text>
+      <Text style={{ color: palette.fg, fontFamily: FONT.body }}>{text}</Text>
     </View>
   );
 }
@@ -154,8 +161,8 @@ export function ErrorText({ text }: { text: string }) {
 export function Banner({ text }: { text: string }) {
   const { palette } = useTheme();
   return (
-    <View role="status" style={[styles.note, { borderLeftColor: palette.accent, backgroundColor: palette.chip }]}>
-      <Text style={{ color: palette.fg }}>{text}</Text>
+    <View role="status" style={[styles.note, { borderLeftColor: palette.accent, backgroundColor: palette.glass }]}>
+      <Text style={{ color: palette.fg, fontFamily: FONT.body }}>{text}</Text>
     </View>
   );
 }
@@ -164,7 +171,7 @@ export function Tag({ text, attention }: { text: string; attention?: boolean }) 
   const { palette } = useTheme();
   return (
     <View style={[styles.tag, { backgroundColor: palette.chip, borderColor: attention ? palette.accent : palette.line }]}>
-      <Text style={{ color: palette.fg, fontSize: 13, fontWeight: '600' }}>{text}</Text>
+      <Text style={{ color: palette.fg, fontSize: 13, fontFamily: FONT.medium }}>{text}</Text>
     </View>
   );
 }
@@ -224,12 +231,41 @@ export function useConfirm() {
   return { ask: setPending, element };
 }
 
+/**
+ * One row of the Profil hub menu (the web's .menu-item). `web` marks a row that opens the web app in the browser:
+ * it says so in words and shows the external-link icon, so it is never mistaken for a native screen.
+ */
+export function MenuRow({ title, hint, badge, web, onPress }: { title: string; hint?: string; badge?: string; web?: boolean; onPress: () => void }) {
+  const { palette } = useTheme();
+  const reduced = useReducedMotion();
+  const label = [title, badge, hint, web ? t('mobile.opensInWeb') : null].filter(Boolean).join('. ');
+  return (
+    <Pressable
+      role={web ? 'link' : 'button'}
+      aria-label={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuRow, { borderColor: palette.glassLine }, pressed && { backgroundColor: palette.pill }, pressed && !reduced && { transform: [{ scale: 0.99 }] }]}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <View style={styles.row}>
+          <Text style={{ color: palette.fg, fontSize: 16, fontFamily: FONT.bold }}>{title}</Text>
+          {badge && <Tag text={badge} attention />}
+        </View>
+        {hint && <Text style={{ color: palette.muted, fontSize: 14, fontFamily: FONT.body }}>{hint}</Text>}
+        {web && <Text style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.medium }}>{t('mobile.opensInWeb')}</Text>}
+      </View>
+      <Icon d={web ? ICONS.external : ICONS.chevron} size={20} color={palette.muted} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  screen: { padding: 16, gap: 14, paddingBottom: 48 },
-  h1: { fontSize: 26, fontWeight: '700' },
-  h2: { fontSize: 20, fontWeight: '700' },
-  p: { fontSize: 16, lineHeight: 22 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 14, gap: 8 },
+  screen: { padding: 16, paddingBottom: 32 },
+  screenInner: { gap: 14 },
+  h1: { fontSize: 30, lineHeight: 34, fontFamily: FONT.display, letterSpacing: -0.3 },
+  h2: { fontSize: 21, lineHeight: 26, fontFamily: FONT.display },
+  p: { fontSize: 16, lineHeight: 23, fontFamily: FONT.body },
+  card: { borderWidth: 1, borderRadius: 22, padding: 16, gap: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   button: {
     minHeight: TOUCH,
@@ -241,12 +277,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonSmall: { paddingHorizontal: 14 },
-  buttonText: { fontSize: 16, fontWeight: '700' },
+  buttonText: { fontSize: 16, fontFamily: FONT.bold },
   chip: { minHeight: TOUCH, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, justifyContent: 'center' },
-  label: { fontSize: 15, fontWeight: '600' },
-  input: { minHeight: TOUCH, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, fontSize: 16 },
+  label: { fontSize: 15, fontFamily: FONT.medium },
+  input: { minHeight: TOUCH, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, fontSize: 16, fontFamily: FONT.body },
   note: { borderLeftWidth: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 6 },
-  tag: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  menuRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  tag: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,17,17,0.55)' },
   sheet: { maxHeight: '88%', borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1, padding: 16 },
 });

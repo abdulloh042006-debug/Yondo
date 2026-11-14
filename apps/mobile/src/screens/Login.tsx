@@ -5,8 +5,8 @@ import { ApiError, WEB_URL, errorText } from '../api';
 import { useAuth } from '../auth';
 import { useNav, type Route } from '../nav';
 import { dedupePhonePrefix, t } from '../shared';
-import { useTheme } from '../theme';
-import { Banner, Button, ErrorText, Field, H1, P, Row, Screen } from '../ui';
+import { FONT, useTheme } from '../theme';
+import { Banner, Button, Card, ErrorText, Field, H1, MenuRow, P, Row, Screen } from '../ui';
 
 const PHONE = /^\+998\d{9}$/;
 
@@ -60,6 +60,11 @@ export function LoginScreen({ then }: { then?: Route }) {
   const wait = step ? Math.max(0, Math.ceil((step.resendAt - now) / 1000)) : 0;
   return (
     <Screen>
+      {nav.canGoBack && (
+        <Row>
+          <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
+        </Row>
+      )}
       <H1>{t('login.title')}</H1>
       <P muted>{t('login.lead')}</P>
       {!step ? (
@@ -72,7 +77,7 @@ export function LoginScreen({ then }: { then?: Route }) {
         <>
           <P>
             {t('login.codeSentBefore')}
-            <Text style={{ fontWeight: '700' }}>{phone}</Text>
+            <Text style={{ fontFamily: FONT.bold }}>{phone}</Text>
             {t('login.codeSentAfter')}
           </P>
           {step.devOtp && (
@@ -95,6 +100,10 @@ export function LoginScreen({ then }: { then?: Route }) {
         </>
       )}
       <P muted>{t('login.disclaimer')}</P>
+      {/* As on the web login page: Settings is reachable before signing in (language, alphabet, theme). */}
+      <Card style={{ gap: 0, paddingVertical: 8 }}>
+        <MenuRow title={t('settings.link')} hint={t('settings.linkHint')} onPress={() => nav.push({ name: 'settings' })} />
+      </Card>
     </Screen>
   );
 }
@@ -121,7 +130,7 @@ export function ConsentCheck({ checked, onChange }: { checked: boolean; onChange
             backgroundColor: checked ? palette.primary : 'transparent',
           }}
         />
-        <Text style={{ color: palette.fg, flex: 1, fontSize: 15 }}>{t('legal.agree')}</Text>
+        <Text style={{ fontFamily: FONT.body, color: palette.fg, flex: 1, fontSize: 15 }}>{t('legal.agree')}</Text>
       </Pressable>
       {WEB_URL ? (
         <Row>
@@ -129,7 +138,7 @@ export function ConsentCheck({ checked, onChange }: { checked: boolean; onChange
           <Button kind="ghost" small label={t('legal.privacy')} onPress={() => void Linking.openURL(`${WEB_URL}/privacy`)} />
         </Row>
       ) : (
-        <Text style={{ color: palette.muted }}>{t('mobile.webMissing')}</Text>
+        <Text style={{ fontFamily: FONT.body, color: palette.muted }}>{t('mobile.webMissing')}</Text>
       )}
     </View>
   );

@@ -5,7 +5,8 @@ import { ApiError, api, errorText, type Schemas } from '../api';
 import { useAuth } from '../auth';
 import { useNav } from '../nav';
 import { formatMoney, serviceLabel, t } from '../shared';
-import { useTheme } from '../theme';
+import { HeartButton } from '../favorites';
+import { FONT, useTheme } from '../theme';
 import { Banner, Button, Card as Box, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
 import { CompanionImage, VerifiedTag, type Card } from './companion';
@@ -48,12 +49,19 @@ export function ProfileScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
+      <Row>
+        <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
+      </Row>
+      <View>
+        <CompanionImage card={c} />
+        <View style={{ position: 'absolute', top: 12, right: 12 }}>
+          <HeartButton id={c.id} name={c.display_name} />
+        </View>
+      </View>
       <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <CompanionImage card={c} size={112} />
         <View style={{ flex: 1, gap: 6 }}>
           <H1>{c.display_name}</H1>
-          <Text style={{ color: palette.muted }}>
+          <Text style={{ color: palette.muted, fontFamily: FONT.body, fontSize: 15 }}>
             {[c.city, c.age ? t('profile.ageYears', { n: c.age }) : null].filter(Boolean).join(' · ')}
           </Text>
           <VerifiedTag card={c} />
@@ -65,9 +73,9 @@ export function ProfileScreen({ id }: { id: string }) {
       {c.services.length === 0 && <P muted>{t('profile.noServices')}</P>}
       {c.services.map((s) => (
         <Box key={s.id}>
-          <Text style={{ color: palette.fg, fontWeight: '700', fontSize: 16 }}>{serviceLabel(s.service_code)}</Text>
+          <Text style={{ color: palette.fg, fontFamily: FONT.bold, fontSize: 16 }}>{serviceLabel(s.service_code)}</Text>
           {!!s.description && <P muted>{s.description}</P>}
-          <Text style={{ color: palette.fg }}>{`${formatMoney(s.price_minor, s.currency)} / ${t('common.minutesShort', { n: s.unit_minutes })}`}</Text>
+          <Text style={{ fontFamily: FONT.body, color: palette.fg }}>{`${formatMoney(s.price_minor, s.currency)} / ${t('common.minutesShort', { n: s.unit_minutes })}`}</Text>
         </Box>
       ))}
       <P muted>{t('profile.bookNote')}</P>

@@ -866,11 +866,13 @@ export const uz = {
   // --- mobile app (apps/mobile shares these dictionaries)
   'mobile.day': 'Kun',
   'mobile.time': 'Vaqt (soat:daqiqa)',
-  'mobile.webOnly': 'Çat, uçraşuv, şarhlar, sevimlilar va hamroh studiyasi hozirça faqat veb-ilovada.',
+  'mobile.webOnly': 'Çat, uçraşuv va şarhlar hozirça faqat veb-ilovada.',
   'mobile.enableCustomer': 'Mijoz rolini yoqiş',
   'mobile.themeSystem': 'Qurilma böyiça',
   'mobile.webMissing': 'Veb-ilova manzili sozlanmagan (EXPO_PUBLIC_WEB_URL).',
   'intro.slogan': 'doim yoningda',
   'mobile.loginForBookings': 'Bronlaringizni köriş uçun hisobingizga kiring.',
+  'mobile.documents': 'Hujjatlar',
+  'mobile.opensInWeb': 'Veb-ilovada oçiladi',
 };
 export type Key = keyof typeof uz;

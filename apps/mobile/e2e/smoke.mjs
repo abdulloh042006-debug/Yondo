@@ -48,6 +48,7 @@ const tab = (name) => page.getByRole('tab', { name, exact: true }).click();
 const button = (name) => page.getByRole('button', { name, exact: true });
 async function axe(label) {
   assert(AXE_PATH, 'axe-core not found: run npm ci in apps/web (or apps/mobile) first');
+  await page.waitForTimeout(450); // let the 320 ms screen enter fade finish (a half-faded frame reads as low contrast)
   await page.addScriptTag({ content: readFileSync(AXE_PATH, 'utf8') });
   const v = await page.evaluate(async () => {
     const r = await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'], resultTypes: ['violations'] });
@@ -79,6 +80,20 @@ await step('discovery lists the DEMO companions (anonymous, API data)', async ()
   await axe('discovery');
 });
 
+await step('signed out: the dock is Discover · Sign in (as on the web); Settings opens from Sign in', async () => {
+  const names = await page.getByRole('tab').allInnerTexts();
+  assert(names.join('|') === 'Discover|Sign in', `signed-out tabs: ${names.join('|')}`);
+  await tab('Sign in');
+  await page.getByLabel('Phone number').waitFor();
+  await page.getByRole('button', { name: /^Settings/ }).click();
+  await page.getByRole('heading', { name: 'Settings' }).waitFor();
+  await button('← Back').click();
+  await page.getByLabel('Phone number').waitFor();
+  await axe('sign in');
+  await tab('Discover');
+  await page.getByText('DEMO Madina').first().waitFor();
+});
+
 await step('profile -> book -> login with the development code -> back on the profile', async () => {
   await page.getByRole('button', { name: /DEMO Madina/ }).first().click();
   await page.getByText('Services and prices').waitFor();
@@ -88,13 +103,22 @@ await step('profile -> book -> login with the development code -> back on the pr
   await page.getByText('Services and prices').waitFor({ timeout: 15000 });
 });
 
+await step('signed in: the dock is Discover · Favourites · Bookings · Profile, Settings is not a tab', async () => {
+  const names = await page.getByRole('tab').allInnerTexts();
+  assert(names.join('|') === 'Discover|Favourites|Bookings|Profile', `signed-in tabs: ${names.join('|')}`);
+});
+
 await step('booking form sends exactly the 5 fields and the booking appears as pending', async () => {
   const sent = [];
   page.on('request', (r) => r.method() === 'POST' && r.url().endsWith('/api/v1/bookings') && sent.push(r.postDataJSON()));
   await button('Book').click();
-  const chips = page.getByRole('radio', { name: /^\d{2}\.\d{2}$/ });
-  await chips.nth(2).click();
-  await page.getByLabel('Time (hh:mm)').fill('18:30');
+  // The DEMO seed opens Madina's availability for [now+2d, now+2d+7h] and books now+2d+1h itself, so pick now+2d+4h
+  // (Tashkent wall time, 5-minute steps): clear of the seed booking at any time of day.
+  const slot = new Date(Math.floor((Date.now() + 2 * 864e5 + 4 * 36e5) / 3e5) * 3e5);
+  const local = new Date(slot.getTime() + 5 * 36e5); // Asia/Tashkent = UTC+05:00
+  const p2 = (n) => String(n).padStart(2, '0');
+  await page.getByRole('radio', { name: `${p2(local.getUTCDate())}.${p2(local.getUTCMonth() + 1)}`, exact: true }).click();
+  await page.getByLabel('Time (hh:mm)').fill(`${p2(local.getUTCHours())}:${p2(local.getUTCMinutes())}`);
   await page.getByLabel('Meeting place').fill('DEMO Amir Temur square');
   await button('Send request').click();
   await page.getByText('DEMO Amir Temur square').first().waitFor({ timeout: 15000 });
@@ -102,7 +126,7 @@ await step('booking form sends exactly the 5 fields and the booking appears as p
   assert(sent.length === 1, `POST /bookings count ${sent.length}`);
   const keys = Object.keys(sent[0]).sort().join(',');
   assert(keys === 'duration_minutes,meeting_place,service_id,starts_at,timezone', `fields: ${keys}`);
-  assert(/T13:30:00\.000Z$/.test(sent[0].starts_at), `18:30 Tashkent must be 13:30Z, got ${sent[0].starts_at}`);
+  assert(sent[0].starts_at === slot.toISOString(), `Tashkent ${p2(local.getUTCHours())}:${p2(local.getUTCMinutes())} must be ${slot.toISOString()}, got ${sent[0].starts_at}`);
   assert(sent[0].timezone === 'Asia/Tashkent', 'timezone');
   await noSideScroll('bookings');
   await axe('bookings');
@@ -125,9 +149,9 @@ await step('booking detail: report goes by booking_id only; payment not offered 
 });
 
 await step('companion accepts the booking (role mode in the same app)', async () => {
-  await tab('Settings');
+  await tab('Profile');
   await button('Sign out').click();
-  await button('Sign in').click();
+  await tab('Sign in');
   await login(MADINA);
   await tab('Bookings');
   await page.getByText('DEMO Amir Temur square').first().waitFor({ timeout: 15000 });
@@ -140,9 +164,9 @@ await step('companion accepts the booking (role mode in the same app)', async ()
 await step('customer pays: no provider configured => shown as unavailable, never as declined', async () => {
   const keys = [];
   page.on('request', (r) => r.method() === 'POST' && r.url().includes('/payments/bookings/') && keys.push(r.headers()['idempotency-key']));
-  await tab('Settings');
+  await tab('Profile');
   await button('Sign out').click();
-  await button('Sign in').click();
+  await tab('Sign in');
   await login(CUSTOMER);
   await tab('Bookings');
   await page.getByRole('button', { name: 'Details' }).filter({ hasText: 'DEMO Amir Temur square' }).first().click();
@@ -157,18 +181,49 @@ await step('customer pays: no provider configured => shown as unavailable, never
   assert(keys.length === 2 && keys[0] && keys[0] === keys[1], `idempotency keys ${keys.join(' / ')}`);
 });
 
+await step('favourites: the heart saves a companion (PUT) and Favourites lists it from the API', async () => {
+  await tab('Discover');
+  await page.getByRole('button', { name: /^Add DEMO Madina to favourites|DEMO Madina.*favourites/ }).first().click();
+  await page.getByText(/Added to favourites/i).first().waitFor();
+  await tab('Favourites');
+  await page.getByText('DEMO Madina').first().waitFor();
+  await noSideScroll('favourites');
+  await axe('favourites');
+});
+
+await step('profile hub: every row leads somewhere (native screen or a labelled web page)', async () => {
+  await tab('Profile');
+  await page.getByRole('heading', { name: 'My account' }).waitFor();
+  await axe('profile hub');
+  await page.getByRole('button', { name: /^Bookings\./ }).click();
+  assert((await page.getByRole('tab', { name: 'Bookings' }).getAttribute('aria-selected')) === 'true', 'Bookings row');
+  await tab('Profile');
+  await page.getByRole('button', { name: /^Favourites\./ }).click();
+  assert((await page.getByRole('tab', { name: 'Favourites' }).getAttribute('aria-selected')) === 'true', 'Favourites row');
+  await tab('Profile');
+  const web = process.env.WEB_URL;
+  if (web) {
+    for (const [name, path] of [[/^Notifications/, '/notifications'], [/^Help and safety/, '/help'], [/^Delete account/, '/account'], [/^Terms of use/, '/terms'], [/^Privacy policy/, '/privacy']]) {
+      const [popup] = await Promise.all([page.waitForEvent('popup'), page.getByRole('link', { name }).click()]);
+      assert(popup.url().startsWith(web + path), `${name} opened ${popup.url()}`);
+      await popup.close();
+    }
+  }
+  await page.getByRole('button', { name: /^Settings\./ }).click();
+  await page.getByRole('heading', { name: 'Settings' }).waitFor();
+});
+
 await step('settings: Russian, Uzbek alphabets and the night theme apply in place', async () => {
-  await tab('Settings');
-  await page.getByRole('radio', { name: 'Русский' }).click();
+  await page.getByRole('radio', { name: 'Русский' }).last().click();
   await page.getByRole('tab', { name: 'Брони' }).waitFor();
-  await page.getByRole('radio', { name: /^O‘zbekcha$/ }).click();
+  await page.getByRole('radio', { name: /^O‘zbekcha$/ }).last().click();
   await page.getByRole('radio', { name: /^Özbekça \(ö ğ ş ç\)/ }).click();
   await page.getByRole('tab', { name: 'Kaşf' }).waitFor();
   await page.getByRole('radio', { name: /^O‘zbekcha \(o‘ g‘ sh ch\)/ }).click();
   await page.getByRole('tab', { name: 'Kashf' }).waitFor();
   await page.getByRole('radio', { name: 'Yondo tungi', exact: true }).click();
   const bg = await page.evaluate(() => getComputedStyle(document.querySelector('[role="tablist"]')).backgroundColor);
-  assert(bg === 'rgb(17, 17, 17)', `night theme tab bar ${bg}`);
+  assert(/^rgba?\(17, 17, 17/.test(bg), `night theme tab bar ${bg}`);
   await noSideScroll('settings');
   await axe('settings (night)');
 });

@@ -19,7 +19,7 @@
     "android": {
       "package": "uz.yondo.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/splash.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5F2EC",
         "monochromeImage": "./assets/adaptive-monochrome.png"
       }

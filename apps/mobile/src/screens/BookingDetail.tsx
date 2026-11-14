@@ -62,7 +62,9 @@ export function BookingDetailScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <Button kind="ghost" small label={t('bd.back')} onPress={nav.back} />
+      <Row>
+        <Button kind="ghost" small label={t('bd.back')} onPress={nav.back} />
+      </Row>
       <H1>{t('bd.title')}</H1>
       <Row>
         <Tag text={BOOKING_STATUS[b.status]?.label ?? b.status} attention={ATTENTION.has(b.status)} />
