@@ -104,6 +104,14 @@ Google and Telegram are separate login providers. Sending OTP codes through Tele
 8. Do not turn on real payment integrations or real payments without the owner's separate permission.
 9. Never report unfinished work as done.
 
+## 8. Profile photos, likes, discovery filters and cards (owner, 2026-11-14)
+
+- **Photos:** every user (customer and companion) may have profile photos, **at most 6** visible per user (server-enforced). A companion's photos are public, as before. A **customer's** photos are seen only by the companion(s) the customer has sent a booking request to (any booking status), by the customer, and by admins (moderation); never in discovery, never by other users. Clients reach them only through `booking_id` (`/user-photos/bookings/{booking_id}`), so no customer user id is exposed. A block between the two (either direction) hides them.
+- **Likes:** any signed-in user can like a companion profile, once, and remove it. The like count is public (profile and discovery). Likes are separate from favourites (favourites stay private). No one can like their own profile.
+- **Discovery:** filters/sort by category (`service_code`), minimum stars (`rating_min`), most completed meetings and most likes (`sort=rating|meetings|likes`, ties by profile id).
+- **Stars** come only from a review after a **completed** meeting, about that companion, for that profile.
+- **Cards ("Kartochkalar"):** one card at a time (service category, name, city, first photo, price from, stars, likes). Actions: "Saqlash" (= favourite) and "Keyingisi" (skip, client-side only). **No dislike of people and no "match"/dating mechanic** (Yondo is never a dating app).
+
 ## What is already in the code (2026-11-06)
 
 | Area | Status |

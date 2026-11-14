@@ -16,6 +16,8 @@ from yondo_api.companions.models import CompanionPhoto
 from yondo_api.companions.schemas import PhotoCaption, PhotoDownload, PhotoOrder, PhotoResponse
 
 router = APIRouter(prefix='/companions/me/photos', tags=['companion photos'])
+# Owner rule (2026-11-14): at most 6 visible profile photos per user, companions and customers.
+PROFILE_PHOTO_LIMIT = 6
 IMAGE_TYPES = {'JPEG': 'image/jpeg', 'PNG': 'image/png', 'WEBP': 'image/webp'}
 
 
@@ -94,7 +96,7 @@ async def upload_photo(request: Request, owner: Owner, session: Session):
         .select_from(CompanionPhoto)
         .where(CompanionPhoto.profile_id == profile.id)
     )
-    if retained_count >= settings.companion_max_photos:
+    if retained_count >= settings.companion_max_photos or len(photos) >= PROFILE_PHOTO_LIMIT:
         raise ApplicationError('photo_limit', 'Configured photo limit reached', 422)
     content_type = request.headers.get('content-type', '').split(';')[0].strip()
     if content_type not in IMAGE_TYPES.values():
@@ -217,12 +219,12 @@ async def reconcile_failed_save(request: Request, storage, photo: CompanionPhoto
     try:
         with CancelScope(shield=True):
             async with request.app.state.db_session_factory() as reconciliation:
-                persisted = await reconciliation.get(CompanionPhoto, photo.id)
+                persisted = await reconciliation.get(type(photo), photo.id)
     except Exception:
         # Database outcome is unknown. Preserve the object and log its private key;
         # reconciliation can compare it with committed photo metadata later.
         logging.getLogger(__name__).exception(
-            'Companion photo commit outcome is unknown: storage_key=%s',
+            'Photo commit outcome is unknown: storage_key=%s',
             photo.storage_key,
             extra={'storage_key': photo.storage_key},
         )

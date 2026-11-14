@@ -87,7 +87,16 @@ try {
   // default is the 1995 alphabet, so every context starts on 2026 unless a step chose otherwise; the default
   // itself is covered by the "Uzbek alphabet" step, which uses a context without this script.
   const NEW_ALPHABET_DEFAULT = Date.now() >= Date.parse('2027-04-22T00:00:00+05:00');
-  const ctx = async (opts = {}) => {
+  // The opening animation (index.html + ui/Intro.tsx) covers the home page until its first list has arrived. Every
+  // context switches it off, except the "opening animation" steps, which ask for it with `intro: true`.
+  const noIntro = () => {
+    try {
+      localStorage.setItem('yondo.intro.off', '1');
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  const ctx = async ({ intro = false, ...opts } = {}) => {
     const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ', ...opts });
     await c.addInitScript(() => {
       try {
@@ -96,6 +105,7 @@ try {
         /* storage unavailable */
       }
     });
+    if (!intro) await c.addInitScript(noIntro);
     return c;
   };
 
@@ -805,6 +815,7 @@ try {
   });
   await step('Uzbek alphabet: date-based default, Settings switch, and search matches both spellings', async () => {
     const fresh = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'uz-UZ' });
+    await fresh.addInitScript(noIntro);
     const fp = await fresh.newPage();
     watch(fp, 'alphabet');
     try {
@@ -846,6 +857,239 @@ try {
       }
     });
   }
+  /* ------------------------------------------------------- opening animation */
+  // The animation is part of index.html and leaves when the first screen is ready (src/ui/Intro.tsx). To look at it
+  // at a known moment these steps hold the home page's first list request and let it go when they are done.
+  const LIST = '**/api/v1/discovery/companions**';
+  const holdList = async (p) => {
+    const held = [];
+    await p.route(LIST, (route) => void held.push(route));
+    return async () => {
+      await p.unroute(LIST);
+      await Promise.all(held.map((route) => route.continue().catch(() => {})));
+    };
+  };
+  const useTheme = (id) => {
+    try {
+      localStorage.setItem('yondo.theme', id);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  // how long the overlay stayed, measured in the page from the moment index.html chose the mode
+  const stopwatch = () => {
+    let seen = false;
+    new MutationObserver(() => {
+      const on = !!document.getElementById('yi');
+      if (window.__yondoIntro?.app && window.__introApp === undefined) window.__introApp = performance.now() - window.__yondoIntro.t0;
+      if (on) seen = true;
+      else if (seen && window.__introGone === undefined) window.__introGone = performance.now() - window.__yondoIntro.t0;
+    }).observe(document, { childList: true, subtree: true });
+  };
+  // Where the visible mark is just before and at the moment the exit starts (an early exit must not jump), and where
+  // the flight ends. Timers and a MutationObserver, not animation frames: a headless page may draw very few of them.
+  const markTrack = () => {
+    const centre = (sel) => {
+      const r = document.querySelector(sel).getBoundingClientRect();
+      return [r.left + r.width / 2, r.top + r.height / 2, r.width];
+    };
+    let before = null;
+    const iv = setInterval(() => {
+      const el = document.getElementById('yi');
+      if (el && !el.classList.contains('yi-land') && el.querySelector('.yi-sym')) before = centre('.yi-sym');
+    }, 20);
+    new MutationObserver(() => {
+      const el = document.getElementById('yi');
+      if (!el || !el.classList.contains('yi-land') || window.__exit) return;
+      clearInterval(iv);
+      const at = centre('.yi-sym'); // the flight is at its first instant
+      for (const a of document.getAnimations()) if (a.effect?.target?.closest?.('#yi')) a.finish(); // ... and now at its end
+      window.__exit = { before, at, end: centre('.yi-sym'), logo: centre('.brand .brand-mark') };
+    }).observe(document, { attributes: true, attributeFilter: ['class'], subtree: true });
+  };
+  const yi = (p, mode) => p.locator(`html[data-intro=${mode}] #yi`);
+  for (const [theme, viewport] of [['yondo', { width: 390, height: 844 }], ['yondo-tun', { width: 1280, height: 900 }]]) {
+    await step(`opening animation [${theme}, ${viewport.width}px]: on screen while the first list loads, axe clean, lands on the header logo when it arrives`, async () => {
+      const c = await ctx({ intro: true, viewport });
+      await c.addInitScript(useTheme, theme);
+      const ip = await c.newPage();
+      watch(ip, `intro ${theme}`);
+      try {
+        await ip.bringToFront(); // a page in the background draws no frames, and these steps look at animated state
+        const release = await holdList(ip);
+        await ip.goto(WEB, { waitUntil: 'commit' });
+        await yi(ip, 'full').waitFor();
+        await ip.waitForFunction(() => window.__yondoIntro?.app === true); // the app has mounted underneath and taken over
+        const at = await ip.evaluate(() => ({
+          inert: document.getElementById('root').inert,
+          seen: localStorage.getItem('yondo.intro.v1'),
+          theme: document.documentElement.dataset.theme,
+          ground: getComputedStyle(document.querySelector('.yi-ground')).backgroundColor,
+          buttons: document.querySelectorAll('#yi button:not(#yi-retry)').length,
+          message: document.getElementById('yi-msg').hidden,
+        }));
+        assert(at.inert, 'the app under the overlay must be inert');
+        assert(at.seen === '1', 'the first-run flag is written when the app takes over');
+        assert(at.theme === theme, `theme ${at.theme}`);
+        assert(at.ground === (theme === 'yondo-tun' ? 'rgb(17, 17, 17)' : 'rgb(245, 242, 236)'), `ground colour ${at.ground}`);
+        assert(at.buttons === 0 && at.message, 'no skip button and no fallback message');
+        await ip.waitForTimeout(3300); // the 2.5 s piece is over and the list has still not arrived
+        await ip.waitForFunction(() => getComputedStyle(document.querySelector('.yi-slogan')).opacity === '1', null, { timeout: 3000 }).catch(() => {});
+        const mid = await ip.evaluate(() => ({
+          up: !!document.getElementById('yi') && !document.getElementById('yi').classList.contains('yi-land'),
+          slogan: document.querySelector('.yi-slogan').textContent,
+          said: getComputedStyle(document.querySelector('.yi-slogan')).opacity,
+          pulse: document.getAnimations().some((a) => a.effect?.target?.classList?.contains('yi-ring1') && a.playState === 'running'),
+          logo: getComputedStyle(document.querySelector('.brand .brand-mark')).opacity,
+        }));
+        assert(mid.up, 'it must stay while the first screen is not ready');
+        assert(mid.slogan === 'doim yoningda' && mid.said === '1', `slogan "${mid.slogan}" opacity ${mid.said}`);
+        assert(mid.pulse, 'the slow pulse must run while it waits');
+        assert(mid.logo === '0', 'the header logo waits while the flying mark is on its way');
+        await axeScan(ip, `opening animation [${theme}]`);
+        await release();
+        await ip.locator('#yi.yi-land').waitFor({ state: 'attached' });
+        const off = await ip.evaluate(() => {
+          for (const a of document.getAnimations()) if (a.effect?.target?.closest?.('#yi')) a.finish(); // jump to the end of the flight
+          const a = document.querySelector('.yi-sym').getBoundingClientRect();
+          const b = document.querySelector('.brand .brand-mark').getBoundingClientRect();
+          return [a.left - b.left, a.top - b.top, a.width - b.width, a.height - b.height].map((v) => Math.round(Math.abs(v) * 10) / 10);
+        });
+        assert(Math.max(...off) <= 1, `the mark must land exactly on the header logo, off by ${off.join('/')} px`);
+        await ip.locator('#yi').waitFor({ state: 'detached', timeout: 3000 });
+        await ip.waitForFunction(() => getComputedStyle(document.querySelector('.brand .brand-mark')).opacity === '1');
+        const after = await ip.evaluate(() => ({ inert: document.getElementById('root').inert, on: document.documentElement.classList.contains('yi-on'), mode: document.documentElement.dataset.intro }));
+        assert(!after.inert && !after.on && after.mode === 'done', 'the app must be usable once it has left');
+        await ip.getByText('DEMO Madina').first().click({ trial: true }); // and clickable
+      } finally {
+        await c.close();
+      }
+    });
+  }
+  await step('opening animation: a quick start is not held back (no 2.5 s wait), a start that never finishes is let go at the 6 s cap', async () => {
+    const c = await ctx({ intro: true });
+    await c.addInitScript(stopwatch);
+    await c.addInitScript(markTrack);
+    const ip = await c.newPage();
+    watch(ip, 'intro timing');
+    try {
+      await ip.bringToFront();
+      await ip.goto(WEB, { waitUntil: 'commit' });
+      await ip.waitForFunction(() => window.__introGone !== undefined, null, { timeout: 5000 });
+      // It may leave once the mark has formed (0.7 s) and the first list has arrived, whichever is later; the flight takes 0.62 s.
+      const q = await ip.evaluate(() => {
+        const list = performance.getEntriesByType('resource').find((r) => r.name.includes('/discovery/companions'));
+        return { gone: Math.round(window.__introGone), app: Math.round(window.__introApp), list: list ? Math.round(list.responseEnd - window.__yondoIntro.t0) : null };
+      });
+      const due = Math.max(700, q.list ?? 0) + 620;
+      assert(q.list !== null && q.gone >= due - 100 && q.gone < due + 400, `quick start: gone after ${q.gone} ms, expected about ${due} ms (app took over at ${q.app} ms, list arrived at ${q.list} ms)`);
+      assert(q.gone < 2400, `quick start: ${q.gone} ms is not quick (list at ${q.list} ms)`);
+      // At this early exit the mark is still in the middle of the frame: the flight must start from there, not jump,
+      // and still end exactly on the header logo.
+      const x = await ip.evaluate(() => window.__exit);
+      assert(x?.before, 'the exit was not observed');
+      const jump = Math.hypot(x.at[0] - x.before[0], x.at[1] - x.before[1]);
+      assert(Math.abs(x.before[0] - 640) < 12, `before the exit the mark should be in the middle of the 1280 px frame, was at x ${Math.round(x.before[0])}`);
+      assert(jump <= 6, `the mark jumped ${Math.round(jump)} px at the moment the exit started (x ${Math.round(x.before[0])} -> ${Math.round(x.at[0])})`);
+      const miss = Math.max(Math.abs(x.end[0] - x.logo[0]), Math.abs(x.end[1] - x.logo[1]), Math.abs(x.end[2] - x.logo[2]));
+      assert(miss <= 1.5, `an early exit must land on the header logo too, off by ${miss.toFixed(1)} px`);
+      await ip.getByText('DEMO Madina').first().click({ trial: true });
+
+      await ip.evaluate(() => localStorage.removeItem('yondo.intro.v1')); // a first visit again, this time the list never answers
+      const release = await holdList(ip);
+      await ip.goto(WEB, { waitUntil: 'commit' });
+      await yi(ip, 'full').waitFor();
+      await ip.waitForFunction(() => window.__introGone !== undefined, null, { timeout: 9000 });
+      const slow = await ip.evaluate(() => window.__introGone);
+      assert(slow >= 6000 && slow < 7600, `no answer: gone after ${Math.round(slow)} ms (cap 6 s + flight)`);
+      await ip.locator('.skeleton').first().waitFor(); // the page shows its own loading state
+      assert(!(await ip.evaluate(() => document.getElementById('root').inert)), 'the app must be usable after the cap');
+      await release();
+      await ip.getByText('DEMO Madina').first().waitFor();
+    } finally {
+      await c.close();
+    }
+  });
+  for (const theme of ['yondo', 'yondo-tun']) {
+    await step(`opening animation [${theme}]: when the app's code cannot be loaded it says "no connection" with a retry button instead of animating for ever`, async () => {
+      const c = await ctx({ intro: true });
+      await c.addInitScript(useTheme, theme);
+      const ip = await c.newPage(); // not watched: the failed script load is the point of this step
+      try {
+        await ip.bringToFront();
+        await ip.route('**/assets/*.js', (route) => route.abort());
+        await ip.goto(WEB, { waitUntil: 'commit' });
+        await ip.getByRole('alert').getByText('Aloqa yöq. Internetni tekşirib, qayta urinib köring.').waitFor();
+        const retry = ip.getByRole('button', { name: 'Qayta uriniş' });
+        await retry.waitFor();
+        assert(!(await ip.evaluate(() => document.getAnimations().some((a) => a.effect?.target?.classList?.contains('yi-ring') && a.playState === 'running'))), 'the pulse must stop');
+        assert((await ip.evaluate(() => localStorage.getItem('yondo.intro.v1'))) === null, 'a failed start must not spend the first run');
+        await axeScan(ip, `opening animation, no connection [${theme}]`);
+        await ip.unroute('**/assets/*.js');
+        await retry.click(); // reloads the page
+        await ip.getByText('DEMO Madina').first().waitFor();
+        await ip.locator('#yi').waitFor({ state: 'detached', timeout: 5000 });
+      } finally {
+        await c.close();
+      }
+    });
+  }
+  await step('opening animation: deep links show nothing, Escape dismisses, later visits get the short form, reduced motion gets one still frame, the switch-off key silences it', async () => {
+    const c = await ctx({ intro: true });
+    const ip = await c.newPage();
+    watch(ip, 'intro later');
+    const r = await ctx({ intro: true, reducedMotion: 'reduce' });
+    const rp = await r.newPage();
+    watch(rp, 'intro reduced');
+    try {
+      await ip.bringToFront();
+      await ip.goto(`${WEB}/login`);
+      await ip.getByLabel('Telefon raqami').waitFor();
+      assert((await ip.evaluate(() => document.documentElement.dataset.intro)) === 'off' && (await ip.locator('#yi').count()) === 0, 'no opening animation on a deep link');
+      assert((await ip.evaluate(() => localStorage.getItem('yondo.intro.v1'))) === null, 'a deep link must not spend the first run');
+      await ip.locator('.brand').first().click(); // in-app navigation home: same page load, still nothing
+      await ip.getByText('DEMO Madina').first().waitFor();
+      assert((await ip.locator('#yi').count()) === 0, 'in-app navigation must not start it');
+
+      let release = await holdList(ip); // the first cold open at /
+      await ip.goto(WEB, { waitUntil: 'commit' });
+      await yi(ip, 'full').waitFor();
+      await ip.waitForFunction(() => window.__yondoIntro?.app === true);
+      await ip.keyboard.press('Escape');
+      await ip.locator('#yi').waitFor({ state: 'detached', timeout: 1500 });
+      assert(!(await ip.evaluate(() => document.getElementById('root').inert)), 'the app must be usable after Escape');
+      await release();
+
+      release = await holdList(ip); // a later cold open: the finished mark, no build
+      await ip.reload({ waitUntil: 'commit' });
+      await yi(ip, 'short').waitFor();
+      await ip.waitForFunction(() => window.__yondoIntro?.app === true);
+      assert((await ip.evaluate(() => getComputedStyle(document.querySelector('.yi-wmclip')).display)) === 'none', 'the short form has no wordmark');
+      await release();
+      await ip.locator('#yi').waitFor({ state: 'detached', timeout: 2500 });
+      await ip.getByText('DEMO Madina').first().click({ trial: true });
+
+      await rp.bringToFront();
+      release = await holdList(rp);
+      await rp.goto(WEB, { waitUntil: 'commit' });
+      await yi(rp, 'reduced').waitFor();
+      await rp.waitForFunction(() => window.__yondoIntro?.app === true);
+      assert((await rp.evaluate(() => document.getAnimations().filter((a) => a.effect?.target?.closest?.('#yi')).length)) === 0, 'reduced motion: nothing may move');
+      await release();
+      await rp.locator('#yi').waitFor({ state: 'detached', timeout: 2500 });
+      await rp.reload();
+      await rp.getByText('DEMO Madina').first().waitFor();
+      assert((await rp.evaluate(() => document.documentElement.dataset.intro)) === 'off' && (await rp.locator('#yi').count()) === 0, 'reduced motion: nothing on later visits');
+
+      await page.goto(WEB); // every other context of this run carries the switch-off key
+      await page.getByText('DEMO Madina').first().waitFor();
+      assert((await page.evaluate(() => document.documentElement.dataset.intro)) === 'off' && (await page.locator('#yi').count()) === 0, 'the switch-off key must silence it');
+      assert((await page.evaluate(() => localStorage.getItem('yondo.intro.v1'))) === null, 'the switch-off key must not spend the first run');
+    } finally {
+      await c.close();
+      await r.close();
+    }
+  });
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
       for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [cp, '/notifications'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {

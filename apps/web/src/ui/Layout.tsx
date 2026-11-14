@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { IntroHost } from './Intro';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { LanguageSwitch } from '../i18n/LanguageSwitch';
@@ -62,6 +63,7 @@ export function Layout() {
   ];
   return (
     <>
+      <IntroHost />
       <div className="aurora" aria-hidden="true">
         <i />
         <i />

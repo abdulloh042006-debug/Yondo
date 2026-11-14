@@ -855,6 +855,7 @@ export const ru: Record<Key, string> = {
   'mobile.enableCustomer': 'Включить роль клиента',
   'mobile.themeSystem': 'Как на устройстве',
   'mobile.webMissing': 'Адрес веб-версии не настроен (EXPO_PUBLIC_WEB_URL).',
+  'intro.slogan': 'всегда рядом',
   'mobile.loginForBookings': 'Войдите, чтобы увидеть свои брони.',
   'mobile.documents': 'Документы',
   'mobile.opensInWeb': 'Откроется в веб-версии',
