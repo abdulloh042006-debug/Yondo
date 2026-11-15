@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   createContext,
   useCallback,
@@ -77,6 +77,8 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // prefers-reduced-motion: the dialog only fades, it does not slide or scale.
+  const still = useReducedMotion();
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -133,9 +135,9 @@ export function Dialog({
             aria-labelledby={titleId}
             tabIndex={-1}
             className="glass dialog"
-            initial={{ opacity: 0, y: 40, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.97 }}
+            initial={still ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.96 }}
+            animate={still ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={still ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 360, damping: 32 }}
           >
             <h2 id={titleId}>{title}</h2>

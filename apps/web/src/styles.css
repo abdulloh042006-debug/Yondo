@@ -1131,16 +1131,24 @@ table.data td {
     opacity: 0.55;
   }
 }
+/* The scrolled state changes paint only (shadow), never the box. The header is sticky, i.e. still in the flow:
+   shrinking its padding/margin (16 px) at scrollY > 16 moved the content, scroll anchoring then pulled scrollY
+   back under 16, the class flipped back, the header grew, and so on: an endless shake while a finger rested over
+   the page title (measured 39 class flips in 120 frames at scrollY 20 on a 360 px phone). */
 .topbar {
-  transition:
-    padding 0.35s var(--ease),
-    box-shadow 0.35s var(--ease),
-    margin 0.35s var(--ease);
+  transition: box-shadow 0.35s var(--ease);
 }
 .topbar.scrolled {
-  padding-block: 2px;
-  margin-top: 6px;
   box-shadow: 0 16px 36px -16px color-mix(in oklab, var(--c-scrim) 42%, transparent);
+}
+/* Language choice on the sign-in page (no longer in the header). */
+.login-lang {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.login-lang .lang-switch {
+  margin-left: 0;
 }
 .check-draw path {
   stroke-dasharray: 26;

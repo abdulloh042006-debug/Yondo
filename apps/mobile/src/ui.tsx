@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +15,7 @@ import {
 } from 'react-native';
 
 import { Enter, ICONS, Icon, useReducedMotion } from './brand';
-import { t } from './shared';
+import { LANGS, getLang, setLang, t } from './shared';
 import { FONT, useTheme } from './theme';
 
 /** Minimum touch target (WCAG 2.5.5 / platform guidelines). */
@@ -139,8 +140,13 @@ export function Field({ label, error, hint, ...input }: TextInputProps & { label
         aria-label={label}
         aria-invalid={!!error}
         placeholderTextColor={palette.muted}
-        style={[styles.input, { color: palette.fg, backgroundColor: palette.glass, borderColor: error ? palette.accent : palette.glassLine }]}
         {...input}
+        style={[
+          styles.input,
+          { color: palette.fg, backgroundColor: palette.glass, borderColor: error ? palette.accent : palette.glassLine },
+          // Multi-line fields (support message) grow from the top, as a textarea on the web.
+          input.multiline && { minHeight: 96, textAlignVertical: 'top', paddingTop: 10 },
+        ]}
       />
       {hint && !error && <Text style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.body }}>{hint}</Text>}
       {error && <ErrorText text={error} />}
@@ -191,6 +197,30 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.scrim}>
         <View role="dialog" aria-modal aria-label={title} style={[styles.sheet, { backgroundColor: palette.bg, borderColor: palette.line }]}>
+          <ScrollView contentContainerStyle={{ gap: 12 }} keyboardShouldPersistTaps="handled">
+            <H2>{title}</H2>
+            {children}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+/**
+ * A centred confirmation dialog over a blurred backdrop (owner, 2026-11-15: account deletion). Modal gives the dialog
+ * semantics, the Android back button / Esc on the web (onRequestClose) and focus containment; fade only, and no
+ * animation at all with the OS "reduce motion" setting.
+ */
+export function ConfirmDialog({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
+  const { palette } = useTheme();
+  const reduced = useReducedMotion();
+  return (
+    <Modal visible={open} transparent animationType={reduced ? 'none' : 'fade'} onRequestClose={onClose}>
+      <BlurView intensity={30} tint={palette.dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      <Pressable aria-hidden accessible={false} onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
+      <View pointerEvents="box-none" style={styles.dialogWrap}>
+        <View role="dialog" aria-modal aria-label={title} style={[styles.dialog, { backgroundColor: palette.bg, borderColor: palette.glassLine }]}>
           <ScrollView contentContainerStyle={{ gap: 12 }} keyboardShouldPersistTaps="handled">
             <H2>{title}</H2>
             {children}
@@ -259,6 +289,37 @@ export function MenuRow({ title, hint, badge, web, onPress }: { title: string; h
   );
 }
 
+/**
+ * Compact UZ | RU | EN choice (the web's .lang-switch). Owner, 2026-11-15: chosen when entering the app (Kirish)
+ * and in Settings, no longer in the header.
+ */
+export function LangSwitch() {
+  const { palette } = useTheme();
+  const lang = getLang();
+  return (
+    <View style={styles.row}>
+      <Text style={{ color: palette.muted, fontFamily: FONT.body, fontSize: 15 }}>{t('settings.language')}</Text>
+      <View role="radiogroup" aria-label={t('settings.languageGroup')} style={[styles.langSwitch, { borderColor: palette.glassLine }]}>
+        {LANGS.map((l) => {
+          const on = lang === l.id;
+          return (
+            <Pressable
+              key={l.id}
+              role="radio"
+              aria-checked={on}
+              aria-label={`${l.short} — ${l.label}`}
+              onPress={() => void setLang(l.id).catch(() => {})}
+              style={[styles.langOpt, { backgroundColor: on ? palette.primary : 'transparent' }]}
+            >
+              <Text style={{ color: on ? palette.onPrimary : palette.fg, fontSize: 13, fontFamily: FONT.bold }}>{l.short}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { padding: 16, paddingBottom: 32 },
   screenInner: { gap: 14 },
@@ -282,6 +343,10 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, fontFamily: FONT.medium },
   input: { minHeight: TOUCH, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, fontSize: 16, fontFamily: FONT.body },
   note: { borderLeftWidth: 4, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 6 },
+  dialogWrap: { flex: 1, justifyContent: 'center', padding: 16 },
+  dialog: { maxHeight: '86%', borderRadius: 22, borderWidth: 1, padding: 18 },
+  langSwitch: { flexDirection: 'row', gap: 2, padding: 2, borderRadius: 999, borderWidth: 1 },
+  langOpt: { minWidth: TOUCH, minHeight: TOUCH, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   menuRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 14, borderBottomWidth: StyleSheet.hairlineWidth },
   tag: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,17,17,0.55)' },

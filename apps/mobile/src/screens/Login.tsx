@@ -6,7 +6,7 @@ import { useAuth } from '../auth';
 import { useNav, type Route } from '../nav';
 import { dedupePhonePrefix, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, ErrorText, Field, H1, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, ErrorText, Field, H1, LangSwitch, MenuRow, P, Row, Screen } from '../ui';
 
 const PHONE = /^\+998\d{9}$/;
 
@@ -65,6 +65,7 @@ export function LoginScreen({ then }: { then?: Route }) {
           <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
         </Row>
       )}
+      <LangSwitch />
       <H1>{t('login.title')}</H1>
       <P muted>{t('login.lead')}</P>
       {!step ? (
@@ -109,14 +110,15 @@ export function LoginScreen({ then }: { then?: Route }) {
 }
 
 /** The documents live on the web app (single published text); consent is recorded with their versions. */
-export function ConsentCheck({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+/** `label` reuses the same checkbox for another confirmation (account deletion); the document links then stay out. */
+export function ConsentCheck({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label?: string }) {
   const { palette } = useTheme();
   return (
     <View style={{ gap: 8 }}>
       <Pressable
         role="checkbox"
         aria-checked={checked}
-        aria-label={t('legal.agree')}
+        aria-label={label ?? t('legal.agree')}
         onPress={() => onChange(!checked)}
         style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', minHeight: 44 }}
       >
@@ -130,9 +132,9 @@ export function ConsentCheck({ checked, onChange }: { checked: boolean; onChange
             backgroundColor: checked ? palette.primary : 'transparent',
           }}
         />
-        <Text style={{ fontFamily: FONT.body, color: palette.fg, flex: 1, fontSize: 15 }}>{t('legal.agree')}</Text>
+        <Text style={{ fontFamily: FONT.body, color: palette.fg, flex: 1, fontSize: 15 }}>{label ?? t('legal.agree')}</Text>
       </Pressable>
-      {WEB_URL ? (
+      {label ? null : WEB_URL ? (
         <Row>
           <Button kind="ghost" small label={t('legal.terms')} onPress={() => void Linking.openURL(`${WEB_URL}/terms`)} />
           <Button kind="ghost" small label={t('legal.privacy')} onPress={() => void Linking.openURL(`${WEB_URL}/privacy`)} />

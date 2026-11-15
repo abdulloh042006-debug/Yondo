@@ -311,6 +311,7 @@ try {
   });
   await step('account profile validates age and saves via server', async () => {
     await cp.goto(`${WEB}/account`);
+    await cp.getByRole('button', { name: 'Tahrirlaş' }).click(); // Profil shows the data; the form opens on "Tahrirlash"
     await cp.getByLabel('Yoş').fill('12');
     await cp.getByText('Yoş 18 dan 120 gaça bölişi kerak.').waitFor();
     await cp.getByLabel('Yoş').fill('29');
@@ -319,7 +320,9 @@ try {
   });
   await step('profile hub → help: trusted contact add/remove, report a booking (server derives the companion), my reports', async () => {
     await cp.goto(`${WEB}/account`);
-    await cp.getByRole('navigation', { name: 'Bölimlar' }).getByRole('link', { name: /Yordam va xavfsizlik/ }).click();
+    await cp.getByRole('link', { name: /Sozlamalar/ }).first().click(); // Profil → Sozlamalar → Yordam (owner, 2026-11-14)
+    await cp.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
+    await cp.getByRole('main').getByRole('link', { name: 'Yordam va xavfsizlik' }).first().click();
     await cp.getByRole('heading', { name: 'Yordam va xavfsizlik', level: 1 }).waitFor();
     assert((await cp.getByRole('link', { name: /112/ }).getAttribute('href')) === 'tel:112', 'emergency number link');
     await cp.getByLabel('Ism', { exact: true }).fill('E2E Ona');
@@ -347,16 +350,16 @@ try {
     const op = await other.newPage();
     watch(op, 'second-device');
     try {
-      await cp.goto(`${WEB}/account`);
+      await cp.goto(`${WEB}/settings`); // the header has no language switch any more (owner, 2026-11-15)
       const saved = cp.waitForResponse((r) => r.url().endsWith('/api/v1/auth/profile') && r.request().method() === 'PUT');
-      await cp.locator('.lang-switch').getByRole('button', { name: /^RU/ }).click();
+      await cp.locator('.lang-picker').getByRole('button', { name: /Русский/ }).click();
       assert((await (await saved).json()).ui_locale === 'ru', 'PUT /auth/profile should store ru');
       await otpLogin(op, '+998901110003'); // fresh device, Uzbek by default
       await op.getByRole('link', { name: 'Профиль' }).first().waitFor();
       assert((await op.evaluate(() => document.documentElement.lang)) === 'ru', 'second device should switch to ru');
     } finally {
-      await cp.locator('.lang-switch').getByRole('button', { name: /^UZ/ }).click();
-      await cp.getByRole('heading', { name: 'Hisobim', level: 1 }).waitFor();
+      await cp.locator('.lang-picker').getByRole('button', { name: /Özbekça|O‘zbekcha/ }).click();
+      await cp.getByRole('heading', { name: 'Sozlamalar', level: 1 }).waitFor();
       await cp.waitForTimeout(500); // let the PUT back to uz-Latn-2026 land
       await other.close();
     }
@@ -368,7 +371,7 @@ try {
   watch(kp, 'companion');
   await step('new user becomes companion, applies, builds profile, submits for review', async () => {
     await otpLogin(kp, '+998907770001');
-    await kp.goto(`${WEB}/account`);
+    await kp.goto(`${WEB}/settings`); // "Men kimman" moved from Profil to Sozlamalar → Hisob
     await kp.getByRole('button', { name: 'Hamroh', exact: true }).click();
     await kp.getByText('Rollar yangilandi.').waitFor();
     await kp.getByRole('link', { name: 'Hamroh studiyasi' }).first().click();
@@ -578,7 +581,7 @@ try {
     await cp.getByText('E2E: tuzatildi, qayta urinib köring.').waitFor();
     await cp.getByText('Javob berildi').first().waitFor();
   });
-  await step('SOS: header button opens a confirmation window; 112 + trusted contact via own phone; location only on tap', async () => {
+  await step('SOS: the Help page button opens a confirmation window; 112 + trusted contact via own phone; location only on tap', async () => {
     await cp.goto(`${WEB}/help`);
     await cp.getByLabel('Ism', { exact: true }).fill('E2E Opa');
     await cp.getByLabel('Kontakt telefoni').fill('+998901234500');
@@ -586,7 +589,9 @@ try {
     await cp.getByText('Kontakt saqlandi.').waitFor();
     await cust.grantPermissions(['geolocation'], { origin: WEB });
     await cust.setGeolocation({ latitude: 41.31108, longitude: 69.24056, accuracy: 20 });
-    await cp.locator('header').getByRole('button', { name: /SOS: favqulodda/ }).click();
+    // Owner, 2026-11-15: no SOS in the header; it stays on Help (here) and on confirmed/active bookings (S25).
+    assert((await cp.locator('header').getByRole('button', { name: /SOS/ }).count()) === 0, 'no SOS in the header');
+    await cp.getByRole('main').getByRole('button', { name: /SOS: favqulodda/ }).click();
     const dlg = cp.getByRole('dialog', { name: 'SOS — favqulodda holat' });
     await dlg.waitFor();
     assert((await dlg.getByRole('link', { name: '112 ga qönğiroq qiliş' }).getAttribute('href')) === 'tel:112', 'tel:112');
@@ -623,7 +628,7 @@ try {
     } finally {
       await m.close();
     }
-    await cp.goto(`${WEB}/account`);
+    await cp.goto(`${WEB}/settings`);
     await cp.getByRole('link', { name: /Bildirişnomalar/ }).click();
     await cp.getByText('Bron qabul qilindi').first().waitFor();
     await cp.goto(`${WEB}/bookings`);
@@ -656,7 +661,7 @@ try {
       await mp2.getByText('Davom etmoqda').first().waitFor();
       await cp.reload();
       await cp.getByText('Davom etmoqda').first().waitFor();
-      await cp.locator('header').getByRole('button', { name: /SOS: favqulodda/ }).click();
+      await cp.getByRole('main').getByRole('button', { name: /SOS: favqulodda/ }).first().click(); // the active booking's own SOS
       const dlg = cp.getByRole('dialog', { name: 'SOS — favqulodda holat' });
       await dlg.getByRole('button', { name: /«Sayr» uçraşuvi böyiça signal yuboriş/ }).click();
       await dlg.getByText(/Signal qayd etildi\. Moderator uni qölda körib çiqadi/).waitFor();
@@ -680,22 +685,33 @@ try {
     await cp.getByText('Bron yopilgan: çat faqat öqiş uçun.').waitFor();
   });
   await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
-    await cp.goto(`${WEB}/account#delete`);
-    await cp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
+    await cp.goto(`${WEB}/settings#delete`);
+    // Owner, 2026-11-15: "Hisobni öçiriş" looks like "Çiqiş"; the question opens in a dialog over a blurred backdrop.
+    const trigger = cp.getByRole('button', { name: 'Hisobni öçiriş', exact: true });
+    const signOut = cp.getByRole('button', { name: 'Çiqiş', exact: true });
+    const [a, b] = await Promise.all([trigger.getAttribute('class'), signOut.getAttribute('class')]);
+    assert(a === b, `delete and sign-out buttons must look the same: ${a} vs ${b}`);
+    await trigger.click();
+    const dlg = cp.getByRole('dialog', { name: 'Hisobni öçirmoqçimisiz?' });
+    await dlg.waitFor();
+    assert((await dlg.getAttribute('aria-modal')) === 'true', 'aria-modal');
+    assert(/blur/.test(await cp.locator('.overlay').evaluate((el) => getComputedStyle(el).backdropFilter)), 'blurred backdrop');
+    await cp.keyboard.press('Escape'); // Esc closes and focus returns to the trigger
+    await dlg.waitFor({ state: 'detached' });
+    assert(await trigger.evaluate((el) => el === document.activeElement), 'focus returns to the button');
+    await trigger.click();
     await cp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
-    await cp.getByRole('button', { name: 'Öçirişni tasdiqlaş' }).click();
+    await cp.getByRole('button', { name: 'Ha, öçiriş' }).click();
     await cp.getByText('Avval oçiq bronlarni yakunlang yoki bekor qiling.').waitFor(); // cp has a pending booking
-    await cp.getByRole('button', { name: 'Bekor qiliş', exact: true }).last().click();
+    await cp.getByRole('button', { name: 'Yöq', exact: true }).click();
     const d = await ctx();
     const dp = await d.newPage();
     watch(dp, 'deletion');
     try {
       await otpLogin(dp, '+998907770088');
-      await dp.goto(`${WEB}/settings`);
-      await dp.getByRole('link', { name: 'Hisobni öçiriş' }).click();
-      await dp.getByRole('heading', { name: 'Hisobni öçiriş', level: 2 }).waitFor();
-      await dp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).click();
-      const confirm = dp.getByRole('button', { name: 'Öçirişni tasdiqlaş' });
+      await dp.goto(`${WEB}/settings`); // account deletion sits in Sozlamalar → Hisob, next to Çiqiş
+      await dp.getByRole('button', { name: 'Hisobni öçiriş', exact: true }).click();
+      const confirm = dp.getByRole('button', { name: 'Ha, öçiriş' });
       assert(await confirm.isDisabled(), 'confirm stays disabled until the box is ticked');
       await dp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
       await confirm.click();
@@ -705,9 +721,39 @@ try {
       await ap.getByText('Kutilmoqda').first().waitFor();
       await dp.getByRole('button', { name: 'Sörovni bekor qiliş' }).click();
       await dp.getByText('Öçiriş sörovi bekor qilindi.').waitFor();
-      await dp.getByRole('button', { name: 'Hisobni öçirişni söraş' }).waitFor();
+      await dp.getByRole('button', { name: 'Hisobni öçiriş', exact: true }).waitFor();
     } finally {
       await d.close();
+    }
+  });
+  await step('360 px header: logo and navigation only, no SOS/language in it, no overflow, steady while scrolling', async () => {
+    const phone = await ctx({ viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true });
+    const pp = await phone.newPage();
+    try {
+      for (const path of ['/login', '/help']) {
+        await pp.goto(`${WEB}${path}`);
+        await pp.locator('header.topbar').waitFor();
+        await pp.waitForTimeout(1500); // opening animation
+        const hdr = pp.locator('header.topbar');
+        assert((await hdr.locator('.lang-switch, .sos-btn').count()) === 0, `${path}: header still holds SOS/language`);
+        const over = await pp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        assert(over <= 1, `${path}: horizontal overflow ${over}px`);
+        // Root cause of the reported shake: the scrolled state shrank the sticky header, scroll anchoring moved the
+        // page back under the threshold, the class flipped back... Rest a "finger" at 20 px for 120 frames.
+        const flips = await pp.evaluate(async () => {
+          const h = document.querySelector('header.topbar');
+          const raf = () => new Promise((r) => requestAnimationFrame(r));
+          for (let y = 0; y <= 20; y++) { window.scrollTo(0, y); await raf(); }
+          let n = 0; let last = h.className; const ys = new Set();
+          for (let i = 0; i < 120; i++) { await raf(); ys.add(Math.round(window.scrollY)); if (h.className !== last) { n++; last = h.className; } }
+          return { n, ys: [...ys] };
+        });
+        assert(flips.n === 0 && flips.ys.length === 1, `${path}: header oscillates (${flips.n} flips, scrollY ${flips.ys.join(',')})`);
+      }
+      await pp.goto(`${WEB}/login`);
+      assert((await pp.locator('.login-lang .lang-switch button').count()) === 3, 'UZ | RU | EN on the sign-in page');
+    } finally {
+      await phone.close();
     }
   });
   const mobile = await ctx({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
