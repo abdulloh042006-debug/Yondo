@@ -15,6 +15,8 @@ from yondo_api.api.errors import install_exception_handlers
 from yondo_api.api.health import DatabaseHealthCheck, RedisHealthCheck, public_router
 from yondo_api.api.middleware import RequestContextMiddleware
 from yondo_api.api.v1.router import router as api_v1_router
+from yondo_api.auth.password_router import router as password_router
+from yondo_api.auth.passwords import IpRateLimiter
 from yondo_api.auth.providers import (
     DevelopmentOtpProvider,
     NoopOtpRateLimitHook,
@@ -151,12 +153,16 @@ def create_application(
     # Trust & Safety verification records are the identity source (ID + selfie review).
     app.state.identity_eligibility = identity_eligibility or DatabaseIdentityEligibility()
     app.state.payment_provider = payment_provider or select_payment_provider(app_settings)
+    app.state.password_ip_limiter = IpRateLimiter(
+        app_settings.auth_password_ip_rate_limit_per_minute
+    )
     app.add_middleware(RequestContextMiddleware)
     install_exception_handlers(app)
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
     app.include_router(auth_router, prefix=app_settings.api_v1_prefix)
     app.include_router(telegram_link_router, prefix=app_settings.api_v1_prefix)
+    app.include_router(password_router, prefix=app_settings.api_v1_prefix)
     for companion_routes in (
         companion_router,
         companion_resources_router,

@@ -475,6 +475,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change Password
+         * @description Needs the current password; signs out every OTHER session.
+         */
+        put: operations["change_password_api_v1_auth_password_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Password Login
+         * @description Username or phone + password. Unknown login, no password or wrong password: one answer.
+         */
+        post: operations["password_login_api_v1_auth_password_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Password
+         * @description Code from POST /auth/otp/request + a new password; signs out ALL sessions.
+         */
+        post: operations["reset_password_api_v1_auth_password_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/profile": {
         parameters: {
             query?: never;
@@ -503,6 +563,26 @@ export interface paths {
         put?: never;
         /** Refresh */
         post: operations["refresh_api_v1_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete Registration
+         * @description Set username + password after a code (OTP) sign-in; this completes the account.
+         */
+        post: operations["complete_registration_api_v1_auth_registration_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -589,6 +669,26 @@ export interface paths {
         };
         /** Link Status */
         get: operations["link_status_api_v1_auth_telegram_link_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/username/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Username Available
+         * @description Deliberate availability check for the registration form (rate-limited per IP).
+         */
+        get: operations["username_available_api_v1_auth_username_available_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3587,6 +3687,41 @@ export interface components {
             /** Phone Number */
             phone_number: string;
         };
+        /** PasswordChange */
+        PasswordChange: {
+            /**
+             * Current Password
+             * Format: password
+             */
+            current_password: string;
+            /**
+             * New Password
+             * Format: password
+             */
+            new_password: string;
+        };
+        /** PasswordLogin */
+        PasswordLogin: {
+            /** Login */
+            login: string;
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+        };
+        /** PasswordReset */
+        PasswordReset: {
+            /** Code */
+            code: string;
+            /**
+             * New Password
+             * Format: password
+             */
+            new_password: string;
+            /** Phone Number */
+            phone_number: string;
+        };
         /** PaymentResponse */
         PaymentResponse: {
             /**
@@ -3790,6 +3925,16 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** Registration */
+        Registration: {
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+            /** Username */
+            username: string;
         };
         /** ReportRead */
         ReportRead: {
@@ -4123,22 +4268,43 @@ export interface components {
             /** Gender */
             gender: string | null;
             /**
+             * Has Password
+             * @default false
+             */
+            has_password: boolean;
+            /**
              * Id
              * Format: uuid
              */
             id: string;
+            /**
+             * Password Setup Required
+             * @default true
+             */
+            password_setup_required: boolean;
             /** Phone Number */
             phone_number: string;
             /** Roles */
             roles: components["schemas"]["UserRoleType"][];
             /** Ui Locale */
             ui_locale?: ("uz-Latn-1995" | "uz-Latn-2026" | "ru" | "en") | null;
+            /** Username */
+            username?: string | null;
         };
         /**
          * UserRoleType
          * @enum {string}
          */
         UserRoleType: "customer" | "companion" | "vendor" | "admin";
+        /** UsernameAvailability */
+        UsernameAvailability: {
+            /** Available */
+            available: boolean;
+            /** Reason */
+            reason?: ("invalid" | "reserved" | "taken") | null;
+            /** Username */
+            username: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -5079,6 +5245,103 @@ export interface operations {
             };
         };
     };
+    change_password_api_v1_auth_password_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    password_login_api_v1_auth_password_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_password_api_v1_auth_password_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordReset"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_profile_api_v1_auth_profile_put: {
         parameters: {
             query?: never;
@@ -5132,6 +5395,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_registration_api_v1_auth_registration_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Registration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5284,6 +5580,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LinkStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    username_available_api_v1_auth_username_available_get: {
+        parameters: {
+            query: {
+                username: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsernameAvailability"];
                 };
             };
             /** @description Validation Error */

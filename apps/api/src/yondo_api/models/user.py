@@ -4,7 +4,16 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from yondo_api.db.base import Base, TimestampMixin
@@ -40,6 +49,7 @@ class User(TimestampMixin, Base):
             name='ck_users_ui_locale',
         ),
         Index('ix_users_account_status', 'account_status'),
+        UniqueConstraint('username', name='uq_users_username'),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -49,6 +59,11 @@ class User(TimestampMixin, Base):
     city: Mapped[str | None] = mapped_column(String(128))
     # Interface language chosen by the user (NULL = not chosen; clients use their own default).
     ui_locale: Mapped[str | None] = mapped_column(String(16))
+    # Private login identifier (never shown to other users), stored normalised (lower case).
+    username: Mapped[str | None] = mapped_column(String(30))
+    # Self-describing scrypt string (auth/passwords.py); NULL = no password set yet.
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     account_status: Mapped[AccountStatus] = mapped_column(
         Enum(
             AccountStatus,

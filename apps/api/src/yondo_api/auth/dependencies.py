@@ -29,7 +29,12 @@ class AuthenticatedUser:
     session: AuthSession
 
 
+# Paths an account without username + password may still use when the setup gate is on.
+_SETUP_ALLOWED = ('/auth/', '/legal/')
+
+
 async def get_authenticated_user(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> AuthenticatedUser:
@@ -56,4 +61,13 @@ async def get_authenticated_user(
         AccountStatus.DELETED,
     }:
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
+    settings = request.app.state.settings
+    if settings.auth_require_password_setup and (
+        user.password_hash is None or user.username is None
+    ):
+        path = request.url.path.removeprefix(settings.api_v1_prefix)
+        if not path.startswith(_SETUP_ALLOWED):
+            raise ApplicationError(
+                'password_setup_required', 'Set a username and password first', 403
+            )
     return AuthenticatedUser(user=user, session=auth_session)

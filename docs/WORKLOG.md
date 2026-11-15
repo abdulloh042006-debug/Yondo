@@ -28,6 +28,22 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S67 — Username + password login, backend (2026-11-15) [cloud chat, backend worker]
+Done: product-decisions §3/§6 plus the owner's username addition (CLAUDE.md §7, `docs/login-password.md`).
+- New endpoints: `POST /auth/registration` (username + password, needs a code session ≤ 15 min), `POST /auth/password/login` (username or phone), `PUT /auth/password` (signs out the other sessions), `POST /auth/password/reset` (code; signs out all), `GET /auth/username/available`. `/auth/me` gains `username`, `has_password`, `password_setup_required`.
+- Rules: scrypt with stored parameters; 5 failures lock that account for 15 min (unknown logins are locked the same way); 20/min per IP; one generic 401; the username is private. Optional setup gate `YONDO_AUTH_REQUIRE_PASSWORD_SETUP`, off.
+- Account erasure frees the username. Migration 0023 (additive).
+Not done: web/mobile screens (separate task). Turn the gate on after they ship.
+Verifier notes (non-blocking):
+- per-IP limit and trusted proxy IPs (deploy);
+- `login:<hash>` guard rows are never cleaned up;
+- registration can replace a password set by a reset without signing out other sessions;
+- the "rehash on next login" docstring is not implemented;
+- usernames from the availability query reach access logs.
+Next: frontend worker builds the registration/sign-in/reset screens from `apps/web/src/api/schema.d.ts`.
+Blockers: none.
+Evidence: pytest SQLite 501 passed + 12 skipped; PG16 513 passed (username race included); fresh PG16 `alembic check` clean, 0023 down/up OK; ruff and `export_openapi --check` PASS; demo tests 9 passed; web typecheck PASS; verifier (Opus) APPROVE on 0d18b0f.
+Commit: branch `feat/password-username-login`, PR to `main`.
 ## S66 — Header shake root cause, logo-only header, language on Kirish, equal sign-out/delete + delete dialog (2026-11-15) [cloud worker, mobile + web]
 Done (owner, 2026-11-15, on PR #35): **web header shake** — root cause: `.topbar` is sticky (in the flow) and `.topbar.scrolled` (scrollY > 16) shrank its padding/margin by 16 px; content moved, scroll anchoring pulled scrollY back under 16, the class flipped back, etc. (measured at 360 px with the scroll resting at 20 px: 39 class flips in 120 frames, scrollY 11–24). Fix: the scrolled state changes the shadow only. After: 0 flips, steady scrollY (/login, /help). Mobile header is outside the ScrollView (steady, measured). Header on web + mobile = logo (+ nav) only: SOS stays on Help and confirmed/active bookings (S25), language moved to Kirish (compact UZ | RU | EN) and Settings. "Hisobni o'chirish" now looks exactly like "Chiqish" (side by side, no red block); it opens a modal over a blurred backdrop ("Hisobni o'chirmoqchimisiz?", the existing 30-day text, the "I understand" box, "Ha, o'chirish" / "Yo'q"; Esc closes, focus returns, reduced motion = fade only). Mobile: same, `ConfirmDialog` with expo-blur. i18n: `account.delete.ask|yes|no` (uz 2026/ru/en). Merged origin/main (#36–#39), no conflicts.
 Not done: nothing in scope.

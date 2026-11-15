@@ -96,11 +96,13 @@ async def issue_otp(
     return IssuedOtp(delivery.development_code, delivery.channel)
 
 
-async def verify_otp(
-    session: AsyncSession, phone: str, code: str, settings: Settings
-) -> tuple[User, TokenResponseData]:
-    phone_number = normalize_uzbekistan_phone(phone)
-    now = _now()
+async def consume_otp(
+    session: AsyncSession, phone_number: str, code: str, settings: Settings, now: datetime
+) -> User | None:
+    """Check and use up a code (attempt counter, lockout, expiry). Returns the phone's user, if any.
+
+    The challenge row is deleted in the session on success; the caller commits.
+    """
     challenge = await session.get(OtpChallenge, phone_number, with_for_update=True)
     if challenge is None:
         raise ApplicationError('invalid_otp', 'The verification code is invalid or expired', 401)
@@ -134,11 +136,20 @@ async def verify_otp(
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
 
     await session.delete(challenge)
+    return user
+
+
+async def verify_otp(
+    session: AsyncSession, phone: str, code: str, settings: Settings
+) -> tuple[User, TokenResponseData]:
+    phone_number = normalize_uzbekistan_phone(phone)
+    now = _now()
+    user = await consume_otp(session, phone_number, code, settings, now)
     if user is None:
         user = User(phone_number=phone_number, account_status=AccountStatus.VERIFICATION_PENDING)
         session.add(user)
         await session.flush()
-    token_data = await create_session(session, user, settings, now)
+    token_data = await create_session(session, user, settings, now, via='otp')
     await session.commit()
     return user, token_data
 
@@ -151,7 +162,7 @@ class TokenResponseData:
 
 
 async def create_session(
-    session: AsyncSession, user: User, settings: Settings, now: datetime
+    session: AsyncSession, user: User, settings: Settings, now: datetime, via: str | None = None
 ) -> TokenResponseData:
     access_token = _new_token()
     refresh_token = _new_token()
@@ -164,6 +175,7 @@ async def create_session(
             refresh_token_hash=_token_hash(refresh_token),
             access_expires_at=now + timedelta(seconds=access_lifetime),
             refresh_expires_at=now + timedelta(seconds=refresh_lifetime),
+            via=via,
         )
     )
     await session.flush()

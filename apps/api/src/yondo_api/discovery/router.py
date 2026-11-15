@@ -67,7 +67,7 @@ async def _optional_viewer(
     if credentials is None:
         return None
     try:
-        return (await get_authenticated_user(credentials, session)).user
+        return (await get_authenticated_user(request, credentials, session)).user
     except ApplicationError:
         return None
 

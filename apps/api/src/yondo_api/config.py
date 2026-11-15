@@ -79,6 +79,15 @@ class Settings(BaseSettings):
     # Short: /link/complete sends the code inside the bot's 30-second call.
     telegram_bot_timeout_seconds: float = Field(default=5.0, gt=0, le=15)
     telegram_link_lifetime_seconds: int = Field(default=600, ge=60, le=3600)
+    # Password login (docs/login-password.md). scrypt cost N = 2**log_n (17 = 128 MiB, ~0.1-0.3 s).
+    auth_scrypt_log_n: int = Field(default=17, ge=14, le=20)
+    # Password-login, reset and username-check attempts per client IP per minute (in-process).
+    auth_password_ip_rate_limit_per_minute: int = Field(default=20, ge=0)
+    # Registration (username + password) must follow a code login no older than this.
+    auth_registration_window_seconds: int = Field(default=900, ge=60, le=3600)
+    # When true, accounts without username + password get 403 password_setup_required outside
+    # /auth and /legal. Off until the web/mobile setup screens ship (the demo must keep working).
+    auth_require_password_setup: bool = False
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
     # Offline CLICK Shop API emulator only. Never accepts or moves real funds.

@@ -2608,6 +2608,89 @@
         "title": "OtpVerification",
         "type": "object"
       },
+      "PasswordChange": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "new_password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "New Password",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange",
+        "type": "object"
+      },
+      "PasswordLogin": {
+        "additionalProperties": false,
+        "properties": {
+          "login": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Login",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "login",
+          "password"
+        ],
+        "title": "PasswordLogin",
+        "type": "object"
+      },
+      "PasswordReset": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "new_password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "New Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "phone_number": {
+            "maxLength": 32,
+            "minLength": 9,
+            "title": "Phone Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone_number",
+          "code",
+          "new_password"
+        ],
+        "title": "PasswordReset",
+        "type": "object"
+      },
       "PaymentResponse": {
         "properties": {
           "amount_minor": {
@@ -3155,6 +3238,31 @@
           "refresh_token"
         ],
         "title": "RefreshRequest",
+        "type": "object"
+      },
+      "Registration": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Registration",
         "type": "object"
       },
       "ReportRead": {
@@ -3960,10 +4068,20 @@
             ],
             "title": "Gender"
           },
+          "has_password": {
+            "default": false,
+            "title": "Has Password",
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "password_setup_required": {
+            "default": true,
+            "title": "Password Setup Required",
+            "type": "boolean"
           },
           "phone_number": {
             "title": "Phone Number",
@@ -3992,6 +4110,17 @@
               }
             ],
             "title": "Ui Locale"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           }
         },
         "required": [
@@ -4015,6 +4144,40 @@
         ],
         "title": "UserRoleType",
         "type": "string"
+      },
+      "UsernameAvailability": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "invalid",
+                  "reserved",
+                  "taken"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "available"
+        ],
+        "title": "UsernameAvailability",
+        "type": "object"
       },
       "ValidationError": {
         "properties": {
@@ -5708,6 +5871,130 @@
         ]
       }
     },
+    "/api/v1/auth/password": {
+      "put": {
+        "description": "Needs the current password; signs out every OTHER session.",
+        "operationId": "change_password_api_v1_auth_password_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Change Password",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/password/login": {
+      "post": {
+        "description": "Username or phone + password. Unknown login, no password or wrong password: one answer.",
+        "operationId": "password_login_api_v1_auth_password_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Password Login",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "description": "Code from POST /auth/otp/request + a new password; signs out ALL sessions.",
+        "operationId": "reset_password_api_v1_auth_password_reset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordReset"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Password",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
     "/api/v1/auth/profile": {
       "put": {
         "operationId": "update_profile_api_v1_auth_profile_put",
@@ -5790,6 +6077,53 @@
           }
         },
         "summary": "Refresh",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/registration": {
+      "post": {
+        "description": "Set username + password after a code (OTP) sign-in; this completes the account.",
+        "operationId": "complete_registration_api_v1_auth_registration_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registration"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Complete Registration",
         "tags": [
           "authentication"
         ]
@@ -6013,6 +6347,51 @@
           }
         },
         "summary": "Link Status",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/username/available": {
+      "get": {
+        "description": "Deliberate availability check for the registration form (rate-limited per IP).",
+        "operationId": "username_available_api_v1_auth_username_available_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Username",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsernameAvailability"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Username Available",
         "tags": [
           "authentication"
         ]
