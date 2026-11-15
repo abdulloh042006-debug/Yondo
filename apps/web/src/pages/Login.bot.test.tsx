@@ -85,6 +85,10 @@ describe('Login: Telegram bot', () => {
     expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
     expect(screen.getByText(t('login.bot.codeHint'))).toBeInTheDocument();
     expect(screen.queryByText(t('login.tg.noTelegram'))).toBeNull(); // Gateway-only hint hidden
+    // The code step links to the bot chat, so the user can open it, copy the code and come back.
+    const toBot = screen.getByRole('link', { name: t('login.bot.open') });
+    expect(toBot).toHaveAttribute('href', 'https://t.me/YondoTestBot');
+    expect(toBot).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.getByRole('button', { name: t('login.resendIn', { n: 60 }) })).toBeDisabled();
     expect(auth.requestCode).toHaveBeenCalledTimes(1); // the first ask; the bot then sent the code
   });
@@ -107,6 +111,7 @@ describe('Login: Telegram bot', () => {
     expect(post).not.toHaveBeenCalled();
     expect(screen.getByLabelText(t('login.code'))).toBeInTheDocument();
     expect(screen.getByText('123456')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: t('login.bot.open') })).toBeNull(); // on-screen code: no bot link
   });
 
   it('bot blocked: the link is done, so it explains and offers to request the code again', async () => {
