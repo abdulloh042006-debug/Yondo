@@ -92,6 +92,13 @@ await step('signed out: the dock is Discover · Sign in (as on the web); Setting
   assert(names.join('|') === 'Discover|Sign in', `signed-out tabs: ${names.join('|')}`);
   await tab('Sign in');
   await page.getByLabel('Phone number').waitFor();
+  // Owner, 2026-11-15: the language is chosen here (and in Settings), not in the header.
+  const langs = page.getByRole('radiogroup', { name: 'App language' }).getByRole('radio');
+  assert((await langs.count()) === 3, 'UZ | RU | EN on the sign-in screen');
+  await page.getByRole('radio', { name: /^RU/ }).click();
+  await page.getByLabel('Номер телефона').waitFor();
+  await page.getByRole('radio', { name: /^EN/ }).click();
+  await page.getByLabel('Phone number').waitFor();
   await page.getByRole('button', { name: /^Settings/ }).click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
   await button('← Back').click();
@@ -113,6 +120,10 @@ await step('profile -> book -> login with the development code -> back on the pr
 await step('signed in: the dock is Discover · Favourites · Bookings · Profile, Settings is not a tab', async () => {
   const names = await page.getByRole('tab').allInnerTexts();
   assert(names.join('|') === 'Discover|Favourites|Bookings|Profile', `signed-in tabs: ${names.join('|')}`);
+  // Header = logo only (owner, 2026-11-15): no SOS button, no language switch; nothing overflows at this width.
+  assert((await page.getByRole('button', { name: /SOS/ }).count()) === 0, 'no SOS in the header');
+  assert((await page.getByRole('radiogroup', { name: 'App language' }).count()) === 0, 'no language switch in the header');
+  await noSideScroll('header');
 });
 
 await step('booking form sends exactly the 5 fields and the booking appears as pending', async () => {
@@ -219,7 +230,22 @@ await step('profile = only the person (data + Edit); Settings holds app and acco
   await axe('help');
   await button('← Back').click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
-  await page.getByRole('heading', { name: 'Delete account' }).waitFor();
+  // Owner, 2026-11-15: "Delete account" looks like "Sign out"; the question opens in a blurred, modal dialog.
+  const del = page.getByRole('button', { name: 'Delete account', exact: true });
+  const out = page.getByRole('button', { name: 'Sign out', exact: true });
+  const look = (l) => l.evaluate((el) => { const c = getComputedStyle(el); return [c.backgroundColor, c.borderColor, c.borderRadius, c.minHeight].join(' '); });
+  assert((await look(del)) === (await look(out)), `same look: ${await look(del)} vs ${await look(out)}`);
+  await del.click();
+  const dlg = page.getByRole('dialog', { name: 'Delete your account?' });
+  await dlg.waitFor();
+  assert((await dlg.getAttribute('aria-modal')) === 'true', 'aria-modal');
+  assert(await page.getByRole('button', { name: 'Yes, delete' }).isDisabled(), 'confirm waits for the "I understand" box');
+  await axe('delete dialog');
+  await page.keyboard.press('Escape');
+  await dlg.waitFor({ state: 'detached' });
+  await del.click();
+  await button('No').click();
+  await dlg.waitFor({ state: 'detached' });
   const web = process.env.WEB_URL;
   if (web) {
     for (const [name, path] of [[/^Terms of use/, '/terms'], [/^Privacy policy/, '/privacy']]) {

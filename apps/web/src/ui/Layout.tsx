@@ -4,9 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { IntroHost } from './Intro';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
-import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { ConsentGate } from './Consent';
-import { SosButton } from './Sos';
 import { PageTransition } from './motion';
 
 const Icon = ({ d }: { d: string }) => (
@@ -90,8 +88,8 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          {user && <SosButton />}
-          <LanguageSwitch />
+          {/* Owner, 2026-11-15: the header is the logo and the navigation only. Language is chosen on Kirish and in
+              Settings; SOS lives on Help and on confirmed/active bookings (CLAUDE.md S25). */}
         </header>
         <main id="main" className="page" tabIndex={-1}>
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>

@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { dedupePhonePrefix } from '../lib/format';
 import { ConsentCheck } from '../ui/Consent';
 import { Field } from '../ui/form';
@@ -258,6 +259,10 @@ export function Login() {
   return (
     <div className="stack" style={{ maxWidth: 480, margin: '0 auto' }}>
       <div className="stack">
+        <div className="login-lang">
+          <span className="muted">{t('settings.language')}</span>
+          <LanguageSwitch />
+        </div>
         <h1>{t('login.title')}</h1>
         <p className="muted">{t('login.lead')}</p>
         <p className="hint"><Link to="/settings">{t('settings.link')}</Link>: {t('settings.linkHint')}</p>

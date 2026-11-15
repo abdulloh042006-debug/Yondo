@@ -48,10 +48,8 @@ function AccountGroup({ user }: { user: User }) {
           </button>
         ))}
       </div>
-      <div className="row">
-        {user.roles.includes('companion') && <Link className="btn" to="/studio">{t('account.studio')}</Link>}
-        <button className="btn ghost" onClick={() => void logout()}>{t('account.logout')}</button>
-      </div>
+      {user.roles.includes('companion') && <Link className="btn" to="/studio" style={{ width: 'fit-content' }}>{t('account.studio')}</Link>}
+      <DeleteAccount before={<button className="btn ghost" onClick={() => void logout()}>{t('account.logout')}</button>} />
     </>
   );
 }
@@ -109,11 +107,6 @@ export function Settings() {
           {user ? <AccountGroup user={user} /> : <Link className="btn" to="/login" style={{ width: 'fit-content' }}>{t('nav.login')}</Link>}
         </section>
       </Reveal>
-      {user && (
-        <Reveal delay={0.06}>
-          <DeleteAccount />
-        </Reveal>
-      )}
       <Reveal delay={0.07}>
         <section className="glass pad stack" aria-labelledby="safe-h">
           <h2 id="safe-h">{t('settings.safety')}</h2>

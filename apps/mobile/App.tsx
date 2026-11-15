@@ -24,8 +24,7 @@ import { ConsentCheck, LoginScreen } from './src/screens/Login';
 import { NotificationsScreen } from './src/screens/Notifications';
 import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
-import { SosButton } from './src/screens/Sos';
-import { LANGS, getLang, setLang, t, useLang, type LegalDoc } from './src/shared';
+import { t, useLang, type LegalDoc } from './src/shared';
 import { FONT, ThemeProvider, useTheme } from './src/theme';
 import { Button, ErrorText, H1, Loading, P, Row, Screen, TOUCH } from './src/ui';
 import { useResource } from './src/useResource';
@@ -111,7 +110,7 @@ function Shell() {
     <View style={{ flex: 1, backgroundColor: palette.bg }}>
       <StatusBar style={palette.dark ? 'light' : 'dark'} />
       <Aurora />
-      <Header signedIn={signedIn} />
+      <Header />
       <View style={{ flex: 1, paddingBottom: DOCK_H + insets.bottom + 18 }}>
         <ConsentGate>{screen}</ConsentGate>
       </View>
@@ -183,12 +182,15 @@ function DockItem({ label, icon, on, onPress }: { label: string; icon: string; o
   );
 }
 
-/** The web's glass top bar: brand logo + wordmark text, SOS for signed-in users, the compact UZ|RU|EN switch. */
-function Header({ signedIn }: { signedIn: boolean }) {
+/**
+ * The web's glass top bar. Owner, 2026-11-15: logo only — SOS lives on Help and on confirmed/active bookings
+ * (CLAUDE.md S25), the language is chosen on Kirish and in Settings. No scroll-linked styles: the bar sits outside
+ * the ScrollView, so it cannot shift while the page scrolls.
+ */
+function Header() {
   const { palette } = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
-  const lang = getLang();
   return (
     <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 12, paddingBottom: 4 }}>
       <View
@@ -214,24 +216,6 @@ function Header({ signedIn }: { signedIn: boolean }) {
           <BrandMark size={28} />
           <Text style={{ color: palette.fg, fontSize: 22, fontFamily: FONT.display }}>Yondo</Text>
         </Pressable>
-        {signedIn && <SosButton kind="ghost" />}
-        <View role="radiogroup" aria-label={t('settings.language')} style={{ flexDirection: 'row' }}>
-          {LANGS.map((l) => {
-            const on = lang === l.id;
-            return (
-              <Pressable
-                key={l.id}
-                role="radio"
-                aria-checked={on}
-                aria-label={l.label}
-                onPress={() => void setLang(l.id).catch(() => {})}
-                style={{ minWidth: 38, minHeight: TOUCH, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? palette.primary : 'transparent' }}
-              >
-                <Text style={{ color: on ? palette.onPrimary : palette.muted, fontSize: 13, fontFamily: on ? FONT.bold : FONT.medium }}>{l.id.toUpperCase()}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
       </View>
     </View>
   );

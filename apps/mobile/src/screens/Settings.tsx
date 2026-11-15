@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { WEB_URL, api, errorText, type Schemas } from '../api';
@@ -7,7 +7,7 @@ import { useAuth, type User } from '../auth';
 import { useNav } from '../nav';
 import { LANGS, UZ_ALPHABETS, formatInstant, getLang, getUzAlphabet, roleLabel, setLang, setUzAlphabet, t, useLang } from '../shared';
 import { FONT, useTheme, type ThemeChoice } from '../theme';
-import { Banner, Button, Card, Chip, ChipGroup, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen, Sheet } from '../ui';
+import { Banner, Button, Card, Chip, ChipGroup, ConfirmDialog, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
 import { ConsentCheck } from './Login';
 import { openWeb } from './Account';
@@ -79,7 +79,6 @@ export function SettingsScreen() {
         <H2>{t('settings.account')}</H2>
         {user ? <AccountGroup user={user} /> : <Button label={t('nav.login')} onPress={() => nav.switchTab('login')} />}
       </Card>
-      {user && <DeleteAccount />}
       <Card style={{ gap: 0, paddingVertical: 8 }}>
         <View style={{ paddingHorizontal: 8, paddingBottom: 4 }}>
           <H2>{t('settings.safety')}</H2>
@@ -141,17 +140,18 @@ function AccountGroup({ user }: { user: User }) {
           <MenuRow title={t('account.studio')} hint={t('account.menu.studioHint')} web onPress={() => openWeb('/studio')} />
         </View>
       ) : null}
-      <Row>
-        <Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />
-      </Row>
+      <DeleteAccount before={<Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />} />
     </>
   );
 }
 
 type Deletion = Schemas['DeletionState'];
 
-/** In-app account deletion, the same API and texts as the web (apps/web/src/pages/DeleteAccount.tsx). */
-function DeleteAccount() {
+/**
+ * In-app account deletion, the same API and texts as the web (apps/web/src/pages/DeleteAccount.tsx). Owner,
+ * 2026-11-15: the button looks exactly like "Chiqish" (no red block); the question opens in a blurred dialog.
+ */
+function DeleteAccount({ before }: { before: ReactNode }) {
   const res = useResource(() => api.get<Deletion>('/account/deletion'), []);
   const [open, setOpen] = useState(false);
   const [understood, setUnderstood] = useState(false);
@@ -186,46 +186,44 @@ function DeleteAccount() {
     }
   };
   return (
-    <Card style={{ gap: 10 }}>
-      <H2>{t('account.delete.title')}</H2>
+    <View style={{ gap: 10 }}>
       {notice && <Banner text={notice} />}
-      {res.loading && !res.data ? (
-        <Loading />
-      ) : res.error ? (
+      {res.data?.pending ? (
+        <>
+          <Row>
+            {before}
+            <Button kind="ghost" label={t('account.delete.cancel')} busy={busy} onPress={() => void cancel()} />
+          </Row>
+          <Banner text={t('account.delete.pending', { date: formatInstant(res.data.due_at) })} />
+          <P muted>{t('account.delete.pendingNote')}</P>
+        </>
+      ) : (
+        <Row>
+          {before}
+          {res.data && (
+            <Button kind="ghost" label={t('account.delete.title')} onPress={() => { setUnderstood(false); setErr(undefined); setOpen(true); }} />
+          )}
+        </Row>
+      )}
+      {res.loading && !res.data && <Loading />}
+      {!!res.error && (
         <>
           <ErrorText text={errorText(res.error)} />
           <Button kind="ghost" label={t('common.retry')} onPress={res.reload} />
         </>
-      ) : res.data?.pending ? (
-        <>
-          <Banner text={t('account.delete.pending', { date: formatInstant(res.data.due_at) })} />
-          <P muted>{t('account.delete.pendingNote')}</P>
-          {err && <ErrorText text={err} />}
-          <Row>
-            <Button label={t('account.delete.cancel')} busy={busy} onPress={() => void cancel()} />
-          </Row>
-        </>
-      ) : (
-        <>
-          <P muted>{t('account.delete.body', { days })}</P>
-          <P muted style={{ fontSize: 14 }}>{t('account.delete.openBookings')}</P>
-          <Row>
-            <Button kind="danger" label={t('account.delete.button')} onPress={() => { setUnderstood(false); setErr(undefined); setOpen(true); }} />
-          </Row>
-        </>
       )}
-      {open && (
-        <Sheet open title={t('account.delete.confirmTitle')} onClose={() => !busy && setOpen(false)}>
-          <P>{t('account.delete.body', { days })}</P>
-          <P muted>{t('account.delete.pendingNote')}</P>
-          <ConsentCheck checked={understood} onChange={setUnderstood} label={t('account.delete.confirmCheck')} />
-          {err && <ErrorText text={err} />}
-          <Row>
-            <Button kind="danger" label={t('account.delete.confirm')} busy={busy} disabled={!understood} onPress={() => void request()} />
-            <Button kind="ghost" label={t('common.cancel')} disabled={busy} onPress={() => setOpen(false)} />
-          </Row>
-        </Sheet>
-      )}
-    </Card>
+      {err && !open && <ErrorText text={err} />}
+      <ConfirmDialog open={open} title={t('account.delete.ask')} onClose={() => !busy && setOpen(false)}>
+        <P>{t('account.delete.body', { days })}</P>
+        <P muted>{t('account.delete.pendingNote')}</P>
+        <P muted style={{ fontSize: 14 }}>{t('account.delete.openBookings')}</P>
+        <ConsentCheck checked={understood} onChange={setUnderstood} label={t('account.delete.confirmCheck')} />
+        {err && <ErrorText text={err} />}
+        <Row>
+          <Button label={t('account.delete.yes')} busy={busy} disabled={!understood} onPress={() => void request()} />
+          <Button kind="ghost" label={t('account.delete.no')} disabled={busy} onPress={() => setOpen(false)} />
+        </Row>
+      </ConfirmDialog>
+    </View>
   );
 }

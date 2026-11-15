@@ -6,7 +6,7 @@ import { useAuth } from '../auth';
 import { useNav, type Route } from '../nav';
 import { dedupePhonePrefix, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, ErrorText, Field, H1, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, ErrorText, Field, H1, LangSwitch, MenuRow, P, Row, Screen } from '../ui';
 
 const PHONE = /^\+998\d{9}$/;
 
@@ -65,6 +65,7 @@ export function LoginScreen({ then }: { then?: Route }) {
           <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
         </Row>
       )}
+      <LangSwitch />
       <H1>{t('login.title')}</H1>
       <P muted>{t('login.lead')}</P>
       {!step ? (
