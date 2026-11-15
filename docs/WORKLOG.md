@@ -28,6 +28,23 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S66 — Username + password login, backend (2026-11-15) [cloud chat, backend worker]
+Done: product-decisions §3/§6 plus the owner's username addition (CLAUDE.md §7, `docs/login-password.md`).
+- New endpoints: `POST /auth/registration` (username + password, needs a code session ≤ 15 min), `POST /auth/password/login` (username or phone), `PUT /auth/password` (signs out the other sessions), `POST /auth/password/reset` (code; signs out all), `GET /auth/username/available`. `/auth/me` gains `username`, `has_password`, `password_setup_required`.
+- Rules: scrypt with stored parameters; 5 failures lock that account for 15 min (unknown logins are locked the same way); 20/min per IP; one generic 401; the username is private. Optional setup gate `YONDO_AUTH_REQUIRE_PASSWORD_SETUP`, off.
+- Account erasure frees the username. Migration 0023 (additive).
+Not done: web/mobile screens (separate task). Turn the gate on after they ship.
+Verifier notes (non-blocking):
+- per-IP limit and trusted proxy IPs (deploy);
+- `login:<hash>` guard rows are never cleaned up;
+- registration can replace a password set by a reset without signing out other sessions;
+- the "rehash on next login" docstring is not implemented;
+- usernames from the availability query reach access logs.
+Next: frontend worker builds the registration/sign-in/reset screens from `apps/web/src/api/schema.d.ts`.
+Blockers: none.
+Evidence: pytest SQLite 501 passed + 12 skipped; PG16 513 passed (username race included); fresh PG16 `alembic check` clean, 0023 down/up OK; ruff and `export_openapi --check` PASS; demo tests 9 passed; web typecheck PASS; verifier (Opus) APPROVE on 0d18b0f.
+Commit: branch `feat/password-username-login`, PR to `main`.
+
 ## S65 — Login codes through the free Yondo Telegram bot (2026-11-14) [cloud chat, backend worker]
 Done: owner decision (CLAUDE.md §7, `docs/login-telegram-bot.md`). `YONDO_OTP_PROVIDER=telegram_bot`: `TelegramBotOtpProvider` (Bot API sendMessage, 5 s timeout, bot blocked / chat not found = `telegram_bot_unreachable`). Link flow `/auth/telegram/link/{config,start,status,complete}`: a single-use challenge (hash only, 10 min) and a poll token returned once; `/complete` takes the shared secret `YONDO_BOT_SHARED_SECRET` (constant-time compare; unset or under 32 characters = 503), matches the VPS bot contract (`linked` / `already_linked`) and only accepts private chats. One Telegram account per phone. The code goes out through the existing `issue_otp`; a failed send stores nothing. Account erasure removes the link. httpx/httpcore loggers are pinned at WARNING because the Bot API URL contains the token. Web login: bot deep link, polling, code step, resend or new link (uz/ru/en). Paid Gateway unchanged and off; no paid fallback; WhatsApp is out of scope (one doc line each). Migration 0022, chained onto 0021.
 Not done: live bot ↔ backend end-to-end test (needs the owner's VPS bot configured with the same secret). Verifier notes, non-blocking: `already_linked` / `telegram_link_required` reveal whether a phone is linked (CEO-requested); the per-phone start limit (5 per 10 min) can be used to delay someone's login; old challenge rows are never cleaned up.
