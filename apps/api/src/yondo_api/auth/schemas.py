@@ -62,6 +62,11 @@ class UserResponse(BaseModel):
 
     id: UUID
     phone_number: str
+    # Private login identifier: only ever returned to its owner.
+    username: str | None = None
+    has_password: bool = False
+    # True until username and password are set (clients show the setup screen).
+    password_setup_required: bool = True
     age: int | None
     gender: str | None
     city: str | None

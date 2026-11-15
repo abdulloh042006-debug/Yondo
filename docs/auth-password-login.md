@@ -1,5 +1,7 @@
 # Password login (phone + password) — design plan
 
+> **Built 2026-11-15** with the owner's decisions and a username: see `docs/login-password.md` (this file is the earlier plan).
+
 Status: **PLAN, not built.** **The owner answered Q1–Q7 on 2026-11-06** (`docs/product-decisions.md` §3/§6). Where this plan differs, those answers win:
 - the password is **mandatory** (Q1);
 - there is no extra code on a new device;

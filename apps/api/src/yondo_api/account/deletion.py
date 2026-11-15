@@ -32,7 +32,7 @@ from yondo_api.companions.models import (
 )
 from yondo_api.discovery.models import CompanionFavorite, CompanionLike
 from yondo_api.gifts.models import GiftCartItem
-from yondo_api.models.auth import AuthSession, OtpChallenge
+from yondo_api.models.auth import AuthSession, OtpChallenge, PasswordLoginGuard
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
 from yondo_api.safety.models import TrustedContact, UserBlock
@@ -174,6 +174,12 @@ async def erase_account(
     )
     for model in (TelegramLink, TelegramLinkChallenge):  # Telegram ids are personal data
         await session.execute(delete(model).where(model.phone_number == user.phone_number))
+    await session.execute(
+        delete(PasswordLoginGuard).where(PasswordLoginGuard.subject == f'user:{uid}')
+    )
+    user.username = None
+    user.password_hash = None
+    user.password_changed_at = None
     user.phone_number = f'deleted-{uid.hex[:24]}'
     user.age = None
     user.gender = None

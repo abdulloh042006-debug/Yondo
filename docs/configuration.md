@@ -55,6 +55,10 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_TELEGRAM_BOT_BASE_URL` | Bot API origin (https) | no | `https://api.telegram.org` | Default |
 | `YONDO_TELEGRAM_BOT_TIMEOUT_SECONDS` | sendMessage timeout (≤ 15; the bot waits 30 s) | no | `5` | Default |
 | `YONDO_TELEGRAM_LINK_LIFETIME_SECONDS` | Bot link lifetime (60–3600) | no | `600` | Default |
+| `YONDO_AUTH_SCRYPT_LOG_N` | Password hash cost, N = 2^value (14–20) | no | `17` | Default (docs/login-password.md) |
+| `YONDO_AUTH_PASSWORD_IP_RATE_LIMIT_PER_MINUTE` | Password login/reset/username-check attempts per client IP per minute (0 = off) | no | `20` | Owner decision |
+| `YONDO_AUTH_REGISTRATION_WINDOW_SECONDS` | Registration must follow a code sign-in this recent | no | `900` | Default |
+| `YONDO_AUTH_REQUIRE_PASSWORD_SETUP` | 403 `password_setup_required` for accounts without username + password (outside /auth, /legal) | no | `false` | Turn on after the setup screens ship |
 | `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` | Global cap on code sends per minute (0 = off) | recommended | `30` | Owner/CEO decides |
 | `YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` / `..._REFRESH_...` | Session lifetimes | no | `900` / `2592000` | Defaults |
 | `YONDO_STORAGE_BACKEND` | `disabled` or `s3` | for photos/ID | `s3` | — |

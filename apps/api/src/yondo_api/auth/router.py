@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.api.errors import ApplicationError
@@ -10,6 +10,7 @@ from yondo_api.auth.dependencies import (
     get_authenticated_user,
     get_db_session,
 )
+from yondo_api.auth.password_router import user_response
 from yondo_api.auth.providers import OtpDeliveryProvider, OtpRateLimitHook
 from yondo_api.auth.schemas import (
     OtpRequest,
@@ -110,20 +111,7 @@ async def get_profile(
     principal: PrincipalDependency,
     session: SessionDependency,
 ) -> UserResponse:
-    roles = await session.scalars(
-        select(UserRole.role).where(UserRole.user_id == principal.user.id)
-    )
-    user = principal.user
-    return UserResponse(
-        id=user.id,
-        phone_number=user.phone_number,
-        age=user.age,
-        gender=user.gender,
-        city=user.city,
-        ui_locale=user.ui_locale,
-        roles=list(roles),
-        created_at=user.created_at,
-    )
+    return await user_response(session, principal.user)
 
 
 @router.put('/profile', response_model=UserResponse)
@@ -136,20 +124,7 @@ async def update_profile(
         setattr(principal.user, field, getattr(payload, field))
     await session.commit()
     await session.refresh(principal.user)
-    roles = await session.scalars(
-        select(UserRole.role).where(UserRole.user_id == principal.user.id)
-    )
-    user = principal.user
-    return UserResponse(
-        id=user.id,
-        phone_number=user.phone_number,
-        age=user.age,
-        gender=user.gender,
-        city=user.city,
-        ui_locale=user.ui_locale,
-        roles=list(roles),
-        created_at=user.created_at,
-    )
+    return await user_response(session, principal.user)
 
 
 @router.put('/roles', response_model=list[UserRoleType])

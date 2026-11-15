@@ -34,3 +34,15 @@ class AuthSession(TimestampMixin, Base):
     access_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     refresh_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # How the session was created: 'otp', 'password' (NULL for sessions older than this column).
+    via: Mapped[str | None] = mapped_column(String(16))
+
+
+class PasswordLoginGuard(TimestampMixin, Base):
+    """Failed password attempts per subject: 'user:<id>', or 'login:<hash>' for unknown logins."""
+
+    __tablename__ = 'password_login_guards'
+
+    subject: Mapped[str] = mapped_column(String(64), primary_key=True)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
