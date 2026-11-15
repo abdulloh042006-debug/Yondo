@@ -3,7 +3,8 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 /**
  * A small stack per tab is all the app needs; no navigation library (fewer native dependencies).
  * The tabs are the web app's bottom dock (apps/web/src/ui/Layout.tsx): signed in = Kashf · Sevimlilar · Bronlar ·
- * Profil; signed out = Kashf · Kirish. Settings is not a tab: it opens from the Profil hub (and from Kirish).
+ * Profil; signed out = Kashf · Kirish. Settings is not a tab: it opens from Profil (and from Kirish); Notifications
+ * and Help open from Settings (owner, 2026-11-14).
  */
 export type Route =
   | { name: 'discover' }
@@ -13,6 +14,8 @@ export type Route =
   | { name: 'booking'; id: string }
   | { name: 'account' }
   | { name: 'settings' }
+  | { name: 'notifications' }
+  | { name: 'help' }
   | { name: 'login'; then?: Route };
 export type Tab = 'discover' | 'favorites' | 'bookings' | 'account' | 'login';
 
