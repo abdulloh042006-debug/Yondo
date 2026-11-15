@@ -71,12 +71,17 @@ export function Login() {
   const [noTelegram, setNoTelegram] = useState(false);
   const noTelegramId = useId();
   const [botEnabled, setBotEnabled] = useState(false);
+  const [botUsername, setBotUsername] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
     api
       .get<Schemas['LinkConfig']>('/auth/telegram/link/config', { anonymous: true })
-      .then((cfg) => live && setBotEnabled(cfg.enabled))
+      .then((cfg) => {
+        if (!live) return;
+        setBotEnabled(cfg.enabled);
+        setBotUsername(cfg.enabled && cfg.bot_username ? cfg.bot_username : null);
+      })
       .catch(() => undefined); // unknown = keep the existing (demo) login
     return () => {
       live = false;
@@ -353,6 +358,17 @@ export function Login() {
             <p role="status" className={step.resent ? 'hint' : 'sr-only'}>
               {step.resent ? t('login.resent') : ''}
             </p>
+            {step.bot && step.channel === 'telegram' && botUsername && (
+              // The code is in the bot chat: one tap opens it; the user copies the code and comes back.
+              <a
+                className="btn ghost"
+                href={`https://t.me/${encodeURIComponent(botUsername)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('login.bot.open')}
+              </a>
+            )}
             <Field
               key={step.focusKey}
               label={t('login.code')}
