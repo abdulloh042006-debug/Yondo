@@ -136,7 +136,10 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
     }
   };
   let res = await send();
-  if (res.status === 401 && !opts.anonymous && read(REFRESH)) {
+  // A 401 about the request itself (a wrong current password: invalid_credentials) is not about the session:
+  // it must neither refresh nor sign the user out. Branch on the code, never the message.
+  const sessionProblem = res.status === 401 && (await res.clone().json().catch(() => null))?.code !== 'invalid_credentials';
+  if (sessionProblem && !opts.anonymous && read(REFRESH)) {
     if (await refresh()) res = await send();
     if (res.status === 401) {
       tokens.clear();

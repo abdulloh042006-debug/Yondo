@@ -7,7 +7,8 @@ One app for every role: a customer books, a companion accepts the booking in the
 | Area | Screens | Rules it keeps |
 | --- | --- | --- |
 | Discovery | list with search and service filter, companion profile | the verified badge only when the API says `verified: true`; photos come from short-lived signed URLs |
-| Sign-in | phone, then the one-time code (Telegram Gateway in production), Terms/Privacy consent with versions | the on-screen code exists only in development; the consent gate also asks again after a document update |
+| Sign-in | username or phone + password first; a one-time code via Telegram second (sign-up); "Parolni unutdingizmi?" = phone → code → new password; setup of username + password after a code sign-in; Terms/Privacy consent with versions | errors chosen by `code` (`invalid_credentials`, `password_login_blocked`, `rate_limited`); the on-screen code exists only in development; `docs/login-password.md` |
+| Face ID / fingerprint | offered once after a sign-in; the OS check (`expo-local-authentication`) before a saved session opens; opt-out in Settings → Hisob | phone only, hidden without enrolled biometrics; nothing leaves the phone and the server is not involved; tested with a mock on the web build (`src/biometric.ts`): the real prompt needs a device test |
 | Booking | form with exactly the 5 API fields (service, start instant, duration, place, `Asia/Tashkent`) | Tashkent wall time is sent as an explicit `+05:00` instant |
 | Bookings | list and detail; a companion accepts or declines; cancel | |
 | Payment | "Go to payment" only for `accepted`, opens the provider's `checkout_url` | one `Idempotency-Key` per booking, kept on the device; 503 is shown as "unavailable", never as "declined"; no money logic in the app |

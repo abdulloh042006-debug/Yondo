@@ -28,6 +28,20 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S68 — Username + password screens on web and mobile; Face ID / fingerprint on mobile (2026-11-15) [cloud worker, mobile + web]
+Done (owner 2026-11-15, CEO brief; API from PR #40):
+- Kirish = username or phone + password first; "Telegram orqali kod bilan kiriş" second (sign-up path); "Parolni unutdingizmi?" = phone → code (bot flow reused) → new password. Errors by `code` (invalid_credentials, password_login_blocked with the 15-minute wait, rate_limited).
+- Setup gate after a code sign-in (`password_setup_required`): username with live, debounced availability; rules shown; password + repeat. `reauth_required` → sign out → code sign-in with an explanation. Help and the documents stay open. The server gate stays OFF.
+- Settings → Hisob: "Parolni almaştiriş" (current + new; other devices are signed out); "Login: …" shown only to the owner.
+- Mobile: the same screens + Face ID / fingerprint (`expo-local-authentication`): offered once after a sign-in, then the app asks the OS before it opens a saved session; opt-out in Settings; hidden without enrolled biometrics. No server change.
+- Fixes found on the way: a 401 `invalid_credentials` (wrong current password) no longer signs the user out (web + mobile clients); the mobile web build lost its language on reload (`applySavedLang` before the stored tag).
+- i18n: 61 keys (uz 2026 / ru / en). Shared rules `apps/web/src/lib/credentials.ts` (mobile imports them).
+Not done / honest limits:
+- Biometrics were tested only with a mock on the web build. The real Face ID / fingerprint prompt, iOS NSFaceIDUsageDescription and Android BiometricPrompt need a device test.
+- Tokens stay in SecureStore without `requireAuthentication`: on Android every write would prompt, and refresh tokens rotate. The gate is the OS check before the stored session is loaded.
+Next: device test of biometrics on the APK; the owner decides when to turn on `YONDO_AUTH_REQUIRE_PASSWORD_SETUP`.
+Evidence: web vitest 114/114, web e2e 69/69 on the real API, mobile smoke 16/16, typechecks, lint, build, expo export; screenshots `apps/mobile/docs/password/`.
+Commit: branch `feat/password-screens`, PR to `main`.
 ## S67 — Username + password login, backend (2026-11-15) [cloud chat, backend worker]
 Done: product-decisions §3/§6 plus the owner's username addition (CLAUDE.md §7, `docs/login-password.md`).
 - New endpoints: `POST /auth/registration` (username + password, needs a code session ≤ 15 min), `POST /auth/password/login` (username or phone), `PUT /auth/password` (signs out the other sessions), `POST /auth/password/reset` (code; signs out all), `GET /auth/username/available`. `/auth/me` gains `username`, `has_password`, `password_setup_required`.

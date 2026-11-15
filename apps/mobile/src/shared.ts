@@ -8,6 +8,7 @@ export {
   LANGS,
   UZ_ALPHABETS,
   applyLocaleTag,
+  applySavedLang,
   getLang,
   getLocaleTag,
   getUzAlphabet,
@@ -23,6 +24,7 @@ export {
 } from '../../web/src/i18n';
 export { dedupePhonePrefix, formatInstant, formatMoney, initial, prettyPhone } from '../../web/src/lib/format';
 export { messageFor } from '../../web/src/lib/messages';
+export { normalizeUsername, passwordProblem, usernameValid } from '../../web/src/lib/credentials';
 export { BOOKING_STATUS, REPORT_CATEGORY, REPORT_STATUS, SUPPORT_STATUS, roleLabel, serviceLabel } from '../../web/src/lib/labels';
 export { LEGAL_VERSIONS, type LegalDoc } from '../../web/src/legal/versions';
 import type { components } from '../../web/src/api/schema';

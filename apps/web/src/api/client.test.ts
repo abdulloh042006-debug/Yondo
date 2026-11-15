@@ -58,6 +58,19 @@ describe('api client', () => {
     off();
   });
 
+  it('a wrong current password (401 invalid_credentials) is a form error: no refresh, the session stays', async () => {
+    tokens.set({ access_token: 'a', refresh_token: 'r' });
+    const expired = vi.fn();
+    const off = onSessionExpired(expired);
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(401, { code: 'invalid_credentials', message: '' }));
+    const err = (await api.put('/auth/password', { current_password: 'x', new_password: 'y' }).catch((e) => e)) as ApiError;
+    expect(err.code).toBe('invalid_credentials');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(tokens.has()).toBe(true);
+    expect(expired).not.toHaveBeenCalled();
+    off();
+  });
+
   it('anonymous requests never carry credentials; 204 resolves to undefined', async () => {
     tokens.set({ access_token: 'secret', refresh_token: 'r' });
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }));

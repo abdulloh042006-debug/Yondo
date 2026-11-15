@@ -31,7 +31,8 @@ function routeGet(enabled: boolean) {
 
 const mount = () =>
   render(
-    <MemoryRouter>
+    // The code path (Kirish opens on username/phone + password since 2026-11-15).
+    <MemoryRouter initialEntries={[{ pathname: '/login', state: { mode: 'code' } }]}>
       <Login />
     </MemoryRouter>,
   );

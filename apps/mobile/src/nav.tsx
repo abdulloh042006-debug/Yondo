@@ -16,7 +16,7 @@ export type Route =
   | { name: 'settings' }
   | { name: 'notifications' }
   | { name: 'help' }
-  | { name: 'login'; then?: Route };
+  | { name: 'login'; then?: Route; mode?: 'password' | 'code' | 'reset'; notice?: string }
 export type Tab = 'discover' | 'favorites' | 'bookings' | 'account' | 'login';
 
 interface NavApi {
@@ -27,7 +27,8 @@ interface NavApi {
   back: () => void;
   switchTab: (tab: Tab) => void;
   /** Back to the tab roots on the Kashf tab (after sign-in/out, so no screen of another account stays open). */
-  reset: () => void;
+  /** Back to the roots of every tab; `tab` picks the open tab (default Kashf). */
+  reset: (tab?: Tab) => void;
 }
 const Ctx = createContext<NavApi | null>(null);
 const ROOT: Record<Tab, Route> = {
@@ -52,7 +53,7 @@ interface State {
 export function NavProvider({ children }: { children: ReactNode }) {
   // One state object, so `reset()` followed by `push()` in the same tick lands on the new tab's stack.
   const [s, setS] = useState<State>(() => ({ tab: 'discover', stacks: roots() }));
-  const reset = useCallback(() => setS({ tab: 'discover', stacks: roots() }), []);
+  const reset = useCallback((tab: Tab = 'discover') => setS({ tab, stacks: roots() }), []);
   const value = useMemo<NavApi>(() => {
     const stack = s.stacks[s.tab];
     return {

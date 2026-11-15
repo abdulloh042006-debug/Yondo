@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -131,14 +131,21 @@ export function Chip({ label, selected, onPress, toggle }: { label: string; sele
   );
 }
 
-export function Field({ label, error, hint, ...input }: TextInputProps & { label: string; error?: string; hint?: string }) {
+/**
+ * `live`: a polite status line under the field (e.g. "username available"). The hint, the error and the status
+ * are tied to the input (aria-describedby on the web build; the error is also an alert on phones).
+ */
+export function Field({ label, error, hint, live, ...input }: TextInputProps & { label: string; error?: string; hint?: string; live?: string }) {
   const { palette } = useTheme();
+  const id = `f${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const described = [error ? `${id}-e` : hint ? `${id}-h` : null, live ? `${id}-s` : null].filter(Boolean).join(' ');
   return (
     <View style={{ gap: 4 }}>
       <Text style={[styles.label, { color: palette.fg }]}>{label}</Text>
       <TextInput
         aria-label={label}
         aria-invalid={!!error}
+        {...(described ? ({ 'aria-describedby': described } as object) : {})}
         placeholderTextColor={palette.muted}
         {...input}
         style={[
@@ -148,18 +155,23 @@ export function Field({ label, error, hint, ...input }: TextInputProps & { label
           input.multiline && { minHeight: 96, textAlignVertical: 'top', paddingTop: 10 },
         ]}
       />
-      {hint && !error && <Text style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.body }}>{hint}</Text>}
-      {error && <ErrorText text={error} />}
+      {hint && !error && <Text nativeID={`${id}-h`} style={{ color: palette.muted, fontSize: 13, fontFamily: FONT.body }}>{hint}</Text>}
+      {error && <ErrorText text={error} nativeID={`${id}-e`} />}
+      {live ? (
+        <Text nativeID={`${id}-s`} role="status" aria-live="polite" style={{ color: palette.fg, fontSize: 13, fontFamily: FONT.medium }}>
+          {live}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 /** Errors are ink text with a carrot rule beside them (meaning by words, not hue). */
-export function ErrorText({ text }: { text: string }) {
+export function ErrorText({ text, nativeID }: { text: string; nativeID?: string }) {
   const { palette } = useTheme();
   return (
     <View role="alert" style={[styles.note, { borderLeftColor: palette.accent }]}>
-      <Text style={{ color: palette.fg, fontFamily: FONT.body }}>{text}</Text>
+      <Text nativeID={nativeID} style={{ color: palette.fg, fontFamily: FONT.body }}>{text}</Text>
     </View>
   );
 }

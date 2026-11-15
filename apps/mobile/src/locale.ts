@@ -1,4 +1,4 @@
-import { applyLocaleTag, getLocaleTag, onLocaleChange } from './shared';
+import { applyLocaleTag, applySavedLang, getLocaleTag, onLocaleChange } from './shared';
 import { getItem, setItem } from './storage';
 
 /**
@@ -9,6 +9,9 @@ import { getItem, setItem } from './storage';
 const KEY = 'yondo.locale';
 
 export async function restoreLocale(): Promise<void> {
+  // The shared i18n module starts from the web build's localStorage choice without loading its dictionary:
+  // load it first, or a reload of the web build shows Uzbek while thinking it is already English/Russian.
+  await applySavedLang();
   const saved = await getItem(KEY, 'pref');
   if (saved) await applyLocaleTag(saved).catch(() => {});
   onLocaleChange(() => void setItem(KEY, getLocaleTag(), 'pref'));

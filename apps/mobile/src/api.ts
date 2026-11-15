@@ -105,7 +105,9 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
     }
   };
   let res = await send();
-  if (res.status === 401 && !opts.anonymous && refreshToken) {
+  // A 401 about the request itself (a wrong current password: invalid_credentials) is not about the session.
+  const sessionProblem = res.status === 401 && (await res.clone().json().catch(() => null))?.code !== 'invalid_credentials';
+  if (sessionProblem && !opts.anonymous && refreshToken) {
     if (await refresh()) res = await send();
     if (res.status === 401) {
       await tokens.clear();

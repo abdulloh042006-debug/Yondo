@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { WEB_URL, api, errorText, type Schemas } from '../api';
@@ -11,6 +11,8 @@ import { Banner, Button, Card, Chip, ChipGroup, ConfirmDialog, ErrorText, H1, H2
 import { useResource } from '../useResource';
 import { ConsentCheck } from './Login';
 import { openWeb } from './Account';
+import { ChangePassword } from './Password';
+import { biometricAvailable, biometricCheck, biometricEnabled, setBiometricEnabled } from '../biometric';
 
 type Role = Schemas['UserRoleType'];
 
@@ -135,12 +137,52 @@ function AccountGroup({ user }: { user: User }) {
           <Chip toggle key={r} label={roleLabel(r)} selected={user.roles.includes(r)} onPress={() => !busy && void toggleRole(r)} />
         ))}
       </Row>
+      <ChangePassword user={user} onDone={setNotice} />
+      <BiometricToggle />
       {user.roles.includes('companion') && WEB_URL ? (
         <View style={{ marginHorizontal: -8 }}>
           <MenuRow title={t('account.studio')} hint={t('account.menu.studioHint')} web onPress={() => openWeb('/studio')} />
         </View>
       ) : null}
       <DeleteAccount before={<Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />} />
+    </>
+  );
+}
+
+/**
+ * Face ID / fingerprint sign-in on this phone (owner, 2026-11-15): the opt-out lives here. Hidden when the device
+ * has no biometrics enrolled (and always on the web build). Turning it on asks for one successful check first.
+ */
+function BiometricToggle() {
+  const [available, setAvailable] = useState(false);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void Promise.all([biometricAvailable(), biometricEnabled()]).then(([a, e]) => {
+      if (!live) return;
+      setAvailable(a);
+      setOn(a && e);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!available) return null;
+  const toggle = async () => {
+    if (on) {
+      await setBiometricEnabled(false);
+      return setOn(false);
+    }
+    if (!(await biometricCheck())) return;
+    await setBiometricEnabled(true);
+    setOn(true);
+  };
+  return (
+    <>
+      <P muted>{t('bio.settingHint')}</P>
+      <Row>
+        <Chip toggle label={t('bio.setting')} selected={on} onPress={() => void toggle()} />
+      </Row>
     </>
   );
 }

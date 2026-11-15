@@ -5,6 +5,7 @@ import { IntroHost } from './Intro';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { ConsentGate } from './Consent';
+import { PasswordSetupGate } from '../auth/PasswordSetup';
 import { PageTransition } from './motion';
 
 const Icon = ({ d }: { d: string }) => (
@@ -94,7 +95,9 @@ export function Layout() {
         <main id="main" className="page" tabIndex={-1}>
           <PageTransition key={location.pathname.split('/').slice(0, 2).join('/')}>
             <ConsentGate>
-              <Outlet />
+              <PasswordSetupGate>
+                <Outlet />
+              </PasswordSetupGate>
             </ConsentGate>
           </PageTransition>
           {state.status === 'loading' && <span className="sr-only">{t('nav.sessionChecking')}</span>}
