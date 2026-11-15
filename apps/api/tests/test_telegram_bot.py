@@ -129,6 +129,12 @@ async def test_link_send_code_verify_and_later_login():
         assert done.status_code == 200 and done.json() == {'status': 'linked'}
         assert (await status(client, body['poll_token']))['status'] == 'otp_sent'
         assert api.sent[-1]['chat_id'] == 777001 and 'development_otp' not in done.text
+        # Tap-to-copy: the code is in <code> (HTML mode) and a copy_text button carries it.
+        sent, code = api.sent[-1], api.last_code()
+        assert sent['parse_mode'] == 'HTML' and f'<code>{code}</code>' in sent['text']
+        assert 'protect_content' not in sent  # protected messages cannot be copied
+        button = sent['reply_markup']['inline_keyboard'][0][0]
+        assert button['copy_text'] == {'text': code}
         async with app.state.db_session_factory() as session:
             row = await session.scalar(select(TelegramLinkChallenge))
             assert row.token_hash != token.encode() and len(row.token_hash) == 32

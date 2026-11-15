@@ -33,6 +33,8 @@ type LinkStep = {
 };
 type Step = { kind: 'phone' } | CodeStep | LinkStep;
 const POLL_MS = 2000;
+/** A status request that hangs (a phone browser paused it while the user was in Telegram) is dropped. */
+const POLL_TIMEOUT_MS = 8000;
 /** Failures of the link itself; any other failure means the link is done and only the code was not sent. */
 const LINK_FAILURES = new Set(['telegram_phone_mismatch', 'telegram_account_linked_elsewhere']);
 
@@ -69,44 +71,80 @@ export function Login() {
   const [noTelegram, setNoTelegram] = useState(false);
   const noTelegramId = useId();
   const [botEnabled, setBotEnabled] = useState(false);
+  const [botUsername, setBotUsername] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
     api
       .get<Schemas['LinkConfig']>('/auth/telegram/link/config', { anonymous: true })
-      .then((cfg) => live && setBotEnabled(cfg.enabled))
+      .then((cfg) => {
+        if (!live) return;
+        setBotEnabled(cfg.enabled);
+        setBotUsername(cfg.enabled && cfg.bot_username ? cfg.bot_username : null);
+      })
       .catch(() => undefined); // unknown = keep the existing (demo) login
     return () => {
       live = false;
     };
   }, []);
 
-  // Poll the link status while the user is in Telegram; stop on any final state.
+  // Poll the link status while the user is in Telegram; stop on any final state. Phone browsers pause
+  // a page that is in the background, so a request may hang: each one has a timeout, and coming back
+  // to the page checks at once instead of waiting for the next round.
+  const waitingPoll = step.kind === 'link' && step.state === 'waiting' ? step.poll : null;
   useEffect(() => {
-    if (step.kind !== 'link' || step.state !== 'waiting') return;
-    const timer = window.setTimeout(async () => {
+    if (waitingPoll === null) return;
+    let done = false;
+    let timer = 0;
+    let current: AbortController | null = null;
+    const check = async () => {
+      window.clearTimeout(timer);
+      current?.abort();
+      const mine = new AbortController();
+      current = mine;
+      const limit = window.setTimeout(() => mine.abort(), POLL_TIMEOUT_MS);
       try {
         const st = await api.get<Schemas['LinkStatus']>('/auth/telegram/link/status', {
           anonymous: true,
-          headers: { 'X-Yondo-Link-Poll': step.poll },
+          headers: { 'X-Yondo-Link-Poll': waitingPoll },
+          signal: mine.signal,
         });
-        setStep((cur) => {
-          if (cur.kind !== 'link' || cur.poll !== step.poll) return cur;
-          if (st.status === 'otp_sent') return codeStepFor(cur.phone, null, true);
-          if (st.status === 'expired') return { ...cur, state: 'expired' };
-          if (st.status === 'failed') return { ...cur, state: 'failed', failure: st.failure_code };
-          return { ...cur }; // new object = schedule the next poll
-        });
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 404) {
-          setStep((cur) => (cur.kind === 'link' && cur.poll === step.poll ? { ...cur, state: 'expired' } : cur));
-        } else {
-          setStep((cur) => (cur.kind === 'link' ? { ...cur } : cur)); // network blip: keep polling
+        if (done || current !== mine) return;
+        if (st.status === 'otp_sent' || st.status === 'expired' || st.status === 'failed') {
+          setStep((cur) => {
+            if (cur.kind !== 'link' || cur.poll !== waitingPoll) return cur;
+            if (st.status === 'otp_sent') return codeStepFor(cur.phone, null, true);
+            if (st.status === 'expired') return { ...cur, state: 'expired' };
+            return { ...cur, state: 'failed', failure: st.failure_code };
+          });
+          return;
         }
+      } catch (err) {
+        if (done || current !== mine) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setStep((cur) => (cur.kind === 'link' && cur.poll === waitingPoll ? { ...cur, state: 'expired' } : cur));
+          return;
+        }
+        // a timeout or a network blip: keep polling
+      } finally {
+        window.clearTimeout(limit);
       }
-    }, POLL_MS);
-    return () => window.clearTimeout(timer);
-  }, [step]);
+      timer = window.setTimeout(() => void check(), POLL_MS);
+    };
+    const wake = () => {
+      if (document.visibilityState === 'visible') void check();
+    };
+    timer = window.setTimeout(() => void check(), POLL_MS);
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('focus', wake);
+    return () => {
+      done = true;
+      window.clearTimeout(timer);
+      current?.abort();
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('focus', wake);
+    };
+  }, [waitingPoll]);
 
   useEffect(() => {
     if (step.kind !== 'code' || step.resendIn <= 0) return;
@@ -142,8 +180,10 @@ export function Login() {
     setBusy(true);
     setError(undefined);
     try {
-      // Bot login: a phone without a verified chat links first; a linked phone just gets a code.
-      if (botEnabled && step.kind === 'phone' && (await startLink(number))) return;
+      // Bot login: ask for the code first. A linked phone gets it in Telegram; a phone without a
+      // verified chat answers telegram_link_required and starts the link (catch below). Asking first
+      // creates no link challenge for linked phones and lets the demo's sample numbers keep their
+      // on-screen code.
       const res = await requestCode(number);
       const prev = step.kind === 'code' ? step : null;
       setStep({
@@ -264,6 +304,9 @@ export function Login() {
                 <p role="status" className="hint">
                   <span className="spinner" aria-hidden="true" /> {t('login.bot.waiting')}
                 </p>
+                <button type="button" className="btn ghost" onClick={() => setStep(codeStepFor(step.phone, null, true))}>
+                  {t('login.bot.haveCode')}
+                </button>
               </>
             )}
             {step.state === 'expired' && (
@@ -315,6 +358,17 @@ export function Login() {
             <p role="status" className={step.resent ? 'hint' : 'sr-only'}>
               {step.resent ? t('login.resent') : ''}
             </p>
+            {step.bot && step.channel === 'telegram' && botUsername && (
+              // The code is in the bot chat: one tap opens it; the user copies the code and comes back.
+              <a
+                className="btn ghost"
+                href={`https://t.me/${encodeURIComponent(botUsername)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('login.bot.open')}
+              </a>
+            )}
             <Field
               key={step.focusKey}
               label={t('login.code')}
