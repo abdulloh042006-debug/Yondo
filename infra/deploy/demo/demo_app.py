@@ -268,15 +268,28 @@ class SpaFiles(StaticFiles):
             return await super().get_response('index.html', scope)
 
 
-def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None):
+def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None, *, internal: bool = False,
+              storage: MemoryStorage | None = None):
+    """The public app (served by uvicorn) or, with `internal=True`, the harness's own in-process app.
+
+    Owner, 2026-11-16: the password is mandatory, so the public demo may run with
+    YONDO_AUTH_REQUIRE_PASSWORD_SETUP=true (read from the environment as usual). The seeded DEMO accounts and the
+    owner's admin number have no password, and nobody may be given one they do not know, so the harness's own
+    work (seed, admin refresh, availability top-up) goes through a second app on the same database with that gate
+    off. It is never served: the gate stays exactly as configured for every visitor.
+    """
+    gate = {'auth_require_password_setup': False} if internal else {}
     settings = Settings(environment='test', database_url=db_url,
-                        **({'platform_fee_bps': 0} if demo_pay else {}))  # labelled DEMO fee, the real policy is the owner's
+                        **({'platform_fee_bps': 0} if demo_pay else {}),  # labelled DEMO fee, the real policy is the owner's
+                        **gate)
     # The demo seeds users through the on-screen code, so pin the OTP provider: without this a stray
     # YONDO_TELEGRAM_GATEWAY_TOKEN would make the app send real (paid) Telegram codes to the fake seeded numbers and
     # drop `development_otp` from the responses. Only an explicit YONDO_OTP_PROVIDER=telegram_bot turns on the free
     # bot, and then only for real numbers (DemoOtpProvider).
-    app = create_application(settings, object_storage=MemoryStorage(port), identity_eligibility=AlwaysVerified(),
+    app = create_application(settings, object_storage=storage or MemoryStorage(port), identity_eligibility=AlwaysVerified(),
                              payment_provider=demo_pay, otp_provider=demo_otp_provider(settings))
+    if internal:
+        return app
     if demo_pay:
         install_demo_payment_routes(app, demo_pay)
     if WEB_DIST:
@@ -295,33 +308,36 @@ async def main(port: int, db_file: str):
         print('A previous start died while seeding: the half-seeded demo database was wiped', flush=True)
     if use_migrations:
         await asyncio.to_thread(run_migrations, db_url)
-    app = build_app(db_url, port, demo_pay)
+    storage = MemoryStorage(port)  # one photo store for both apps
+    app = build_app(db_url, port, demo_pay, storage=storage)
+    harness = build_app(db_url, port, demo_pay, internal=True, storage=storage)  # seed + maintenance, gate off
     print(f'PERSISTENT_MODE={"on" if DATABASE_URL else "off"} DEMO_PAYMENT={"on" if demo_pay else "off"} '
-          f'TEZCHECK={"on" if tezcheck_on else "off"}', flush=True)
-    async with app.router.lifespan_context(app):
+          f'TEZCHECK={"on" if tezcheck_on else "off"} '
+          f'PASSWORD_GATE={"on" if app.state.settings.auth_require_password_setup else "off"}', flush=True)
+    async with app.router.lifespan_context(app), harness.router.lifespan_context(harness):
         if not use_migrations:  # Alembic already built the schema of a PostgreSQL database
             async with app.state.db_engine.begin() as connection:
                 await connection.run_sync(Base.metadata.create_all)
         maintenance = None
         if not DATABASE_URL:
-            await seed(app)
+            await seed(harness)
         else:
-            status = await seed_status(app)
+            status = await seed_status(harness)
             if status == 'empty':
-                await mark_seed(app, 'running')  # a start that dies before 'complete' is wiped and seeded again
-                await seed(app)
-                await mark_seed(app, 'complete')
+                await mark_seed(harness, 'running')  # a start that dies before 'complete' is wiped and seeded again
+                await seed(harness)
+                await mark_seed(harness, 'complete')
             else:
                 note = ' (no completion marker: assuming it is complete)' if status == 'legacy' else ''
                 print(f'SEED_SKIPPED: the database already has data (persistent mode){note}', flush=True)
                 if ADMIN_ENV:  # let the owner change the admin number later
-                    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://seed') as client:
+                    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=harness), base_url='http://seed') as client:
                         _, admin_id = await login(client, ADMIN)
-                    await set_user(app, admin_id, [UserRoleType.ADMIN], age=40)
+                    await set_user(harness, admin_id, [UserRoleType.ADMIN], age=40)
             # Persistent mode: the admin is exactly YONDO_DEMO_ADMIN_PHONE (nobody when it is unset), so the well-known
             # number, a changed number or the random seed admin never stay admin in a database that outlives this process.
-            await restrict_admins(app, ADMIN if ADMIN_ENV else None)
-            maintenance = asyncio.create_task(maintenance_loop(app, login, (MADINA, JASUR)))
+            await restrict_admins(harness, ADMIN if ADMIN_ENV else None)
+            maintenance = asyncio.create_task(maintenance_loop(harness, login, (MADINA, JASUR)))
         print('SEED_DONE', flush=True)
         server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=port, lifespan='off', log_level='warning'))
         try:
