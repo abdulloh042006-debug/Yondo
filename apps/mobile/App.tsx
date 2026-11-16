@@ -4,7 +4,7 @@ import { Manrope_700Bold } from '@expo-google-fonts/manrope/700Bold';
 import { SpaceGrotesk_600SemiBold } from '@expo-google-fonts/space-grotesk/600SemiBold';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,34 +27,25 @@ import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
 import { t, useLang, type LegalDoc } from './src/shared';
 import { FONT, ThemeProvider, useTheme } from './src/theme';
-import { Button, ConfirmDialog, ErrorText, H1, Loading, P, Row, Screen, TOUCH } from './src/ui';
+import { Button, ErrorText, H1, Loading, P, Row, Screen, TOUCH } from './src/ui';
 import { useResource } from './src/useResource';
 import { hasLoginIntent } from './src/loginIntent';
-import { biometricAvailable, biometricCheck, biometricEnabled, biometricOffered, setBiometricEnabled, setBiometricOffered } from './src/biometric';
+import { setItem } from './src/storage';
 
 /** Tokens, the saved language and the brand fonts are ready before the first render, so nothing flashes. */
 export default function App() {
   const [ready, setReady] = useState(false);
-  const [locked, setLocked] = useState(false);
   const [fontsLoaded, fontError] = useFonts({ SpaceGrotesk_600SemiBold, Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold });
   useEffect(() => {
-    void Promise.all([tokens.load(), restoreLocale()])
-      .then(async () => {
-        // Face ID / fingerprint on: a saved session opens only after the check (BiometricUnlock below).
-        if (!tokens.has() || !(await biometricEnabled())) return;
-        if (await biometricAvailable()) return setLocked(true);
-        await dropSession(); // biometrics were removed from the phone: sign in again instead
-      })
-      .finally(() => setReady(true));
+    // Owner, 2026-11-16: no in-app Face ID lock. A build that had it may have left its flags: forget them.
+    void Promise.all([tokens.load(), restoreLocale(), forgetBiometricFlags()]).finally(() => setReady(true));
   }, []);
   // A font that fails to load falls back to the system font instead of blocking the app.
   const go = ready && (fontsLoaded || !!fontError);
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        {go && locked ? (
-          <BiometricUnlock onDone={() => setLocked(false)} />
-        ) : go ? (
+        {go ? (
           <AuthProvider>
             <FavoritesProvider>
               <NavProvider>
@@ -70,74 +61,9 @@ export default function App() {
   );
 }
 
-/** Ends the saved session on this phone (and on the server, best effort) and forgets the biometric choice. */
-async function dropSession() {
-  await api.post('/auth/logout').catch(() => {});
-  await tokens.clear();
-  await setBiometricEnabled(false);
-}
-
-/** App start with Face ID / fingerprint on: the OS check opens the saved session; nothing leaves the phone. */
-function BiometricUnlock({ onDone }: { onDone: () => void }) {
-  const { palette } = useTheme();
-  const [failed, setFailed] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const unlock = useCallback(async () => {
-    setBusy(true);
-    const ok = await biometricCheck();
-    setBusy(false);
-    if (ok) onDone();
-    else setFailed(true);
-  }, [onDone]);
-  useEffect(() => {
-    void unlock(); // ask once on open; the button asks again
-  }, [unlock]);
-  return (
-    <View style={{ flex: 1, backgroundColor: palette.bg, justifyContent: 'center', padding: 24, gap: 16 }}>
-      <View style={{ alignItems: 'center' }}>
-        <BrandMark size={64} />
-      </View>
-      <H1>{t('bio.prompt')}</H1>
-      {failed && <ErrorText text={t('bio.failed')} />}
-      <Button label={t('bio.unlock')} busy={busy} onPress={() => void unlock()} />
-      <Button kind="ghost" label={t('login.pw.usePassword')} onPress={() => void dropSession().then(onDone)} />
-    </View>
-  );
-}
-
-/**
- * After a sign-in (password or code) in this app run, offer Face ID / fingerprint once, if the phone has it
- * enrolled and it is not on yet. "Hozir emas" is remembered; Settings → Hisob can turn it on later.
- */
-function BiometricOffer() {
-  const { user, signIns } = useAuth();
-  const [open, setOpen] = useState(false);
-  const ready = signIns > 0 && !!user && !user.password_setup_required;
-  useEffect(() => {
-    if (!ready) return;
-    let live = true;
-    void (async () => {
-      if ((await biometricOffered()) || (await biometricEnabled()) || !(await biometricAvailable())) return;
-      if (live) setOpen(true);
-    })();
-    return () => {
-      live = false;
-    };
-  }, [ready, signIns]);
-  const close = async (enable: boolean) => {
-    await setBiometricOffered();
-    if (enable && (await biometricCheck())) await setBiometricEnabled(true);
-    setOpen(false);
-  };
-  return (
-    <ConfirmDialog open={open} title={t('bio.offer')} onClose={() => void close(false)}>
-      <P>{t('bio.offerBody')}</P>
-      <Row>
-        <Button label={t('bio.enable')} onPress={() => void close(true)} />
-        <Button kind="ghost" label={t('bio.later')} onPress={() => void close(false)} />
-      </Row>
-    </ConfirmDialog>
-  );
+/** Flags of the removed in-app biometric lock (S68, removed 2026-11-16): cleared so nothing can lock a session. */
+async function forgetBiometricFlags() {
+  await Promise.all(['yondo.biometric', 'yondo.biometric.offered'].map((key) => setItem(key, null, 'pref')));
 }
 
 function Splash() {
@@ -201,7 +127,6 @@ function Shell() {
         <ConsentGate>{screen}</ConsentGate>
       </View>
       <Toast bottom={DOCK_H + insets.bottom + 18} />
-      <BiometricOffer />
       <View
         role="tablist"
         aria-label={t('nav.mobile')}

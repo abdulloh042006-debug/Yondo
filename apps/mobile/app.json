@@ -30,12 +30,6 @@
     },
     "plugins": [
       "expo-secure-store",
-      [
-        "expo-local-authentication",
-        {
-          "faceIDPermission": "Yondo uses Face ID only to open your saved session on this phone."
-        }
-      ],
       "expo-asset",
       "expo-font"
     ],

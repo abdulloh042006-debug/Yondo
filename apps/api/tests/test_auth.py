@@ -306,3 +306,73 @@ async def test_profile_and_role_selection_require_authentication(auth_client):
         '/api/v1/auth/roles', json={'roles': ['admin']}, headers=headers
     )
     assert admin.status_code == 403
+
+
+async def _signed_in(client):
+    issued = await request_code(client)
+    tokens = await client.post(
+        '/api/v1/auth/otp/verify',
+        json={'phone_number': '901234567', 'code': issued.json()['development_otp']},
+    )
+    return tokens.json()
+
+
+def refresh(client, token):
+    return client.post('/api/v1/auth/refresh', json={'refresh_token': token})
+
+
+async def _session_row(app):
+    async with app.state.db_session_factory() as db:
+        return await db.scalar(select(AuthSession))
+
+
+@pytest.mark.asyncio
+async def test_refresh_slides_the_expiry_so_an_active_user_stays_signed_in(
+    auth_client, monkeypatch
+):
+    client, app = auth_client
+    data = await _signed_in(client)
+    first_expiry = service._as_utc((await _session_row(app)).refresh_expires_at)
+    start = service._now()
+    # 20 days later (inside the 30-day window): the refresh moves the expiry to then + 30 days.
+    monkeypatch.setattr(service, '_now', lambda: start + timedelta(days=20))
+    refreshed = await refresh(client, data['refresh_token'])
+    assert refreshed.status_code == 200
+    expiry = service._as_utc((await _session_row(app)).refresh_expires_at)
+    assert expiry > first_expiry
+    assert abs((expiry - (start + timedelta(days=50))).total_seconds()) < 60
+    # 45 days after the sign-in: past the first 30-day window, still signed in thanks to the slide.
+    monkeypatch.setattr(service, '_now', lambda: start + timedelta(days=45))
+    again = await refresh(client, refreshed.json()['refresh_token'])
+    assert again.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_an_unused_refresh_token_still_expires_after_30_days(auth_client, monkeypatch):
+    client, _ = auth_client
+    data = await _signed_in(client)
+    start = service._now()
+    monkeypatch.setattr(service, '_now', lambda: start + timedelta(days=30, minutes=1))
+    expired = await refresh(client, data['refresh_token'])
+    assert expired.status_code == 401
+    assert expired.json()['code'] == 'invalid_refresh_token'
+
+
+@pytest.mark.asyncio
+async def test_sessions_end_180_days_after_the_sign_in_however_active(auth_client, monkeypatch):
+    client, app = auth_client
+    data = await _signed_in(client)
+    start = service._now()
+    token = data['refresh_token']
+    for day in range(25, 180, 25):  # a refresh every 25 days keeps it alive...
+        monkeypatch.setattr(service, '_now', lambda d=day: start + timedelta(days=d))
+        response = await refresh(client, token)
+        assert response.status_code == 200, day
+        token = response.json()['refresh_token']
+    # ...but the expiry never passes the cap, and after it the session must sign in again.
+    cap = service._as_utc((await _session_row(app)).created_at) + timedelta(days=180)
+    assert service._as_utc((await _session_row(app)).refresh_expires_at) <= cap
+    monkeypatch.setattr(service, '_now', lambda: start + timedelta(days=180, minutes=1))
+    late = await refresh(client, token)
+    assert late.status_code == 401
+    assert late.json()['code'] == 'invalid_refresh_token'

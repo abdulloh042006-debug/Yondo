@@ -60,7 +60,8 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_AUTH_REGISTRATION_WINDOW_SECONDS` | Registration must follow a code sign-in this recent | no | `900` | Default |
 | `YONDO_AUTH_REQUIRE_PASSWORD_SETUP` | 403 `password_setup_required` for accounts without username + password (outside /auth, /legal) | no | `false` | Turn on after the setup screens ship |
 | `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` | Global cap on code sends per minute (0 = off) | recommended | `30` | Owner/CEO decides |
-| `YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` / `..._REFRESH_...` | Session lifetimes | no | `900` / `2592000` | Defaults |
+| `YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` / `..._REFRESH_...` | Session lifetimes; the refresh lifetime slides on every refresh (S70) | no | `900` / `2592000` | Defaults |
+| `YONDO_AUTH_SESSION_MAX_AGE_SECONDS` | Absolute cap of a session from its sign-in, however active | no | `15552000` (180 days) | CEO decision 2026-11-16 |
 | `YONDO_STORAGE_BACKEND` | `disabled` or `s3` | for photos/ID | `s3` | — |
 | `YONDO_STORAGE_ENDPOINT` | S3 API origin (https in prod) | with s3 | `https://<region>.digitaloceanspaces.com` | Storage provider console |
 | `YONDO_STORAGE_PUBLIC_ENDPOINT` | Origin the apps download from (defaults to endpoint) | no | `https://<s3-endpoint>` | Storage provider |

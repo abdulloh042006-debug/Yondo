@@ -4,6 +4,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import { ApiError, WEB_URL, errorText } from '../api';
 import { useAuth } from '../auth';
 import { takeLoginIntent } from '../loginIntent';
+import { AUTOFILL } from '../autofill';
 import { useNav, type Route } from '../nav';
 import { dedupePhonePrefix, passwordProblem, t } from '../shared';
 import { FONT, useTheme } from '../theme';
@@ -124,19 +125,14 @@ export function LoginScreen({ then, mode: initialMode, notice: initialNotice }: 
             hint={t('login.pw.loginHint')}
             value={login}
             onChangeText={setLogin}
-            autoComplete="username"
-            textContentType="username"
-            autoCapitalize="none"
-            autoCorrect={false}
+            {...AUTOFILL.username}
           />
           <Field
             label={t('login.pw.password')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!show}
-            autoComplete="current-password"
-            textContentType="password"
-            autoCapitalize="none"
+            {...AUTOFILL.currentPassword}
             error={err}
             onSubmitEditing={() => void signIn()}
           />
@@ -172,9 +168,7 @@ export function LoginScreen({ then, mode: initialMode, notice: initialNotice }: 
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!show}
-                autoComplete="new-password"
-                textContentType="newPassword"
-                autoCapitalize="none"
+                {...AUTOFILL.newPassword}
                 error={pwErr}
               />
               <Field
@@ -182,9 +176,7 @@ export function LoginScreen({ then, mode: initialMode, notice: initialNotice }: 
                 value={password2}
                 onChangeText={setPassword2}
                 secureTextEntry={!show}
-                autoComplete="new-password"
-                textContentType="newPassword"
-                autoCapitalize="none"
+                {...AUTOFILL.newPassword}
               />
               <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
               <P muted>{t('login.reset.note')}</P>
