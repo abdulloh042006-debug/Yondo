@@ -5,9 +5,10 @@ import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { LanguageSwitch } from '../i18n/LanguageSwitch';
+import { passwordProblem } from '../lib/credentials';
 import { dedupePhonePrefix } from '../lib/format';
 import { ConsentCheck } from '../ui/Consent';
-import { Field } from '../ui/form';
+import { Field, ShowPassword } from '../ui/form';
 
 type CodeStep = {
   kind: 'code';
@@ -40,6 +41,12 @@ const POLL_TIMEOUT_MS = 8000;
 const LINK_FAILURES = new Set(['telegram_phone_mismatch', 'telegram_account_linked_elsewhere']);
 
 const CODE_LENGTH = 6;
+/**
+ * Owner, 2026-11-15 (docs/login-password.md): username or phone + password is the main way in; a code via
+ * Telegram stays the second way (and the sign-up path); "reset" = phone → code → new password.
+ */
+export type LoginMode = 'password' | 'code' | 'reset';
+type LoginState = { from?: string; mode?: LoginMode; notice?: string } | null;
 /** Errors about the number itself are shown under the phone field. */
 const PHONE_FIELD_ERRORS = new Set(['invalid_phone_number', 'otp_channel_unavailable']);
 
@@ -58,11 +65,21 @@ function codeStepFor(phone: string, prev: CodeStep | null, bot: boolean): CodeSt
 }
 
 export function Login() {
-  const { requestCode, verify, state } = useAuth();
+  const { requestCode, verify, passwordLogin, resetPassword, state } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const nav = location.state as LoginState;
+  const from = nav?.from ?? '/';
+  const [mode, setMode] = useState<LoginMode>(nav?.mode ?? 'password');
+  const [notice, setNotice] = useState(nav?.notice);
   const [step, setStep] = useState<Step>({ kind: 'phone' });
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [pwErr, setPwErr] = useState<string>();
+  const [repeatErr, setRepeatErr] = useState<string>();
+  const showPwId = useId();
   const [phone, setPhone] = useState('+998');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -166,9 +183,39 @@ export function Login() {
     return true;
   };
 
+  const switchMode = (next: LoginMode) => {
+    setMode(next);
+    setError(undefined);
+    setPwErr(undefined);
+    setNotice(undefined);
+    setStep({ kind: 'phone' });
+    setPassword('');
+    setPassword2('');
+  };
+
+  const signInWithPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(undefined);
+    if (!login.trim() || !password) {
+      setError(new ApiError(401, 'invalid_credentials'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await passwordLogin(login.trim(), password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));
+      setPassword('');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
-    if (!agree) {
+    // A reset is for an existing account, which consented when it was made; the consent gate covers new versions.
+    if (mode !== 'reset' && !agree) {
       setAgreeErr(true);
       return;
     }
@@ -234,13 +281,26 @@ export function Login() {
   const confirm = async (e: FormEvent) => {
     e.preventDefault();
     if (step.kind !== 'code') return;
-    setBusy(true);
     setError(undefined);
+    if (mode === 'reset') {
+      const problem = passwordProblem(password, step.phone);
+      setPwErr(problem ? t(problem) : undefined);
+      setRepeatErr(!problem && password !== password2 ? t('pw.mismatch') : undefined);
+      if (problem || password !== password2) return;
+    }
+    setPwErr(undefined);
+    setRepeatErr(undefined);
+    setBusy(true);
     try {
-      await verify(step.phone, code, { acceptLegal: agree });
+      if (mode === 'reset') await resetPassword(step.phone, code, password);
+      else await verify(step.phone, code, { acceptLegal: agree });
       navigate(from, { replace: true });
     } catch (err) {
       const apiErr = err instanceof ApiError ? err : new ApiError(0, 'network_error');
+      if (apiErr.code === 'weak_password') {
+        setPwErr(apiErr.message);
+        return;
+      }
       setError(apiErr);
       if (apiErr.code === 'otp_expired') {
         setCode('');
@@ -263,12 +323,43 @@ export function Login() {
           <span className="muted">{t('settings.language')}</span>
           <LanguageSwitch />
         </div>
-        <h1>{t('login.title')}</h1>
-        <p className="muted">{t('login.lead')}</p>
+        <h1>{mode === 'reset' ? t('login.reset.title') : t('login.title')}</h1>
+        <p className="muted">{t(mode === 'password' ? 'login.pw.lead' : mode === 'reset' ? 'login.reset.lead' : 'login.pw.codeLead')}</p>
         <p className="hint"><Link to="/settings">{t('settings.link')}</Link>: {t('settings.linkHint')}</p>
       </div>
+      {notice && <p className="banner" role="status">{notice}</p>}
       <motion.div layout className="glass pad" transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
-        {step.kind === 'phone' ? (
+        {mode === 'password' ? (
+          <form className="stack" onSubmit={signInWithPassword} noValidate>
+            <Field
+              label={t('login.pw.login')}
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
+              hint={t('login.pw.loginHint')}
+            />
+            <Field
+              label={t('login.pw.password')}
+              type={showPw ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={error ? error.message : undefined}
+            />
+            <ShowPassword id={showPwId} checked={showPw} onChange={setShowPw} />
+            <button className="btn" disabled={busy}>
+              {busy && <span className="spinner" aria-hidden="true" />}
+              {t('login.submit')}
+            </button>
+            <div className="row">
+              <button type="button" className="btn ghost" onClick={() => switchMode('code')}>{t('login.pw.useCode')}</button>
+              <button type="button" className="chip" onClick={() => switchMode('reset')}>{t('login.pw.forgot')}</button>
+            </div>
+            <p className="hint">{t('login.pw.firstTime')}</p>
+          </form>
+        ) : step.kind === 'phone' ? (
           <form className="stack" onSubmit={send} noValidate>
             <Field
               label={t('login.phone')}
@@ -280,7 +371,9 @@ export function Login() {
               hint={t('login.phoneHint')}
               error={error && PHONE_FIELD_ERRORS.has(error.code) ? error.message : undefined}
             />
-            <ConsentCheck checked={agree} onChange={(v) => { setAgree(v); setAgreeErr(false); }} error={agreeErr ? t('legal.agreeRequired') : undefined} />
+            {mode === 'code' && (
+              <ConsentCheck checked={agree} onChange={(v) => { setAgree(v); setAgreeErr(false); }} error={agreeErr ? t('legal.agreeRequired') : undefined} />
+            )}
             {error && !PHONE_FIELD_ERRORS.has(error.code) && (
               <p className="err" role="alert">
                 {error.message}
@@ -388,8 +481,31 @@ export function Login() {
               error={error ? error.message : undefined}
               autoFocus
             />
+            {mode === 'reset' && (
+              <>
+                <Field
+                  label={t('pw.new')}
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  hint={t('pw.rules')}
+                  error={pwErr}
+                />
+                <Field
+                  label={t('pw.repeat')}
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  error={repeatErr}
+                />
+                <ShowPassword id={showPwId} checked={showPw} onChange={setShowPw} />
+                <p className="hint">{t('login.reset.note')}</p>
+              </>
+            )}
             <button className="btn" disabled={busy || code.length !== CODE_LENGTH}>
-              {busy && <span className="spinner" aria-hidden="true" />}{t('login.submit')}
+              {busy && <span className="spinner" aria-hidden="true" />}{mode === 'reset' ? t('login.reset.submit') : t('login.submit')}
             </button>
             <button type="button" className="btn ghost" disabled={busy || step.resendIn > 0} onClick={() => void send()}>
               {step.resendIn > 0 ? t('login.resendIn', { n: step.resendIn }) : t('login.resend')}
@@ -424,7 +540,13 @@ export function Login() {
           </form>
         )}
       </motion.div>
+      {mode !== 'password' && (
+        <button type="button" className="btn ghost" onClick={() => switchMode('password')}>
+          {t('login.pw.usePassword')}
+        </button>
+      )}
       <p className="hint">{t('login.disclaimer')}</p>
     </div>
   );
 }
+

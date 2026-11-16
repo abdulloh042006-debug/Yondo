@@ -11,6 +11,12 @@ interface AuthApi {
   user: User | null;
   requestCode: (phone: string) => Promise<Schemas['OtpRequestResponse']>;
   verify: (phone: string, code: string, acceptLegal: boolean) => Promise<void>;
+  /** `login` = username or phone number (docs/login-password.md). */
+  passwordLogin: (login: string, password: string) => Promise<void>;
+  /** Forgotten password: a code + the new password; the server signs out every old session. */
+  resetPassword: (phone: string, code: string, newPassword: string) => Promise<void>;
+  /** Counts sign-ins made in this app run (not a restored session): the biometric offer follows a sign-in. */
+  signIns: number;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
 }
@@ -38,6 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   const reload = useCallback(async () => setState(await resolve()), [resolve]);
+  const [signIns, setSignIns] = useState(0);
+  const start = useCallback(
+    async (pair: Schemas['TokenResponse']) => {
+      await tokens.set(pair);
+      await reload();
+      setSignIns((n) => n + 1);
+    },
+    [reload],
+  );
 
   useEffect(() => {
     let live = true;
@@ -82,7 +97,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await tokens.set(pair);
         if (accept) await acceptLegal().catch(() => {}); // the consent gate asks again if this did not land
         await reload();
+        setSignIns((n) => n + 1);
       },
+      passwordLogin: async (login, password) =>
+        start(await api.post<Schemas['TokenResponse']>('/auth/password/login', { login, password }, { anonymous: true })),
+      resetPassword: async (phone, code, newPassword) =>
+        start(
+          await api.post<Schemas['TokenResponse']>(
+            '/auth/password/reset',
+            { phone_number: phone, code, new_password: newPassword },
+            { anonymous: true },
+          ),
+        ),
+      signIns,
       logout: async () => {
         try {
           await api.post('/auth/logout');
@@ -94,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       reload,
     }),
-    [state, reload],
+    [state, reload, start, signIns],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

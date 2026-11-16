@@ -13,7 +13,8 @@ import { Login } from './Login';
 const base = { message: 'x', expires_in_seconds: 300, resend_after_seconds: 3 };
 const mount = () =>
   render(
-    <MemoryRouter>
+    // The code path (Kirish opens on username/phone + password since 2026-11-15).
+    <MemoryRouter initialEntries={[{ pathname: '/login', state: { mode: 'code' } }]}>
       <Login />
     </MemoryRouter>,
   );

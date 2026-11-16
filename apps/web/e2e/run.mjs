@@ -46,8 +46,28 @@ const assert = (cond, msg) => {
   if (!cond) throw new Error(msg);
 };
 
-async function otpLogin(page, phone) {
+/** Kirish opens on username/phone + password (2026-11-15); the code path is one tap away. */
+async function toCodeLogin(page, label = 'Telegram orqali kod bilan kiriş') {
   await page.goto(`${WEB}/login`);
+  await page.getByRole('button', { name: label }).click();
+}
+/** Every DEMO account starts without a password; the e2e user sets one the way a person would. */
+const e2ePassword = (phone) => `e2e pass ${phone.slice(-4)}`;
+const e2eUsername = (phone) => `e2e${phone.slice(-9)}`; // all 9 digits: two DEMO numbers share their last 4
+async function finishSetup(page, phone) {
+  const me = await page.evaluate(async () => (await fetch('/api/v1/auth/me', { headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` } })).json());
+  if (!me.password_setup_required) return;
+  await page.getByRole('heading', { name: 'Login va parol yarating', level: 1 }).waitFor();
+  await page.waitForTimeout(600); // the page transition after sign-in replaces the first copy of the form
+  await page.getByLabel('Login', { exact: true }).fill(e2eUsername(phone));
+  await page.getByLabel('Yangi parol').fill(e2ePassword(phone));
+  await page.getByLabel('Parolni takrorlang').fill(e2ePassword(phone));
+  await page.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
+  await page.getByRole('heading', { name: 'Login va parol yarating' }).waitFor({ state: 'detached' });
+}
+
+async function otpLogin(page, phone, { setup = true } = {}) {
+  await toCodeLogin(page);
   await page.getByLabel('Telefon raqami').fill(phone);
   await page.locator('.consent input').check(); // explicit consent to the terms + privacy policy
   await page.getByRole('button', { name: 'Kod yuboriş' }).click();
@@ -55,6 +75,7 @@ async function otpLogin(page, phone) {
   await page.getByLabel('Tasdiqlaş kodi').fill(code);
   await page.getByRole('button', { name: 'Kiriş', exact: true }).click();
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
+  if (setup) await finishSetup(page, phone);
 }
 
 async function axeScan(page, label) {
@@ -168,7 +189,7 @@ try {
     await page.waitForURL(/\/login/);
   });
   await step('login validation: bad phone + wrong code are shown in Uzbek, from error codes', async () => {
-    await page.goto(`${WEB}/login`);
+    await toCodeLogin(page);
     await page.getByLabel('Telefon raqami').fill('+99');
     await page.getByRole('button', { name: 'Kod yuboriş' }).click();
     await page.getByText('Davom etiş uçun rozilik belgisini qöying.').waitFor(); // consent first, unticked by default
@@ -188,7 +209,7 @@ try {
   const OTP_REQUEST = '**/api/v1/auth/otp/request';
   const reply = (status, body) => (r) => r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   const submitPhone = async (p) => {
-    await p.goto(`${WEB}/login`);
+    await toCodeLogin(p);
     await p.getByLabel('Telefon raqami').fill('+998901110055');
     await p.locator('.consent input').check();
     await p.getByRole('button', { name: 'Kod yuboriş' }).click();
@@ -254,6 +275,115 @@ try {
     await cp.getByText('Hisobim').first().waitFor();
     await cp.reload();
     await cp.getByText('+998 90 111 00 03').waitFor();
+  });
+  await step('password (owner, 2026-11-15): set up after a code, sign in by username and by phone, wrong password, lockout, change, reset', async () => {
+    const PHONE = '+998907770066';
+    const pw1 = 'e2e first pass';
+    const pw2 = 'e2e second pass';
+    const pw3 = 'e2e third pass';
+    const contexts = [];
+    const fresh = async (label) => {
+      const c = await ctx();
+      contexts.push(c);
+      const p = await c.newPage();
+      watch(p, label);
+      return p;
+    };
+    const signIn = async (p, login, password) => {
+      await p.goto(`${WEB}/login`);
+      await p.getByLabel('Login yoki telefon raqami').fill(login);
+      await p.getByLabel('Parol', { exact: true }).fill(password);
+      await p.getByRole('button', { name: 'Kiriş', exact: true }).click();
+    };
+    const meStatus = (p) => p.evaluate(async () => (await fetch('/api/v1/auth/me', { headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` } })).status);
+    try {
+      // 1. Registration: a code sign-in, then the forced setup screen with a live username check.
+      const a = await fresh('pw-setup');
+      await otpLogin(a, PHONE, { setup: false });
+      await a.getByRole('heading', { name: 'Login va parol yarating', level: 1 }).waitFor();
+      await a.waitForTimeout(600); // let the page transition after sign-in finish
+      const name = a.getByLabel('Login', { exact: true });
+      assert((await name.getAttribute('autocomplete')) === 'username', 'username autocomplete');
+      assert((await a.getByLabel('Yangi parol').getAttribute('autocomplete')) === 'new-password', 'new-password autocomplete');
+      await name.fill(e2eUsername('+998901110003')); // taken by the customer above
+      await a.getByText('Bu login band.').waitFor();
+      await name.fill('admin'); // reserved
+      await a.getByText('Bu loginni tanlab bölmaydi.').waitFor();
+      await name.fill('E2E.Pass');
+      await a.getByText('Bu login böş.').waitFor();
+      await a.getByLabel('Yangi parol').fill('998907770066');
+      await a.getByLabel('Parolni takrorlang').fill('998907770066');
+      await a.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
+      await a.getByText('Parol telefon raqamingiz bölmasin.').waitFor();
+      await a.getByLabel('Yangi parol').fill(pw1);
+      await a.getByLabel('Parolni takrorlang').fill(pw1);
+      await a.waitForTimeout(400);
+      await axeScan(a, 'password setup');
+      await a.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
+      await a.getByRole('heading', { name: 'Login va parol yarating' }).waitFor({ state: 'detached' });
+      const me = await a.evaluate(async () => (await fetch('/api/v1/auth/me', { headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` } })).json());
+      assert(me.username === 'e2e.pass' && me.has_password && !me.password_setup_required, `account complete: ${JSON.stringify(me).slice(0, 160)}`);
+
+      // 2. Sign in with the username, then with the phone (any spelling).
+      const b = await fresh('pw-username');
+      await signIn(b, 'E2E.Pass', pw1);
+      await b.waitForURL((u) => !u.pathname.startsWith('/login'));
+      const c = await fresh('pw-phone');
+      await signIn(c, '+998 90 777 00 66', pw1);
+      await c.waitForURL((u) => !u.pathname.startsWith('/login'));
+
+      // 3. A wrong password: one neutral answer, tied to the password field, the field is emptied.
+      const d = await fresh('pw-wrong');
+      await signIn(d, 'e2e.pass', 'not the password');
+      await d.getByText('Login yoki parol notöğri.').waitFor();
+      const pwField = d.getByLabel('Parol', { exact: true });
+      assert((await pwField.getAttribute('aria-invalid')) === 'true' && (await pwField.inputValue()) === '', 'error on the password field, which is emptied');
+      await axeScan(d, 'login (password error)');
+
+      // 4. Lockout after 5 failures (an unknown login is locked the same way, so nothing leaks).
+      for (let i = 0; i < 5; i += 1) {
+        await signIn(d, 'nobody.e2e', `wrong ${i}`);
+        await d.getByText('Login yoki parol notöğri.').waitFor();
+      }
+      await signIn(d, 'nobody.e2e', 'wrong again');
+      await d.getByText(/parol bilan kiriş 15 daqiqaga yopildi/).waitFor();
+
+      // 5. Change password in Settings → Hisob: other devices are signed out, this one stays.
+      await a.goto(`${WEB}/settings`);
+      await a.getByText('Login: e2e.pass').waitFor();
+      await a.getByRole('button', { name: 'Parolni almaştiriş' }).click();
+      await a.getByText(/boşqa qurilmalardagi seanslar yopiladi/).waitFor();
+      await a.getByLabel('Hozirgi parol').fill('wrong current');
+      await a.getByLabel('Yangi parol').fill(pw2);
+      await a.getByLabel('Parolni takrorlang').fill(pw2);
+      await a.getByRole('button', { name: 'Parolni saqlaş' }).click();
+      await a.getByText('Hozirgi parol notöğri.').waitFor();
+      await a.getByLabel('Hozirgi parol').fill(pw1);
+      await a.getByRole('button', { name: 'Parolni saqlaş' }).click();
+      await a.getByText('Parol almaştirildi. Boşqa qurilmalardagi seanslar yopildi.').waitFor();
+      assert((await meStatus(a)) === 200, 'this device stays signed in');
+      assert((await meStatus(b)) === 401, 'another device is signed out after the change');
+
+      // 6. Forgotten password: phone → code → new password; every old session ends.
+      const e = await fresh('pw-reset');
+      await e.goto(`${WEB}/login`);
+      await e.getByRole('button', { name: 'Parolni unutdingizmi?' }).click();
+      await e.getByRole('heading', { name: 'Parolni tiklaş', level: 1 }).waitFor();
+      await e.getByLabel('Telefon raqami').fill(PHONE);
+      await e.getByRole('button', { name: 'Kod yuboriş' }).click();
+      const code = (await e.locator('b.mono').first().innerText()).trim();
+      await e.getByLabel('Tasdiqlaş kodi').fill(code);
+      await e.getByLabel('Yangi parol').fill(pw3);
+      await e.getByLabel('Parolni takrorlang').fill(pw3);
+      await e.getByRole('button', { name: 'Parolni saqlaş va kiriş' }).click();
+      await e.waitForURL((u) => !u.pathname.startsWith('/login'));
+      assert((await meStatus(a)) === 401, 'a reset signs out every old session');
+      const f = await fresh('pw-after-reset');
+      await signIn(f, 'e2e.pass', pw3);
+      await f.waitForURL((u) => !u.pathname.startsWith('/login'));
+    } finally {
+      for (const c of contexts) await c.close();
+    }
   });
   await step('favorite toggles only after the server confirms', async () => {
     await cp.goto(WEB);
@@ -552,7 +682,7 @@ try {
     watch(gp, 'consent-gate');
     try {
       await gp.route('**/api/v1/account/consents', (route) => (route.request().method() === 'POST' ? route.abort() : route.continue()));
-      await otpLogin(gp, '+998907770077'); // the consent POST is lost on purpose
+      await otpLogin(gp, '+998907770077', { setup: false }); // the consent POST is lost on purpose
       await gp.getByRole('heading', { name: 'Hujjatlarni qabul qiling', level: 1 }).waitFor();
       await gp.unroute('**/api/v1/account/consents');
       await gp.getByRole('button', { name: 'Qabul qilaman' }).click();
@@ -562,6 +692,7 @@ try {
       await gp.getByRole('heading', { name: 'Hujjatlarni qabul qiling' }).waitFor({ state: 'detached' });
       const state = await gp.evaluate(async () => (await fetch('/api/v1/account/consents', { headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` } })).json());
       assert(state.required.length === 0 && state.accepted.length === 2, `consents recorded: ${JSON.stringify(state).slice(0, 120)}`);
+      await finishSetup(gp, '+998907770077'); // consent first, then the username + password (both gates in order)
     } finally {
       await g.close();
     }
@@ -830,7 +961,7 @@ try {
       assert(ru.includes('Личность подтверждена'), 'verified badge (from API verified=true) should be Russian');
       assert(/сум/.test(ru), 'prices should use the Russian currency word');
       assert(!ru.includes('Şaxsi tasdiqlangan') && !ru.includes('Hammasi'), 'no Uzbek leftovers in Russian UI');
-      await page.goto(`${WEB}/login`);
+      await toCodeLogin(page, 'Войти по коду через Telegram');
       await page.getByLabel('Номер телефона').fill('+998');
       await page.locator('.consent input').check();
       await page.getByRole('button', { name: 'Отправить код' }).click();
@@ -849,12 +980,12 @@ try {
       assert((await page.evaluate(() => document.documentElement.lang)) === 'uz', '<html lang> should be uz again');
       // Header switch: changing language must not wipe what the user is typing (no remount).
       await page.goto(`${WEB}/login`);
-      await page.getByLabel('Telefon raqami').fill('+998901234567');
+      await page.getByLabel('Login yoki telefon raqami').fill('+998901234567');
       await page.locator('.lang-switch').getByRole('button', { name: /^RU/ }).click();
-      await page.getByLabel('Номер телефона').waitFor();
-      assert((await page.getByLabel('Номер телефона').inputValue()) === '+998901234567', 'typed phone must survive a language switch');
+      await page.getByLabel('Логин или номер телефона').waitFor();
+      assert((await page.getByLabel('Логин или номер телефона').inputValue()) === '+998901234567', 'typed login must survive a language switch');
       await page.locator('.lang-switch').getByRole('button', { name: /^UZ/ }).click();
-      await page.getByLabel('Telefon raqami').waitFor();
+      await page.getByLabel('Login yoki telefon raqami').waitFor();
     } finally {
       await page.evaluate(() => localStorage.removeItem('yondo.lang'));
     }
@@ -1090,7 +1221,7 @@ try {
     try {
       await ip.bringToFront();
       await ip.goto(`${WEB}/login`);
-      await ip.getByLabel('Telefon raqami').waitFor();
+      await ip.getByLabel('Login yoki telefon raqami').waitFor();
       assert((await ip.evaluate(() => document.documentElement.dataset.intro)) === 'off' && (await ip.locator('#yi').count()) === 0, 'no opening animation on a deep link');
       assert((await ip.evaluate(() => localStorage.getItem('yondo.intro.v1'))) === null, 'a deep link must not spend the first run');
       await ip.locator('.brand').first().click(); // in-app navigation home: same page load, still nothing

@@ -3,17 +3,31 @@ import { Linking, Pressable, Text, View } from 'react-native';
 
 import { ApiError, WEB_URL, errorText } from '../api';
 import { useAuth } from '../auth';
+import { takeLoginIntent } from '../loginIntent';
 import { useNav, type Route } from '../nav';
-import { dedupePhonePrefix, t } from '../shared';
+import { dedupePhonePrefix, passwordProblem, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, ErrorText, Field, H1, LangSwitch, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, Field, H1, LangSwitch, MenuRow, P, Row, Screen } from '../ui';
 
 const PHONE = /^\+998\d{9}$/;
+export type LoginMode = 'password' | 'code' | 'reset';
 
-/** Phone + one-time code (Telegram Gateway in production). The on-screen code exists only in development. */
-export function LoginScreen({ then }: { then?: Route }) {
-  const { requestCode, verify } = useAuth();
+/**
+ * Kirish, as on the web (apps/web/src/pages/Login.tsx, owner 2026-11-15): username or phone + password first;
+ * a one-time code via Telegram second (the sign-up path); "Parolni unutdingizmi?" = phone → code → new password.
+ * The on-screen code exists only in development.
+ */
+export function LoginScreen({ then, mode: initialMode, notice: initialNotice }: { then?: Route; mode?: LoginMode; notice?: string }) {
+  const { requestCode, verify, passwordLogin, resetPassword } = useAuth();
   const nav = useNav();
+  const [intent] = useState(takeLoginIntent);
+  const [mode, setMode] = useState<LoginMode>(intent?.mode ?? initialMode ?? 'password');
+  const [notice, setNotice] = useState(intent?.notice ?? initialNotice);
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [show, setShow] = useState(false);
+  const [pwErr, setPwErr] = useState<string>();
   const [phone, setPhone] = useState('+998');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<{ devOtp?: string | null; resendAt: number } | null>(null);
@@ -25,6 +39,35 @@ export function LoginScreen({ then }: { then?: Route }) {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  const done = () => {
+    nav.reset(); // nothing of a previous account stays open
+    if (then) nav.push(then);
+  };
+  const switchMode = (next: LoginMode) => {
+    setMode(next);
+    setStep(null);
+    setErr(undefined);
+    setPwErr(undefined);
+    setNotice(undefined);
+    setPassword('');
+    setPassword2('');
+  };
+
+  const signIn = async () => {
+    if (!login.trim() || !password) return setErr(t('err.invalid_credentials'));
+    setBusy(true);
+    setErr(undefined);
+    try {
+      await passwordLogin(login.trim(), password);
+      done();
+    } catch (e) {
+      setErr(errorText(e)); // invalid_credentials / password_login_blocked / rate_limited, chosen by code
+      setPassword('');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const send = async () => {
     const value = dedupePhonePrefix(phone);
@@ -43,15 +86,20 @@ export function LoginScreen({ then }: { then?: Route }) {
   };
 
   const submit = async () => {
-    if (!agree) return setErr(t('legal.agreeRequired'));
+    if (mode === 'reset') {
+      const problem = passwordProblem(password, phone);
+      if (problem || password !== password2) return setPwErr(t(problem ?? 'pw.mismatch'));
+    } else if (!agree) return setErr(t('legal.agreeRequired'));
+    setPwErr(undefined);
     setBusy(true);
     setErr(undefined);
     try {
-      await verify(phone, code.trim(), true);
-      nav.reset(); // nothing of a previous account stays open
-      if (then) nav.push(then);
+      if (mode === 'reset') await resetPassword(phone, code.trim(), password);
+      else await verify(phone, code.trim(), true);
+      done();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : t('common.actionFailed'));
+      if (e instanceof ApiError && e.code === 'weak_password') setPwErr(e.message);
+      else setErr(e instanceof ApiError ? e.message : t('common.actionFailed'));
     } finally {
       setBusy(false);
     }
@@ -66,12 +114,43 @@ export function LoginScreen({ then }: { then?: Route }) {
         </Row>
       )}
       <LangSwitch />
-      <H1>{t('login.title')}</H1>
-      <P muted>{t('login.lead')}</P>
-      {!step ? (
+      <H1>{mode === 'reset' ? t('login.reset.title') : t('login.title')}</H1>
+      <P muted>{t(mode === 'password' ? 'login.pw.lead' : mode === 'reset' ? 'login.reset.lead' : 'login.pw.codeLead')}</P>
+      {notice && <Banner text={notice} />}
+      {mode === 'password' ? (
         <>
-          <Field label={t('login.phone')} hint={t('login.phoneHint')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" />
-          {err && <ErrorText text={err} />}
+          <Field
+            label={t('login.pw.login')}
+            hint={t('login.pw.loginHint')}
+            value={login}
+            onChangeText={setLogin}
+            autoComplete="username"
+            textContentType="username"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Field
+            label={t('login.pw.password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!show}
+            autoComplete="current-password"
+            textContentType="password"
+            autoCapitalize="none"
+            error={err}
+            onSubmitEditing={() => void signIn()}
+          />
+          <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
+          <Button label={t('login.submit')} busy={busy} onPress={() => void signIn()} />
+          <Row>
+            <Button kind="ghost" small label={t('login.pw.useCode')} onPress={() => switchMode('code')} />
+            <Button kind="ghost" small label={t('login.pw.forgot')} onPress={() => switchMode('reset')} />
+          </Row>
+          <P muted>{t('login.pw.firstTime')}</P>
+        </>
+      ) : !step ? (
+        <>
+          <Field label={t('login.phone')} hint={t('login.phoneHint')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" error={err} />
           <Button label={t('login.sendCode')} busy={busy} onPress={() => void send()} />
         </>
       ) : (
@@ -84,10 +163,36 @@ export function LoginScreen({ then }: { then?: Route }) {
           {step.devOtp && (
             <Banner text={`${t('login.devBefore')}${step.devOtp}${t('login.devAfter')}`} />
           )}
-          <Field label={t('login.code')} value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" maxLength={8} />
-          <ConsentCheck checked={agree} onChange={setAgree} />
-          {err && <ErrorText text={err} />}
-          <Button label={t('login.submit')} busy={busy} onPress={() => void submit()} />
+          <Field label={t('login.code')} value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" maxLength={8} error={err} />
+          {mode === 'reset' ? (
+            <>
+              <Field
+                label={t('pw.new')}
+                hint={t('pw.rules')}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!show}
+                autoComplete="new-password"
+                textContentType="newPassword"
+                autoCapitalize="none"
+                error={pwErr}
+              />
+              <Field
+                label={t('pw.repeat')}
+                value={password2}
+                onChangeText={setPassword2}
+                secureTextEntry={!show}
+                autoComplete="new-password"
+                textContentType="newPassword"
+                autoCapitalize="none"
+              />
+              <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
+              <P muted>{t('login.reset.note')}</P>
+            </>
+          ) : (
+            <ConsentCheck checked={agree} onChange={setAgree} />
+          )}
+          <Button label={mode === 'reset' ? t('login.reset.submit') : t('login.submit')} busy={busy} onPress={() => void submit()} />
           <Row>
             <Button kind="ghost" small label={t('login.changeNumber')} onPress={() => setStep(null)} />
             <Button
@@ -100,6 +205,7 @@ export function LoginScreen({ then }: { then?: Route }) {
           </Row>
         </>
       )}
+      {mode !== 'password' && <Button kind="ghost" label={t('login.pw.usePassword')} onPress={() => switchMode('password')} />}
       <P muted>{t('login.disclaimer')}</P>
       {/* As on the web login page: Settings is reachable before signing in (language, alphabet, theme). */}
       <Card style={{ gap: 0, paddingVertical: 8 }}>

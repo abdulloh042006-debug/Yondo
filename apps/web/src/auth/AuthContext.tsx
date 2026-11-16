@@ -15,6 +15,10 @@ interface AuthApi {
   requestCode: (phone: string) => Promise<Schemas['OtpRequestResponse']>;
   /** `acceptLegal`: the user ticked the consent box; it is recorded right after the session starts. */
   verify: (phone: string, code: string, opts?: { acceptLegal?: boolean }) => Promise<void>;
+  /** `login` = username or phone number (docs/login-password.md). */
+  passwordLogin: (login: string, password: string) => Promise<void>;
+  /** Forgotten password: a code from /auth/otp/request + the new password; signs out every old session. */
+  resetPassword: (phone: string, code: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   reload: () => Promise<void>;
 }
@@ -99,6 +103,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             /* the consent gate asks again if this did not land */
           });
         }
+        await reload();
+      },
+      passwordLogin: async (login, password) => {
+        tokens.set(await api.post<Schemas['TokenResponse']>('/auth/password/login', { login, password }, { anonymous: true }));
+        await reload();
+      },
+      resetPassword: async (phone, code, newPassword) => {
+        tokens.set(
+          await api.post<Schemas['TokenResponse']>(
+            '/auth/password/reset',
+            { phone_number: phone, code, new_password: newPassword },
+            { anonymous: true },
+          ),
+        );
         await reload();
       },
       logout: async () => {

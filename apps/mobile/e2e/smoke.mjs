@@ -67,8 +67,12 @@ async function signOut() {
   await button('Sign out').click();
 }
 
-async function login(phone) {
-  await page.getByLabel('Phone number').fill(`+998${phone}`);
+/** Kirish opens on username/phone + password (owner, 2026-11-15); the code path is one tap away. */
+const pw = (phone) => `smoke pass ${phone.slice(-4)}`;
+const uname = (phone) => `smoke${phone.slice(-4)}`;
+async function login(phone, p = page) {
+  await p.getByRole('button', { name: 'Sign in with a code via Telegram', exact: true }).click();
+  await p.getByLabel('Phone number').fill(`+998${phone}`);
   await button('Send code').click();
   const banner = page.getByText(/\b\d{6}\b/).first();
   await banner.waitFor({ timeout: 10000 });
@@ -76,6 +80,17 @@ async function login(phone) {
   await page.getByLabel('Verification code').fill(code);
   await page.getByRole('checkbox').click();
   await button('Sign in').click();
+  // Every DEMO account starts without a password: the setup screen comes first, as for a real new account.
+  const setup = page.getByRole('heading', { name: 'Create a username and password' });
+  await Promise.race([setup.waitFor({ timeout: 15000 }), page.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 })]);
+  if (await setup.count()) {
+    await page.waitForTimeout(400);
+    await page.getByLabel('Username', { exact: true }).fill(uname(phone));
+    await page.getByLabel('New password', { exact: true }).fill(pw(phone));
+    await page.getByLabel('Repeat the password', { exact: true }).fill(pw(phone));
+    await button('Save and continue').click();
+    await setup.waitFor({ state: 'detached', timeout: 15000 });
+  }
 }
 
 await step('discovery lists the DEMO companions (anonymous, API data)', async () => {
@@ -91,18 +106,21 @@ await step('signed out: the dock is Discover · Sign in (as on the web); Setting
   const names = await page.getByRole('tab').allInnerTexts();
   assert(names.join('|') === 'Discover|Sign in', `signed-out tabs: ${names.join('|')}`);
   await tab('Sign in');
-  await page.getByLabel('Phone number').waitFor();
+  await page.getByLabel('Username or phone number').waitFor();
   // Owner, 2026-11-15: the language is chosen here (and in Settings), not in the header.
   const langs = page.getByRole('radiogroup', { name: 'App language' }).getByRole('radio');
   assert((await langs.count()) === 3, 'UZ | RU | EN on the sign-in screen');
   await page.getByRole('radio', { name: /^RU/ }).click();
-  await page.getByLabel('Номер телефона').waitFor();
+  await page.getByLabel('Логин или номер телефона').waitFor();
   await page.getByRole('radio', { name: /^EN/ }).click();
-  await page.getByLabel('Phone number').waitFor();
+  await page.getByLabel('Username or phone number').waitFor();
+  const pwField = page.getByLabel('Password', { exact: true });
+  assert((await pwField.getAttribute('autocomplete')) === 'current-password', 'current-password autocomplete');
+  assert((await page.getByLabel('Username or phone number').getAttribute('autocomplete')) === 'username', 'username autocomplete');
   await page.getByRole('button', { name: /^Settings/ }).click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
   await button('← Back').click();
-  await page.getByLabel('Phone number').waitFor();
+  await page.getByLabel('Username or phone number').waitFor();
   await axe('sign in');
   await tab('Discover');
   await page.getByText('DEMO Madina').first().waitFor();
@@ -112,7 +130,7 @@ await step('profile -> book -> login with the development code -> back on the pr
   await page.getByRole('button', { name: /DEMO Madina/ }).first().click();
   await page.getByText('Services and prices').waitFor();
   await button('Book').click();
-  await page.getByLabel('Phone number').waitFor();
+  await page.getByLabel('Username or phone number').waitFor();
   await login(CUSTOMER);
   await page.getByText('Services and prices').waitFor({ timeout: 15000 });
 });
@@ -289,6 +307,137 @@ await step('settings: Russian, Uzbek alphabets and the night theme apply in plac
   assert(/^rgba?\(17, 17, 17/.test(bg), `night theme tab bar ${bg}`);
   await noSideScroll('settings');
   await axe('settings (night)');
+});
+
+await step('password (owner, 2026-11-15): username and phone sign-in, wrong password, change, reset', async () => {
+  const PHONE = CUSTOMER;
+  // The previous step left Settings in Uzbek, and the language is saved to the account: back to English.
+  await page.getByRole('radio', { name: 'English', exact: true }).click();
+  await page.getByRole('heading', { name: 'Settings' }).waitFor();
+  await page.waitForTimeout(600); // the PUT /auth/profile (ui_locale = en) lands before signing out
+  const passwordSignIn = async (login, password) => {
+    await page.getByLabel('Username or phone number').fill(login);
+    await page.getByLabel('Password', { exact: true }).fill(password);
+    await button('Sign in').click();
+  };
+  await signOut();
+  await tab('Sign in');
+  await passwordSignIn(uname(PHONE), 'not the password');
+  await page.getByText('The username or password is incorrect.').waitFor();
+  assert((await page.getByLabel('Password', { exact: true }).inputValue()) === '', 'the password field is emptied');
+  await axe('sign in (password error)');
+  await passwordSignIn(uname(PHONE).toUpperCase(), pw(PHONE)); // usernames are case-insensitive
+  await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 });
+  await signOut();
+  await tab('Sign in');
+  await passwordSignIn(`+998 ${PHONE}`, pw(PHONE));
+  await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 });
+  // Change in Settings → Account: the note says other devices are signed out.
+  await tab('Profile');
+  await page.getByRole('button', { name: /^Settings\./ }).click();
+  await page.getByText(`Username: ${uname(PHONE)}`).waitFor();
+  await button('Change password').click();
+  await page.getByText(/other devices are signed out/).first().waitFor();
+  await page.getByLabel('Current password', { exact: true }).fill('wrong current');
+  await page.getByLabel('New password', { exact: true }).fill('smoke changed pass');
+  await page.getByLabel('Repeat the password', { exact: true }).fill('smoke changed pass');
+  await button('Save the password').click();
+  await page.getByText('The current password is incorrect.').waitFor();
+  await page.getByLabel('Current password', { exact: true }).fill(pw(PHONE));
+  await button('Save the password').click();
+  await page.getByText('Password changed. Other devices were signed out.').waitFor();
+  // Forgotten password: phone → code → new password → signed in.
+  await button('Sign out').click();
+  await tab('Sign in');
+  await button('Forgot your password?').click();
+  await page.getByRole('heading', { name: 'Reset your password' }).waitFor();
+  await page.getByLabel('Phone number').fill(`+998${PHONE}`);
+  await button('Send code').click();
+  const banner = page.getByText(/\b\d{6}\b/).first();
+  await banner.waitFor({ timeout: 10000 });
+  await page.getByLabel('Verification code').fill((await banner.innerText()).match(/\b(\d{6})\b/)[1]);
+  await page.getByLabel('New password', { exact: true }).fill(`+998${PHONE}`);
+  await page.getByLabel('Repeat the password', { exact: true }).fill(`+998${PHONE}`);
+  await button('Save the password and sign in').click();
+  await page.getByText('The password must not be your phone number.').waitFor();
+  await page.getByLabel('New password', { exact: true }).fill(pw(PHONE));
+  await page.getByLabel('Repeat the password', { exact: true }).fill(pw(PHONE));
+  await button('Save the password and sign in').click();
+  await page.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 });
+});
+
+await step('Face ID / fingerprint (mocked OS check): offered after sign-in, locks the saved session, opt-out in Settings', async () => {
+  // The web build has no biometrics: the documented test seam stands in for the OS check (src/biometric.ts).
+  const bctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });
+  await bctx.addInitScript(() => {
+    localStorage.setItem('yondo.locale', 'en');
+    globalThis.__YONDO_BIO_MOCK__ = { available: true, result: localStorage.getItem('mock.bio.result') !== 'fail' };
+  });
+  const b = await bctx.newPage();
+  b.on('pageerror', (e) => problems.push(`bio pageerror: ${e.message}`));
+  const bb = (name) => b.getByRole('button', { name, exact: true });
+  try {
+    await b.goto(URL);
+    await b.getByRole('tab', { name: 'Sign in', exact: true }).click();
+    await b.getByLabel('Username or phone number').fill(uname(CUSTOMER));
+    await b.getByLabel('Password', { exact: true }).fill(pw(CUSTOMER));
+    await bb('Sign in').click();
+    const offer = b.getByRole('dialog', { name: 'Sign in next time with Face ID or your fingerprint?' });
+    await offer.waitFor({ timeout: 15000 });
+    assert((await offer.innerText()).includes('never leave your phone'), 'says nothing leaves the phone');
+    await bb('Turn on').click();
+    await offer.waitFor({ state: 'detached' });
+    // The account's saved language follows the user on every start: keep it English for the texts below.
+    await b.evaluate(() =>
+      fetch('/api/v1/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}` },
+        body: JSON.stringify({ ui_locale: 'en' }),
+      }),
+    );
+    // App start with a saved session: the OS check opens it.
+    await b.reload();
+    await b.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 }).catch((e) => { throw new Error(`profile tab #1: ${e.message}`); });
+    assert((await b.evaluate(() => globalThis.__YONDO_BIO_MOCK__.calls)) >= 1, 'the check ran on start');
+    // A failed check keeps the session closed and offers password / code sign-in instead.
+    await b.evaluate(() => localStorage.setItem('mock.bio.result', 'fail'));
+    await b.reload();
+    await b.getByText('Biometrics were not confirmed. Sign in with your username and password or a code.').waitFor({ timeout: 15000 });
+    assert((await b.getByRole('tab').count()) === 0, 'nothing of the app opens before the check');
+    await bb('Sign in with username and password').click();
+    await b.getByRole('tab', { name: 'Sign in', exact: true }).waitFor();
+    // Opt-out in Settings → Account.
+    await b.evaluate(() => {
+      localStorage.removeItem('mock.bio.result');
+      globalThis.__YONDO_BIO_MOCK__.result = true; // this page load read "fail"; the next check succeeds
+    });
+    await b.getByRole('tab', { name: 'Sign in', exact: true }).click();
+    await b.getByLabel('Username or phone number').fill(uname(CUSTOMER));
+    await b.getByLabel('Password', { exact: true }).fill(pw(CUSTOMER));
+    await bb('Sign in').click();
+    await offer.waitFor({ state: 'detached', timeout: 3000 }).catch(() => {});
+    assert((await offer.count()) === 0, 'offered once only');
+    await b.getByRole('tab', { name: 'Profile', exact: true }).click();
+    await b.getByRole('button', { name: /^Settings\./ }).click();
+    const toggle = b.getByRole('checkbox', { name: 'Sign in with Face ID / fingerprint' });
+    await toggle.waitFor();
+    assert((await toggle.getAttribute('aria-checked')) === 'false', 'off after the failed start');
+    await toggle.click();
+    await b.waitForFunction(() => localStorage.getItem('yondo.biometric') === '1');
+    await toggle.click();
+    await b.waitForFunction(() => localStorage.getItem('yondo.biometric') === null);
+    await b.reload();
+    await b.getByRole('tab', { name: 'Profile', exact: true }).waitFor({ timeout: 15000 }).catch((e) => { throw new Error(`profile tab #2: ${e.message}`); }); // no check when off
+  } finally {
+    await bctx.close();
+  }
+});
+
+await step('Face ID / fingerprint is hidden without enrolled biometrics (and on a plain web build)', async () => {
+  await tab('Profile');
+  await page.getByRole('button', { name: /^Settings\./ }).click();
+  await page.getByRole('heading', { name: 'Settings' }).waitFor();
+  assert((await page.getByRole('checkbox', { name: 'Sign in with Face ID / fingerprint' }).count()) === 0, 'no biometric option');
 });
 
 await step('no page errors or console errors', async () => {

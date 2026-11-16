@@ -1,7 +1,7 @@
 # Username + password login (backend)
 
 Built 2026-11-15 from `docs/product-decisions.md` §3 and §6 and the owner's addition of a
-**username** ("login"). The web and mobile screens are a separate task. Design history:
+**username** ("login"). Web and mobile screens: see "Clients" below (S68). Design history:
 `docs/auth-password-login.md` (plan).
 
 ## Flows
@@ -81,3 +81,12 @@ The per-IP limit needs the real client IP:
   which no client uses yet. Fix it with the server work.
 
 With several API instances, move the counter to Redis.
+
+## Clients (S68, 2026-11-15)
+
+- **Kirish** (web `apps/web/src/pages/Login.tsx`, mobile `apps/mobile/src/screens/Login.tsx`): username or phone + password first, a code via Telegram second, "Parolni unutdingizmi?" = phone → code → new password. Errors are chosen by `code`.
+- **Setup** (`apps/web/src/auth/PasswordSetup.tsx`, `apps/mobile/src/screens/Password.tsx`): shown after a code sign-in while `password_setup_required` is true. Help and the documents stay reachable. `reauth_required` sends the user back to a code sign-in.
+- **Change** in Settings → Hisob. A 401 `invalid_credentials` there is a form error: the clients do not treat it as an expired session.
+- **Face ID / fingerprint** (mobile only, `apps/mobile/src/biometric.ts`): an OS check before a saved session opens. Off by default, offered once, opt-out in Settings, hidden without enrolled biometrics. Nothing is sent to the server.
+- Client-side rule mirror: `apps/web/src/lib/credentials.ts`. The server stays the authority.
+
