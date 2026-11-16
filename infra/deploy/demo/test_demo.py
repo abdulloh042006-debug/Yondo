@@ -194,3 +194,43 @@ async def test_demo_with_the_telegram_bot_keeps_demo_accounts_and_sends_real_num
             assert real.status_code >= 400 and real.json()['code'] == 'telegram_link_required'
             start = await client.post('/api/v1/auth/telegram/link/start', json={'phone_number': '+998935550002'})
             assert start.status_code == 201 and 't.me/YondoTestBot?start=' in start.json()['deep_link']
+
+
+@loop
+async def test_password_gate_on_the_harness_still_seeds_and_tops_up_while_visitors_must_set_a_password(tmp_path, monkeypatch):
+    """Owner, 2026-11-16: the demo runs with YONDO_AUTH_REQUIRE_PASSWORD_SETUP=true (Render env).
+
+    The public app follows the environment; the harness's own app (seed, maintenance) has the gate off, on the same
+    database, so the seeded accounts and the owner's admin number never get a password nobody knows.
+    """
+    monkeypatch.setenv('YONDO_AUTH_REQUIRE_PASSWORD_SETUP', 'true')
+    url = f'sqlite+aiosqlite:///{tmp_path / "gate.db"}'
+    storage = demo_app.MemoryStorage(0)
+    public = demo_app.build_app(url, 0, None, storage=storage)
+    harness = demo_app.build_app(url, 0, None, internal=True, storage=storage)
+    assert public.state.settings.auth_require_password_setup is True
+    assert harness.state.settings.auth_require_password_setup is False
+    async with public.router.lifespan_context(public), harness.router.lifespan_context(harness):
+        await _tables(public)
+        await demo_app.seed(harness)  # would stop at the first gated call on the public app
+        phones = (demo_app.MADINA, demo_app.JASUR)
+        await top_up_availability(harness, demo_app.login, phones)
+        assert await top_up_availability(harness, demo_app.login, phones) == 0  # the top-up ran: nothing left to add
+        async with AsyncClient(transport=ASGITransport(app=public), base_url='http://test') as client:
+            listed = (await client.get('/api/v1/discovery/companions')).json()['items']
+            assert sorted(item['display_name'] for item in listed) == ['DEMO Jasur', 'DEMO Madina']
+            # A visitor's code sign-in on the public app: setup first, then the app opens.
+            headers, _ = await demo_app.login(client, '+998909990011')
+            me = (await client.get('/api/v1/auth/me', headers=headers)).json()
+            assert me['password_setup_required'] is True
+            gated = await client.get('/api/v1/account/consents', headers=headers)  # any signed-in user, any role
+            assert gated.status_code == 403 and gated.json()['code'] == 'password_setup_required'
+            done = await client.post('/api/v1/auth/registration', headers=headers,
+                                     json={'username': 'demo.visitor', 'password': 'a demo password'})
+            assert done.status_code == 200, done.text
+            assert (await client.get('/api/v1/account/consents', headers=headers)).status_code == 200
+    # Nobody seeded was given a password.
+    async with harness.router.lifespan_context(harness):
+        async with harness.state.db_session_factory() as session:
+            with_password = await session.scalars(select(User.phone_number).where(User.password_hash.is_not(None)))
+            assert list(with_password) == ['+998909990011']

@@ -58,7 +58,7 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_AUTH_SCRYPT_LOG_N` | Password hash cost, N = 2^value (14–20) | no | `17` | Default (docs/login-password.md) |
 | `YONDO_AUTH_PASSWORD_IP_RATE_LIMIT_PER_MINUTE` | Password login/reset/username-check attempts per client IP per minute (0 = off) | no | `20` | Owner decision |
 | `YONDO_AUTH_REGISTRATION_WINDOW_SECONDS` | Registration must follow a code sign-in this recent | no | `900` | Default |
-| `YONDO_AUTH_REQUIRE_PASSWORD_SETUP` | 403 `password_setup_required` for accounts without username + password (outside /auth, /legal) | no | `false` | Turn on after the setup screens ship |
+| `YONDO_AUTH_REQUIRE_PASSWORD_SETUP` | 403 `password_setup_required` for accounts without username + password (outside /auth, /legal) | no | `false` | **On in the public demo from 2026-11-16** (owner: password mandatory). The demo harness seeds through an internal app with the gate off (`docs/login-password.md`) |
 | `YONDO_AUTH_OTP_PROVIDER_RATE_LIMIT_PER_MINUTE` | Global cap on code sends per minute (0 = off) | recommended | `30` | Owner/CEO decides |
 | `YONDO_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS` / `..._REFRESH_...` | Session lifetimes | no | `900` / `2592000` | Defaults |
 | `YONDO_STORAGE_BACKEND` | `disabled` or `s3` | for photos/ID | `s3` | — |
