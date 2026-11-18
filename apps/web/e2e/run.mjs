@@ -153,8 +153,9 @@ try {
     assert((await page.locator('main').innerText()).includes('DEMO Jasur'), 'Jasur expected');
     await page.getByRole('button', { name: /Hammasini tozalaş/ }).click();
     await page.getByText('DEMO Madina').first().waitFor();
+    await page.getByRole('button', { name: /^Filtrlar/ }).click();
     await page.getByLabel('Eng yuqori narx (söm)').fill('50000');
-    await page.getByLabel('Eng yuqori narx (söm)').blur();
+    await page.getByRole('button', { name: 'Natijalarni körsatiş' }).click();
     await page.waitForFunction(() => { const t = document.body.innerText; return t.includes('DEMO Jasur') && !t.includes('DEMO Madina'); });
     assert((await page.locator('main').innerText()).includes('DEMO Jasur'), 'cheaper Jasur expected');
   });
@@ -392,6 +393,110 @@ try {
     await cp.getByText('Sevimlilarga qöşildi.').waitFor();
     await cp.goto(`${WEB}/favorites`);
     await cp.getByText('DEMO Madina').first().waitFor();
+  });
+  const authed = (pg, path, init = {}) =>
+    pg.evaluate(async ([path, init]) => {
+      const r = await fetch(`/api/v1${path}`, { ...init, headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}`, ...(init.headers ?? {}) } });
+      return { status: r.status, body: r.status === 204 ? null : await r.json() };
+    }, [path, init]);
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  await step('Profil photos (owner, 2026-11-14): upload PNG, privacy note, main photo, delete — on the real API', async () => {
+    await cp.goto(`${WEB}/account`);
+    await cp.getByRole('heading', { name: /Rasmlarim/ }).waitFor();
+    assert(/bron sörovi yuborgan hamrohlar/.test(await cp.locator('main').innerText()), 'customer privacy note expected');
+    for (const name of ['a.png', 'b.png']) {
+      await cp.locator('[data-testid=photo-input]').setInputFiles({ name, mimeType: 'image/png', buffer: PNG });
+      await cp.getByText('Rasm yuklandi.').last().waitFor();
+      await cp.getByText('Rasm yuklandi.').last().waitFor({ state: 'detached', timeout: 8000 }).catch(() => {});
+    }
+    await cp.getByAltText('Mening rasmim, 2').waitFor();
+    const before = (await authed(cp, '/user-photos/me')).body.map((p) => p.id);
+    assert(before.length === 2, `2 photos expected, got ${before.length}`);
+    await cp.getByRole('button', { name: 'Asosiy qiliş' }).click();
+    await cp.getByText('Asosiy rasm tanlandi.').waitFor();
+    const after = (await authed(cp, '/user-photos/me')).body.map((p) => p.id);
+    assert(after[0] === before[1] && after[1] === before[0], 'the second photo must become the main one on the server');
+    await cp.getByRole('button', { name: 'Öçiriş' }).first().click();
+    await cp.getByRole('dialog').getByRole('button', { name: 'Öçiriş' }).click();
+    await cp.getByText('Rasm öçirildi.').waitFor();
+    const left = (await authed(cp, '/user-photos/me')).body.map((p) => p.id);
+    assert(left.length === 1 && left[0] === before[0], 'the main photo was deleted on the server');
+    const gif = await (async () => {
+      await cp.locator('[data-testid=photo-input]').setInputFiles({ name: 'x.gif', mimeType: 'image/gif', buffer: Buffer.from('GIF89a') });
+      return cp.getByRole('alert').filter({ hasText: 'Faqat JPEG, PNG yoki WebP' }).count();
+    })();
+    assert(gif === 1, 'a GIF is refused before it is sent');
+  });
+  let madinaId = '';
+  await step('Yoqdi: like/unlike with an optimistic count, separate from favourites (real API)', async () => {
+    const list = await (await fetch(`${API}/api/v1/discovery/companions?q=Madina`)).json();
+    madinaId = list.items[0].id;
+    const start = list.items[0].like_count;
+    await cp.goto(`${WEB}/c/${madinaId}`);
+    const btn = cp.getByRole('button', { name: /profiliga «Yoqdi» bosiş/ });
+    await btn.click();
+    await cp.getByRole('button', { name: /«Yoqdi»ni olib taşlaş/ }).waitFor();
+    await cp.waitForFunction(async ([id, n]) => (await (await fetch(`/api/v1/discovery/companions/${id}`)).json()).like_count === n, [madinaId, start + 1]);
+    const anonView = await (await fetch(`${API}/api/v1/discovery/companions/${madinaId}`)).json();
+    assert(anonView.like_count === start + 1 && anonView.liked_by_me === null, 'public count +1, no viewer state when anonymous');
+    await cp.reload();
+    await cp.getByRole('button', { name: /«Yoqdi»ni olib taşlaş/ }).click();
+    await cp.getByRole('button', { name: /profiliga «Yoqdi» bosiş/ }).waitFor();
+    await cp.waitForFunction(async ([id, n]) => (await (await fetch(`/api/v1/discovery/companions/${id}`)).json()).like_count === n, [madinaId, start]);
+    await cp.getByRole('button', { name: /profiliga «Yoqdi» bosiş/ }).click(); // leave one like for the sort step
+    await cp.getByRole('button', { name: /«Yoqdi»ni olib taşlaş/ }).waitFor();
+    await page.goto(`${WEB}/c/${madinaId}`);
+    await page.getByRole('heading', { name: 'DEMO Madina', level: 1 }).waitFor();
+    assert((await page.getByRole('button', { name: /Yoqdi/ }).count()) === 0, 'signed out: the count only, no button');
+    assert((await page.getByText(/ta «Yoqdi»/).count()) >= 1, 'signed out: the like count is shown');
+  });
+  await step('filters sheet: stars, category, sort by likes; chips + clear all (real API)', async () => {
+    await page.goto(WEB);
+    await page.getByText('DEMO Madina').first().waitFor();
+    await page.getByRole('button', { name: /^Filtrlar/ }).click();
+    const sheet = page.getByRole('dialog', { name: 'Filtrlar' });
+    await sheet.getByRole('button', { name: 'Köp «Yoqdi»' }).click();
+    await sheet.getByRole('button', { name: 'Natijalarni körsatiş' }).click();
+    await page.waitForURL(/sort=likes/);
+    await page.waitForFunction(() => document.querySelector('.grid-cards h3')?.textContent?.includes('DEMO Madina'));
+    await page.waitForFunction(() => document.querySelector('main select')?.value === 'likes'); // the sort select follows the URL
+    await page.getByRole('button', { name: /^Filtrlar/ }).click();
+    await sheet.getByRole('button', { name: '4+ ★' }).click();
+    await sheet.getByRole('button', { name: 'Kofe' }).click();
+    await sheet.getByRole('button', { name: 'Natijalarni körsatiş' }).click();
+    await page.waitForURL((u) => u.searchParams.get('rating_min') === '4' && u.searchParams.get('service_code') === 'coffee');
+    await page.getByRole('button', { name: '«4+ ★» filtrini olib taşlaş' }).waitFor();
+    await page.getByRole('button', { name: /^Filtrlar \(2\)/ }).waitFor();
+    await page.getByText(/Mos hamroh topilmadi|DEMO/).first().waitFor();
+    await page.getByRole('button', { name: 'Hammasini tozalaş' }).first().click();
+    await page.waitForURL((u) => !u.searchParams.get('rating_min') && !u.searchParams.get('service_code') && u.searchParams.get('sort') === 'likes');
+    await page.getByLabel('Saralaş', { exact: true }).selectOption('meetings');
+    await page.waitForURL(/sort=meetings/);
+    await page.getByLabel('Saralaş', { exact: true }).selectOption('default');
+    await page.waitForURL((u) => !u.searchParams.get('sort'));
+    await page.waitForFunction(() => document.querySelector('main')?.innerText.includes('DEMO Madina'));
+  });
+  await step('Kartoçkalar: Saqlaş adds to favourites, Keyingisi skips; keyboard path; no dislike/match', async () => {
+    await authed(cp, `/discovery/favorites/${madinaId}`, { method: 'DELETE' });
+    await cp.goto(`${WEB}/?view=cards&q=DEMO`);
+    const deck = cp.getByRole('region', { name: 'Hamroh kartoçkalari' });
+    await deck.waitFor();
+    const first = await deck.locator('h2').innerText();
+    const text = await cp.locator('main').innerText();
+    assert(!/dislike|match|yoqmadi/i.test(text), 'no dislike or match wording');
+    await cp.getByRole('button', { name: /Keyingisi/ }).click();
+    await cp.waitForFunction((f) => document.querySelector('.deck h2') && !document.querySelector('.deck h2').textContent.startsWith(f.split(',')[0]), first);
+    const second = (await deck.locator('h2').innerText()).split(',')[0];
+    await cp.getByRole('button', { name: /^Saqlaş$/ }).click();
+    await cp.getByText('Sevimlilarga qöşildi.').last().waitFor();
+    await cp.getByRole('button', { name: /^Saqlangan$/ }).waitFor();
+    const favs = (await authed(cp, '/discovery/favorites')).body.map((c) => c.display_name);
+    assert(favs.some((n) => second.startsWith(n)), `favourites on the server must hold ${second}: ${favs}`);
+    await deck.focus();
+    await cp.keyboard.press('ArrowRight');
+    await cp.waitForFunction((s) => !document.querySelector('.deck h2')?.textContent?.startsWith(s), second);
+    await cp.getByRole('button', { name: 'Röyxat' }).click();
+    await cp.locator('.grid-cards').waitFor();
   });
   await step('booking dialog validates, then creates a pending booking on the server', async () => {
     await cp.goto(WEB);
@@ -1269,7 +1374,7 @@ try {
   });
   for (const theme of ['gul', 'rausch', 'stone', 'yondo', 'yondo-tun']) {
     await step(`axe (WCAG2 A/AA serious+critical) in theme ${theme}: public + admin pages`, async () => {
-      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [cp, '/notifications'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
+      for (const [pg, path] of [[page, '/'], [page, '/login'], [page, '/settings'], [page, '/help'], [page, '/privacy'], [cp, '/account'], [cp, '/help'], [page, '/?view=cards'], [cp, '/notifications'], [ap, '/admin'], [ap, '/admin/support'], [ap, '/admin/deletions'], [ap, '/admin/applications'], [ap, '/admin/users'], [ap, '/admin/safety'], [ap, '/admin/audit']]) {
         await pg.goto(`${WEB}${path}`);
         await pg.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
         await pg.waitForTimeout(1700);

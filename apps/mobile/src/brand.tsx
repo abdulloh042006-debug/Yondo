@@ -30,6 +30,8 @@ export const ICONS = {
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 9a8 8 0 0 1 16 0',
   external: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
   chevron: 'M9 6l6 6-6 6',
+  thumb: 'M7 10v11H3V10h4zm0 0 4-7c1.7 0 2.6 1.2 2.3 2.8L12.6 9H19a2 2 0 0 1 2 2.3l-1.3 7.6A2.5 2.5 0 0 1 17.2 21H7',
+  filter: 'M4 6h16M7 12h10M10 18h4',
 } as const;
 
 export function Icon({ d, size = 22, color, fill }: { d: string; size?: number; color: string; fill?: string }) {
