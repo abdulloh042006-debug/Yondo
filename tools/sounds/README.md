@@ -13,4 +13,5 @@ ffmpeg -i <out_dir>/yondo-bildirishnoma-A-tomchi-rin.wav -c:a libmp3lame -b:a 12
 ```
 
 Only the A file, as mp3, is committed: `apps/web/public/sounds/yondo-notify.mp3` and
-`apps/mobile/assets/sounds/yondo-notify.mp3`. WAV files are not committed.
+`apps/mobile/assets/sounds/yondo_notify.mp3` (underscore: Android resource names cannot contain "-"; it is also
+the Android push channel sound). WAV files are not committed.

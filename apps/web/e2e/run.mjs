@@ -580,6 +580,47 @@ try {
     await cp.getByText('E2E: hamroh kelmadi').waitFor();
     await cp.getByText('Yuborildi, navbatda').first().waitFor();
   });
+  await step('push (owner, 2026-11-18): Settings switch asks only on a tap, registers this browser on the server, off unregisters', async () => {
+    // Headless Chromium has no push service, so only PushManager.subscribe is replaced: it returns a subscription with
+    // a real P-256 key made by WebCrypto. The permission prompt, the service worker and the API calls are real.
+    await cust.grantPermissions(['notifications'], { origin: WEB });
+    await cust.addInitScript(() => {
+      const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const KEY = 'e2e.push.sub';
+      const make = (s) => s && { endpoint: s.endpoint, toJSON: () => s, unsubscribe: async () => (sessionStorage.removeItem(KEY), true) };
+      PushManager.prototype.getSubscription = async function () {
+        return make(JSON.parse(sessionStorage.getItem(KEY) || 'null'));
+      };
+      PushManager.prototype.subscribe = async function (opts) {
+        if (!opts || !opts.userVisibleOnly || !opts.applicationServerKey) throw new Error('bad subscribe options');
+        window.__pushAsked = (window.__pushAsked || 0) + 1;
+        const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+        const raw = await crypto.subtle.exportKey('raw', pair.publicKey);
+        const s = { endpoint: `https://fcm.googleapis.com/fcm/send/e2e-${Date.now()}`, keys: { p256dh: b64u(raw), auth: b64u(crypto.getRandomValues(new Uint8Array(16))) } };
+        sessionStorage.setItem(KEY, JSON.stringify(s));
+        return make(s);
+      };
+    });
+    await cp.goto(`${WEB}/settings`);
+    const sw = cp.getByRole('switch', { name: /Push bildirişnomalar/ });
+    await sw.waitFor();
+    await cp.getByText(/Öçirilgan\. Yoqsangiz/).waitFor();
+    assert(!(await sw.isChecked()), 'off before the tap');
+    assert((await cp.evaluate(() => window.__pushAsked || 0)) === 0, 'nothing is subscribed on page load');
+    const registered = cp.waitForResponse((r) => r.url().endsWith('/api/v1/push/devices') && r.request().method() === 'PUT');
+    await sw.click();
+    const reg = await registered;
+    assert(reg.status() === 200, `PUT /push/devices should be 200, got ${reg.status()}`);
+    await cp.getByText(/Yoqilgan: ilova yopiq/).waitFor();
+    assert(await sw.isChecked(), 'on after the tap');
+    assert(await cp.evaluate(async () => !!(await navigator.serviceWorker.getRegistration('/sw.js'))), 'the service worker is registered');
+    await cp.reload();
+    await cp.getByText(/Yoqilgan: ilova yopiq/).waitFor(); // the state survives a reload
+    const removed = cp.waitForResponse((r) => /\/api\/v1\/push\/devices\/[0-9a-f-]+$/.test(r.url()) && r.request().method() === 'DELETE');
+    await cp.getByRole('switch', { name: /Push bildirişnomalar/ }).click();
+    assert((await removed).status() === 204, 'DELETE /push/devices/{id} should be 204');
+    await cp.getByText(/Öçirilgan\. Yoqsangiz/).waitFor();
+  });
   await step('interface language is saved to the account and follows the user to another device', async () => {
     const other = await ctx();
     const op = await other.newPage();

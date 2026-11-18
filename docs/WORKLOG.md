@@ -17,6 +17,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00c. **When money exists:** domain → TezCheck cash desk + keys (`docs/payments-tezcheck.md`); server (Oracle Always Free needs a card hold, or DigitalOcean 12 USD/month, package in `infra/deploy/digitalocean/`); Telegram Gateway balance (Fragment/TON).
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
+00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -35,6 +36,16 @@ Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for
 - i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
 Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
 Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
+## S73 — Push notifications: web (VAPID) + Android (FCM), with a permission request (2026-11-18) [cloud worker, backend + web + mobile]
+Done (owner: "Push notifications don't work? Add them, with the permission request"):
+- **API:** `push_devices` + `push_vapid_keys` (migration 0024, additive); `GET /push/config` (public), `PUT /push/devices`, `DELETE /push/devices/{id}`. An after-commit hook pushes every new in-app notification in the background (5 s timeouts, errors logged and swallowed, rollback = nothing sent). Lock-screen text has no personal data, in the user's `ui_locale`. Web Push (VAPID ES256 + RFC 8291, `cryptography` only, RFC test vector PASS); VAPID keys from env or generated once into the DB. FCM HTTP v1 via a service-account JSON from env. Invalid tokens disabled (404/410/UNREGISTERED). Endpoint allowlist (SSRF guard). Account deletion removes devices.
+- **Web:** `public/sw.js`, Settings → "Push bildirişnomalar" switch (asks only on a tap), states: on / off / denied (how to re-enable) / unsupported / iPhone "Add to Home Screen" / not set up; sign-out unregisters; `manifest.webmanifest` added (iOS needs it).
+- **Mobile:** `expo-notifications`; one-time card after sign-in (Yoqish / Keyinroq), same switch in Settings, denied → "open phone settings" (`Linking.openSettings`), channel "Yondo" with the #44 "tomchi-rin" sound (file renamed `yondo_notify.mp3`: Android resource names cannot contain "-"), tap opens the booking or the list, token refresh re-registers. `app.config.js` adds Firebase only if `google-services.json` exists; `mobile-apk.yml` writes it from the `GOOGLE_SERVICES_JSON` secret, else builds without push.
+Not done: iOS app push (OUT OF SCOPE: paid Apple account + iOS build). Real delivery to a phone / browser push service: needs the owner's Firebase project and a device.
+Next: owner does the Firebase steps (`docs/push-notifications.md`).
+Blockers: none for code; Android push BLOCKED on the owner's Firebase secrets.
+Evidence: API SQLite 513 passed / 12 skipped, PostgreSQL 16 525 passed (9 new tests); ruff, `export_openapi --check`, `alembic check` + downgrade/upgrade PASS; web typecheck, lint, vitest 141 (9 new), build, e2e 74/74 (1 new); mobile typecheck, `e2e/push.mjs` 5/5, smoke 18/18, `expo export` web + android, `expo prebuild` with and without google-services.json.
+Commit: branch `feat/push-notifications`, PR to `main`.
 ## S72 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
 Done (owner decision 2026-11-11; the first draft was lost before push):
 - `tools/sounds/yondo_notify.py` (verbatim, deterministic) + README; only A as mp3 (128k, 39 KB): `apps/web/public/sounds/yondo-notify.mp3`, `apps/mobile/assets/sounds/yondo-notify.mp3`.

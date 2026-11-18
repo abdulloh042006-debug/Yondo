@@ -829,6 +829,19 @@
         "title": "AdminVerificationRead",
         "type": "object"
       },
+      "AndroidPushConfig": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "AndroidPushConfig",
+        "type": "object"
+      },
       "ApplicationResponse": {
         "properties": {
           "id": {
@@ -1799,6 +1812,106 @@
           "window_days"
         ],
         "title": "DeletionState",
+        "type": "object"
+      },
+      "DeviceRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "created_at",
+          "last_seen_at"
+        ],
+        "title": "DeviceRead",
+        "type": "object"
+      },
+      "DeviceRegister": {
+        "properties": {
+          "auth": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auth"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "minLength": 12,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint"
+          },
+          "p256dh": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P256Dh"
+          },
+          "platform": {
+            "enum": [
+              "android",
+              "web"
+            ],
+            "title": "Platform",
+            "type": "string"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "minLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          }
+        },
+        "required": [
+          "platform"
+        ],
+        "title": "DeviceRegister",
         "type": "object"
       },
       "DiscoveryPage": {
@@ -3204,6 +3317,22 @@
         "title": "ProfileWrite",
         "type": "object"
       },
+      "PushConfig": {
+        "properties": {
+          "android": {
+            "$ref": "#/components/schemas/AndroidPushConfig"
+          },
+          "web": {
+            "$ref": "#/components/schemas/WebPushConfig"
+          }
+        },
+        "required": [
+          "web",
+          "android"
+        ],
+        "title": "PushConfig",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "checks": {
@@ -4340,6 +4469,31 @@
           "document_type"
         ],
         "title": "VerificationStart",
+        "type": "object"
+      },
+      "WebPushConfig": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "vapid_public_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vapid Public Key"
+          }
+        },
+        "required": [
+          "enabled",
+          "vapid_public_key"
+        ],
+        "title": "WebPushConfig",
         "type": "object"
       }
     },
@@ -10888,6 +11042,117 @@
         "summary": "Payment Webhook",
         "tags": [
           "payments"
+        ]
+      }
+    },
+    "/api/v1/push/config": {
+      "get": {
+        "description": "Public: which platforms can receive push, and the Web Push VAPID public key.",
+        "operationId": "push_config_api_v1_push_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Push Config",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/api/v1/push/devices": {
+      "put": {
+        "description": "Register or refresh this device. A token seen before moves to the signed-in user.",
+        "operationId": "register_device_api_v1_push_devices_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Register Device",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/api/v1/push/devices/{device_id}": {
+      "delete": {
+        "description": "Remove this device (sign-out, or push switched off). Works for any account status.",
+        "operationId": "unregister_device_api_v1_push_devices__device_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unregister Device",
+        "tags": [
+          "push"
         ]
       }
     },
