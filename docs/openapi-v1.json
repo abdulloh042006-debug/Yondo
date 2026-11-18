@@ -2171,6 +2171,22 @@
         "title": "GiftTestStatus",
         "type": "string"
       },
+      "GoogleCredential": {
+        "additionalProperties": false,
+        "properties": {
+          "credential": {
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Credential",
+            "type": "string"
+          }
+        },
+        "required": [
+          "credential"
+        ],
+        "title": "GoogleCredential",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2399,6 +2415,29 @@
           "expires_in_seconds"
         ],
         "title": "LinkStatus",
+        "type": "object"
+      },
+      "LinkedIdentity": {
+        "properties": {
+          "linked_at": {
+            "format": "date-time",
+            "title": "Linked At",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "telegram",
+              "google"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "linked_at"
+        ],
+        "title": "LinkedIdentity",
         "type": "object"
       },
       "LivenessResponse": {
@@ -3718,6 +3757,130 @@
         "title": "SimulateWrite",
         "type": "object"
       },
+      "SocialComplete": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "phone_number": {
+            "maxLength": 32,
+            "minLength": 9,
+            "title": "Phone Number",
+            "type": "string"
+          },
+          "signup_token": {
+            "maxLength": 128,
+            "minLength": 16,
+            "title": "Signup Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signup_token",
+          "phone_number",
+          "code"
+        ],
+        "title": "SocialComplete",
+        "type": "object"
+      },
+      "SocialConfig": {
+        "properties": {
+          "google_client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Client Id"
+          },
+          "telegram": {
+            "title": "Telegram",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "telegram",
+          "google_client_id"
+        ],
+        "title": "SocialConfig",
+        "type": "object"
+      },
+      "SocialResult": {
+        "properties": {
+          "expires_in_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In Seconds"
+          },
+          "password_setup_required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password Setup Required"
+          },
+          "provider": {
+            "enum": [
+              "telegram",
+              "google"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "signup_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signup Token"
+          },
+          "status": {
+            "enum": [
+              "signed_in",
+              "phone_required",
+              "linked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tokens": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokenResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "provider"
+        ],
+        "title": "SocialResult",
+        "type": "object"
+      },
       "SupportRead": {
         "properties": {
           "category": {
@@ -3839,6 +4002,78 @@
           "message"
         ],
         "title": "SupportWrite",
+        "type": "object"
+      },
+      "TelegramExchange": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "flow_token": {
+            "maxLength": 128,
+            "minLength": 16,
+            "title": "Flow Token",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 128,
+            "minLength": 16,
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "state",
+          "flow_token"
+        ],
+        "title": "TelegramExchange",
+        "type": "object"
+      },
+      "TelegramStart": {
+        "additionalProperties": false,
+        "properties": {
+          "redirect_uri": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Uri"
+          }
+        },
+        "title": "TelegramStart",
+        "type": "object"
+      },
+      "TelegramStarted": {
+        "properties": {
+          "authorization_url": {
+            "title": "Authorization Url",
+            "type": "string"
+          },
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          },
+          "flow_token": {
+            "title": "Flow Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_url",
+          "flow_token",
+          "expires_in_seconds"
+        ],
+        "title": "TelegramStarted",
         "type": "object"
       },
       "TestOrderItemRead": {
@@ -6328,6 +6563,363 @@
           }
         ],
         "summary": "Select Roles",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/complete": {
+      "post": {
+        "description": "Phone proof for a social identity: a code from POST /auth/otp/request (or the bot).\n\nThe phone's account (existing or new) gets the identity linked and is signed in.",
+        "operationId": "complete_signup_api_v1_auth_social_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialComplete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Signup",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/config": {
+      "get": {
+        "operationId": "social_config_api_v1_auth_social_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Social Config",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/google": {
+      "post": {
+        "description": "Google ID token (GIS credential). A new Google identity always needs a phone code.",
+        "operationId": "google_sign_in_api_v1_auth_social_google_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleCredential"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Google Sign In",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/google/link": {
+      "post": {
+        "operationId": "google_link_api_v1_auth_social_google_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleCredential"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Google Link",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/identities": {
+      "get": {
+        "operationId": "list_identities_api_v1_auth_social_identities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LinkedIdentity"
+                  },
+                  "title": "Response List Identities Api V1 Auth Social Identities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Identities",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/identities/{provider}": {
+      "delete": {
+        "description": "Only with a password set, so the account always keeps a way in besides the phone code.",
+        "operationId": "unlink_identity_api_v1_auth_social_identities__provider__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "telegram",
+                "google"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlink Identity",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/exchange": {
+      "post": {
+        "description": "The callback page sends code + state + flow token; the code is exchanged server-side.",
+        "operationId": "telegram_exchange_api_v1_auth_social_telegram_exchange_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramExchange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Telegram Exchange",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/link/start": {
+      "post": {
+        "description": "A signed-in user adds Telegram to the account (Settings).",
+        "operationId": "telegram_link_start_api_v1_auth_social_telegram_link_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Telegram Link Start",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/start": {
+      "post": {
+        "description": "Sign in or register: returns the oauth.telegram.org URL to open (code flow + PKCE).",
+        "operationId": "telegram_start_api_v1_auth_social_telegram_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Telegram Start",
         "tags": [
           "authentication"
         ]

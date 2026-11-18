@@ -92,6 +92,18 @@ class Settings(BaseSettings):
     # When true, accounts without username + password get 403 password_setup_required outside
     # /auth and /legal. Off until the web/mobile setup screens ship (the demo must keep working).
     auth_require_password_setup: bool = False
+    # Social sign-in (docs/login-telegram-google.md). Each provider is OFF until its values are set
+    # in the host's environment; the API then answers 503 provider_not_configured and the web hides
+    # the button. Telegram Login = OpenID Connect at oauth.telegram.org (Client ID + Client Secret
+    # from @BotFather -> Login Widget). Redirect URIs: comma-separated; empty =
+    # <public_web_url>/auth/callback/telegram. Each must be listed in BotFather's Allowed URLs.
+    telegram_login_client_id: str = ''
+    telegram_login_client_secret: SecretStr | None = None
+    telegram_login_redirect_uris: str = ''
+    # Google Identity Services: comma-separated OAuth client IDs (web, Android) accepted as "aud".
+    google_client_ids: str = ''
+    social_login_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
+    social_login_lifetime_seconds: int = Field(default=600, ge=60, le=3600)
     # Push notifications (docs/push-notifications.md). Android = FCM HTTP v1 with a Google
     # service-account JSON (a secret: set it only in the host's env). Empty = Android push off.
     fcm_service_account_json: SecretStr | None = None
@@ -201,12 +213,31 @@ class Settings(BaseSettings):
     def empty_push_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
         return value if value is not None and value.get_secret_value().strip() else None
 
-    @field_validator('telegram_bot_token', 'bot_shared_secret')
+    @field_validator('telegram_bot_token', 'bot_shared_secret', 'telegram_login_client_secret')
     @classmethod
     def empty_telegram_bot_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
         if value is not None and not value.get_secret_value().strip():
             return None
         return value
+
+    @property
+    def telegram_login_redirect_uri_list(self) -> list[str]:
+        uris = [u.strip() for u in self.telegram_login_redirect_uris.split(',') if u.strip()]
+        if not uris and self.public_web_url:
+            uris = [f"{self.public_web_url.rstrip('/')}/auth/callback/telegram"]
+        return uris
+
+    @property
+    def telegram_login_enabled(self) -> bool:
+        return bool(
+            self.telegram_login_client_id.strip()
+            and self.telegram_login_client_secret is not None
+            and self.telegram_login_redirect_uri_list
+        )
+
+    @property
+    def google_client_id_list(self) -> list[str]:
+        return [c.strip() for c in self.google_client_ids.split(',') if c.strip()]
 
     @field_validator('telegram_bot_username')
     @classmethod

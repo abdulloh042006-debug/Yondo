@@ -57,6 +57,11 @@ class UsernameAvailability(BaseModel):
     reason: Literal['invalid', 'reserved', 'taken'] | None = None
 
 
+# Sessions that may set the password: a code sign-in, or a social sign-in (Telegram's verified
+# phone, or an identity linked earlier with phone proof).
+_SETUP_VIA = frozenset({'otp', 'telegram', 'google'})
+
+
 def _settings(request: Request) -> Settings:
     return request.app.state.settings
 
@@ -126,7 +131,8 @@ async def complete_registration(
     if user.password_hash is not None and user.username is not None:
         raise ApplicationError('registration_complete', 'The account is already set up', 409)
     window = timedelta(seconds=settings.auth_registration_window_seconds)
-    if principal.session.via != 'otp' or _now() - _as_utc(principal.session.created_at) > window:
+    age = _now() - _as_utc(principal.session.created_at)
+    if principal.session.via not in _SETUP_VIA or age > window:
         raise ApplicationError(
             'reauth_required', 'Sign in with a code again, then set the password', 403
         )
