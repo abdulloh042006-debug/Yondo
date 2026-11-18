@@ -193,15 +193,21 @@ def bearer(result) -> dict:
 async def test_config_and_not_configured():
     async with client_for() as (client, _app, _fake):
         config = (await client.get(f'{S}/config')).json()
-        assert config == {'telegram': True, 'google_client_id': GOOGLE_ID}
+        assert config == {
+            'telegram': True, 'telegram_client_id': CLIENT_ID, 'telegram_code_flow': True,
+            'google_client_id': GOOGLE_ID,
+        }
     async with client_for(
         telegram_login_client_id='', google_client_ids='', public_web_url=''
     ) as (client, _app, _fake):
         assert (await client.get(f'{S}/config')).json() == {
-            'telegram': False, 'google_client_id': None,
+            'telegram': False, 'telegram_client_id': None, 'telegram_code_flow': False,
+            'google_client_id': None,
         }
         for path, body in (
             ('telegram/start', {}),
+            ('telegram/nonce', None),
+            ('telegram', {'id_token': 'x'}),
             ('google', {'credential': 'x'}),
             ('telegram/exchange', {'code': 'c', 'state': 's' * 20, 'flow_token': 'f' * 20}),
         ):
@@ -549,3 +555,76 @@ async def test_password_gate_allows_social_endpoints():
         assert (await client.get(f'{S}/identities', headers=headers)).status_code == 200
         blocked = await client.get('/api/v1/notifications', headers=headers)
         assert blocked.json()['code'] == 'password_setup_required'
+
+
+# ---- Telegram: official JS library (ID token in the browser, nonce from us) -----------------
+
+
+async def lib_login(client, fake_claims=None, headers=None, link=False):
+    path = 'telegram/link/nonce' if link else 'telegram/nonce'
+    issued = await client.post(f'{S}/{path}', headers=headers or {})
+    assert issued.status_code == 201, issued.text
+    nonce = issued.json()['nonce']
+    token = make_token(tg_claims(nonce=nonce, **(fake_claims or {})))
+    response = await client.post(
+        f'{S}/telegram/link' if link else f'{S}/telegram',
+        json={'id_token': token}, headers=headers or {},
+    )
+    return response, token
+
+
+async def test_library_flow_needs_only_the_client_id():
+    async with client_for(telegram_login_client_secret=None) as (client, app, fake):
+        config = (await client.get(f'{S}/config')).json()
+        assert config['telegram'] is True and config['telegram_code_flow'] is False
+        assert (await client.post(f'{S}/telegram/start', json={})).status_code == 503
+        response, _token = await lib_login(client)
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body['status'] == 'signed_in' and body['password_setup_required'] is True
+        assert not any(str(r.url).endswith('/token') for r in fake.requests)
+        me = (await client.get(f'{A}/me', headers=bearer(body))).json()
+        assert me['phone_number'] == PHONE
+        assert await count(app, TelegramLink) == 1
+
+
+async def test_library_flow_nonce_is_required_and_single_use():
+    async with client_for() as (client, app, _fake):
+        response, token = await lib_login(client)
+        assert response.json()['status'] == 'signed_in'
+        replay = await client.post(f'{S}/telegram', json={'id_token': token})
+        assert replay.json()['code'] == 'social_state_invalid'
+        no_nonce = await client.post(
+            f'{S}/telegram', json={'id_token': make_token(tg_claims())}
+        )
+        assert no_nonce.status_code == 401 and no_nonce.json()['code'] == 'social_token_invalid'
+        unknown = await client.post(
+            f'{S}/telegram', json={'id_token': make_token(tg_claims(nonce='n' * 43))}
+        )
+        assert unknown.json()['code'] == 'social_state_invalid'
+        bad_sig = await client.post(f'{S}/telegram/nonce')
+        forged = make_token(tg_claims(nonce=bad_sig.json()['nonce']), key=EVIL_KEY)
+        refused = await client.post(f'{S}/telegram', json={'id_token': forged})
+        assert refused.json()['code'] == 'social_token_invalid'
+        assert await count(app, User) == 1
+
+
+async def test_library_flow_withheld_phone_and_link_nonce_scoping():
+    async with client_for() as (client, app, _fake):
+        response, _token = await lib_login(
+            client, {'phone_number': None, 'phone_number_verified': None}
+        )
+        assert response.json()['status'] == 'phone_required'
+        assert await count(app, User) == 0
+        # A link nonce belongs to the signed-in user: it cannot sign anyone in.
+        code = await code_for(client, OTHER)
+        tokens = (
+            await client.post(f'{A}/otp/verify', json={'phone_number': OTHER, 'code': code})
+        ).json()
+        headers = {'Authorization': f'Bearer {tokens["access_token"]}'}
+        link_nonce = (await client.post(f'{S}/telegram/link/nonce', headers=headers)).json()
+        token = make_token(tg_claims(nonce=link_nonce['nonce'], sub='tg-sub-9'))
+        misuse = await client.post(f'{S}/telegram', json={'id_token': token})
+        assert misuse.json()['code'] == 'social_state_invalid'
+        linked, _token = await lib_login(client, {'sub': 'tg-sub-9'}, headers=headers, link=True)
+        assert linked.json()['status'] == 'linked'

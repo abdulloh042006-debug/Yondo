@@ -719,6 +719,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/social/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Sign In
+         * @description ID token from Telegram.Login.auth (official JS library) with a nonce from /telegram/nonce.
+         */
+        post: operations["telegram_sign_in_api_v1_auth_social_telegram_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/social/telegram/exchange": {
         parameters: {
             query?: never;
@@ -739,6 +759,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/social/telegram/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Telegram Link */
+        post: operations["telegram_link_api_v1_auth_social_telegram_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/link/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Telegram Link Nonce */
+        post: operations["telegram_link_nonce_api_v1_auth_social_telegram_link_nonce_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/social/telegram/link/start": {
         parameters: {
             query?: never;
@@ -753,6 +807,26 @@ export interface paths {
          * @description A signed-in user adds Telegram to the account (Settings).
          */
         post: operations["telegram_link_start_api_v1_auth_social_telegram_link_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Nonce
+         * @description A single-use nonce for Telegram.Login.auth; the ID token must carry it back.
+         */
+        post: operations["telegram_nonce_api_v1_auth_social_telegram_nonce_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4385,6 +4459,10 @@ export interface components {
             google_client_id: string | null;
             /** Telegram */
             telegram: boolean;
+            /** Telegram Client Id */
+            telegram_client_id: string | null;
+            /** Telegram Code Flow */
+            telegram_code_flow: boolean;
         };
         /** SocialResult */
         SocialResult: {
@@ -4463,6 +4541,18 @@ export interface components {
             flow_token: string;
             /** State */
             state: string;
+        };
+        /** TelegramIdToken */
+        TelegramIdToken: {
+            /** Id Token */
+            id_token: string;
+        };
+        /** TelegramNonce */
+        TelegramNonce: {
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Nonce */
+            nonce: string;
         };
         /** TelegramStart */
         TelegramStart: {
@@ -6005,6 +6095,39 @@ export interface operations {
             };
         };
     };
+    telegram_sign_in_api_v1_auth_social_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramIdToken"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     telegram_exchange_api_v1_auth_social_telegram_exchange_post: {
         parameters: {
             query?: never;
@@ -6038,6 +6161,59 @@ export interface operations {
             };
         };
     };
+    telegram_link_api_v1_auth_social_telegram_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramIdToken"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_link_nonce_api_v1_auth_social_telegram_link_nonce_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramNonce"];
+                };
+            };
+        };
+    };
     telegram_link_start_api_v1_auth_social_telegram_link_start_post: {
         parameters: {
             query?: never;
@@ -6067,6 +6243,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_nonce_api_v1_auth_social_telegram_nonce_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramNonce"];
                 };
             };
         };

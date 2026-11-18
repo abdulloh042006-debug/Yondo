@@ -12,7 +12,7 @@ vi.mock('../api/client', async (orig) => {
 });
 vi.mock('./AuthContext', () => ({ useAuth: () => ({ reload, user: null, state: { status: 'anon' } }) }));
 import { tokens } from '../api/client';
-import { browser, completeSignup, pendingSignup, resetSocialConfigCache } from './social';
+import { completeSignup, pendingSignup, resetSocialConfigCache } from './social';
 import { SocialCallback } from './SocialCallback';
 import { SocialSignIn } from './SocialSignIn';
 
@@ -24,7 +24,8 @@ const renderButton = vi.fn((el: HTMLElement) => {
 
 function config(telegram: boolean, google: string | null) {
   get.mockImplementation(async (path: string) => {
-    if (path === '/auth/social/config') return { telegram, google_client_id: google };
+    if (path === '/auth/social/config')
+      return { telegram, telegram_client_id: telegram ? '9000000001' : null, telegram_code_flow: false, google_client_id: google };
     throw new Error(`unexpected GET ${path}`);
   });
 }
@@ -61,6 +62,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   delete window.google;
+  delete window.Telegram;
   vi.restoreAllMocks();
 });
 
@@ -83,22 +85,43 @@ describe('SocialSignIn', () => {
     expect(screen.queryByRole('button', { name: t('social.telegram') })).toBeNull();
   });
 
-  it('Telegram: starts the OIDC flow, keeps the flow token and redirects', async () => {
+  it('Telegram: round official button, server nonce, ID token verified by the server', async () => {
     config(true, null);
-    const go = vi.spyOn(browser, 'go').mockImplementation(() => undefined);
-    post.mockResolvedValue({ authorization_url: 'https://oauth.telegram.org/auth?x=1', flow_token: 'flow-123', expires_in_seconds: 600 });
-    signIn();
+    const auth = vi.fn((_opts: unknown, cb: (r: { id_token?: string; error?: string }) => void) => cb({ id_token: 'tg-id-token' }));
+    window.Telegram = { Login: { auth } };
+    post.mockImplementation(async (path: string) => {
+      if (path === '/auth/social/telegram/nonce') return { nonce: 'nonce-abcdefghijklmnop', expires_in_seconds: 600 };
+      if (path === '/auth/social/telegram') return { status: 'signed_in', provider: 'telegram', tokens: TOKENS, password_setup_required: true };
+      throw new Error(`unexpected POST ${path}`);
+    });
+    const { onSignedIn } = signIn();
+    const button = await screen.findByRole('button', { name: t('social.telegram') });
+    expect(button).toHaveClass('tg-auth-button');
+    expect(button).toHaveAttribute('data-style', 'icon');
+    await waitFor(() => expect(post).toHaveBeenCalledWith('/auth/social/telegram/nonce', undefined, { anonymous: true }));
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(auth).toHaveBeenCalledWith(
+      expect.objectContaining({ client_id: 9000000001, request_access: ['phone', 'write'], nonce: 'nonce-abcdefghijklmnop' }),
+      expect.any(Function),
+    );
+    expect(post).toHaveBeenCalledWith('/auth/social/telegram', { id_token: 'tg-id-token' }, { anonymous: true });
+    expect(tokens.has()).toBe(true);
+    expect(onSignedIn).toHaveBeenCalled();
+  });
+
+  it('Telegram: a closed popup shows a clear message and signs nobody in', async () => {
+    config(true, null);
+    window.Telegram = { Login: { auth: (_o: unknown, cb: (r: { error?: string }) => void) => cb({ error: 'popup_closed' }) } };
+    post.mockResolvedValue({ nonce: 'nonce-abcdefghijklmnop', expires_in_seconds: 600 });
+    const { onSignedIn } = signIn();
     const button = await screen.findByRole('button', { name: t('social.telegram') });
     await act(async () => {
       fireEvent.click(button);
     });
-    expect(post).toHaveBeenCalledWith(
-      '/auth/social/telegram/start',
-      { redirect_uri: `${window.location.origin}/auth/callback/telegram` },
-      { anonymous: true },
-    );
-    expect(go).toHaveBeenCalledWith('https://oauth.telegram.org/auth?x=1');
-    expect(JSON.parse(sessionStorage.getItem('yondo.social.flow') ?? '{}')).toEqual({ flow: 'flow-123', intent: 'login' });
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('err.social_cancelled'));
+    expect(onSignedIn).not.toHaveBeenCalled();
   });
 
   it('Google: a known identity signs in', async () => {

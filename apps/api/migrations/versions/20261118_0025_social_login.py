@@ -63,7 +63,9 @@ def upgrade() -> None:
         sa.Column('consumed_at', sa.DateTime(timezone=True), nullable=True),
         *_timestamps(),
         sa.CheckConstraint(_PROVIDERS, name='ck_social_challenge_provider'),
-        sa.CheckConstraint("kind IN ('authorize', 'signup')", name='ck_social_challenge_kind'),
+        sa.CheckConstraint(
+            "kind IN ('authorize', 'nonce', 'signup')", name='ck_social_challenge_kind'
+        ),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('token_hash'),

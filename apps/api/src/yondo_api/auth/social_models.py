@@ -42,9 +42,11 @@ class SocialLoginChallenge(TimestampMixin, Base):
     """Single-use state for one social flow.
 
     kind 'authorize': an OIDC redirect (state, nonce, PKCE verifier; ``user_id`` set when a
-    signed-in user links a provider). kind 'signup': a verified provider identity waiting for a
-    phone code (accounts are phone-anchored). Only SHA-256 hashes of the browser-held values
-    (state, flow token, signup token) are stored.
+    signed-in user links a provider). kind 'nonce': a nonce for the official Telegram JS library,
+    which hands the ID token straight to the browser (``token_hash`` = hash of the nonce).
+    kind 'signup': a verified provider identity waiting for a phone code (accounts are
+    phone-anchored). Only SHA-256 hashes of the browser-held values (state, flow token, nonce of
+    the JS flow, signup token) are stored.
     """
 
     __tablename__ = 'social_login_challenges'
@@ -52,7 +54,9 @@ class SocialLoginChallenge(TimestampMixin, Base):
         CheckConstraint(
             "provider IN ('telegram', 'google', 'apple')", name='ck_social_challenge_provider'
         ),
-        CheckConstraint("kind IN ('authorize', 'signup')", name='ck_social_challenge_kind'),
+        CheckConstraint(
+            "kind IN ('authorize', 'nonce', 'signup')", name='ck_social_challenge_kind'
+        ),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     provider: Mapped[str] = mapped_column(String(16))

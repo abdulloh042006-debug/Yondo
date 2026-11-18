@@ -94,9 +94,10 @@ class Settings(BaseSettings):
     auth_require_password_setup: bool = False
     # Social sign-in (docs/login-telegram-google.md). Each provider is OFF until its values are set
     # in the host's environment; the API then answers 503 provider_not_configured and the web hides
-    # the button. Telegram Login = OpenID Connect at oauth.telegram.org (Client ID + Client Secret
-    # from @BotFather -> Login Widget). Redirect URIs: comma-separated; empty =
-    # <public_web_url>/auth/callback/telegram. Each must be listed in BotFather's Allowed URLs.
+    # the button. Telegram Login = OpenID Connect at oauth.telegram.org; the Client ID (= the bot's
+    # numeric ID, public) from @BotFather -> Login Widget is enough for the web (official JS
+    # library). The Client Secret + redirect URIs are only for the code flow (mobile, system
+    # browser). Redirect URIs: comma-separated; empty = <public_web_url>/auth/callback/telegram.
     telegram_login_client_id: str = ''
     telegram_login_client_secret: SecretStr | None = None
     telegram_login_redirect_uris: str = ''
@@ -229,8 +230,14 @@ class Settings(BaseSettings):
 
     @property
     def telegram_login_enabled(self) -> bool:
+        """The official JS library flow (ID token straight to the browser) needs only the ID."""
+        return bool(self.telegram_login_client_id.strip())
+
+    @property
+    def telegram_code_flow_enabled(self) -> bool:
+        """Authorization-code + PKCE flow (system browser, mobile): also the secret + redirects."""
         return bool(
-            self.telegram_login_client_id.strip()
+            self.telegram_login_enabled
             and self.telegram_login_client_secret is not None
             and self.telegram_login_redirect_uri_list
         )

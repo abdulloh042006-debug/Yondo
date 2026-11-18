@@ -77,6 +77,10 @@ class SocialLogin:
 
 class SocialConfig(BaseModel):
     telegram: bool
+    # Bot ID for the official Telegram JS library (public), or null = off.
+    telegram_client_id: str | None
+    # The authorization-code flow (mobile / system browser) is configured too.
+    telegram_code_flow: bool
     # The web client ID for Google Identity Services (the first configured ID), or null = off.
     google_client_id: str | None
 
@@ -96,6 +100,17 @@ class TelegramStarted(BaseModel):
     # Returned once; keep it in the browser (sessionStorage) and send it with the code.
     flow_token: str
     expires_in_seconds: int
+
+
+class TelegramNonce(BaseModel):
+    # Pass it to Telegram.Login.auth({nonce}); single-use, short-lived.
+    nonce: str
+    expires_in_seconds: int
+
+
+class TelegramIdToken(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id_token: str = Field(min_length=1, max_length=8192)
 
 
 class TelegramExchange(BaseModel):
@@ -164,9 +179,10 @@ def _state_invalid() -> ApplicationError:
     )
 
 
-def _telegram_settings(request: Request) -> Settings:
+def _telegram_settings(request: Request, *, code_flow: bool = False) -> Settings:
     settings: Settings = request.app.state.settings
-    if not settings.telegram_login_enabled:
+    enabled = settings.telegram_code_flow_enabled if code_flow else settings.telegram_login_enabled
+    if not enabled:
         raise not_configured()
     return settings
 
@@ -303,8 +319,12 @@ async def _cleanup(session: AsyncSession) -> None:
 async def social_config(request: Request) -> SocialConfig:
     settings: Settings = request.app.state.settings
     google = settings.google_client_id_list
+    client_id = settings.telegram_login_client_id.strip()
     return SocialConfig(
-        telegram=settings.telegram_login_enabled, google_client_id=google[0] if google else None
+        telegram=settings.telegram_login_enabled,
+        telegram_client_id=client_id or None,
+        telegram_code_flow=settings.telegram_code_flow_enabled,
+        google_client_id=google[0] if google else None,
     )
 
 
@@ -337,7 +357,7 @@ async def unlink_identity(provider: Provider, principal: Principal, session: Ses
 async def _telegram_start(
     request: Request, session: AsyncSession, payload: TelegramStart, user_id: UUID | None
 ) -> TelegramStarted:
-    settings = _telegram_settings(request)
+    settings = _telegram_settings(request, code_flow=True)
     _ip_check(request)
     allowed = settings.telegram_login_redirect_uri_list
     redirect_uri = payload.redirect_uri or allowed[0]
@@ -462,7 +482,7 @@ async def telegram_exchange(
     payload: TelegramExchange, request: Request, session: Session
 ) -> SocialResult:
     """The callback page sends code + state + flow token; the code is exchanged server-side."""
-    settings = _telegram_settings(request)
+    settings = _telegram_settings(request, code_flow=True)
     _ip_check(request)
     now = _now()
     challenge = await session.scalar(
@@ -490,14 +510,25 @@ async def telegram_exchange(
     await session.commit()
 
     claims, granted = await _telegram_tokens(_service(request), settings, challenge, payload.code)
+    return await _telegram_finish(session, settings, claims, granted, challenge.user_id)
+
+
+async def _telegram_finish(
+    session: AsyncSession,
+    settings: Settings,
+    claims: dict,
+    granted: set[str],
+    link_user_id: UUID | None,
+) -> SocialResult:
+    """Shared by both Telegram flows once the ID token is verified."""
     subject = claims['sub']
     phone = _verified_phone(claims) if 'phone' in granted else None
     tg_id = claims.get('id')
     tg_id = tg_id if isinstance(tg_id, int) and not isinstance(tg_id, bool) and tg_id > 0 else None
     bot_access = 'telegram:bot_access' in granted and tg_id is not None
 
-    if challenge.user_id is not None:  # linking from Settings
-        user = _ensure_available(await session.get(User, challenge.user_id))
+    if link_user_id is not None:  # linking from Settings
+        user = _ensure_available(await session.get(User, link_user_id))
         if bot_access and phone == user.phone_number:
             await _record_bot_chat(session, phone, tg_id)
         return await _link_to(session, user, 'telegram', subject)
@@ -520,6 +551,100 @@ async def telegram_exchange(
     if bot_access and phone is not None and phone == user.phone_number:
         await _record_bot_chat(session, phone, tg_id)
     return await _sign_in(session, user, settings, 'telegram')
+
+
+# ---- Telegram: official JS library (web) -----------------------------------------------------
+
+
+async def _issue_nonce(
+    request: Request, session: AsyncSession, user_id: UUID | None
+) -> TelegramNonce:
+    settings = _telegram_settings(request)
+    _ip_check(request)
+    nonce = secrets.token_urlsafe(32)
+    lifetime = settings.social_login_lifetime_seconds
+    await _cleanup(session)
+    session.add(
+        SocialLoginChallenge(
+            provider='telegram',
+            kind='nonce',
+            token_hash=_hash(nonce),
+            user_id=user_id,
+            expires_at=_now() + timedelta(seconds=lifetime),
+        )
+    )
+    await session.commit()
+    return TelegramNonce(nonce=nonce, expires_in_seconds=lifetime)
+
+
+@router.post('/telegram/nonce', response_model=TelegramNonce, status_code=201)
+async def telegram_nonce(request: Request, session: Session) -> TelegramNonce:
+    """A single-use nonce for Telegram.Login.auth; the ID token must carry it back."""
+    return await _issue_nonce(request, session, None)
+
+
+@router.post('/telegram/link/nonce', response_model=TelegramNonce, status_code=201)
+async def telegram_link_nonce(
+    request: Request, principal: Principal, session: Session
+) -> TelegramNonce:
+    return await _issue_nonce(request, session, principal.user.id)
+
+
+async def _telegram_id_token(
+    request: Request, session: AsyncSession, id_token: str, user_id: UUID | None
+) -> SocialResult:
+    settings = _telegram_settings(request)
+    _ip_check(request)
+    service = _service(request)
+    async with service.client() as client:
+        claims = await verify_id_token(
+            id_token,
+            jwks=service.telegram_jwks,
+            client=client,
+            issuers=(TELEGRAM_ISSUER,),
+            audiences=[settings.telegram_login_client_id.strip()],
+        )
+    # The token reached the browser directly, so the nonce is what makes it single-use.
+    nonce = claims.get('nonce')
+    if not isinstance(nonce, str) or not 16 <= len(nonce) <= 128:
+        raise ApplicationError('social_token_invalid', 'The sign-in token is invalid', 401)
+    now = _now()
+    used = await session.execute(
+        update(SocialLoginChallenge)
+        .where(
+            SocialLoginChallenge.token_hash == _hash(nonce),
+            SocialLoginChallenge.kind == 'nonce',
+            SocialLoginChallenge.provider == 'telegram',
+            SocialLoginChallenge.consumed_at.is_(None),
+            SocialLoginChallenge.expires_at > now,
+            SocialLoginChallenge.user_id.is_(None)
+            if user_id is None
+            else SocialLoginChallenge.user_id == user_id,
+        )
+        .values(consumed_at=now)
+    )
+    if used.rowcount != 1:
+        raise _state_invalid()
+    await session.commit()
+    # The library asks for profile, phone and bot access ("write"); what was granted shows in the
+    # claims (phone) or not at all (bot access): an unusable chat answers telegram_bot_unreachable
+    # later and the bot link flow (/start) repairs it.
+    return await _telegram_finish(session, settings, claims, set(TELEGRAM_SCOPES), user_id)
+
+
+@router.post('/telegram', response_model=SocialResult)
+async def telegram_sign_in(
+    payload: TelegramIdToken, request: Request, session: Session
+) -> SocialResult:
+    """ID token from Telegram.Login.auth (official JS library) with a nonce from /telegram/nonce."""
+    return await _telegram_id_token(request, session, payload.id_token, None)
+
+
+@router.post('/telegram/link', response_model=SocialResult)
+async def telegram_link(
+    payload: TelegramIdToken, request: Request, principal: Principal, session: Session
+) -> SocialResult:
+    return await _telegram_id_token(request, session, payload.id_token, principal.user.id)
 
 
 async def _google_subject(request: Request, credential: str) -> str:

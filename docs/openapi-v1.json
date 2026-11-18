@@ -3802,10 +3802,27 @@
           "telegram": {
             "title": "Telegram",
             "type": "boolean"
+          },
+          "telegram_client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telegram Client Id"
+          },
+          "telegram_code_flow": {
+            "title": "Telegram Code Flow",
+            "type": "boolean"
           }
         },
         "required": [
           "telegram",
+          "telegram_client_id",
+          "telegram_code_flow",
           "google_client_id"
         ],
         "title": "SocialConfig",
@@ -4032,6 +4049,40 @@
           "flow_token"
         ],
         "title": "TelegramExchange",
+        "type": "object"
+      },
+      "TelegramIdToken": {
+        "additionalProperties": false,
+        "properties": {
+          "id_token": {
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Id Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id_token"
+        ],
+        "title": "TelegramIdToken",
+        "type": "object"
+      },
+      "TelegramNonce": {
+        "properties": {
+          "expires_in_seconds": {
+            "title": "Expires In Seconds",
+            "type": "integer"
+          },
+          "nonce": {
+            "title": "Nonce",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nonce",
+          "expires_in_seconds"
+        ],
+        "title": "TelegramNonce",
         "type": "object"
       },
       "TelegramStart": {
@@ -6794,6 +6845,48 @@
         ]
       }
     },
+    "/api/v1/auth/social/telegram": {
+      "post": {
+        "description": "ID token from Telegram.Login.auth (official JS library) with a nonce from /telegram/nonce.",
+        "operationId": "telegram_sign_in_api_v1_auth_social_telegram_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramIdToken"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Telegram Sign In",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
     "/api/v1/auth/social/telegram/exchange": {
       "post": {
         "description": "The callback page sends code + state + flow token; the code is exchanged server-side.",
@@ -6831,6 +6924,78 @@
           }
         },
         "summary": "Telegram Exchange",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/link": {
+      "post": {
+        "operationId": "telegram_link_api_v1_auth_social_telegram_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramIdToken"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Telegram Link",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/link/nonce": {
+      "post": {
+        "operationId": "telegram_link_nonce_api_v1_auth_social_telegram_link_nonce_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramNonce"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Telegram Link Nonce",
         "tags": [
           "authentication"
         ]
@@ -6878,6 +7043,28 @@
           }
         ],
         "summary": "Telegram Link Start",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/social/telegram/nonce": {
+      "post": {
+        "description": "A single-use nonce for Telegram.Login.auth; the ID token must carry it back.",
+        "operationId": "telegram_nonce_api_v1_auth_social_telegram_nonce_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramNonce"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Telegram Nonce",
         "tags": [
           "authentication"
         ]

@@ -1,7 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api/client';
 import { getLocaleTag, t } from '../i18n';
-import { applyResult, loadGoogle, socialConfig, startTelegram, type FlowIntent, type SocialConfig, type SocialResult } from './social';
+import {
+  applyResult,
+  fetchTelegramNonce,
+  loadGoogle,
+  loadTelegram,
+  socialConfig,
+  telegramPopup,
+  type FlowIntent,
+  type Nonce,
+  type SocialConfig,
+  type SocialResult,
+  type TelegramLoginApi,
+} from './social';
 
 /** The official Telegram mark (simple-icons, CC0), kept in Telegram's own colour as its brand rules ask. */
 export function TelegramMark({ size = 20 }: { size?: number }) {
@@ -15,7 +27,7 @@ export function TelegramMark({ size = 20 }: { size?: number }) {
   );
 }
 
-/** Google's own rendered button (its brand rules); it only appears when a client ID is configured. */
+/** Google's own rendered button (its brand rules): the round icon variant. Shown only when configured. */
 export function GoogleButton({ clientId, onCredential }: { clientId: string; onCredential: (credential: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const cb = useRef(onCredential);
@@ -30,14 +42,11 @@ export function GoogleButton({ clientId, onCredential }: { clientId: string; onC
         if (!live || !ref.current) return;
         gis.initialize({ client_id: clientId, callback: (r) => cb.current(r.credential), ux_mode: 'popup' });
         gis.renderButton(ref.current, {
-          type: 'standard',
+          type: 'icon',
+          shape: 'circle',
           theme: 'outline',
           size: 'large',
-          shape: 'pill',
-          text: 'continue_with',
-          logo_alignment: 'left',
           locale: getLocaleTag().slice(0, 2),
-          width: 300,
         });
       })
       .catch(() => live && setFailed(true)); // blocked script: no button rather than a broken one
@@ -46,7 +55,72 @@ export function GoogleButton({ clientId, onCredential }: { clientId: string; onC
     };
   }, [clientId]);
   if (failed) return null;
-  return <div ref={ref} className="social-google" aria-label={t('social.google')} />;
+  return <div ref={ref} className="social-google" title={t('social.google')} aria-label={t('social.google')} />;
+}
+
+/**
+ * Telegram's own round icon button (official library styles, `data-style="icon"`). The server nonce is
+ * fetched before the tap so the popup opens inside the user's gesture and is not blocked.
+ */
+export function TelegramButton({
+  clientId,
+  intent,
+  disabled,
+  onIdToken,
+  onError,
+}: {
+  clientId: string;
+  intent: FlowIntent;
+  disabled?: boolean;
+  onIdToken: (idToken: string) => void;
+  onError: (err: ApiError) => void;
+}) {
+  const [lib, setLib] = useState<TelegramLoginApi | null>(null);
+  const [failed, setFailed] = useState(false);
+  const nonce = useRef<Nonce | null>(null);
+  const refill = useCallback(() => {
+    fetchTelegramNonce(intent)
+      .then((n) => {
+        nonce.current = n;
+      })
+      .catch(() => {
+        nonce.current = null;
+      });
+  }, [intent]);
+  useEffect(() => {
+    let live = true;
+    loadTelegram()
+      .then((l) => live && setLib(l))
+      .catch(() => live && setFailed(true));
+    refill();
+    return () => {
+      live = false;
+    };
+  }, [refill]);
+  if (failed || !lib) return null;
+  const open = async () => {
+    let n = nonce.current;
+    nonce.current = null;
+    try {
+      if (!n || n.until < Date.now()) n = await fetchTelegramNonce(intent);
+      onIdToken(await telegramPopup(lib, clientId, n.nonce, getLocaleTag().slice(0, 2)));
+    } catch (err) {
+      onError(err instanceof ApiError ? err : new ApiError(0, 'network_error'));
+    } finally {
+      refill();
+    }
+  };
+  return (
+    <button
+      type="button"
+      className="tg-auth-button"
+      data-style="icon"
+      aria-label={t('social.telegram')}
+      title={t('social.telegram')}
+      disabled={disabled}
+      onClick={() => void open()}
+    />
+  );
 }
 
 /** Hook: the provider config (null while loading or unknown). */
@@ -63,8 +137,8 @@ export function useSocialConfig(): SocialConfig | null {
 }
 
 /**
- * "Telegram orqali kiriş" + "Google orqali kiriş" on the sign-in / registration page. Hidden entirely
- * when neither provider is configured.
+ * "Telegram orqali kiriş" + "Google orqali kiriş" (round icon buttons) on the sign-in / registration
+ * page. Hidden entirely when neither provider is configured; never shown as broken.
  */
 export function SocialSignIn({
   onSignedIn,
@@ -76,15 +150,13 @@ export function SocialSignIn({
   const config = useSocialConfig();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError>();
-  if (!config || (!config.telegram && !config.google_client_id)) return null;
+  if (!config || (!config.telegram_client_id && !config.google_client_id)) return null;
 
-  const run = async (task: () => Promise<SocialResult | void>) => {
+  const run = async (task: () => Promise<SocialResult>) => {
     setBusy(true);
     setError(undefined);
     try {
-      const result = await task();
-      if (!result) return; // redirected to Telegram
-      const next = applyResult(result);
+      const next = applyResult(await task());
       if (next === 'phone_required') onPhoneRequired();
       else await onSignedIn();
     } catch (err) {
@@ -95,22 +167,29 @@ export function SocialSignIn({
   };
 
   return (
-    <div className="stack social-signin" aria-label={t('social.title')} role="group">
-      <p className="social-or muted"><span>{t('social.or')}</span></p>
-      {config.telegram && (
-        <button type="button" className="btn ghost social-btn" disabled={busy} onClick={() => void run(() => startTelegram('login' satisfies FlowIntent))}>
-          <TelegramMark />
-          {t('social.telegram')}
-        </button>
-      )}
-      {config.google_client_id && (
-        <GoogleButton
-          clientId={config.google_client_id}
-          onCredential={(credential) =>
-            void run(() => api.post<SocialResult>('/auth/social/google', { credential }, { anonymous: true }))
-          }
-        />
-      )}
+    <div className="stack social-signin" role="group" aria-labelledby="social-signin-h">
+      <p className="social-or muted"><span id="social-signin-h">{t('social.title')}</span></p>
+      <div className="social-icons">
+        {config.telegram_client_id && (
+          <TelegramButton
+            clientId={config.telegram_client_id}
+            intent="login"
+            disabled={busy}
+            onIdToken={(idToken) =>
+              void run(() => api.post<SocialResult>('/auth/social/telegram', { id_token: idToken }, { anonymous: true }))
+            }
+            onError={setError}
+          />
+        )}
+        {config.google_client_id && (
+          <GoogleButton
+            clientId={config.google_client_id}
+            onCredential={(credential) =>
+              void run(() => api.post<SocialResult>('/auth/social/google', { credential }, { anonymous: true }))
+            }
+          />
+        )}
+      </div>
       {error && <p className="banner bad" role="alert">{error.message}</p>}
     </div>
   );

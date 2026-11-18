@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { t } from '../i18n';
 import { useAuth } from './AuthContext';
-import { startTelegram, type SocialProvider, type SocialResult } from './social';
-import { GoogleButton, TelegramMark, useSocialConfig } from './SocialSignIn';
+import { type SocialProvider, type SocialResult } from './social';
+import { GoogleButton, TelegramButton, TelegramMark, useSocialConfig } from './SocialSignIn';
 
 type Identity = Schemas['LinkedIdentity'];
 
@@ -27,7 +27,7 @@ export function LinkedAccounts() {
     void load();
   }, []);
 
-  if (!user || !config || (!config.telegram && !config.google_client_id)) return null;
+  if (!user || !config || (!config.telegram_client_id && !config.google_client_id)) return null;
   const has = (p: SocialProvider) => !!linked?.some((i) => i.provider === p);
 
   const act = async (task: () => Promise<unknown>, done?: string) => {
@@ -68,13 +68,19 @@ export function LinkedAccounts() {
       {notice && <p className="banner" role="status">{notice}</p>}
       {error && <p className="banner bad" role="alert">{error.message}</p>}
       <ul className="stack social-list">
-        {config.telegram &&
+        {config.telegram_client_id &&
           row(
             'telegram',
             t('social.provider.telegram'),
-            <button type="button" className="chip" disabled={busy} onClick={() => void act(() => startTelegram('link'))}>
-              {t('social.settings.link')}
-            </button>,
+            <TelegramButton
+              clientId={config.telegram_client_id}
+              intent="link"
+              disabled={busy}
+              onIdToken={(idToken) =>
+                void act(() => api.post<SocialResult>('/auth/social/telegram/link', { id_token: idToken }), t('social.settings.done'))
+              }
+              onError={setError}
+            />,
           )}
         {config.google_client_id &&
           row(

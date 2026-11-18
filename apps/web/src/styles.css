@@ -1534,16 +1534,16 @@ input.switch:focus-visible {
   border-top: 1px solid currentColor;
   opacity: 0.3;
 }
-.social-btn {
-  display: inline-flex;
-  align-items: center;
+.social-icons {
+  display: flex;
   justify-content: center;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
 }
 .social-google {
   min-height: 44px;
   display: flex;
-  justify-content: center;
+  align-items: center;
 }
 .social-list {
   list-style: none;
