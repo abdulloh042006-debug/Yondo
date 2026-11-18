@@ -225,6 +225,110 @@ await step('favourites: the heart saves a companion (PUT) and Favourites lists i
   await axe('favourites');
 });
 
+const authed = (path, init = {}) =>
+  page.evaluate(async ([path, init]) => {
+    const r = await fetch(`/api/v1${path}`, { ...init, headers: { Authorization: `Bearer ${sessionStorage.getItem('yondo.access')}`, ...(init.headers ?? {}) } });
+    return { status: r.status, body: r.status === 204 ? null : await r.json() };
+  }, [path, init]);
+const deckName = async () => (await page.getByRole('heading').filter({ hasText: /^DEMO/ }).first().innerText()).split(',')[0];
+async function nextCard(from) {
+  await button('Next').click();
+  for (let i = 0; i < 50 && (await deckName()) === from; i++) await page.waitForTimeout(100);
+  assert((await deckName()) !== from, 'Next must show another card');
+}
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+await step('Profile photos (owner, 2026-11-14): upload a PNG through the picker, main photo, delete (real API)', async () => {
+  await tab('Profile');
+  await page.getByText(/^My photos/).first().waitFor();
+  await page.getByText(/companions you sent a booking request to/).first().waitFor();
+  for (const name of ['a.png', 'b.png']) {
+    const chooser = page.waitForEvent('filechooser');
+    await button('Add a photo').click();
+    await (await chooser).setFiles({ name, mimeType: 'image/png', buffer: PNG });
+    await page.getByText('Photo uploaded.').first().waitFor();
+    await page.waitForFunction((n) => document.body.innerText.includes(`My photos · ${n} of 6`), name === 'a.png' ? 1 : 2);
+  }
+  const before = (await authed('/user-photos/me')).body.map((p) => p.id);
+  assert(before.length === 2, `2 photos expected, got ${before.length}`);
+  await button('Make main').click();
+  await page.getByText('Main photo set.').first().waitFor();
+  const after = (await authed('/user-photos/me')).body.map((p) => p.id);
+  assert(after[0] === before[1], 'the second photo must become the main one on the server');
+  await button('Delete').first().click();
+  await page.getByRole('dialog', { name: 'Delete this photo?' }).getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByText('Photo deleted.').first().waitFor();
+  const left = (await authed('/user-photos/me')).body.map((p) => p.id);
+  assert(left.length === 1 && left[0] === before[0], 'the main photo was deleted on the server');
+  await noSideScroll('profile photos');
+  await axe('profile photos');
+});
+
+await step('Like: optimistic toggle with the count from the API, separate from favourites', async () => {
+  await tab('Discover');
+  await page.getByRole('button', { name: 'Open the profile of DEMO Jasur' }).first().click();
+  const like = page.getByRole('button', { name: /^Like DEMO Jasur/ });
+  await like.waitFor();
+  const id = (await (await page.evaluate(async () => (await fetch('/api/v1/discovery/companions?q=Jasur')).json())).items[0].id);
+  const count = async () => (await page.evaluate(async (id) => (await fetch(`/api/v1/discovery/companions/${id}`)).json(), id)).like_count;
+  const start = await count();
+  await like.click();
+  await page.getByRole('button', { name: /^Remove your like from DEMO Jasur/ }).waitFor();
+  await page.waitForFunction(async ([id, n]) => (await (await fetch(`/api/v1/discovery/companions/${id}`)).json()).like_count === n, [id, start + 1]);
+  await page.getByRole('button', { name: /^Remove your like from DEMO Jasur/ }).click();
+  await page.waitForFunction(async ([id, n]) => (await (await fetch(`/api/v1/discovery/companions/${id}`)).json()).like_count === n, [id, start]);
+  await page.getByText(/No ratings yet|★/).first().waitFor();
+  await axe('profile with likes');
+});
+
+await step('filters sheet: category, minimum stars, sort; chips + clear all (real API)', async () => {
+  await tab('Discover');
+  await page.getByText('DEMO Madina').first().waitFor();
+  await page.getByRole('button', { name: 'Filters', exact: true }).click();
+  const sheet = page.getByRole('dialog', { name: 'Filters' });
+  await sheet.getByRole('radio', { name: 'Coffee' }).click();
+  await sheet.getByRole('radio', { name: '4+ ★' }).click();
+  await sheet.getByRole('radio', { name: 'Most likes' }).click();
+  const req = page.waitForRequest((r) => r.url().includes('/discovery/companions?') && r.url().includes('sort=likes') && r.url().includes('rating_min=4') && r.url().includes('service_code=coffee'));
+  await sheet.getByRole('button', { name: 'Show results' }).click();
+  await req;
+  await page.getByRole('button', { name: 'Filters (2)' }).waitFor();
+  await page.getByRole('button', { name: 'Remove the “4+ ★” filter' }).waitFor();
+  await axe('discover with filters');
+  await button('Clear all').click();
+  await page.getByRole('button', { name: 'Filters', exact: true }).waitFor();
+  await page.getByRole('radio', { name: 'Recommended' }).click();
+  await page.getByText('DEMO Madina').first().waitFor();
+  await noSideScroll('discover filters');
+});
+
+await step('Cards: Save adds to favourites, Next skips; no dislike or match', async () => {
+  await page.getByRole('radio', { name: 'Cards' }).click();
+  const heading = page.getByRole('heading').filter({ hasText: /^DEMO/ }).first();
+  await heading.waitFor();
+  const first = (await heading.innerText()).split(',')[0];
+  assert(!/dislike|match/i.test(await page.locator('body').innerText()), 'no dislike or match wording');
+  await nextCard(first);
+  // Madina was saved by the favourites step: skip any card that is already saved, then save the next one.
+  let second = '';
+  for (let i = 0; i < 5 && !second; i++) {
+    const name = (await page.getByRole('heading').filter({ hasText: /^DEMO/ }).first().innerText()).split(',')[0];
+    if (await button('Save').isVisible()) {
+      second = name;
+      await button('Save').click();
+    } else {
+      await nextCard(name);
+    }
+  }
+  assert(second, 'a card that is not yet saved');
+  await page.getByText(/Added to favourites/i).first().waitFor();
+  await button('Saved').waitFor();
+  const favs = (await authed('/discovery/favorites')).body.map((c) => c.display_name);
+  assert(favs.includes(second), `favourites on the server must hold ${second}: ${favs}`);
+  await noSideScroll('cards');
+  await axe('cards');
+  await page.getByRole('radio', { name: 'List' }).click();
+});
+
 await step('profile = only the person (data + Edit); Settings holds app and account; every row works', async () => {
   await tab('Profile');
   await page.getByRole('heading', { name: 'My account' }).waitFor();
