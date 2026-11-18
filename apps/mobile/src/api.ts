@@ -87,6 +87,9 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   /** Public endpoints skip the bearer header. */
   anonymous?: boolean;
+  /** Raw bytes (a photo): sent as the body, typed by `rawType`. */
+  raw?: Blob;
+  rawType?: string;
 }
 
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
@@ -97,9 +100,10 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
   const send = async (): Promise<Response> => {
     const headers: Record<string, string> = { Accept: 'application/json', ...opts.headers };
     if (!opts.anonymous && access) headers.Authorization = `Bearer ${access}`;
-    if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (opts.raw) headers['Content-Type'] = opts.rawType || opts.raw.type;
+    else if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     try {
-      return await fetch(url, { method, headers, body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
+      return await fetch(url, { method, headers, body: opts.raw ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)) });
     } catch {
       throw new ApiError(0, 'network_error');
     }
@@ -133,6 +137,8 @@ export const api = {
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, { ...opts, body }),
   put: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PUT', path, { ...opts, body }),
   del: <T>(path: string, opts?: RequestOptions) => request<T>('DELETE', path, opts),
+  /** Raw image bytes (the API takes the file as the request body, typed by Content-Type), as the web client. */
+  upload: <T>(path: string, raw: Blob, type: string) => request<T>('POST', path, { raw, rawType: type }),
 };
 
 export const errorText = (error: unknown): string => (error instanceof ApiError ? error.message : t('common.actionFailed'));

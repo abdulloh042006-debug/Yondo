@@ -9,6 +9,7 @@ import { useToast } from '../ui/feedback';
 import { Field } from '../ui/form';
 import { useResource } from '../lib/useResource';
 import { Reveal } from '../ui/motion';
+import { MyPhotos } from '../ui/MyPhotos';
 
 type CompanionProfile = Schemas['ProfileResponse'];
 
@@ -93,6 +94,9 @@ function AccountView({ user }: { user: User }) {
             </div>
           )}
         </div>
+      </Reveal>
+      <Reveal delay={0.02}>
+        <MyPhotos isCompanion={user.roles.includes('companion')} />
       </Reveal>
       <Reveal delay={0.03}>
         {editing ? (

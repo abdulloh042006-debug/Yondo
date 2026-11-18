@@ -110,6 +110,26 @@ The UI is Uzbek (Latin) by default and also available in Russian and English. Ch
 * **Notifications** (`/notifications`, badge in the Profile menu): list, open booking, mark all read.
 * Not available yet: reporting a profile without a booking; realtime chat socket (polling is used).
 
+## Photos, likes, filters, cards (owner, 2026-11-14; `docs/product-decisions.md` §8)
+
+* **Profil → Rasmlarim** (`ui/MyPhotos.tsx`, `/user-photos/me`): up to 6 photos; JPEG/PNG/WebP up to 10 MB are
+  checked before sending (`lib/photos.ts`, the API's own limits), server refusals are shown by error `code`;
+  the first photo is the main one ("Asosiy qiliş", ← / → reorder with rollback); delete with a confirmation.
+  A customer reads who can see them (companions they sent a booking request to, moderators; never in search);
+  a companion is pointed to the studio, where the public card photos live (`/companions/me/photos`).
+* **"Yoqdi"** (`LikeButton` in `pages/companionParts.tsx`): public thumbs-up count on cards and profiles, separate
+  from the private heart / Sevimlilar. Optimistic toggle with rollback; signed-out visitors see the count only.
+  Discovery and profiles send the token when signed in, so `liked_by_me` is known.
+* **Kaşf**: a "Filtrlar" sheet (category, minimum stars, sort, city, language, max price; nothing is fetched until
+  "Natijalarni körsatiş"), a sort select (`default | rating | meetings | likes`, the API's values), chips for the
+  active filters and "Hammasini tozalaş". Stars only come from reviews of completed meetings; without them the card
+  says "Hali baho yöq". URL updates start from the live URL (React Router commits in a transition).
+* **Kartoçkalar** (`?view=cards`, `pages/CardDeck.tsx`): one card at a time (photo, name, city, categories, stars,
+  meetings, likes, price) and two actions only: "Saqlaş" (favourite) and "Keyingisi" (skip, client-side). No
+  dislike, no match, no swipe. Keyboard: → / N next, S save. Reduced motion: fade only.
+* Not built: customer photos inside a companion's booking view (`/user-photos/bookings/{booking_id}` exists on the
+  server); a minimum-meetings / minimum-likes *filter* (the API offers these only as sort orders).
+
 ## Security notes
 
 * Roles in the UI are a convenience only. Every privileged endpoint authorizes on the server

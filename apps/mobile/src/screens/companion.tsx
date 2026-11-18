@@ -4,6 +4,7 @@ import { Image, Pressable, Text, View, type DimensionValue } from 'react-native'
 import { api, type Schemas } from '../api';
 import { useReducedMotion } from '../brand';
 import { HeartButton } from '../favorites';
+import { CardStats } from '../likes';
 import { formatMoney, initial, t } from '../shared';
 import { FONT, useTheme } from '../theme';
 import { Tag } from '../ui';
@@ -84,6 +85,7 @@ export function CompanionRow({ card, onOpen }: { card: Card; onOpen: () => void 
             {card.age ? `, ${card.age}` : ''}
           </Text>
           {!!card.city && <Text style={{ color: palette.muted, fontFamily: FONT.body, fontSize: 15 }}>{card.city}</Text>}
+          <CardStats card={card} />
           <Text style={{ color: palette.fg, fontFamily: FONT.medium, fontSize: 15 }}>{priceFrom(card)}</Text>
         </View>
       </Pressable>

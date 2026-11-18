@@ -5,6 +5,7 @@ import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
 import { formatMoney, initial } from '../lib/format';
+import { toggledLike } from '../lib/photos';
 import { serviceLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
 
@@ -116,6 +117,86 @@ export function HeartButton({ id, name, fav }: { id: string; name: string; fav: 
   );
 }
 
+/* -------- public likes ("Yoqdi"): separate from the private favourites (heart / Sevimlilar) -------- */
+function ThumbIcon({ filled }: { filled?: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 10v11H3V10h4zm0 0 4-7c1.7 0 2.6 1.2 2.3 2.8L12.6 9H19a2 2 0 0 1 2 2.3l-1.3 7.6A2.5 2.5 0 0 1 17.2 21H7" />
+    </svg>
+  );
+}
+
+/** Read-only like count (cards, signed-out visitors). */
+export function LikeCount({ count }: { count: number }) {
+  return (
+    <span className="tag">
+      <ThumbIcon /> <span aria-hidden="true">{count}</span>
+      <span className="sr-only">{t('like.count', { n: count })}</span>
+    </span>
+  );
+}
+
+/**
+ * "Yoqdi" toggle with its public count. Optimistic: the new state shows at once and is rolled back if the
+ * server refuses (branching on nothing but success/failure; the message comes from the error `code`).
+ * Signed-out visitors see the count only.
+ */
+export function LikeButton({ card }: { card: Pick<Card, 'id' | 'display_name' | 'like_count' | 'liked_by_me'> }) {
+  const { user } = useAuth();
+  const toast = useToast();
+  const [state, setState] = useState({ like_count: card.like_count, liked_by_me: !!card.liked_by_me });
+  const [busy, setBusy] = useState(false);
+  if (!user) return <LikeCount count={state.like_count} />;
+  const toggle = async () => {
+    if (busy) return;
+    const before = state;
+    setState(toggledLike(before));
+    setBusy(true);
+    try {
+      const path = `/discovery/companions/${card.id}/like`;
+      const next = before.liked_by_me ? await api.del<Schemas['LikeState']>(path) : await api.put<Schemas['LikeState']>(path);
+      setState({ like_count: next.like_count, liked_by_me: next.liked_by_me });
+    } catch (e) {
+      setState(before);
+      toast.push('bad', e instanceof ApiError ? e.message : t('common.actionFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const on = state.liked_by_me;
+  return (
+    <motion.button
+      type="button"
+      whileTap={{ scale: 0.9 }}
+      className="chip like-btn"
+      aria-pressed={on}
+      aria-busy={busy}
+      aria-label={`${on ? t('like.remove', { name: card.display_name }) : t('like.add', { name: card.display_name })} — ${t('like.count', { n: state.like_count })}`}
+      onClick={() => void toggle()}
+    >
+      <ThumbIcon filled={on} /> {t('like.label')} <b aria-hidden="true">{state.like_count}</b>
+    </motion.button>
+  );
+}
+
+/** Stars (only from reviews of completed meetings), completed meetings and likes, as one line of tags. */
+export function CardStats({ card, likes = true }: { card: Card; likes?: boolean }) {
+  return (
+    <div className="row" style={{ gap: 6 }}>
+      {card.rating != null && card.review_count > 0 ? (
+        <span className="tag">
+          <span aria-hidden="true">★ {card.rating.toFixed(1)} <span className="muted">({card.review_count})</span></span>
+          <span className="sr-only">{t('card.ratingAria', { rating: card.rating.toFixed(1), count: card.review_count })}</span>
+        </span>
+      ) : (
+        <span className="tag">{t('card.noRating')}</span>
+      )}
+      <span className="tag">{t('card.meetings', { n: card.meeting_count })}</span>
+      {likes && <LikeCount count={card.like_count} />}
+    </div>
+  );
+}
+
 export function CompanionCardView({ card, fav }: { card: Card; fav: ReturnType<typeof useFavorites> }) {
   const price = minPrice(card);
   return (
@@ -131,18 +212,12 @@ export function CompanionCardView({ card, fav }: { card: Card; fav: ReturnType<t
           )}
         </div>
         <div className="body">
-          <div className="spread" style={{ flexWrap: 'nowrap' }}>
-            <h3>
-              {card.display_name}
-              {card.age ? `, ${card.age}` : ''}
-            </h3>
-            {card.rating != null && card.review_count > 0 && (
-              <span className="tag" aria-label={t('card.ratingAria', { rating: card.rating.toFixed(1), count: card.review_count })}>
-                ★ {card.rating.toFixed(1)} <span className="muted">({card.review_count})</span>
-              </span>
-            )}
-          </div>
+          <h3>
+            {card.display_name}
+            {card.age ? `, ${card.age}` : ''}
+          </h3>
           {card.city && <p className="muted">{card.city}</p>}
+          <CardStats card={card} />
           <div className="row" style={{ gap: 6 }}>
             {card.services.slice(0, 3).map((s) => (
               <span key={s.id} className="tag">

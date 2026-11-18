@@ -76,6 +76,15 @@ cd ../mobile && MOBILE_URL=http://127.0.0.1:8765 node e2e/smoke.mjs
 - language, alphabet and night theme switching;
 - axe (WCAG A/AA) on four screens;
 - no horizontal scroll;
-- no console errors.
+- no console errors;
+- profile photos through the picker (upload a PNG, make main, delete), "Yoqdi" like/unlike, the filters sheet with
+  sort, chips and clear all, and the card feed (Saqlash / Keyingisi).
+
+**Photos, likes, filters, cards** (owner, 2026-11-14): the same screens as the web. Profil → Rasmlarim
+(`src/screens/MyPhotos.tsx`, photo picked with `expo-image-picker`, library only: camera and microphone permissions are
+blocked in `app.json`), "Yoqdi" (`src/likes.tsx`), a filters sheet + sort + view switch on Kaşf (`src/screens/Discover.tsx`)
+and the card feed (`src/screens/CardDeck.tsx`). The rules (6 photos, types, 10 MB, optimistic like) are imported from
+`apps/web/src/lib/photos.ts`. 360 px web | mobile screenshots, day and night: `docs/photos-likes-cards/`
+(`e2e/photos-likes-cards.mjs`).
 
 It has not been run on a real iOS or Android device yet.
