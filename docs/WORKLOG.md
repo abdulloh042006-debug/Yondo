@@ -28,6 +28,15 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S71 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
+Done (owner decision 2026-11-11; the first draft was lost before push):
+- `tools/sounds/yondo_notify.py` (verbatim, deterministic) + README; only A as mp3 (128k, 39 KB): `apps/web/public/sounds/yondo-notify.mp3`, `apps/mobile/assets/sounds/yondo-notify.mp3`.
+- Web: `lib/notifySound.ts` (1 per 5 s, no overlap, volume 0.7, refused play() swallowed, per-device switch default ON), `lib/useUnreadNotifications.ts` (poll 30 s, sound only on a rise, stops on 403, 0 signed out), carrot dot on Profil with sr-only `nav.unread`, Settings "Bildiriş ovozi" (role=switch, hint, test button). i18n uz/ru/en.
+- Mobile: same hook and rules with `expo-audio` (`playsInSilentMode: false`: iOS respects the silent switch), Settings switch + test button, dot on the Profil tab.
+Not done: no push (sound only while the app is open); Android has no silent-mode API for media, it follows the media volume; the dot and a real device sound are not covered by the smoke (no unread fixture).
+Next: owner may listen on a real phone; push notifications later.
+Evidence: see PR description (web vitest/typecheck/lint/build/e2e, mobile typecheck/smoke/export).
+Commit: branch `feat/notify-sound`, PR to `main`.
 ## S70 — No in-app Face ID; phone password autofill; sliding sessions (2026-11-16) [cloud worker]
 Done:
 - **Face ID lock removed** (owner: "Face ID kerak emas"; he does not want a lock on every app open). Gone: the offer, the locked start, the Settings toggle, `src/biometric.ts` and its web mock, `expo-local-authentication` with its config plugin and Face ID text, 9 `bio.*` keys per language, the smoke steps and the screenshots. The app clears the old flags at start, so nobody stays locked.
