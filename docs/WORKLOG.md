@@ -8,7 +8,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 - The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
-000. **QUEUED (owner, 2026-11-18): premium UI/UX redesign**: `docs/tasks/2026-11-18-ui-redesign-brief.md`. Start only on the owner's word, after the photos/likes/filters/cards UI and the notification-sound PRs. Settle the 6 points in its CEO notes first (palette vs the brand rule, hold-to-confirm vs the blur dialog, the obsolete biometric toggle, reduced motion).
+000. **UI redesign (owner, 2026-11-18): phase 1 done** (S71): spec `docs/design/redesign-2026-11.md`, prototype `design-prototype/redesign/index.html`, brief `docs/tasks/2026-11-18-ui-redesign-brief.md` (owner answers override it). **Next: phase 2** = implement §8 of the spec in `apps/web` + `apps/mobile` after merging `origin/main` (with #44); verifier APPROVE, tests, 360 px screenshots, APK link per PR.
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
 00g. **Branches (S55, 2026-11-11):** the owner deletes the merged branches listed in S55 on GitHub (the session cannot). Port `codex/scheduled-meeting-reminders` and `ccr-15294129-n60ucy` in small PRs.
@@ -29,6 +29,14 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S71 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
+Done:
+- Captured the current screens at 360 px from a local build of `main` (b8cccd4, with #45): web (real API + DEMO seed, both themes) and mobile (`expo export --platform web`); listed each screen's problems.
+- `docs/design/redesign-2026-11.md`: screen-by-screen plan, navigation (App Bar, names, gear), the 4 component specs with reduced-motion variants (Shockwave dock, Aura role switcher, magnetic chips, 1.5 s hold-to-confirm with a two-step screen-reader path), design system mapped onto the existing tokens of `yondo`/`yondo-tun` (+ one red `--c-danger` for destructive only), layout rules, phase 2 task list mapped to files.
+- `design-prototype/redesign/index.html`: one self-contained file (fonts inlined by `build.mjs`), all redesigned screens, both themes, the 4 components working. Frames in `docs/design/redesign-2026-11/`.
+Not done: phase 2 (app code); device / screen-reader / low-end Android checks.
+Evidence: prototype checks 23/23 PASS (Playwright, 360 px; 0 network requests, 0 page errors).
+Commit: branch `design/ui-redesign-2026-11`, docs + prototype PR to `main`.
 ## S70 — No in-app Face ID; phone password autofill; sliding sessions (2026-11-16) [cloud worker]
 Done:
 - **Face ID lock removed** (owner: "Face ID kerak emas"; he does not want a lock on every app open). Gone: the offer, the locked start, the Settings toggle, `src/biometric.ts` and its web mock, `expo-local-authentication` with its config plugin and Face ID text, 9 `bio.*` keys per language, the smoke steps and the screenshots. The app clears the old flags at start, so nobody stays locked.
