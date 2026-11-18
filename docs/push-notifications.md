@@ -70,8 +70,8 @@ set up. If step 4 is skipped, the APK still builds; the switch then cannot get a
   paths only), `src/lib/push.ts`, `src/ui/PushToggle.tsx` in Settings, `public/manifest.webmanifest` (needed for
   "Add to Home Screen" on iPhone).
 - **Mobile** (`apps/mobile`): `expo-notifications`; `src/push.ts`, `src/pushUi.tsx` (card, switch, tap routing,
-  token refresh). Android channel "Yondo" with the **default system sound**: the custom sound of PR #44 was not on
-  `main` when this was built. `app.config.js` adds Firebase only when `google-services.json` exists; the APK
+  token refresh). Android channel "Yondo" with the "tomchi-rin" sound of PR #44 (renamed to
+  `assets/sounds/yondo_notify.mp3`: Android resource names cannot contain "-"). `app.config.js` adds Firebase only when `google-services.json` exists; the APK
   workflow writes it from the `GOOGLE_SERVICES_JSON` secret.
 
 ## What the tests cover, and what they cannot

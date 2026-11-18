@@ -193,6 +193,7 @@ class PushDispatcher:
                         'priority': 'high',
                         'notification': {
                             'channel_id': ANDROID_CHANNEL_ID,
+                            'sound': 'yondo_notify',  # Android < 8 (no channels)
                             'tag': data['notification_id'],
                         },
                     },

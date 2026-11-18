@@ -55,7 +55,7 @@ async function ensureChannel(n: NativePush) {
   await n.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Yondo',
     importance: 4, // AndroidImportance.HIGH: heads-up banner
-    sound: 'default', // the default system sound (the custom "tomchi-rin" sound is not on main yet)
+    sound: 'yondo_notify.mp3', // variant A "tomchi-rin" (PR #44), bundled by the expo-notifications plugin
     lightColor: '#E8501A',
     vibrationPattern: [0, 200, 120, 200],
   });

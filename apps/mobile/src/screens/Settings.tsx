@@ -1,12 +1,13 @@
 import Constants from 'expo-constants';
+import { useEffect, useState, type ReactNode } from 'react';
 import { PushSwitch } from '../pushUi';
-import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { WEB_URL, api, errorText, type Schemas } from '../api';
 import { useAuth, type User } from '../auth';
 import { useNav } from '../nav';
 import { LANGS, UZ_ALPHABETS, formatInstant, getLang, getUzAlphabet, roleLabel, setLang, setUzAlphabet, t, useLang } from '../shared';
+import { playNotifySound, setSoundEnabled, soundEnabled, loadSoundPref } from '../notifySound';
 import { FONT, useTheme, type ThemeChoice } from '../theme';
 import { Banner, Button, Card, Chip, ChipGroup, ConfirmDialog, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
@@ -67,6 +68,7 @@ export function SettingsScreen() {
           ))}
         </ChipGroup>
       </Card>
+      <SoundCard />
       {user && (
         <Card style={{ gap: 0, paddingVertical: 8 }}>
           <MenuRow
@@ -103,6 +105,33 @@ export function SettingsScreen() {
         )}
       </Card>
     </Screen>
+  );
+}
+
+/** Notification sound: per-device switch (default ON) + test button, as in the web's Settings. */
+function SoundCard() {
+  const [on, setOn] = useState(soundEnabled);
+  useEffect(() => {
+    void loadSoundPref().then(() => setOn(soundEnabled()));
+  }, []);
+  return (
+    <Card style={{ gap: 12 }}>
+      <H2>{t('settings.sound')}</H2>
+      <P muted>{t('settings.soundHint')}</P>
+      <Row>
+        <Chip
+          toggle
+          role="switch"
+          label={t('settings.soundToggle')}
+          selected={on}
+          onPress={() => {
+            setOn(!on);
+            setSoundEnabled(!on);
+          }}
+        />
+        <Button kind="ghost" label={t('settings.soundTest')} onPress={() => playNotifySound({ force: true })} />
+      </Row>
+    </Card>
   );
 }
 

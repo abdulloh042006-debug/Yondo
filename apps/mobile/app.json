@@ -32,6 +32,7 @@
       "expo-secure-store",
       "expo-asset",
       "expo-font",
+      "expo-audio",
       [
         "expo-image-picker",
         {
@@ -44,7 +45,10 @@
         "expo-notifications",
         {
           "color": "#E8501A",
-          "defaultChannel": "yondo"
+          "defaultChannel": "yondo",
+          "sounds": [
+            "./assets/sounds/yondo_notify.mp3"
+          ]
         }
       ]
     ],

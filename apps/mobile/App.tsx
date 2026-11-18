@@ -27,9 +27,10 @@ import { NotificationsScreen } from './src/screens/Notifications';
 import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
 import { t, useLang, type LegalDoc } from './src/shared';
-import { FONT, ThemeProvider, useTheme } from './src/theme';
+import { CARROT, FONT, ThemeProvider, useTheme } from './src/theme';
 import { Button, ErrorText, H1, Loading, P, Row, Screen, TOUCH } from './src/ui';
 import { useResource } from './src/useResource';
+import { useUnreadNotifications } from './src/useUnreadNotifications';
 import { hasLoginIntent } from './src/loginIntent';
 import { setItem } from './src/storage';
 
@@ -109,12 +110,13 @@ function Shell() {
   // Owner, 2026-11-15: after a code sign-in an account without a username/password sets both first (Help stays open).
   if (user?.password_setup_required && r.name !== 'help') screen = <PasswordSetupScreen user={user} />;
   // The web dock (apps/web/src/ui/Layout.tsx): same items, order, icons and labels.
-  const tabs: { id: Tab; label: string; icon: string }[] = user
+  const unreadCount = useUnreadNotifications();
+  const tabs: { id: Tab; label: string; icon: string; dot?: boolean }[] = user
     ? [
         { id: 'discover', label: t('nav.discover'), icon: ICONS.home },
         { id: 'favorites', label: t('nav.favorites'), icon: ICONS.heart },
         { id: 'bookings', label: t('nav.bookings'), icon: ICONS.cal },
-        { id: 'account', label: t('nav.profile'), icon: ICONS.user },
+        { id: 'account', label: t('nav.profile'), icon: ICONS.user, dot: unreadCount > 0 },
       ]
     : [
         { id: 'discover', label: t('nav.discover'), icon: ICONS.home },
@@ -153,7 +155,7 @@ function Shell() {
         }}
       >
         {tabs.map((tab) => (
-          <DockItem key={tab.id} label={tab.label} icon={tab.icon} on={nav.tab === tab.id} onPress={() => nav.switchTab(tab.id)} />
+          <DockItem key={tab.id} label={tab.label} icon={tab.icon} dot={tab.dot} on={nav.tab === tab.id} onPress={() => nav.switchTab(tab.id)} />
         ))}
       </View>
     </View>
@@ -174,7 +176,7 @@ function Toast({ bottom }: { bottom: number }) {
   );
 }
 
-function DockItem({ label, icon, on, onPress }: { label: string; icon: string; on: boolean; onPress: () => void }) {
+function DockItem({ label, icon, on, dot, onPress }: { label: string; icon: string; on: boolean; dot?: boolean; onPress: () => void }) {
   const { palette } = useTheme();
   const reduced = useReducedMotion();
   return (
@@ -182,6 +184,7 @@ function DockItem({ label, icon, on, onPress }: { label: string; icon: string; o
       role="tab"
       aria-selected={on}
       aria-label={label}
+      accessibilityHint={dot ? t('nav.unread') : undefined}
       onPress={onPress}
       style={({ pressed }) => [
         { flex: 1, minHeight: TOUCH, borderRadius: 999, alignItems: 'center', justifyContent: 'center', gap: 2 },
@@ -190,6 +193,7 @@ function DockItem({ label, icon, on, onPress }: { label: string; icon: string; o
       ]}
     >
       <Icon d={icon} color={on ? palette.fg : palette.muted} />
+      {dot && <View testID="unread-dot" aria-hidden style={{ position: 'absolute', top: 6, right: '30%', width: 9, height: 9, borderRadius: 5, backgroundColor: CARROT }} />}
       <Text numberOfLines={1} style={{ color: on ? palette.fg : palette.muted, fontSize: 12, fontFamily: on ? FONT.bold : FONT.medium }}>
         {label}
       </Text>
