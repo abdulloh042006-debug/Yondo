@@ -18,7 +18,9 @@ function statusMap(prefix: string, tones: Record<string, Tone>): Record<string, 
 export const SERVICE_LABELS = lazyMap('service', [
   'coffee', 'walking', 'cinema', 'shopping', 'event', 'city_friend', 'conversation', 'study', 'online_call', 'custom_experience',
 ]);
-export const serviceLabel = (code: string): string => SERVICE_LABELS[code] ?? code.replace(/_/g, ' ');
+/** `romantic` is never a filter chip, but if a service or gift carries it, it reads "Maxsus kunlar" (CLAUDE.md §4). */
+export const serviceLabel = (code: string): string =>
+  code === 'romantic' ? t('service.romantic') : (SERVICE_LABELS[code] ?? code.replace(/_/g, ' '));
 
 export const APPLICATION_STATUS = statusMap('status.application', { draft: '', submitted: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '' });
 export const CONTENT_STATUS = statusMap('status.content', { draft: '', pending: 'warn', approved: 'ok', rejected: 'bad' });

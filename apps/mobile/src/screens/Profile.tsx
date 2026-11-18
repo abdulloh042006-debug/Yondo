@@ -6,6 +6,7 @@ import { useAuth } from '../auth';
 import { useNav } from '../nav';
 import { formatMoney, serviceLabel, t } from '../shared';
 import { HeartButton } from '../favorites';
+import { CardStats, LikeButton } from '../likes';
 import { FONT, useTheme } from '../theme';
 import { Banner, Button, Card as Box, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
@@ -15,7 +16,9 @@ export function ProfileScreen({ id }: { id: string }) {
   const nav = useNav();
   const { palette } = useTheme();
   const { user, reload } = useAuth();
-  const res = useResource(() => api.get<Card>(`/discovery/companions/${id}`, { anonymous: true }), [id]);
+  // Signed in: the token is sent so the answer carries `liked_by_me`; the profile stays public otherwise.
+  const res = useResource(() => api.get<Card>(`/discovery/companions/${id}`, { anonymous: !user }), [id, user?.id]);
+  const [likeErr, setLikeErr] = useState<string>();
   const [booking, setBooking] = useState(false);
   const [roleErr, setRoleErr] = useState<string>();
   const [roleBusy, setRoleBusy] = useState(false);
@@ -67,6 +70,11 @@ export function ProfileScreen({ id }: { id: string }) {
           <VerifiedTag card={c} />
         </View>
       </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <CardStats card={c} likes={false} />
+        <LikeButton key={c.id} card={c} onError={setLikeErr} />
+      </View>
+      {likeErr && <ErrorText text={likeErr} />}
       <P>{c.bio || t('profile.noBio')}</P>
       {c.languages.length > 0 && <P muted>{`${t('profile.languages')}: ${c.languages.join(', ')}`}</P>}
       <H2>{t('profile.services')}</H2>
