@@ -9,6 +9,7 @@ import { prettyPhone, roleLabel, t } from '../shared';
 import { FONT, useTheme } from '../theme';
 import { Banner, Button, Card, ErrorText, Field, H1, H2, MenuRow, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
+import { MyPhotos } from './MyPhotos';
 
 type CompanionProfile = Schemas['ProfileResponse'];
 export const openWeb = (path: string) => void Linking.openURL(`${WEB_URL}${path}`);
@@ -91,6 +92,8 @@ function AccountView({ user }: { user: User }) {
           </View>
         )}
       </Card>
+
+      <MyPhotos isCompanion={isCompanion} onStudio={() => openWeb('/studio')} />
 
       {editing ? (
         <Card style={{ gap: 12 }}>

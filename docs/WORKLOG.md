@@ -28,7 +28,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S71 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
+## S72 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
 Done (owner decision 2026-11-11; the first draft was lost before push):
 - `tools/sounds/yondo_notify.py` (verbatim, deterministic) + README; only A as mp3 (128k, 39 KB): `apps/web/public/sounds/yondo-notify.mp3`, `apps/mobile/assets/sounds/yondo-notify.mp3`.
 - Web: `lib/notifySound.ts` (1 per 5 s, no overlap, volume 0.7, refused play() swallowed, per-device switch default ON), `lib/useUnreadNotifications.ts` (poll 30 s, sound only on a rise, stops on 403, 0 signed out), carrot dot on Profil with sr-only `nav.unread`, Settings "Bildiriş ovozi" (role=switch, hint, test button). i18n uz/ru/en.
@@ -37,6 +37,17 @@ Not done: no push (sound only while the app is open); Android has no silent-mode
 Next: owner may listen on a real phone; push notifications later.
 Evidence: see PR description (web vitest/typecheck/lint/build/e2e, mobile typecheck/smoke/export).
 Commit: branch `feat/notify-sound`, PR to `main`.
+## S71 — Photos, likes, filters and the card feed: web + mobile UI (2026-11-18) [cloud worker, web + mobile]
+Done (server side was PR #34; `apps/api` unchanged):
+- **Profil → Rasmlarim** (web `ui/MyPhotos.tsx`, mobile `screens/MyPhotos.tsx` with `expo-image-picker`, library only): up to 6 photos, type/size checked before sending (`apps/web/src/lib/photos.ts`, shared), errors by `code`, main photo + ← / → reorder with rollback, delete; customer privacy note, companions pointed to the studio.
+- **"Yoqdi"**: public thumbs-up count on cards/profiles, separate from the heart; optimistic toggle + rollback; signed out = count only.
+- **Kaşf**: filters sheet (category, min stars, sort; web also city/language/price), sort `default|rating|meetings|likes`, chips + "Hammasini tozalaş", "Hali baho yöq" when no reviews.
+- **Kartoçkalar**: one card, "Saqlaş" + "Keyingisi" only (no dislike/match/swipe); web keyboard → / N / S; reduced motion = fade. `romantic` → "Maxsus kunlar".
+- Fixed in passing: a fast second filter change could bring cleared filters back (URL updates now start from the live URL).
+Not done: customer photos inside the companion's booking view; min-meetings / min-likes as *filters* (API has them as sorts only); real-device test of the picker.
+Next: owner review of the screenshots (`apps/mobile/docs/photos-likes-cards/`).
+Evidence: see the PR (web typecheck/lint/build, vitest, e2e on the real API; mobile typecheck, smoke, expo export web + android; verifier verdict).
+Commit: branch `feat/photos-likes-cards-ui`, PR to `main`.
 ## S70 — No in-app Face ID; phone password autofill; sliding sessions (2026-11-16) [cloud worker]
 Done:
 - **Face ID lock removed** (owner: "Face ID kerak emas"; he does not want a lock on every app open). Gone: the offer, the locked start, the Settings toggle, `src/biometric.ts` and its web mock, `expo-local-authentication` with its config plugin and Face ID text, 9 `bio.*` keys per language, the smoke steps and the screenshots. The app clears the old flags at start, so nobody stays locked.

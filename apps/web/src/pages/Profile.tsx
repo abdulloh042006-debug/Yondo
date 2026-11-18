@@ -11,14 +11,15 @@ import { useResource } from '../lib/useResource';
 import { Dialog, Empty, ErrorState, Loading, useToast } from '../ui/feedback';
 import { Field, Select } from '../ui/form';
 import { Item, Reveal } from '../ui/motion';
-import { CompanionImage, HeartButton, useFavorites, type Card } from './companionParts';
+import { CardStats, CompanionImage, HeartButton, LikeButton, useFavorites, type Card } from './companionParts';
 
 export function Profile() {
   const { id = '' } = useParams();
-  const res = useResource((signal) => api.get<Card>(`/discovery/companions/${id}`, { anonymous: true, signal }), [id]);
+  const { user } = useAuth();
+  // Signed in: the token is sent so the answer carries `liked_by_me`; the page stays public otherwise.
+  const res = useResource((signal) => api.get<Card>(`/discovery/companions/${id}`, { anonymous: !user, signal }), [id, user?.id]);
   const fav = useFavorites();
   const [booking, setBooking] = useState(false);
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   if (res.loading && !res.data) return <Loading rows={3} />;
@@ -63,11 +64,11 @@ export function Profile() {
               <p className="muted">
                 {[c.age ? t('profile.ageYears', { n: c.age }) : null, c.city, c.gender].filter(Boolean).join(' · ') || t('profile.noPersonal')}
               </p>
-              {c.rating != null && c.review_count > 0 ? (
-                <p><span className="tag">★ {c.rating.toFixed(1)}</span> <span className="muted">{t('profile.reviews', { count: c.review_count })}</span></p>
-              ) : (
-                <p className="hint">{t('profile.noReviews')}</p>
-              )}
+              <div className="row" style={{ gap: 8 }}>
+                <CardStats card={c} likes={false} />
+                <LikeButton key={c.id} card={c} />
+              </div>
+              {c.rating != null && c.review_count > 0 && <p className="hint">{t('profile.reviews', { count: c.review_count })} · {t('discovery.starsNote')}</p>}
               {c.bio ? <p style={{ whiteSpace: 'pre-line' }}>{c.bio}</p> : <p className="hint">{t('profile.noBio')}</p>}
             </div>
           </Reveal>
