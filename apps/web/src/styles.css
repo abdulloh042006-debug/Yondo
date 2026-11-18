@@ -1571,8 +1571,9 @@ legend.label {
   box-shadow: none;
 }
 @media (prefers-reduced-motion: reduce) {
+  /* The global reduced-motion rule shortens every transition; the hold keeps its 1.5 s, in three visible steps. */
   .hold.holding .hold-fill {
-    transition: clip-path 1.5s steps(3, end);
+    transition: clip-path 1.5s steps(3, end) !important;
   }
   .hold.retract .hold-fill {
 /* Settings → Push bildirishnomalar switch (a real checkbox with role="switch"; colours follow the theme tokens). */
