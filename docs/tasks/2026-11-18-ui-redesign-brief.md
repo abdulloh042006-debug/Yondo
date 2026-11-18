@@ -2,7 +2,12 @@
 
 **Status: QUEUED, not started.** The owner sent this brief on 2026-11-18 and said: "Yangi vazifa bor keyin. Boshlash uchun saqlab qo'y" ("a new task for later; save it to start"). Start it only after the two tasks running now (photos/likes/filters/cards UI; the notification sound) and only on the owner's word.
 
-**CEO notes: points to settle with the owner before starting.** These are conflicts with earlier owner decisions recorded in CLAUDE.md §7:
+**Owner answers (2026-11-18), these override the brief:**
+- **Colours:** keep the whole app's colours. Map the new components onto the Yondo brand palette: ink, paper and carrot `#E8501A`. **Red is allowed only for dangerous (destructive) actions.** The brief's `#110d0b`/`#e86f38`/`#ff7b3d`/`#ff854d` values are therefore NOT adopted.
+- **Account deletion:** the **1.5 s Hold-to-Confirm button REPLACES** the blurred confirmation dialog of 2026-11-15 (#35).
+- **Biometric toggle:** not built (in-app Face ID was removed on 2026-11-16, #43).
+
+**CEO notes: points to settle with the owner before starting** (1–3 are answered above). These are conflicts with earlier owner decisions recorded in CLAUDE.md §7:
 1. **Colours.** The brief uses a warm dark palette: `#110d0b`, `#1c1613` and `#302621`, orange `#e86f38` / `#ff7b3d` / `#ff854d`, red for destructive actions, and a red-to-orange gradient. The brand rule of 2026-10-22 allows only ink `#111111`, paper `#F5F2EC` and carrot `#E8501A`, with no other hue. Status colours collapse to ink plus a carrot border. There are two themes, `yondo` (day, the default) and `yondo-tun` (night). Ask: adopt the brief's palette as a new dark theme, or map it onto ink/paper/carrot?
 2. **Destructive actions.** The brief asks for Hold-to-Confirm (1.5 s). On 2026-11-15 the owner asked for equal buttons plus a blurred confirmation dialog for account deletion (#35). Ask: replace the dialog, or use both (hold inside the dialog)?
 3. **Biometric toggle (brief §5, screen 3).** This is obsolete: the owner removed in-app Face ID on 2026-11-16 (#43). The phone's own autofill handles it.
