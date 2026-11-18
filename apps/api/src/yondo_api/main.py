@@ -146,7 +146,7 @@ def create_application(
         try:
             yield
         finally:
-            await app.state.push_dispatcher.drain()
+            await app.state.push_dispatcher.drain(timeout=10)
             await redis_client.aclose()
             await engine.dispose()
             storage = getattr(app.state, 'object_storage', None)
