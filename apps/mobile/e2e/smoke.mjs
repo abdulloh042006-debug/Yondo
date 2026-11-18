@@ -296,16 +296,19 @@ await step('filters sheet: category, minimum stars, sort; chips + clear all (rea
   await axe('discover with filters');
   await button('Clear all').click();
   await page.getByRole('button', { name: 'Filters', exact: true }).waitFor();
+  // Wait for the "Recommended" reload itself: the old list (already showing Madina) stays on screen while it is in
+  // flight, and switching to Cards before it lands let the deck re-render under the next step (flaky "Cards" step).
+  const settled = page.waitForResponse((r) => r.url().includes('/discovery/companions?') && !r.url().includes('sort='));
   await page.getByRole('radio', { name: 'Recommended' }).click();
+  await settled;
   await page.getByText('DEMO Madina').first().waitFor();
+  await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'));
   await noSideScroll('discover filters');
 });
 
 await step('Cards: Save adds to favourites, Next skips; no dislike or match', async () => {
   await page.getByRole('radio', { name: 'Cards' }).click();
-  const heading = page.getByRole('heading').filter({ hasText: /^DEMO/ }).first();
-  await heading.waitFor();
-  const first = (await heading.innerText()).split(',')[0];
+  const first = await deckName();
   assert(!/dislike|match/i.test(await page.locator('body').innerText()), 'no dislike or match wording');
   await nextCard(first);
   // Madina was saved by the favourites step: skip any card that is already saved, then save the next one.
