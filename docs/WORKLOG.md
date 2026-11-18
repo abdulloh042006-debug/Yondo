@@ -28,6 +28,14 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S70 — No in-app Face ID; phone password autofill; sliding sessions (2026-11-16) [cloud worker]
+Done:
+- **Face ID lock removed** (owner: "Face ID kerak emas"; he does not want a lock on every app open). Gone: the offer, the locked start, the Settings toggle, `src/biometric.ts` and its web mock, `expo-local-authentication` with its config plugin and Face ID text, 9 `bio.*` keys per language, the smoke steps and the screenshots. The app clears the old flags at start, so nobody stays locked.
+- **Autofill** (`apps/mobile/src/autofill.ts`): username, current password and new password hints (`textContentType`, `autoComplete`, `importantForAutofill`, iOS `passwordRules` 8–128) on the sign-in, setup, reset and change forms. The phone's own Keychain / Google Password Manager then offers the login with Face ID or a fingerprint. The web already had `autocomplete`.
+- **Sliding sessions** (`auth/service.py`): a refresh moves `refresh_expires_at` to now + 30 days, never past `created_at` + 180 days (new setting `auth_session_max_age_seconds`). `auth_sessions.created_at` already exists and never changes, so no migration.
+Not done: the native autofill prompt can only be confirmed on a device.
+Evidence: API SQLite 504 passed / 12 skipped, PostgreSQL 16 516 passed; ruff, export_openapi --check PASS; web vitest 114, typecheck, lint; mobile typecheck, smoke 14/14, expo export web + android.
+Commit: branch `feat/session-autofill`, PR to `main`.
 ## S69 — Demo ready for the mandatory password gate (2026-11-16) [cloud worker]
 Done (owner: "parol majburiy, xozirdan bo'lsin"):
 - `infra/deploy/demo/demo_app.py`: the served app follows `YONDO_AUTH_REQUIRE_PASSWORD_SETUP`. The seed, the admin-number refresh, `restrict_admins`, the seed marker and the availability top-up go through `build_app(..., internal=True)`: same database and photo store, gate off, never served. No core bypass; seeded accounts and the owner's admin number get no password.

@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     auth_otp_pepper: SecretStr = SecretStr('development-only-change-me')
     auth_access_token_lifetime_seconds: int = Field(default=900, gt=0)
     auth_refresh_token_lifetime_seconds: int = Field(default=2_592_000, gt=0)
+    # Sliding sessions (2026-11-16): each refresh moves the refresh expiry to now + the
+    # lifetime above, so an active user stays signed in; a session older than this cap
+    # (counted from its sign-in) must sign in again.
+    auth_session_max_age_seconds: int = Field(default=15_552_000, gt=0)  # 180 days
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
     # Telegram Gateway (https://core.telegram.org/gateway): delivers login codes to the user's
     # Telegram account. Unset token = not configured. Never log or echo the token.

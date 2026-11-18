@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { ApiError, api, errorText, type Schemas } from '../api';
 import { useAuth, type User } from '../auth';
+import { AUTOFILL } from '../autofill';
 import { setLoginIntent } from '../loginIntent';
 import { normalizeUsername, passwordProblem, t, usernameValid, type Key } from '../shared';
 import { Button, Card, ErrorText, Field, H1, H2, P, Row, Screen } from '../ui';
@@ -92,10 +93,7 @@ export function PasswordSetupScreen({ user }: { user: User }) {
           onChangeText={setUsername}
           editable={!fixed}
           maxLength={30}
-          autoComplete="username"
-          textContentType="username"
-          autoCapitalize="none"
-          autoCorrect={false}
+          {...AUTOFILL.username}
           error={errs.username}
           live={check && check !== 'unknown' && !errs.username ? t(CHECK_TEXT[check]) : undefined}
         />
@@ -105,9 +103,7 @@ export function PasswordSetupScreen({ user }: { user: User }) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!show}
-          autoComplete="new-password"
-          textContentType="newPassword"
-          autoCapitalize="none"
+          {...AUTOFILL.newPassword}
           error={errs.password}
         />
         <Field
@@ -115,9 +111,7 @@ export function PasswordSetupScreen({ user }: { user: User }) {
           value={password2}
           onChangeText={setPassword2}
           secureTextEntry={!show}
-          autoComplete="new-password"
-          textContentType="newPassword"
-          autoCapitalize="none"
+          {...AUTOFILL.newPassword}
           error={errs.repeat}
         />
         <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
@@ -181,9 +175,9 @@ export function ChangePassword({ user, onDone }: { user: User; onDone: (text: st
         <>
           <H2>{t('pwchange.title')}</H2>
           <P muted>{t('pwchange.note')}</P>
-          <Field label={t('pw.current')} value={current} onChangeText={setCurrent} secureTextEntry={!show} autoComplete="current-password" textContentType="password" autoCapitalize="none" error={errs.current} />
-          <Field label={t('pw.new')} hint={t('pw.rules')} value={next} onChangeText={setNext} secureTextEntry={!show} autoComplete="new-password" textContentType="newPassword" autoCapitalize="none" error={errs.next} />
-          <Field label={t('pw.repeat')} value={repeat} onChangeText={setRepeat} secureTextEntry={!show} autoComplete="new-password" textContentType="newPassword" autoCapitalize="none" error={errs.repeat} />
+          <Field label={t('pw.current')} value={current} onChangeText={setCurrent} secureTextEntry={!show} {...AUTOFILL.currentPassword} error={errs.current} />
+          <Field label={t('pw.new')} hint={t('pw.rules')} value={next} onChangeText={setNext} secureTextEntry={!show} {...AUTOFILL.newPassword} error={errs.next} />
+          <Field label={t('pw.repeat')} value={repeat} onChangeText={setRepeat} secureTextEntry={!show} {...AUTOFILL.newPassword} error={errs.repeat} />
           <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
           {errs.form && <ErrorText text={errs.form} />}
           <Row>

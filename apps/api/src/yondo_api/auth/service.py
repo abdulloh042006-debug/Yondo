@@ -195,6 +195,7 @@ async def rotate_refresh_token(
         auth_session is None
         or auth_session.revoked_at is not None
         or now >= _as_utc(auth_session.refresh_expires_at)
+        or now >= session_hard_expiry(auth_session, settings)
     ):
         raise ApplicationError(
             'invalid_refresh_token', 'The refresh token is invalid or expired', 401
@@ -211,8 +212,20 @@ async def rotate_refresh_token(
     auth_session.access_token_hash = _token_hash(access_token)
     auth_session.refresh_token_hash = _token_hash(next_refresh_token)
     auth_session.access_expires_at = now + timedelta(seconds=lifetime)
+    # Sliding: an active user stays signed in (like Telegram),
+    # never past the absolute cap counted from the sign-in.
+    auth_session.refresh_expires_at = min(
+        now + timedelta(seconds=settings.auth_refresh_token_lifetime_seconds),
+        session_hard_expiry(auth_session, settings),
+    )
     await session.commit()
     return TokenResponseData(access_token, next_refresh_token, lifetime)
+
+
+def session_hard_expiry(auth_session: AuthSession, settings: Settings) -> datetime:
+    """The absolute end of a session: sign-in time (`created_at`, never updated) + the max age."""
+    max_age = timedelta(seconds=settings.auth_session_max_age_seconds)
+    return _as_utc(auth_session.created_at) + max_age
 
 
 async def revoke_session(session: AsyncSession, session_id: UUID) -> None:
