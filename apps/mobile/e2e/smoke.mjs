@@ -398,6 +398,18 @@ await step('help: trusted contact add/remove and a support request go to the API
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
 });
 
+await step('settings: notification sound switch (default on, saved on the device) and the test button', async () => {
+  const sw = page.getByRole('switch', { name: 'Notification sound', exact: true });
+  await sw.waitFor();
+  assert((await sw.getAttribute('aria-checked')) === 'true', 'sound switch should default to ON');
+  await sw.click();
+  assert((await sw.getAttribute('aria-checked')) === 'false', 'sound switch should turn OFF');
+  assert((await page.evaluate(() => localStorage.getItem('yondo.notifySound'))) === 'off', 'switch not saved on the device');
+  await button('Test the sound').click(); // a refused or silent play() must never raise an error
+  await sw.click();
+  assert((await sw.getAttribute('aria-checked')) === 'true', 'sound switch should turn ON again');
+});
+
 await step('settings: Russian, Uzbek alphabets and the night theme apply in place', async () => {
   await page.getByRole('radio', { name: 'Русский' }).last().click();
   await page.getByRole('tab', { name: 'Брони' }).waitFor();

@@ -112,11 +112,11 @@ export function ChipGroup({ label, children }: { label: string; children: ReactN
 }
 
 /** `toggle` = an on/off chip outside a radio group (role checkbox), e.g. the account's roles. */
-export function Chip({ label, selected, onPress, toggle }: { label: string; selected: boolean; onPress: () => void; toggle?: boolean }) {
+export function Chip({ label, selected, onPress, toggle, role }: { label: string; selected: boolean; onPress: () => void; toggle?: boolean; role?: 'switch' }) {
   const { palette } = useTheme();
   return (
     <Pressable
-      role={toggle ? 'checkbox' : 'radio'}
+      role={role ?? (toggle ? 'checkbox' : 'radio')}
       aria-checked={selected}
       aria-label={label}
       onPress={onPress}

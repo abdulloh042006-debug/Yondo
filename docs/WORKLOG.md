@@ -28,6 +28,15 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S72 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
+Done (owner decision 2026-11-11; the first draft was lost before push):
+- `tools/sounds/yondo_notify.py` (verbatim, deterministic) + README; only A as mp3 (128k, 39 KB): `apps/web/public/sounds/yondo-notify.mp3`, `apps/mobile/assets/sounds/yondo-notify.mp3`.
+- Web: `lib/notifySound.ts` (1 per 5 s, no overlap, volume 0.7, refused play() swallowed, per-device switch default ON), `lib/useUnreadNotifications.ts` (poll 30 s, sound only on a rise, stops on 403, 0 signed out), carrot dot on Profil with sr-only `nav.unread`, Settings "Bildiriş ovozi" (role=switch, hint, test button). i18n uz/ru/en.
+- Mobile: same hook and rules with `expo-audio` (`playsInSilentMode: false`: iOS respects the silent switch), Settings switch + test button, dot on the Profil tab.
+Not done: no push (sound only while the app is open); Android has no silent-mode API for media, it follows the media volume; the dot and a real device sound are not covered by the smoke (no unread fixture).
+Next: owner may listen on a real phone; push notifications later.
+Evidence: see PR description (web vitest/typecheck/lint/build/e2e, mobile typecheck/smoke/export).
+Commit: branch `feat/notify-sound`, PR to `main`.
 ## S71 — Photos, likes, filters and the card feed: web + mobile UI (2026-11-18) [cloud worker, web + mobile]
 Done (server side was PR #34; `apps/api` unchanged):
 - **Profil → Rasmlarim** (web `ui/MyPhotos.tsx`, mobile `screens/MyPhotos.tsx` with `expo-image-picker`, library only): up to 6 photos, type/size checked before sending (`apps/web/src/lib/photos.ts`, shared), errors by `code`, main photo + ← / → reorder with rollback, delete; customer privacy note, companions pointed to the studio.

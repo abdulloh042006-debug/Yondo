@@ -1326,6 +1326,48 @@ table.data td {
   background: linear-gradient(160deg, color-mix(in oklab, var(--c-fg) 10%, var(--c-bg)), color-mix(in oklab, var(--c-fg) 22%, var(--c-bg)));
 }
 
+/* Unread notifications: carrot dot on the Profil nav item (graphic only; the meaning is in the sr-only label). */
+.unread-dot {
+  position: absolute;
+  top: 8px;
+  right: calc(50% - 20px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e8501a;
+  box-shadow: 0 0 0 2px var(--c-bg, #f5f2ec);
+}
+.topnav .unread-dot {
+  top: 10px;
+  right: 8px;
+}
+
+.sound-switch {
+  gap: 10px;
+}
+.sound-track {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+}
+.sound-track i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+  transition: transform 0.18s ease;
+}
+.sound-track[data-on='true'] i {
+  transform: translateX(14px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sound-track i {
+    transition: none;
+  }
 /* ---------- likes, card feed, photo manager (photos/likes/filters/cards UI) ---------- */
 .like-btn b {
   font-variant-numeric: tabular-nums;
