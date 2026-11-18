@@ -10,6 +10,7 @@ import { useResource } from '../lib/useResource';
 import { playNotifySound, setSoundEnabled, soundEnabled } from '../lib/notifySound';
 import { useToast } from '../ui/feedback';
 import { ThemePicker } from '../ui/theme';
+import { PushToggle } from '../ui/PushToggle';
 import { ChangePassword } from './ChangePassword';
 import { DeleteAccount } from './DeleteAccount';
 
@@ -136,6 +137,7 @@ export function Settings() {
                 </Link>
               </li>
             </ul>
+            <PushToggle />
           </nav>
         </Reveal>
       )}

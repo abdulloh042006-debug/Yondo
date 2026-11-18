@@ -9,6 +9,8 @@ description = 'Yondo marketplace API'
 requires-python = '>=3.12'
 dependencies = [
   'alembic>=1.14,<2',
+  # Web Push (VAPID ES256, RFC 8291 aes128gcm) and FCM service-account RS256 signing.
+  'cryptography>=44,<51',
   'pillow>=11,<13',
   'tzdata>=2025.1',
   'fastapi>=0.115,<1',

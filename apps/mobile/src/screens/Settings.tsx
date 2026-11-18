@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { useEffect, useState, type ReactNode } from 'react';
+import { PushSwitch } from '../pushUi';
 import { View } from 'react-native';
 
 import { WEB_URL, api, errorText, type Schemas } from '../api';
@@ -76,6 +77,7 @@ export function SettingsScreen() {
             badge={n ? t('notif.unread', { n }) : undefined}
             onPress={() => nav.push({ name: 'notifications' })}
           />
+          <PushSwitch />
         </Card>
       )}
       <Card style={{ gap: 12 }}>

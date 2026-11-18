@@ -48,6 +48,18 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: npm ci
+      # Android push needs Firebase's google-services.json. It is a repository secret (the repo is public), so it is
+      # written here only when the secret exists; without it the APK still builds, with push switched off.
+      - name: Add google-services.json from the GOOGLE_SERVICES_JSON secret (if set)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > google-services.json
+            node -e "JSON.parse(require('fs').readFileSync('google-services.json','utf8'))" && echo 'google-services.json added: Android push on'
+          else
+            echo 'GOOGLE_SERVICES_JSON secret not set: building without Android push'
+          fi
       - name: Generate the native Android project
         run: npx expo prebuild --platform android --no-install
       - name: 'Build the release APK (debug-key signed, for testing only, not for the Play Store)'

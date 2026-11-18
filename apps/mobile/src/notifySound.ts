@@ -47,7 +47,7 @@ export function playNotifySound(opts: { force?: boolean } = {}): void {
   try {
     if (!player) {
       void setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {});
-      player = createAudioPlayer(require('../assets/sounds/yondo-notify.mp3') as number);
+      player = createAudioPlayer(require('../assets/sounds/yondo_notify.mp3') as number);
       player.volume = VOLUME;
     }
     lastPlayedAt = now;

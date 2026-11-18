@@ -2039,6 +2039,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/push/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Push Config
+         * @description Public: which platforms can receive push, and the Web Push VAPID public key.
+         */
+        get: operations["push_config_api_v1_push_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Register Device
+         * @description Register or refresh this device. A token seen before moves to the signed-in user.
+         */
+        put: operations["register_device_api_v1_push_devices_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/push/devices/{device_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unregister Device
+         * @description Remove this device (sign-out, or push switched off). Works for any account status.
+         */
+        delete: operations["unregister_device_api_v1_push_devices__device_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reviews/bookings/{booking_id}": {
         parameters: {
             query?: never;
@@ -2935,6 +2995,11 @@ export interface components {
              */
             user_id: string;
         };
+        /** AndroidPushConfig */
+        AndroidPushConfig: {
+            /** Enabled */
+            enabled: boolean;
+        };
         /** ApplicationResponse */
         ApplicationResponse: {
             /**
@@ -3359,6 +3424,42 @@ export interface components {
              * @description Personal data is erased within this many days.
              */
             window_days: number;
+        };
+        /** DeviceRead */
+        DeviceRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Platform */
+            platform: string;
+        };
+        /** DeviceRegister */
+        DeviceRegister: {
+            /** Auth */
+            auth?: string | null;
+            /** Endpoint */
+            endpoint?: string | null;
+            /** P256Dh */
+            p256dh?: string | null;
+            /**
+             * Platform
+             * @enum {string}
+             */
+            platform: "android" | "web";
+            /** Token */
+            token?: string | null;
         };
         /** DiscoveryPage */
         DiscoveryPage: {
@@ -3912,6 +4013,11 @@ export interface components {
             /** Languages */
             languages?: string[];
         };
+        /** PushConfig */
+        PushConfig: {
+            android: components["schemas"]["AndroidPushConfig"];
+            web: components["schemas"]["WebPushConfig"];
+        };
         /** ReadinessResponse */
         ReadinessResponse: {
             /** Checks */
@@ -4363,6 +4469,13 @@ export interface components {
              * @enum {string}
              */
             document_type: "passport" | "id_card" | "driver_license";
+        };
+        /** WebPushConfig */
+        WebPushConfig: {
+            /** Enabled */
+            enabled: boolean;
+            /** Vapid Public Key */
+            vapid_public_key: string | null;
         };
     };
     responses: never;
@@ -8359,6 +8472,88 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    push_config_api_v1_push_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushConfig"];
+                };
+            };
+        };
+    };
+    register_device_api_v1_push_devices_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceRegister"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unregister_device_api_v1_push_devices__device_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
