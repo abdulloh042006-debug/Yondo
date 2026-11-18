@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -56,6 +57,8 @@ from yondo_api.payments.manual import router as manual_payments_router
 from yondo_api.payments.provider import PaymentProvider, UnconfiguredPaymentProvider
 from yondo_api.payments.router import router as payments_router
 from yondo_api.payments.tezcheck import TezCheckPaymentProvider
+from yondo_api.push.router import router as push_router
+from yondo_api.push.service import PushDispatcher, build_fcm_sender
 from yondo_api.reviews.router import router as reviews_router
 from yondo_api.safety.admin import router as safety_admin_router
 from yondo_api.safety.router import router as safety_router
@@ -63,6 +66,8 @@ from yondo_api.userphotos.router import router as user_photos_router
 from yondo_api.verification.router import admin_router as verification_admin_router
 from yondo_api.verification.router import router as verification_router
 from yondo_api.verification.service import DatabaseIdentityEligibility
+
+logger = logging.getLogger(__name__)
 
 
 def select_otp_provider(settings: Settings) -> OtpDeliveryProvider:
@@ -114,7 +119,16 @@ def create_application(
         )
         redis_client = redis.from_url(app_settings.redis_url, decode_responses=True)
         app.state.db_engine = engine
-        app.state.db_session_factory = create_session_factory(engine)
+        app.state.db_session_factory = create_session_factory(
+            engine, info={'app_state': app.state}
+        )
+        app.state.push_dispatcher = PushDispatcher(
+            app_settings, app.state.db_session_factory, fcm=build_fcm_sender(app_settings)
+        )
+        logger.info(
+            'push: Web Push %s',
+            'enabled' if app_settings.webpush_enabled else 'off (YONDO_WEBPUSH_ENABLED=false)',
+        )
         app.state.redis = redis_client
         app.state.otp_provider = selected_otp_provider
         attach_chat_lookup(selected_otp_provider, app.state.db_session_factory)
@@ -132,6 +146,7 @@ def create_application(
         try:
             yield
         finally:
+            await app.state.push_dispatcher.drain()
             await redis_client.aclose()
             await engine.dispose()
             storage = getattr(app.state, 'object_storage', None)
@@ -181,6 +196,7 @@ def create_application(
         vendor_router,
         integration_router,
         notifications_router,
+        push_router,
         beta_router,
         admin_router,
         safety_router,

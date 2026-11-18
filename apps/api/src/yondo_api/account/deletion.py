@@ -35,6 +35,7 @@ from yondo_api.gifts.models import GiftCartItem
 from yondo_api.models.auth import AuthSession, OtpChallenge, PasswordLoginGuard
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
+from yondo_api.push.models import PushDevice
 from yondo_api.safety.models import TrustedContact, UserBlock
 from yondo_api.userphotos.models import UserPhoto
 from yondo_api.verification.service import erase_verification_images
@@ -166,6 +167,7 @@ async def erase_account(
         (SupportRequest, SupportRequest.user_id),
         (BetaEnrollment, BetaEnrollment.user_id),
         (AuthSession, AuthSession.user_id),
+        (PushDevice, PushDevice.user_id),
         (UserRole, UserRole.user_id),
     ):
         await session.execute(delete(model).where(column == uid))

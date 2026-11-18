@@ -14,6 +14,7 @@ from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 from yondo_api.notifications import models as notifications_models
 from yondo_api.payments import models as payment_models
+from yondo_api.push import models as push_models
 from yondo_api.reviews import models as reviews_models
 from yondo_api.safety import models as safety_models
 from yondo_api.userphotos import models as userphoto_models
@@ -38,6 +39,7 @@ __all__ = [
     'chat_models',
     'discovery_models',
     'payment_models',
+    'push_models',
     'AccountStatus',
     'AuthSession',
     'OtpChallenge',
