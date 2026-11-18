@@ -1429,3 +1429,51 @@ legend.label {
   font-size: 0.92rem;
   margin-bottom: 6px;
 }
+
+/* Settings → Push bildirishnomalar switch (a real checkbox with role="switch"; colours follow the theme tokens). */
+input.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  background: var(--c-chip);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+input.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c-fg);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+input.switch:checked {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+input.switch:checked::after {
+  transform: translateX(18px);
+  background: var(--c-on-primary);
+}
+input.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+input.switch:focus-visible {
+  outline: 2px solid var(--c-fg);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  input.switch,
+  input.switch::after {
+    transition: none;
+  }
+}

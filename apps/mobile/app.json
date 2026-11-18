@@ -39,6 +39,13 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E8501A",
+          "defaultChannel": "yondo"
+        }
       ]
     ],
     "experiments": {

@@ -14,6 +14,7 @@ import { Aurora, BrandMark, ICONS, Icon, useReducedMotion } from './src/brand';
 import { FavoritesProvider, useFavorites } from './src/favorites';
 import { restoreLocale } from './src/locale';
 import { NavProvider, useNav, type Tab } from './src/nav';
+import { PushOffer, usePushRouting } from './src/pushUi';
 import { AccountScreen } from './src/screens/Account';
 import { BookingDetailScreen } from './src/screens/BookingDetail';
 import { BookingsScreen } from './src/screens/Bookings';
@@ -86,6 +87,7 @@ function Shell() {
   const nav = useNav();
   const signedIn = !!user;
   const { reset } = nav;
+  usePushRouting();
   useEffect(() => {
     // Signed out (or the session expired): close the account's screens. Sign-in resets in LoginScreen.
     // A pending login intent (the password setup asked for a fresh code sign-in) opens Kirish instead.
@@ -127,6 +129,7 @@ function Shell() {
         <ConsentGate>{screen}</ConsentGate>
       </View>
       <Toast bottom={DOCK_H + insets.bottom + 18} />
+      {signedIn && <PushOffer />}
       <View
         role="tablist"
         aria-label={t('nav.mobile')}

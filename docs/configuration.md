@@ -54,6 +54,14 @@ Unless noted otherwise, the owner sets each value: in Render → Environment for
 | `YONDO_BOT_SHARED_SECRET` | Shared secret with the VPS bot service (32+ chars; unset/short = `/link/complete` answers 503) | with `telegram_bot` | `<random>` | Owner generates; same value on the VPS |
 | `YONDO_TELEGRAM_BOT_BASE_URL` | Bot API origin (https) | no | `https://api.telegram.org` | Default |
 | `YONDO_TELEGRAM_BOT_TIMEOUT_SECONDS` | sendMessage timeout (≤ 15; the bot waits 30 s) | no | `5` | Default |
+| `YONDO_FCM_SERVICE_ACCOUNT_JSON` | Android push: the whole Firebase service-account JSON (a secret; empty = Android push off) | for Android push | `{"type":"service_account",...}` | Firebase console → Project settings → Service accounts (owner; `docs/push-notifications.md`) |
+| `YONDO_FCM_PROJECT_ID` | Firebase project id (empty = read from the JSON) | no | `yondo-xxxxx` | Firebase console |
+| `YONDO_WEBPUSH_ENABLED` | Web Push on/off | no | `true` | Default |
+| `YONDO_WEBPUSH_VAPID_PRIVATE_KEY` | Web Push VAPID private key (raw P-256, base64url). Empty = generated once and kept in the database | no | `<base64url>` | Not needed |
+| `YONDO_WEBPUSH_SUBJECT` | VAPID contact (`mailto:` or `https:`); empty = `YONDO_PUBLIC_WEB_URL`, else the project page | no | `mailto:support@yondo.example` | Default |
+| `YONDO_WEBPUSH_ALLOWED_HOSTS` | Push services a browser subscription may point to (SSRF guard) | no | `["fcm.googleapis.com","push.services.mozilla.com","push.apple.com","notify.windows.com"]` | Default |
+| `YONDO_PUSH_SEND_TIMEOUT_SECONDS` | Per-request push timeout (≤ 15) | no | `5` | Default |
+| `GOOGLE_SERVICES_JSON` (GitHub Actions secret, not a server variable) | Firebase config for the Android APK | for Android push | contents of `google-services.json` | Firebase console → Android app `uz.yondo.app` |
 | `YONDO_TELEGRAM_LINK_LIFETIME_SECONDS` | Bot link lifetime (60–3600) | no | `600` | Default |
 | `YONDO_AUTH_SCRYPT_LOG_N` | Password hash cost, N = 2^value (14–20) | no | `17` | Default (docs/login-password.md) |
 | `YONDO_AUTH_PASSWORD_IP_RATE_LIMIT_PER_MINUTE` | Password login/reset/username-check attempts per client IP per minute (0 = off) | no | `20` | Owner decision |
@@ -95,4 +103,5 @@ These need the owner's accounts, money or decisions. Details in Uzbek: `docs/own
 4. **Render env for manual payments.** Set `YONDO_PAYMENT_PROVIDER=manual`, `YONDO_MANUAL_PAYMENT_CARDS` and `YONDO_PUBLIC_WEB_URL` in Render → Environment, then run the doctor. This turns on real transfers, so it needs the owner's separate permission (`docs/product-decisions.md`).
 5. **Bank and accountant.** Clarify receiving business payments to personal cards: bank limits, blocking risk, tax.
 6. **Expo Go on your phone,** to try the mobile app (`apps/mobile/README.md`). The API must be reachable from the phone.
-7. **Agent Creator permission rule.** The Agent Creator ("ona") needs an owner permission rule before it can create worker sessions itself (CLAUDE.md, team roles). Until then the lead session creates workers.
+7. **Android push (Firebase, free).** Create the Firebase project "Yondo", add the Android app `uz.yondo.app`, put `google-services.json` into the GitHub secret `GOOGLE_SERVICES_JSON` and the service-account key into Render as `YONDO_FCM_SERVICE_ACCOUNT_JSON`. Steps: `docs/push-notifications.md`. Web push needs nothing.
+8. **Agent Creator permission rule.** The Agent Creator ("ona") needs an owner permission rule before it can create worker sessions itself (CLAUDE.md, team roles). Until then the lead session creates workers.
