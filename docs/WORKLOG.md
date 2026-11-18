@@ -36,6 +36,15 @@ Done:
 Not done: the native autofill prompt can only be confirmed on a device.
 Evidence: API SQLite 504 passed / 12 skipped, PostgreSQL 16 516 passed; ruff, export_openapi --check PASS; web vitest 114, typecheck, lint; mobile typecheck, smoke 14/14, expo export web + android.
 Commit: branch `feat/session-autofill`, PR to `main`.
+## S69 — Demo ready for the mandatory password gate (2026-11-16) [cloud worker]
+Done (owner: "parol majburiy, xozirdan bo'lsin"):
+- `infra/deploy/demo/demo_app.py`: the served app follows `YONDO_AUTH_REQUIRE_PASSWORD_SETUP`. The seed, the admin-number refresh, `restrict_admins`, the seed marker and the availability top-up go through `build_app(..., internal=True)`: same database and photo store, gate off, never served. No core bypass; seeded accounts and the owner's admin number get no password.
+- The startup line prints `PASSWORD_GATE=on|off`.
+- Test `test_password_gate_on_the_harness_…` (gate ON): seed completes; top-up runs; a visitor's code sign-in gets `password_setup_required` on /auth/me and 403 on a gated endpoint; after `POST /auth/registration` 200; nobody seeded has a password.
+- Docs: configuration.md, login-password.md, CLAUDE.md §7.
+Next: the owner sets `YONDO_AUTH_REQUIRE_PASSWORD_SETUP=true` in Render after the merge; the first sign-in with his admin number then asks him to set his own username + password.
+Evidence: demo tests 10/10; real start with the gate on: `PASSWORD_GATE=on`, SEED_DONE, discovery lists Madina + Jasur; web e2e (gate off) 69/69.
+Commit: branch `feat/demo-password-gate`, PR to `main`.
 ## S68 — Username + password screens on web and mobile; Face ID / fingerprint on mobile (2026-11-15) [cloud worker, mobile + web]
 Done (owner 2026-11-15, CEO brief; API from PR #40):
 - Kirish = username or phone + password first; "Telegram orqali kod bilan kiriş" second (sign-up path); "Parolni unutdingizmi?" = phone → code (bot flow reused) → new password. Errors by `code` (invalid_credentials, password_login_blocked with the 15-minute wait, rate_limited).

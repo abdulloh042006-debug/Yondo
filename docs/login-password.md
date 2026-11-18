@@ -54,9 +54,17 @@ code sign-in.
 
 Server side, the setting `YONDO_AUTH_REQUIRE_PASSWORD_SETUP` turns on a gate. With the gate on,
 such an account gets 403 `password_setup_required` everywhere except `/auth/*` and `/legal/*`.
-**Default: off**, because the web and mobile setup screens do not exist yet. Turning the gate on
-now would lock every code sign-in out, including the public demo's. Turn it on once the clients
-ship the setup screen.
+**Default: off** in the code. The web and mobile setup screens shipped in S68 (#41). From 2026-11-16
+the owner made the password mandatory: the public demo runs with the gate **on** (Render env
+`YONDO_AUTH_REQUIRE_PASSWORD_SETUP=true`), so every visitor sets a username and password after a code
+sign-in.
+
+**Demo harness and the gate.** `infra/deploy/demo/demo_app.py` seeds and maintains the DEMO data by
+signing in itself. That work (seed, admin-number refresh, availability top-up) goes through a second,
+never-served app instance on the same database with the gate off (`build_app(..., internal=True)`).
+The seeded DEMO accounts and the owner's admin number therefore never get a password nobody knows.
+The served app follows the environment exactly; the owner too sets his own password on his first sign-in.
+The web e2e and the video harness keep the gate off.
 
 Always enforced regardless of the gate:
 - registration needs a fresh code session;
