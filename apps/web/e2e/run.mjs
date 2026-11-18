@@ -922,35 +922,40 @@ try {
   });
   await step('account deletion: refused with open bookings; request → pending (profile hidden) → cancel; admin queue', async () => {
     await cp.goto(`${WEB}/settings#delete`);
-    // Owner, 2026-11-15: "Hisobni öçiriş" looks like "Çiqiş"; the question opens in a dialog over a blurred backdrop.
+    // Owner, 2026-11-18: a 1.5 s hold-to-confirm button replaces the dialog; red only here; early release does nothing.
+    const hold = async (page, ms) => {
+      const btn = page.getByRole('button', { name: 'Hisobni öçiriş', exact: true });
+      await btn.scrollIntoViewIfNeeded();
+      const box = await btn.boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(ms);
+      await page.mouse.up();
+    };
     const trigger = cp.getByRole('button', { name: 'Hisobni öçiriş', exact: true });
-    const signOut = cp.getByRole('button', { name: 'Çiqiş', exact: true });
-    const [a, b] = await Promise.all([trigger.getAttribute('class'), signOut.getAttribute('class')]);
-    assert(a === b, `delete and sign-out buttons must look the same: ${a} vs ${b}`);
-    await trigger.click();
-    const dlg = cp.getByRole('dialog', { name: 'Hisobni öçirmoqçimisiz?' });
-    await dlg.waitFor();
-    assert((await dlg.getAttribute('aria-modal')) === 'true', 'aria-modal');
-    assert(/blur/.test(await cp.locator('.overlay').evaluate((el) => getComputedStyle(el).backdropFilter)), 'blurred backdrop');
-    await cp.keyboard.press('Escape'); // Esc closes and focus returns to the trigger
-    await dlg.waitFor({ state: 'detached' });
-    assert(await trigger.evaluate((el) => el === document.activeElement), 'focus returns to the button');
-    await trigger.click();
-    await cp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
-    await cp.getByRole('button', { name: 'Ha, öçiriş' }).click();
+    await trigger.waitFor();
+    assert((await trigger.getAttribute('class')).includes('hold'), 'deletion is the hold button');
+    assert((await cp.getByRole('button', { name: 'Çiqiş', exact: true }).getAttribute('class')).includes('hold') === false, 'sign-out is a normal button');
+    assert((await cp.locator('.overlay').count()) === 0, 'no dialog');
+    let sent = 0;
+    const count = (r) => r.method() === 'POST' && r.url().endsWith('/account/deletion') && sent++;
+    cp.on('request', count);
+    await hold(cp, 700); // early release
+    await cp.waitForTimeout(1200);
+    assert(sent === 0, 'an early release sends nothing');
+    await hold(cp, 1700);
     await cp.getByText('Avval oçiq bronlarni yakunlang yoki bekor qiling.').waitFor(); // cp has a pending booking
-    await cp.getByRole('button', { name: 'Yöq', exact: true }).click();
+    assert(sent === 1, 'a full hold sends once');
+    cp.off('request', count);
     const d = await ctx();
     const dp = await d.newPage();
     watch(dp, 'deletion');
     try {
       await otpLogin(dp, '+998907770088');
       await dp.goto(`${WEB}/settings`); // account deletion sits in Sozlamalar → Hisob, next to Çiqiş
-      await dp.getByRole('button', { name: 'Hisobni öçiriş', exact: true }).click();
-      const confirm = dp.getByRole('button', { name: 'Ha, öçiriş' });
-      assert(await confirm.isDisabled(), 'confirm stays disabled until the box is ticked');
-      await dp.getByLabel('Tuşundim: sörov bajarilgaç, hisobni tiklab bölmaydi.').check();
-      await confirm.click();
+      // the screen-reader path: activation without a hold opens the explicit two-step confirmation
+      await dp.getByRole('button', { name: 'Hisobni öçiriş', exact: true }).evaluate((el) => el.click());
+      await dp.getByRole('button', { name: 'Ha, öçiriş' }).click();
       await dp.getByText('Öçiriş sörovi qabul qilindi.').waitFor();
       await dp.getByText(/Öçiriş söralgan: hisob .* dan keyin öçiriladi\./).waitFor();
       await ap.goto(`${WEB}/admin/deletions`);

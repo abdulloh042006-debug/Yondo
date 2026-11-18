@@ -28,6 +28,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S75 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
+Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
+- web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
+- Account deletion (web `pages/DeleteAccount.tsx`, mobile `screens/Settings.tsx`) uses it: consequences in a red danger zone, early release does nothing, Space/Enter hold, screen-reader two-step path, aria-live / AccessibilityInfo announcements. The "I understand" box and the dialog are gone.
+- i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
+Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
+Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
 ## S72 — Notification sound rebuilt, variant A "tomchi-rin" (2026-11-18) [cloud worker]
 Done (owner decision 2026-11-11; the first draft was lost before push):
 - `tools/sounds/yondo_notify.py` (verbatim, deterministic) + README; only A as mp3 (128k, 39 KB): `apps/web/public/sounds/yondo-notify.mp3`, `apps/mobile/assets/sounds/yondo-notify.mp3`.

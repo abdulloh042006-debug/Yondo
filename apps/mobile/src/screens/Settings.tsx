@@ -8,9 +8,9 @@ import { useNav } from '../nav';
 import { LANGS, UZ_ALPHABETS, formatInstant, getLang, getUzAlphabet, roleLabel, setLang, setUzAlphabet, t, useLang } from '../shared';
 import { playNotifySound, setSoundEnabled, soundEnabled, loadSoundPref } from '../notifySound';
 import { FONT, useTheme, type ThemeChoice } from '../theme';
-import { Banner, Button, Card, Chip, ChipGroup, ConfirmDialog, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, Chip, ChipGroup, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen } from '../ui';
 import { useResource } from '../useResource';
-import { ConsentCheck } from './Login';
+import { HoldToConfirm } from '../hold';
 import { openWeb } from './Account';
 import { ChangePassword } from './Password';
 
@@ -180,28 +180,18 @@ type Deletion = Schemas['DeletionState'];
 
 /**
  * In-app account deletion, the same API and texts as the web (apps/web/src/pages/DeleteAccount.tsx). Owner,
- * 2026-11-15: the button looks exactly like "Chiqish" (no red block); the question opens in a blurred dialog.
+ * 2026-11-18: the 1.5 s Hold-to-Confirm button replaces the blurred dialog of 2026-11-15.
  */
 function DeleteAccount({ before }: { before: ReactNode }) {
   const res = useResource(() => api.get<Deletion>('/account/deletion'), []);
-  const [open, setOpen] = useState(false);
-  const [understood, setUnderstood] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const days = res.data?.window_days ?? 30;
+  // Errors are shown by HoldToConfirm under the button.
   const request = async () => {
-    setBusy(true);
-    setErr(undefined);
-    try {
-      res.setData(await api.post<Deletion>('/account/deletion', { confirm: true }));
-      setNotice(t('account.delete.requested'));
-      setOpen(false);
-    } catch (e) {
-      setErr(errorText(e));
-    } finally {
-      setBusy(false);
-    }
+    res.setData(await api.post<Deletion>('/account/deletion', { confirm: true }));
+    setNotice(t('account.delete.requested'));
   };
   const cancel = async () => {
     setBusy(true);
@@ -229,12 +219,17 @@ function DeleteAccount({ before }: { before: ReactNode }) {
           <P muted>{t('account.delete.pendingNote')}</P>
         </>
       ) : (
-        <Row>
-          {before}
+        <>
+          <Row>{before}</Row>
           {res.data && (
-            <Button kind="ghost" label={t('account.delete.title')} onPress={() => { setUnderstood(false); setErr(undefined); setOpen(true); }} />
+            <HoldToConfirm label={t('account.delete.title')} yesLabel={t('account.delete.yes')} onConfirm={request} errorText={errorText}>
+              <H2>{t('account.delete.title')}</H2>
+              <P>{t('account.delete.body', { days })}</P>
+              <P muted>{t('account.delete.pendingNote')}</P>
+              <P muted style={{ fontSize: 14 }}>{t('account.delete.openBookings')}</P>
+            </HoldToConfirm>
           )}
-        </Row>
+        </>
       )}
       {res.loading && !res.data && <Loading />}
       {!!res.error && (
@@ -243,18 +238,7 @@ function DeleteAccount({ before }: { before: ReactNode }) {
           <Button kind="ghost" label={t('common.retry')} onPress={res.reload} />
         </>
       )}
-      {err && !open && <ErrorText text={err} />}
-      <ConfirmDialog open={open} title={t('account.delete.ask')} onClose={() => !busy && setOpen(false)}>
-        <P>{t('account.delete.body', { days })}</P>
-        <P muted>{t('account.delete.pendingNote')}</P>
-        <P muted style={{ fontSize: 14 }}>{t('account.delete.openBookings')}</P>
-        <ConsentCheck checked={understood} onChange={setUnderstood} label={t('account.delete.confirmCheck')} />
-        {err && <ErrorText text={err} />}
-        <Row>
-          <Button label={t('account.delete.yes')} busy={busy} disabled={!understood} onPress={() => void request()} />
-          <Button kind="ghost" label={t('account.delete.no')} disabled={busy} onPress={() => setOpen(false)} />
-        </Row>
-      </ConfirmDialog>
+      {err && <ErrorText text={err} />}
     </View>
   );
 }

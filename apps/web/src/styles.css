@@ -1471,3 +1471,110 @@ legend.label {
   font-size: 0.92rem;
   margin-bottom: 6px;
 }
+
+/* ---------- Redesign 2026-11 (docs/design/redesign-2026-11.md §5.2): new tokens ----------
+   Red is allowed ONLY for destructive actions (owner, 2026-11-18): the danger zone and the hold button. */
+:root {
+  --c-danger: var(--bad);
+  --c-on-danger: #ffffff;
+  --c-danger-soft: color-mix(in oklab, var(--bad) 8%, transparent);
+  --c-accent: var(--c-primary);
+  --c-on-accent: var(--c-on-primary);
+  --c-accent-soft: color-mix(in oklab, var(--c-primary) 12%, transparent);
+  --c-surface-2: var(--c-chip);
+  --c-line-strong: color-mix(in oklab, var(--c-fg) 34%, var(--c-bg));
+}
+[data-theme='yondo'] {
+  --c-danger: #b42318;
+  --c-on-danger: #f5f2ec;
+  --c-danger-soft: rgba(180, 35, 24, 0.08);
+  --c-accent: #e8501a;
+  --c-on-accent: #111111;
+  --c-accent-soft: rgba(232, 80, 26, 0.12);
+}
+[data-theme='yondo-tun'] {
+  --c-danger: #ff6b5b;
+  --c-on-danger: #111111;
+  --c-danger-soft: rgba(255, 107, 91, 0.1);
+  --c-accent: #e8501a;
+  --c-on-accent: #111111;
+  --c-accent-soft: rgba(232, 80, 26, 0.18);
+}
+
+/* ---------- Hold-to-Confirm (§4.4) ---------- */
+.danger-zone {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  border: 1.5px solid color-mix(in oklab, var(--c-danger) 40%, transparent);
+  background: var(--c-danger-soft);
+}
+.danger-zone h2,
+.danger-zone h3 {
+  margin: 0;
+  color: var(--c-danger);
+}
+.hold {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--c-danger);
+  background: var(--c-surface);
+  color: var(--c-danger);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.hold:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.hold-fill {
+  position: absolute;
+  inset: -1px;
+  display: grid;
+  place-items: center;
+  background: var(--c-danger);
+  color: var(--c-on-danger);
+  clip-path: inset(0 100% 0 0);
+}
+.hold.holding .hold-fill {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.5s linear;
+}
+.hold.retract .hold-fill {
+  transition: clip-path 0.25s ease-out;
+}
+.hold.done .hold-fill {
+  clip-path: inset(0 0 0 0);
+}
+.hold-hint {
+  margin: 0;
+  text-align: center;
+}
+.hold-two-step {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn.hold-yes {
+  background: var(--c-danger);
+  color: var(--c-on-danger);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hold.holding .hold-fill {
+    transition: clip-path 1.5s steps(3, end);
+  }
+  .hold.retract .hold-fill {
+    transition: none;
+  }
+}
