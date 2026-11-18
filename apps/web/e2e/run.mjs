@@ -79,6 +79,16 @@ async function otpLogin(page, phone, { setup = true } = {}) {
 }
 
 async function axeScan(page, label) {
+  // Let entrance animations (list items fading in) finish first: mid-fade, axe measures white text blended with the
+  // background (#fefafb instead of #ffffff) and reports a contrast that the settled page does not have.
+  await page.evaluate(() => Promise.all(document.getAnimations()
+    .filter((a) => a.effect?.getComputedTiming?.().iterations !== Infinity)
+    .map((a) => a.finished.catch(() => undefined))));
+  // motion/react can also drive opacity from JS: wait until no inline opacity is mid-way (max 2 s).
+  await page.waitForFunction(() => [...document.querySelectorAll('[style*="opacity"]')]
+    .every((el) => { const o = parseFloat(el.style.opacity); return Number.isNaN(o) || o === 0 || o === 1; }), null, { timeout: 2000 })
+    .catch(() => undefined);
+  await page.waitForTimeout(150);
   await page.evaluate(AXE);
   const out = await page.evaluate(async () => {
     const r = await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'], resultTypes: ['violations'] });

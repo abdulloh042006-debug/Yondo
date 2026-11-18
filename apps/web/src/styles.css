@@ -1368,6 +1368,7 @@ table.data td {
   .sound-track i {
     transition: none;
   }
+}
 /* ---------- likes, card feed, photo manager (photos/likes/filters/cards UI) ---------- */
 .like-btn b {
   font-variant-numeric: tabular-nums;
@@ -1576,6 +1577,10 @@ legend.label {
     transition: clip-path 1.5s steps(3, end) !important;
   }
   .hold.retract .hold-fill {
+    transition: none !important;
+  }
+}
+
 /* Settings → Push bildirishnomalar switch (a real checkbox with role="switch"; colours follow the theme tokens). */
 input.switch {
   appearance: none;

@@ -224,7 +224,7 @@ function DeleteAccount({ before }: { before: ReactNode }) {
         <>
           <Row>{before}</Row>
           {res.data && (
-            <HoldToConfirm label={t('account.delete.title')} yesLabel={t('account.delete.yes')} onConfirm={request} errorText={errorText}>
+            <HoldToConfirm label={t('account.delete.title')} yesLabel={t('account.delete.yes')} doneLabel={t('account.delete.requested')} onConfirm={request} errorText={errorText}>
               <H2>{t('account.delete.title')}</H2>
               <P>{t('account.delete.body', { days })}</P>
               <P muted>{t('account.delete.pendingNote')}</P>

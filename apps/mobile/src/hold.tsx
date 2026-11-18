@@ -21,12 +21,15 @@ export const HOLD_MS = 1500;
 export function HoldToConfirm({
   label,
   yesLabel,
+  doneLabel,
   onConfirm,
   errorText,
   children,
 }: {
   label: string;
   yesLabel: string;
+  /** Announced after success. */
+  doneLabel?: string;
   onConfirm: () => Promise<void>;
   /** Maps a thrown error to text (by API error code), e.g. `errorText` from ./shared. */
   errorText: (e: unknown) => string;
@@ -53,6 +56,7 @@ export function HoldToConfirm({
     progress.setValue(1);
     try {
       await onConfirm();
+      if (doneLabel) AccessibilityInfo.announceForAccessibility(doneLabel);
     } catch (e) {
       setErr(errorText(e));
       setPhase('idle');
@@ -84,6 +88,11 @@ export function HoldToConfirm({
     else Animated.timing(progress, { toValue: 0, duration: 250, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
   };
 
+  const openTwoStep = () => {
+    setTwoStep(true);
+    AccessibilityInfo.announceForAccessibility(t('hold.twoStep', { action: label }));
+  };
+
   const text = phase === 'idle' ? label : t('hold.confirming');
   // The fill window slides in from the left while its content slides the other way, so the light label stays put.
   const shift = progress.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] });
@@ -107,8 +116,12 @@ export function HoldToConfirm({
         }}
         onPress={() => {
           if (own.current || phase !== 'idle') return;
-          setTwoStep(true);
-          AccessibilityInfo.announceForAccessibility(t('hold.twoStep', { action: label }));
+          openTwoStep();
+        }}
+        // TalkBack / VoiceOver "activate" is never a hold: it opens the explicit two-step confirmation.
+        accessibilityActions={[{ name: 'activate' }]}
+        onAccessibilityAction={(e) => {
+          if (e.nativeEvent.actionName === 'activate' && phase === 'idle') openTwoStep();
         }}
         style={[styles.btn, { borderColor: palette.danger, backgroundColor: palette.surface }]}
       >

@@ -34,7 +34,10 @@ Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for
 - web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
 - Account deletion (web `pages/DeleteAccount.tsx`, mobile `screens/Settings.tsx`) uses it: consequences in a red danger zone, early release does nothing, Space/Enter hold, screen-reader two-step path, aria-live / AccessibilityInfo announcements. The "I understand" box and the dialog are gone.
 - i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
-- Mobile smoke "Cards: Save…" was flaky (CEO: failed on main): the filters step switched to Cards while the "Recommended" reload was still in flight, so the deck re-rendered under the next step. The test now waits for that response. App behaviour unchanged.
+- Mobile smoke "Cards: Save…" (CEO: fails on main) is flaky (~1 run in 3 here): the deck sometimes opens straight on "You have seen every card". Root cause NOT found yet; to be fixed with the Kashf/CardDeck redesign PR.
+- **Fixed on main's CSS:** the #44 merge left `@media (prefers-reduced-motion)` (sound switch) unclosed, so every rule after it (likes, card feed, photo manager, push switch) applied only to reduced-motion users; the block is closed now (`styles.css` parses again: checked with postcss).
+- Web e2e `axeScan` waits for finite entrance animations / mid-way inline opacity before scanning (the rausch/stone `.btn.sm` contrast 4.49/4.43 failures were measured mid-fade: #fefafb text).
+- Mobile hold: `accessibilityActions` activate → two-step; completion announced.
 Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
 Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
 ## S73 — Push notifications: web (VAPID) + Android (FCM), with a permission request (2026-11-18) [cloud worker, backend + web + mobile]
