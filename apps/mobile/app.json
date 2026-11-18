@@ -32,12 +32,23 @@
       "expo-secure-store",
       "expo-asset",
       "expo-font",
+      "expo-audio",
       [
         "expo-image-picker",
         {
           "photosPermission": "Yondo needs your photo library only when you choose a profile photo.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E8501A",
+          "defaultChannel": "yondo",
+          "sounds": [
+            "./assets/sounds/yondo_notify.mp3"
+          ]
         }
       ]
     ],

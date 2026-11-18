@@ -41,3 +41,6 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Firebase config for Android push: written by CI from a secret, never committed (public repo).
+apps/mobile/google-services.json

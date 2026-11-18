@@ -92,6 +92,26 @@ class Settings(BaseSettings):
     # When true, accounts without username + password get 403 password_setup_required outside
     # /auth and /legal. Off until the web/mobile setup screens ship (the demo must keep working).
     auth_require_password_setup: bool = False
+    # Push notifications (docs/push-notifications.md). Android = FCM HTTP v1 with a Google
+    # service-account JSON (a secret: set it only in the host's env). Empty = Android push off.
+    fcm_service_account_json: SecretStr | None = None
+    # Firebase project id; empty = the "project_id" inside the service-account JSON.
+    fcm_project_id: str | None = None
+    fcm_base_url: str = 'https://fcm.googleapis.com'
+    # Web Push (VAPID). On by default: without YONDO_WEBPUSH_VAPID_PRIVATE_KEY (raw P-256 scalar,
+    # base64url) the server generates a key pair once and keeps it in the database.
+    webpush_enabled: bool = True
+    webpush_vapid_private_key: SecretStr | None = None
+    # VAPID "sub" contact (mailto: or https:). Empty = public_web_url, else the project page.
+    webpush_subject: str = ''
+    # The server POSTs to subscription endpoints, so only these push services are accepted.
+    webpush_allowed_hosts: tuple[str, ...] = (
+        'fcm.googleapis.com',
+        'push.services.mozilla.com',
+        'push.apple.com',
+        'notify.windows.com',
+    )
+    push_send_timeout_seconds: float = Field(default=5.0, gt=0, le=15)
     # Unset until the fee policy has been approved. Values are basis points.
     platform_fee_bps: int | None = Field(default=None, ge=0, le=10_000)
     # Offline CLICK Shop API emulator only. Never accepts or moves real funds.
@@ -168,6 +188,18 @@ class Settings(BaseSettings):
                 'YONDO_AUTH_OTP_PEPPER must be at least 32 characters outside local environments'
             )
         return self
+
+    @property
+    def webpush_subject_value(self) -> str:
+        for candidate in (self.webpush_subject, self.public_web_url):
+            if candidate.startswith(('mailto:', 'https://')):
+                return candidate
+        return 'https://github.com/abdulloh042006-debug/Yondo'
+
+    @field_validator('fcm_service_account_json', 'webpush_vapid_private_key')
+    @classmethod
+    def empty_push_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
+        return value if value is not None and value.get_secret_value().strip() else None
 
     @field_validator('telegram_bot_token', 'bot_shared_secret')
     @classmethod

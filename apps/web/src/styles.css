@@ -1326,6 +1326,48 @@ table.data td {
   background: linear-gradient(160deg, color-mix(in oklab, var(--c-fg) 10%, var(--c-bg)), color-mix(in oklab, var(--c-fg) 22%, var(--c-bg)));
 }
 
+/* Unread notifications: carrot dot on the Profil nav item (graphic only; the meaning is in the sr-only label). */
+.unread-dot {
+  position: absolute;
+  top: 8px;
+  right: calc(50% - 20px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e8501a;
+  box-shadow: 0 0 0 2px var(--c-bg, #f5f2ec);
+}
+.topnav .unread-dot {
+  top: 10px;
+  right: 8px;
+}
+
+.sound-switch {
+  gap: 10px;
+}
+.sound-track {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+}
+.sound-track i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+  transition: transform 0.18s ease;
+}
+.sound-track[data-on='true'] i {
+  transform: translateX(14px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sound-track i {
+    transition: none;
+  }
 /* ---------- likes, card feed, photo manager (photos/likes/filters/cards UI) ---------- */
 .like-btn b {
   font-variant-numeric: tabular-nums;
@@ -1428,4 +1470,52 @@ legend.label {
   font-weight: 600;
   font-size: 0.92rem;
   margin-bottom: 6px;
+}
+
+/* Settings → Push bildirishnomalar switch (a real checkbox with role="switch"; colours follow the theme tokens). */
+input.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  background: var(--c-chip);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+input.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c-fg);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+input.switch:checked {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+input.switch:checked::after {
+  transform: translateX(18px);
+  background: var(--c-on-primary);
+}
+input.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+input.switch:focus-visible {
+  outline: 2px solid var(--c-fg);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  input.switch,
+  input.switch::after {
+    transition: none;
+  }
 }

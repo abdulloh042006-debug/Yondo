@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { forgetPushDevice } from './push';
 
 import { ApiError, api, onSessionExpired, tokens, type Schemas } from './api';
 import { LEGAL_VERSIONS, applyLocaleTag, getLocaleTag, onLocaleChange, type LegalDoc } from './shared';
@@ -105,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ),
         ),
       logout: async () => {
+        await forgetPushDevice(); // needs the session token, so before /auth/logout
         try {
           await api.post('/auth/logout');
         } catch {

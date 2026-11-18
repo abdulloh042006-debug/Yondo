@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, ApiError, onSessionExpired, tokens, type Schemas } from '../api/client';
+import { forgetPushDevice } from '../lib/push';
 import { applyLocaleTag, getLocaleTag, onLocaleChange } from '../i18n';
 import { acceptLegal } from '../legal/consent';
 
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await reload();
       },
       logout: async () => {
+        await forgetPushDevice(); // this browser stops receiving the account's pushes (needs the token, so first)
         try {
           await api.post('/auth/logout');
         } catch {

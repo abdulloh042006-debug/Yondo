@@ -1,0 +1,14 @@
+{
+  "name": "Yondo",
+  "short_name": "Yondo",
+  "description": "Yondo doim yoningda",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F2EC",
+  "theme_color": "#111111",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

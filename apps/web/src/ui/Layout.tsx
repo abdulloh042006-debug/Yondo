@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { ConsentGate } from './Consent';
 import { PasswordSetupGate } from '../auth/PasswordSetup';
 import { PageTransition } from './motion';
+import { useUnreadNotifications } from '../lib/useUnreadNotifications';
 
 const Icon = ({ d }: { d: string }) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -20,6 +21,16 @@ const ICONS = {
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 9a8 8 0 0 1 16 0',
   shield: 'M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6z',
 };
+
+/** Carrot dot (graphic only, no text) on the Profil item while notifications are unread. */
+function UnreadDot() {
+  return (
+    <>
+      <span className="unread-dot" aria-hidden="true" />
+      <span className="sr-only">{t('nav.unread')}</span>
+    </>
+  );
+}
 
 /** Official Yondo symbol (design-prototype/brand/logo): two converging lines, ink + the single accent node. */
 function BrandMark() {
@@ -53,11 +64,12 @@ export function Layout() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  const unreadCount = useUnreadNotifications();
   const items = [
     { to: '/', label: t('nav.discover'), icon: ICONS.home, end: true },
     ...(user ? [{ to: '/favorites', label: t('nav.favorites'), icon: ICONS.heart, end: false }] : []),
     ...(user ? [{ to: '/bookings', label: t('nav.bookings'), icon: ICONS.cal, end: false }] : []),
-    { to: user ? '/account' : '/login', label: user ? t('nav.profile') : t('nav.login'), icon: ICONS.user, end: false },
+    { to: user ? '/account' : '/login', label: user ? t('nav.profile') : t('nav.login'), icon: ICONS.user, end: false, dot: Boolean(user) && unreadCount > 0 },
     ...(user?.roles.includes('admin') ? [{ to: '/admin', label: t('nav.admin'), icon: ICONS.shield, end: false }] : []),
   ];
   return (
@@ -84,6 +96,7 @@ export function Layout() {
                   <>
                     {isActive && <Pill />}
                     {i.label}
+                    {'dot' in i && i.dot && <UnreadDot />}
                   </>
                 )}
               </NavLink>
@@ -119,6 +132,7 @@ export function Layout() {
                   <Icon d={i.icon} />
                 </motion.span>
                 {i.label}
+                {'dot' in i && i.dot && <UnreadDot />}
               </>
             )}
           </NavLink>

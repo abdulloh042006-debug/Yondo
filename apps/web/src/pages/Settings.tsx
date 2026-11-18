@@ -7,8 +7,10 @@ import { AlphabetPicker, LanguagePicker } from '../i18n/LanguagePicker';
 import { Reveal } from '../ui/motion';
 import { roleLabel } from '../lib/labels';
 import { useResource } from '../lib/useResource';
+import { playNotifySound, setSoundEnabled, soundEnabled } from '../lib/notifySound';
 import { useToast } from '../ui/feedback';
 import { ThemePicker } from '../ui/theme';
+import { PushToggle } from '../ui/PushToggle';
 import { ChangePassword } from './ChangePassword';
 import { DeleteAccount } from './DeleteAccount';
 
@@ -56,6 +58,38 @@ function AccountGroup({ user }: { user: User }) {
   );
 }
 
+/** Notification sound: per-device switch (default ON) and a test button; the click also unlocks audio for the page. */
+function SoundSettings() {
+  const [on, setOn] = useState(soundEnabled);
+  return (
+    <section className="glass pad stack" aria-labelledby="sound-h">
+      <h2 id="sound-h">{t('settings.sound')}</h2>
+      <p className="muted">{t('settings.soundHint')}</p>
+      <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          className={`btn ${on ? 'primary' : 'ghost'} sound-switch`}
+          onClick={() => {
+            const next = !on;
+            setOn(next);
+            setSoundEnabled(next);
+          }}
+        >
+          <span className="sound-track" aria-hidden="true" data-on={on}>
+            <i />
+          </span>
+          {t('settings.soundToggle')}
+        </button>
+        <button type="button" className="btn ghost" onClick={() => playNotifySound({ force: true })}>
+          {t('settings.soundTest')}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /**
  * Grouped like most consumer apps: language first (most needed, and how you recover from a wrong choice),
  * then appearance, notifications, account (roles, companion studio, sign out, deletion), privacy & safety, about.
@@ -86,6 +120,9 @@ export function Settings() {
           <ThemePicker />
         </section>
       </Reveal>
+      <Reveal delay={0.035}>
+        <SoundSettings />
+      </Reveal>
       {user && (
         <Reveal delay={0.04}>
           <nav className="glass pad" aria-label={t('nav.notifications')}>
@@ -100,6 +137,7 @@ export function Settings() {
                 </Link>
               </li>
             </ul>
+            <PushToggle />
           </nav>
         </Reveal>
       )}
