@@ -55,6 +55,9 @@ def build_fcm_sender(settings: Settings) -> FcmSender | None:
     return FcmSender(account, base_url=settings.fcm_base_url)
 
 
+VAPID_ATTEMPTS = 3
+
+
 async def load_vapid_keys(
     session_factory: async_sessionmaker[AsyncSession], settings: Settings
 ) -> VapidKeys:
@@ -64,18 +67,22 @@ async def load_vapid_keys(
             webpush.b64url_decode(settings.webpush_vapid_private_key.get_secret_value())
         )
         return VapidKeys(key, webpush.b64url(webpush.public_bytes(key.public_key())), 'env')
-    async with session_factory() as session:
-        row = await session.get(PushVapidKey, 1)
-        if row is None:
+    # Each attempt reads in a fresh session. An insert can lose a race with another worker
+    # (IntegrityError) or, on a connection shared with other sessions (the SQLite test engine),
+    # be rolled back by them before its commit; the next attempt then re-reads or retries.
+    for _ in range(VAPID_ATTEMPTS):
+        async with session_factory() as session:
+            row = await session.get(PushVapidKey, 1)
+            if row is not None:
+                key = webpush.private_from_raw(webpush.b64url_decode(row.private_key))
+                return VapidKeys(key, row.public_key, 'database')
             private, public = webpush.generate_vapid_keypair()
             session.add(PushVapidKey(id=1, private_key=private, public_key=public))
             try:
                 await session.commit()
-            except IntegrityError:  # another worker generated it first: use theirs
+            except IntegrityError:  # another worker stored one first: read theirs next time
                 await session.rollback()
-            row = await session.get(PushVapidKey, 1, populate_existing=True)
-        key = webpush.private_from_raw(webpush.b64url_decode(row.private_key))
-        return VapidKeys(key, row.public_key, 'database')
+    raise RuntimeError('push: the VAPID key pair could not be stored')
 
 
 def deep_link(notification: UserNotification) -> str:
@@ -122,10 +129,25 @@ class PushDispatcher:
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
-    async def drain(self) -> None:
-        """Wait for scheduled sends (tests and graceful shutdown)."""
-        while self._tasks:
-            await asyncio.gather(*list(self._tasks), return_exceptions=True)
+    async def drain(self, timeout: float | None = None) -> None:
+        """Wait for scheduled sends (tests and graceful shutdown), at most ``timeout`` seconds.
+
+        Finished tasks are dropped here as well, without relying on their done callback: in CI
+        (2026-11-18) a task scheduled from an after_commit hook during two concurrent requests
+        was finished while its callback had not removed it, and the old ``while self._tasks:
+        gather(...)`` loop spun for ever.
+        """
+        loop = asyncio.get_running_loop()
+        deadline = None if timeout is None else loop.time() + timeout
+        while True:
+            self._tasks.difference_update([t for t in self._tasks if t.done()])
+            if not self._tasks:
+                return
+            remaining = None if deadline is None else deadline - loop.time()
+            if remaining is not None and remaining <= 0:
+                logger.warning('push: %d send(s) still running at shutdown', len(self._tasks))
+                return
+            await asyncio.wait(list(self._tasks), timeout=remaining)
 
     async def deliver(self, notification_ids: list[UUID]) -> None:
         try:
@@ -172,6 +194,9 @@ class PushDispatcher:
                     for device in by_user.get(notification.recipient_id, []):
                         jobs.append(self._send(client, device, title, body, data))
                 results = await asyncio.gather(*jobs, return_exceptions=True)
+            for result in results:
+                if isinstance(result, BaseException):  # a bug, not a provider answer: say so
+                    logger.error('push: send crashed', exc_info=result)
             invalid = {r for r in results if isinstance(r, UUID)}
             if invalid:
                 now = datetime.now(UTC)
