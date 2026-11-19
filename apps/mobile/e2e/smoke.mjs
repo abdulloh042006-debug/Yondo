@@ -303,15 +303,17 @@ await step('filters sheet: category, minimum stars, sort; chips + clear all (rea
 
 await step('Cards: Save adds to favourites, Next skips; no dislike or match', async () => {
   await page.getByRole('radio', { name: 'Cards' }).click();
+  // The deck always opens on its first card ("1 of N"), never on the end screen.
+  await page.getByText(/^1 of \d+\+?$/).first().waitFor();
   const heading = page.getByRole('heading').filter({ hasText: /^DEMO/ }).first();
   await heading.waitFor();
-  const first = (await heading.innerText()).split(',')[0];
   assert(!/dislike|match/i.test(await page.locator('body').innerText()), 'no dislike or match wording');
-  await nextCard(first);
-  // Madina was saved by the favourites step: skip any card that is already saved, then save the next one.
+  // The seed has two visible companions and the favourites step already saved one of them. Their order under
+  // "Recommended" ties on every stat, so the API breaks the tie by profile id (random per seed): either may come
+  // first. Save the first card that is not saved yet, skipping with Next, and check Next once more after saving.
   let second = '';
   for (let i = 0; i < 5 && !second; i++) {
-    const name = (await page.getByRole('heading').filter({ hasText: /^DEMO/ }).first().innerText()).split(',')[0];
+    const name = await deckName();
     if (await button('Save').isVisible()) {
       second = name;
       await button('Save').click();
@@ -322,6 +324,9 @@ await step('Cards: Save adds to favourites, Next skips; no dislike or match', as
   assert(second, 'a card that is not yet saved');
   await page.getByText(/Added to favourites/i).first().waitFor();
   await button('Saved').waitFor();
+  // Next is always exercised: before the save when the saved card came first, or here when cards remain after it.
+  const [pos, total] = (await page.getByText(/^\d+ of \d+/).first().innerText()).match(/^(\d+) of (\d+)/).slice(1).map(Number);
+  if (pos < total) await nextCard(second);
   const favs = (await authed('/discovery/favorites')).body.map((c) => c.display_name);
   assert(favs.includes(second), `favourites on the server must hold ${second}: ${favs}`);
   await noSideScroll('cards');

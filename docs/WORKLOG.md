@@ -29,6 +29,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S81 — "Cards" deck: the smoke flake explained and fixed (2026-11-19) [cloud worker]
+Done (CEO: the deck "opens on You have seen every card" ~1 run in 3):
+- Root cause (instrumented run): **not an app bug.** The deck opened on card 1 every time; it reached the end screen because the test pressed Next twice on a 2-card deck. The seed shows two companions (Madina, Jasur); the favourites step saves one. Under "Recommended" both tie on every stat, so the API breaks the tie by profile id: a random UUID per seed, so either may come first. When the already-saved card came second, the old step's unconditional first Next left no unsaved card.
+- `apps/mobile/e2e/smoke.mjs` Cards step: asserts the deck opens on "1 of N"; saves the first unsaved card (skipping with Next) and checks Next once more when cards remain after it, so Next is covered in both orders.
+- No app or API change: the profile-id tie-break is the intended stable order (pagination stays consistent within a database).
+Evidence: mobile smoke 3 runs in a row on fresh DBs (orders logged), see the PR.
+Commit: branch `fix/cards-deck-empty`, PR to `main`.
 ## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
 Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
 - web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
