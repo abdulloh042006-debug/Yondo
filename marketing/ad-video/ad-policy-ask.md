@@ -24,8 +24,8 @@ claim safety guarantees, verification of every user, or that SOS sends help.
 **TikTok — via a TikTok for Business representative (the policy says "companionship … in exchange for compensation" is prohibited)**
 1. Does that rule cover a platform where adults book a companion for a public activity (coffee, walk, event) for a fee set by the
    companion?
-2. If yes: is any promotion allowed (for example the free customer app, without showing that companions are paid)? Note: we will
-   **not** run ads that hide the paid model; if the answer is no, we stay organic on TikTok.
+2. If yes: is there any compliant way to advertise such a platform when the ad states truthfully that companions are paid?
+   If the answer is no, we stay organic on TikTok (we never run ads that hide the paid model).
 3. Do the rules for organic brand accounts (non-ad posts) differ?
 
 **Google / YouTube — Google Ads support, Dating and Companionship certification**
