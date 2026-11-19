@@ -29,6 +29,15 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S78 — Redesign phase 2, PR 2: Shockwave dock + compact App Bar (2026-11-19) [cloud worker, web + mobile]
+Done (spec `docs/design/redesign-2026-11.md` §3.2/§4.1; stacked on #49 for the tokens):
+- **Dock** web `ui/ShockwaveDock.tsx` (Web Animations API), mobile `src/dock.tsx` (Animated, native driver): pill = --c-primary (ink by day, paper at night) with on-primary label; on a tab change the pill shrinks into a carrot orb, flies, expands with a spring; on arrival a ripple, 8 particles, a small 3D tilt and an icon bounce. Route changes on tap. Reduced motion: the pill jumps, nothing travels.
+- **App Bar** web `ui/AppBar.tsx`, mobile `AppBar`/`IconAction` in `src/ui.tsx`: 44 px back + one h1 title + icon actions. Replaces "← Orqaga"/"← Bronlar" on Bron tafsilotlari, Hamroh profili, Sozlamalar, Yordam, Bildirishnomalar (and Kirish on mobile). Booking service name is now h2 under the "Bron tafsilotlari" h1.
+- **Names:** `account.title` "Hisobim" → "Profil" (ru "Профиль", en "Profile"), as the tab; gear on Profil opens Sozlamalar. New key `nav.back` (uz/ru/en).
+- Tests: `ShockwaveDock.test.tsx` (dock + AppBar); web e2e and mobile smoke/walkthrough labels updated.
+Not done: screens' content redesign (Kashf chips, Bron details, Settings split, aura switcher). Redesign paused after this PR (CEO: security, 18+ and the pilot first).
+Evidence: web tsc/lint, vitest 162/162, build, e2e 74/74; mobile tsc, smoke 18/19 (only the known "Cards" flake, also on main). Screens: `docs/design/redesign-2026-11/phase2-pr2/`.
+Commit: branch `feat/redesign-dock-appbar`, PR to `main` (after #49).
 ## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
 Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
 - web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.

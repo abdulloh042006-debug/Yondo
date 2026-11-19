@@ -5,7 +5,7 @@ import { api, errorText, type Schemas } from '../api';
 import { useNav } from '../nav';
 import { formatInstant, hasKey, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, ErrorText, H1, Loading, Row, Screen, Tag } from '../ui';
+import { Banner, Button, Card, ErrorText, H1, Loading, Row, Screen, Tag, AppBar } from '../ui';
 import { useResource } from '../useResource';
 
 type Notice = Schemas['NotificationRead'];
@@ -37,12 +37,7 @@ export function NotificationsScreen() {
   };
   return (
     <Screen>
-      {nav.canGoBack && (
-        <Row>
-          <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
-        </Row>
-      )}
-      <H1>{t('nav.notifications')}</H1>
+      <AppBar title={t('nav.notifications')} onBack={nav.canGoBack ? nav.back : undefined} />
       {unread > 0 && (
         <Row>
           <Button kind="ghost" small label={t('notif.readAll')} onPress={() => void readAll()} />

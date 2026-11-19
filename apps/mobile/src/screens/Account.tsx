@@ -7,7 +7,7 @@ import { ICONS, Icon } from '../brand';
 import { useNav } from '../nav';
 import { prettyPhone, roleLabel, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, ErrorText, Field, H1, H2, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, ErrorText, Field, H1, H2, MenuRow, P, Row, Screen, AppBar, GEAR, IconAction } from '../ui';
 import { useResource } from '../useResource';
 import { MyPhotos } from './MyPhotos';
 
@@ -73,7 +73,7 @@ function AccountView({ user }: { user: User }) {
 
   return (
     <Screen>
-      <H1>{t('account.title')}</H1>
+      <AppBar title={t('account.title')} actions={<IconAction label={t('settings.title')} icon={GEAR} onPress={() => nav.push({ name: 'settings' })} />} />
       {notice && <Banner text={notice} />}
       <Card>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
