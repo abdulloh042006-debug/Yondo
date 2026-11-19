@@ -10,7 +10,8 @@ Sources: `kit/` (shared pieces) + `ad5/` (this ad, Stage 2b). AI shots: the owne
   Tadbir, Suhbat, …) shown as chips, the companion profile with its services (categories) and languages, the booking request
   (5 fields) and the toast "Bron so‘rovi yuborildi". The list items in this ad are mapped to those categories.
 - Interests appear only if that feature has merged before capture (the CEO will say).
-- **Prices never in frame.** Crops are chosen so no price line shows; the UI itself is never edited.
+- **Prices never in frame.** Crops are chosen so no price line shows; the UI is not edited, with one exception: the
+  «✓ … tasdiqlangan» badge is removed before each shot, because in the capture server it comes from an always-verified test double.
 - The companion **reviews** a request (accepts or declines); the ad never says a meeting is guaranteed.
 
 ## The plan list (motion design; each item = a real category)

@@ -2,8 +2,9 @@
 // Run the API first:  AD5_SERVICES=1 PHOTOS_DIR=<repo>/marketing/ad-video/photos python3 server_video.py 8000 /tmp/cap.db
 // (needs redis on :6379), then from apps/web:  npx vite build && OUT=<dir> node <repo>/marketing/ad-video/ad5/capture_c3.mjs
 // Default alphabet (1995), theme `yondo`, phone 390x844 @2.5. Verified badges are removed (they come from a test double).
-// Writes: profile.png (top of the profile), services.png (service chips + languages), place.png (meeting-place field + hint),
-// and *.json boxes (fractions of the viewport) of the elements the video lifts or crops. Prices are never in a saved crop.
+// Writes: discover-tadbir.png (Kashf with the Tadbir chip), card.png (card feed), profile.png, services.png, place.png
+// (meeting-place field + hint) and *.json boxes (fractions of the viewport). ad5/crop_c3.py then makes the price-free crops.
+// The only DOM change: the «✓ … tasdiqlangan» badge is removed, because it comes from the always-verified test double.
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
