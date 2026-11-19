@@ -1051,5 +1051,23 @@ export const uz = {
   'err.otp_attempts_exceeded': 'Kod 3 marta notöğri kiritildi va endi işlamaydi. Yangi kod sörang.',
   'err.otp_hourly_limit': 'Bu raqamga bir soatda 5 tadan köp kod yuborilmaydi. Keyinroq urinib köring.',
   'err.otp_daily_limit': 'Bu raqamga bir kunda 10 tadan köp kod yuborilmaydi. Ertaga urinib köring.',
+  // --- 18+ (owner, 2026-11-19; docs/age-limit.md)
+  'age.dob': 'Tuğilgan sana',
+  'age.dobHint': 'Yondo faqat 18 yoş va undan kattalar uçun. Sana boşqalarga körsatilmaydi.',
+  'age.stepTitle': 'Tuğilgan sanangizni kiriting',
+  'age.stepLead': 'Yondo faqat 18 yoş va undan kattalar uçun. Bu bir marta söraladi.',
+  'age.restrictedTitle': 'Yondo 18 yoşdan kattalar uçun',
+  'age.restrictedBody': 'Siz 18 yoşdan kiçik sanani kiritdingiz, şuning uçun hisob çeklangan. Agar sana xato kiritilgan bölsa, qöllab-quvvatlaşga yozing: administrator hujjatingizni tekşiradi. Hisobni öçirib yuboriş ham mumkin.',
+  'age.contactSupport': 'Qöllab-quvvatlaşga yoziş',
+  'age.restrictedNew': 'Yondo faqat 18 yoş va undan kattalar uçun. Hisob oçilmadi.',
+  'age.invalid': 'Haqiqiy tuğilgan sanani kiriting.',
+  'age.under18': 'Yondo faqat 18 yoş va undan kattalar uçun.',
+  'age.fromDob': 'Yoş tuğilgan sanadan hisoblanadi.',
+  'err.age_restricted': 'Yondo faqat 18 yoş va undan kattalar uçun.',
+  'err.date_of_birth_required': 'Tuğilgan sanangizni kiriting.',
+  'err.invalid_date_of_birth': 'Haqiqiy tuğilgan sanani kiriting.',
+  'err.date_of_birth_already_set': 'Tuğilgan sana allaqaçon kiritilgan.',
+  'err.adult_confirmation_required': 'Tasdiqlaşdan oldin hujjatda 18 yoş va undan kattaligini belgilang.',
+  'err.age_restriction_not_set': 'Bu hisobda yoş çeklovi yöq.',
 };
 export type Key = keyof typeof uz;

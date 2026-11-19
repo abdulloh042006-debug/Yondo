@@ -28,8 +28,8 @@ async function api(base, path, body, token, method = 'POST') {
 async function codeSession(base, phone, register) {
   const otp = await api(base, '/auth/otp/request', { phone_number: phone });
   const pair = await api(base, '/auth/otp/verify', { phone_number: phone, code: otp.development_otp });
-  for (const document of ['terms', 'privacy']) await api(base, '/account/consents', { document, version: '2026-10-23-draft' }, pair.access_token);
-  if (register) await api(base, '/auth/registration', register, pair.access_token);
+  for (const [document, version] of Object.entries({ terms: '2026-11-19-draft', privacy: '2026-11-19-draft' })) await api(base, '/account/consents', { document, version }, pair.access_token);
+  if (register) await api(base, '/auth/registration', { date_of_birth: '1995-05-15', ...register }, pair.access_token);
   return pair;
 }
 

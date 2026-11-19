@@ -19,7 +19,7 @@ const MOBILE = process.env.MOBILE ?? 'http://127.0.0.1:8776';
 const WEB = process.env.WEB ?? 'http://127.0.0.1:8777';
 const OUT = process.env.OUT ?? 'parity-out';
 mkdirSync(OUT, { recursive: true });
-const VERSIONS = { terms: '2026-10-23-draft', privacy: '2026-10-23-draft' };
+const VERSIONS = { terms: '2026-11-19-draft', privacy: '2026-11-19-draft' };
 
 async function post(path, body, token) {
   const r = await fetch(`${WEB}/api/v1${path}`, {

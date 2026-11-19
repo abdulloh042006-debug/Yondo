@@ -21,7 +21,7 @@ const MOBILE = process.env.MOBILE ?? 'http://127.0.0.1:8776';
 const OUT = process.env.OUT ?? 'photos-likes-cards-out';
 const PHOTO = readFileSync(process.env.PHOTO);
 mkdirSync(OUT, { recursive: true });
-const VERSIONS = { terms: '2026-10-23-draft', privacy: '2026-10-23-draft' };
+const VERSIONS = { terms: '2026-11-19-draft', privacy: '2026-11-19-draft' };
 
 async function call(base, method, path, body, token, type = 'application/json') {
   const r = await fetch(`${base}/api/v1${path}`, {
@@ -38,7 +38,7 @@ async function prepare(base) {
   const pair = await call(base, 'POST', '/auth/otp/verify', { phone_number: phone, code: otp.development_otp });
   for (const [document, version] of Object.entries(VERSIONS)) await call(base, 'POST', '/account/consents', { document, version }, pair.access_token);
   const me = await call(base, 'GET', '/auth/me', undefined, pair.access_token);
-  if (me.password_setup_required) await call(base, 'POST', '/auth/registration', { username: 'demo.customer', password: 'demo shots 2026' }, pair.access_token);
+  if (me.password_setup_required) await call(base, 'POST', '/auth/registration', { username: 'demo.customer', password: 'demo shots 2026', date_of_birth: '1995-05-15' }, pair.access_token);
   if (!(await call(base, 'GET', '/user-photos/me', undefined, pair.access_token)).length) await call(base, 'POST', '/user-photos/me', PHOTO, pair.access_token, 'image/png');
   const madina = (await call(base, 'GET', '/discovery/companions?q=Madina')).items[0].id;
   await call(base, 'PUT', `/discovery/companions/${madina}/like`, undefined, pair.access_token);

@@ -64,6 +64,8 @@ async function finishSetup(page, phone) {
   await page.getByLabel('Login', { exact: true }).fill(e2eUsername(phone));
   await page.getByLabel('Yangi parol').fill(e2ePassword(phone));
   await page.getByLabel('Parolni takrorlang').fill(e2ePassword(phone));
+  // 18+ (owner, 2026-11-19): asked only when the account has no date yet (seeded DEMO accounts have one).
+  if (await page.getByLabel('Tuğilgan sana').count()) await page.getByLabel('Tuğilgan sana').fill('1995-05-15');
   await page.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
   await page.getByRole('heading', { name: 'Login va parol yarating' }).waitFor({ state: 'detached' });
 }
@@ -365,6 +367,7 @@ try {
       await a.getByText('Parol telefon raqamingiz bölmasin.').waitFor();
       await a.getByLabel('Yangi parol').fill(pw1);
       await a.getByLabel('Parolni takrorlang').fill(pw1);
+      if (await a.getByLabel('Tuğilgan sana').count()) await a.getByLabel('Tuğilgan sana').fill('1995-05-15'); // 18+
       await a.waitForTimeout(400);
       await axeScan(a, 'password setup');
       await a.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
@@ -591,12 +594,12 @@ try {
     });
     assert(status === 403, `got ${status}`);
   });
-  await step('account profile validates age and saves via server', async () => {
+  await step('account profile: the age follows the date of birth (18+, read-only) and the profile saves via server', async () => {
     await cp.goto(`${WEB}/account`);
     await cp.getByRole('button', { name: 'Tahrirlaş' }).click(); // Profil shows the data; the form opens on "Tahrirlash"
-    await cp.getByLabel('Yoş').fill('12');
-    await cp.getByText('Yoş 18 dan 120 gaça bölişi kerak.').waitFor();
-    await cp.getByLabel('Yoş').fill('29');
+    // The seeded DEMO customer has a date of birth (2026-11-19): the age is shown, not edited.
+    assert((await cp.getByLabel('Yoş').getAttribute('readonly')) !== null, 'age is read-only once a date of birth exists');
+    await cp.getByText('Yoş tuğilgan sanadan hisoblanadi.').waitFor();
     await cp.getByRole('button', { name: 'Saqlaş' }).click();
     await cp.getByText('Profil saqlandi.').waitFor();
   });
@@ -863,7 +866,7 @@ try {
     await page.goto(`${WEB}/terms`);
     await page.getByRole('heading', { name: 'Yondo — Foydalanish shartlari', level: 1, exact: true }).waitFor();
     assert((await page.locator('.legal-doc h2').count()) >= 5, 'sections must render as headings (CRLF sources once collapsed into the title)');
-    await page.getByText(/Versiya: 2026-10-23-draft/).waitFor();
+    await page.getByText(/Versiya: 2026-11-19-draft/).waitFor();
     await page.getByText(/Loyiha: hujjat hali kuçga kirmagan/).waitFor();
     await page.locator('.site-foot').getByRole('link', { name: 'Maxfiylik siyosati' }).click();
     await page.getByRole('heading', { name: 'Yondo — Maxfiylik siyosati', level: 1 }).waitFor();

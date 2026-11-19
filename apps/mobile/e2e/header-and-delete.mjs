@@ -19,7 +19,7 @@ const SITES = {
 };
 const OUT = env('OUT', 'shots');
 mkdirSync(OUT, { recursive: true });
-const VERSIONS = { terms: '2026-10-23-draft', privacy: '2026-10-23-draft' };
+const VERSIONS = { terms: '2026-11-19-draft', privacy: '2026-11-19-draft' };
 const API = SITES['web-after'];
 async function post(path, body, token) {
   const r = await fetch(`${API}/api/v1${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });

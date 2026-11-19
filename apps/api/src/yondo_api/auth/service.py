@@ -11,6 +11,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.api.errors import ApplicationError
+from yondo_api.auth.age import ensure_phone_not_blocked
 from yondo_api.auth.phone import normalize_uzbekistan_phone
 from yondo_api.auth.providers import OtpChannel, OtpDeliveryProvider
 from yondo_api.config import Settings
@@ -180,6 +181,7 @@ async def verify_otp(
     now = _now()
     user = await consume_otp(session, phone_number, code, settings, now)
     if user is None:
+        await ensure_phone_not_blocked(session, settings, phone_number)  # 18+ cooldown
         user = User(phone_number=phone_number, account_status=AccountStatus.VERIFICATION_PENDING)
         session.add(user)
         await session.flush()

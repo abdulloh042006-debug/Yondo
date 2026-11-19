@@ -1,7 +1,7 @@
 # Yondo — Foydalanish shartlari
 
 **Holati:** loyiha, hali kuchga kirmagan  
-**Oxirgi yangilanish:** 2026-yil 23-oktabr  
+**Oxirgi yangilanish:** 2026-yil 19-noyabr  
 **Xizmat operatori:** hali ko‘rsatilmagan  
 **Aloqa:** ilova ichidagi murojaat shakli («Yordam va xavfsizlik» → «Qo‘llab-quvvatlash»)
 
@@ -18,6 +18,8 @@ Yondo foydalanuvchilarga profil yaratish, o‘zi haqidagi ma’lumotlarni taqdim
 Platformadagi ayrim profillar yoki xizmatlar qo‘shimcha tekshiruv va tasdiqlashdan o‘tishi mumkin. Profil mavjudligi foydalanuvchining shaxsi yoki malakasi mustaqil ravishda tekshirilganini anglatmaydi, agar bunday tekshiruv alohida tasdiqlanmagan bo‘lsa («Shaxsi tasdiqlangan» belgisi).
 
 ## 3. Hisob va profil
+
+**Yosh chegarasi.** Yondo faqat 18 yosh va undan katta shaxslar uchun. Ro‘yxatdan o‘tishda foydalanuvchi tug‘ilgan sanasini ko‘rsatadi; 18 yoshga to‘lmagan shaxsga hisob ochilmaydi. Tug‘ilgan sana foydalanuvchining o‘z bayonoti hisoblanadi; hamroh (xizmat ko‘rsatuvchi) bo‘lish uchun yosh shaxsni tasdiqlovchi hujjat orqali tekshiriladi. Tug‘ilgan sana boshqa foydalanuvchilarga ko‘rsatilmaydi.
 
 Foydalanuvchi:
 

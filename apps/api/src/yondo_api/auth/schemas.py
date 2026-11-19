@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -67,6 +67,11 @@ class UserResponse(BaseModel):
     has_password: bool = False
     # True until username and password are set (clients show the setup screen).
     password_setup_required: bool = True
+    # Private (owner only). 18+ is enforced on it; True until it is given (clients show the step).
+    date_of_birth: date | None = None
+    date_of_birth_required: bool = True
+    # Declared under 18: locked until an admin checks the ID (support form, account deletion).
+    age_restricted: bool = False
     age: int | None
     gender: str | None
     city: str | None

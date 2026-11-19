@@ -179,7 +179,7 @@ type Deletion = Schemas['DeletionState'];
  * In-app account deletion, the same API and texts as the web (apps/web/src/pages/DeleteAccount.tsx). Owner,
  * 2026-11-18: the 1.5 s Hold-to-Confirm button replaces the blurred dialog of 2026-11-15.
  */
-function DeleteAccount({ before }: { before: ReactNode }) {
+export function DeleteAccount({ before }: { before: ReactNode }) {
   const res = useResource(() => api.get<Deletion>('/account/deletion'), []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>();

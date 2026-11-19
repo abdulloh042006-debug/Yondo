@@ -829,6 +829,22 @@
         "title": "AdminVerificationRead",
         "type": "object"
       },
+      "AgeRestrictionClear": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "AgeRestrictionClear",
+        "type": "object"
+      },
       "AndroidPushConfig": {
         "properties": {
           "enabled": {
@@ -1773,6 +1789,21 @@
         ],
         "title": "ContentStatus",
         "type": "string"
+      },
+      "DateOfBirth": {
+        "additionalProperties": false,
+        "properties": {
+          "date_of_birth": {
+            "format": "date",
+            "title": "Date Of Birth",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date_of_birth"
+        ],
+        "title": "DateOfBirth",
+        "type": "object"
       },
       "DeletionRequestWrite": {
         "additionalProperties": false,
@@ -3456,6 +3487,18 @@
       "Registration": {
         "additionalProperties": false,
         "properties": {
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
           "password": {
             "format": "password",
             "maxLength": 1024,
@@ -4501,6 +4544,11 @@
             ],
             "title": "Age"
           },
+          "age_restricted": {
+            "default": false,
+            "title": "Age Restricted",
+            "type": "boolean"
+          },
           "city": {
             "anyOf": [
               {
@@ -4516,6 +4564,23 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "date_of_birth_required": {
+            "default": true,
+            "title": "Date Of Birth Required",
+            "type": "boolean"
           },
           "gender": {
             "anyOf": [
@@ -4682,6 +4747,11 @@
       "VerificationDecision": {
         "additionalProperties": false,
         "properties": {
+          "adult_confirmed": {
+            "default": false,
+            "title": "Adult Confirmed",
+            "type": "boolean"
+          },
           "decision": {
             "enum": [
               "approve",
@@ -6071,6 +6141,65 @@
         ]
       }
     },
+    "/api/v1/admin/users/{user_id}/age-restriction/clear": {
+      "post": {
+        "description": "After an ID check: the account declared an age under 18 by mistake (18+, 2026-11-19).\nThe user then enters the date of birth again; who cleared it and when is audited.",
+        "operationId": "clear_age_restriction_api_v1_admin_users__user_id__age_restriction_clear_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgeRestrictionClear"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Clear Age Restriction",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/users/{user_id}/status": {
       "post": {
         "operationId": "set_account_status_api_v1_admin_users__user_id__status_post",
@@ -6253,6 +6382,53 @@
         "summary": "Decide",
         "tags": [
           "admin verification"
+        ]
+      }
+    },
+    "/api/v1/auth/date-of-birth": {
+      "put": {
+        "description": "One-time step for accounts made before 2026-11-19 (18+). It cannot be changed later.",
+        "operationId": "set_date_of_birth_api_v1_auth_date_of_birth_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DateOfBirth"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Date Of Birth",
+        "tags": [
+          "authentication"
         ]
       }
     },

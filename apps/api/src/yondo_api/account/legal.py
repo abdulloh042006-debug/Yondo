@@ -6,8 +6,8 @@ Bump a version whenever the document changes materially: every user is then aske
 """
 
 LEGAL_DOCUMENTS: dict[str, str] = {
-    'terms': '2026-10-23-draft',
-    'privacy': '2026-10-23-draft',
+    'terms': '2026-11-19-draft',
+    'privacy': '2026-11-19-draft',
 }
 
 # Personal data is erased (or irreversibly de-identified) within this many days of a confirmed
