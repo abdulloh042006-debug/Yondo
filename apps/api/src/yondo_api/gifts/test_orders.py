@@ -17,7 +17,8 @@ from yondo_api.config import Settings
 from yondo_api.gifts.models import GiftCartItem, GiftProduct
 from yondo_api.gifts.orders_models import GiftTestOrder, GiftTestOrderItem, GiftTestStatus
 from yondo_api.gifts.router import require_role
-from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
+from yondo_api.gifts.shops import vendor_is_active
+from yondo_api.models.user import AccountStatus, User, UserRoleType
 from yondo_api.notifications.gifts import enqueue_gift_notice
 
 router = APIRouter(tags=['manual gift test orders'])
@@ -136,7 +137,7 @@ async def restore_test_stock(session: Session, order: GiftTestOrder) -> None:
         product.stock += item.quantity
 
 
-@router.post('/gifts/test-orders', response_model=TestOrderRead, status_code=201)
+@router.post('/gifts/test-orders', response_model=list[TestOrderRead], status_code=201)
 async def create_test_order(
     payload: TestOrderWrite, request: Request, principal: Principal, session: Session
 ):
@@ -166,6 +167,7 @@ async def create_test_order(
     if not cart:
         raise ApplicationError('cart_empty', 'Cart has no items', 409)
     lines = []
+    by_vendor: dict[UUID, list] = {}
     subtotal = 0
     for cart_item in cart:
         product = await session.scalar(
@@ -173,9 +175,7 @@ async def create_test_order(
         )
         if product is None or product.stock < cart_item.quantity or not product.published:
             raise ApplicationError('gift_unavailable', 'Cart product unavailable', 409)
-        vendor = await session.get(User, product.vendor_id)
-        role = await session.get(UserRole, (product.vendor_id, UserRoleType.VENDOR))
-        if vendor is None or vendor.account_status != AccountStatus.ACTIVE or role is None:
+        if not await vendor_is_active(session, product.vendor_id):  # approved shop
             raise ApplicationError('gift_unavailable', 'Vendor unavailable', 409)
         if product.currency != 'UZS':
             raise ApplicationError(
@@ -186,41 +186,51 @@ async def create_test_order(
             raise ApplicationError('gift_total_overflow', 'Gift subtotal is too large', 422)
         subtotal += line
         lines.append((cart_item, product, line))
+        by_vendor.setdefault(product.vendor_id, []).append((cart_item, product, line))
     if subtotal <= 0:
         raise ApplicationError('gift_test_amount_invalid', 'Test amount must be positive', 422)
-    order = GiftTestOrder(
-        customer_id=principal.user.id,
-        subtotal_minor=subtotal,
-        currency='UZS',
-        delivery_method=payload.delivery_method,
-        delivery_note=(payload.delivery_note.strip() if payload.delivery_note else None),
-        status=GiftTestStatus.AWAITING_TEST_PAYMENT,
-    )
-    session.add(order)
-    await session.flush()
-    for cart_item, product, amount in lines:
-        product.stock -= cart_item.quantity
-        session.add(
-            GiftTestOrderItem(
-                order_id=order.id,
-                product_id=product.id,
-                name_snapshot=product.name,
-                quantity=cart_item.quantity,
-                unit_price_minor=product.price_minor,
-                line_total_minor=amount,
-            )
+    # One order per vendor (CEO, 2026-11-19): each shop moves its own order's status.
+    orders = []
+    note = payload.delivery_note.strip() if payload.delivery_note else None
+    for vendor_id, vendor_lines in by_vendor.items():
+        order = GiftTestOrder(
+            customer_id=principal.user.id,
+            vendor_id=vendor_id,
+            subtotal_minor=sum(amount for _c, _p, amount in vendor_lines),
+            currency='UZS',
+            delivery_method=payload.delivery_method,
+            delivery_note=note,
+            status=GiftTestStatus.AWAITING_TEST_PAYMENT,
         )
-        await session.delete(cart_item)
-    await enqueue_gift_notice(
-        session, order, 'gift_order_created', actor_id=principal.user.id
-    )
+        session.add(order)
+        await session.flush()
+        for cart_item, product, amount in vendor_lines:
+            product.stock -= cart_item.quantity
+            session.add(
+                GiftTestOrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    name_snapshot=product.name,
+                    quantity=cart_item.quantity,
+                    unit_price_minor=product.price_minor,
+                    line_total_minor=amount,
+                )
+            )
+            await session.delete(cart_item)
+        await enqueue_gift_notice(
+            session, order, 'gift_order_created', actor_id=principal.user.id
+        )
+        orders.append(order)
     try:
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
         raise ApplicationError('gift_test_order_conflict', 'Order changed; retry', 409) from exc
-    await session.refresh(order)
-    return await order_payload(session, order)
+    result = []
+    for order in orders:
+        await session.refresh(order)
+        result.append(await order_payload(session, order))
+    return result
 
 
 @router.get('/gifts/test-orders', response_model=list[TestOrderRead])
@@ -294,6 +304,39 @@ async def operator_update_test_status(
     await enqueue_gift_notice(
         session, order, f'gift_{payload.status}', actor_id=admin.id
     )
+    await session.commit()
+    await session.refresh(order)
+    return await order_payload(session, order)
+
+
+class CustomerCancel(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    reason: str | None = Field(default=None, max_length=500)
+
+
+@router.post('/gifts/test-orders/{order_id}/cancel', response_model=TestOrderRead)
+async def cancel_my_test_order(
+    order_id: UUID,
+    payload: CustomerCancel,
+    request: Request,
+    principal: Principal,
+    session: Session,
+):
+    """The customer may cancel only before the shop starts preparing (CEO, 2026-11-19).
+    Test orders move no money: there is nothing to refund."""
+    ensure_test_enabled(request.app.state.settings)
+    order = await locked_order(session, order_id)
+    if order.customer_id != principal.user.id:
+        raise ApplicationError('gift_test_order_not_found', 'Order not found', 404)
+    if order.status not in (GiftTestStatus.AWAITING_TEST_PAYMENT, GiftTestStatus.TEST_PAID):
+        raise ApplicationError(
+            'gift_order_cancel_too_late', 'The shop is already preparing this order', 409
+        )
+    await restore_test_stock(session, order)
+    order.status = GiftTestStatus.CANCELLED
+    order.cancel_reason = (payload.reason or '').strip() or None
+    order.status_changed_by = principal.user.id
+    await enqueue_gift_notice(session, order, 'gift_cancelled', actor_id=principal.user.id)
     await session.commit()
     await session.refresh(order)
     return await order_payload(session, order)

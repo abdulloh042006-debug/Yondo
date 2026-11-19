@@ -19,9 +19,10 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
+00l. **Gifts (S86, 2026-11-19):** owner decides how a shop contacts the recipient for real deliveries (in-app chat or masked phone) before real gift orders (`docs/gifts.md`).
 00k. **18+ (S83, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
 00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
-00l. **Ad video 5 (S86, 2026-11-19):** C1 + C3 approved; Stage 2 docs + kit on `feat/ad-video-5`. **Owner:** generate the 8 images + 4 clips with `marketing/ad-video/flow-pack-c1-keyinroq.md` and upload them; confirm captions ON, the softer caption.md line and the end-card CTA. Then Stage 2b render + QC.
+00l. **Ad video 5 (S87, 2026-11-19):** C1 + C3 approved; Stage 2 docs + kit on `feat/ad-video-5`. **Owner:** generate the 8 images + 4 clips with `marketing/ad-video/flow-pack-c1-keyinroq.md` and upload them; confirm captions ON, the softer caption.md line and the end-card CTA. Then Stage 2b render + QC.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -33,14 +34,14 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S87 — Ad 6 «Yondo nima?» (C3) preview render + QC (2026-11-19) [cloud worker, Videochi 2]
+## S88 — Ad 6 «Yondo nima?» (C3) preview render + QC (2026-11-19) [cloud worker, Videochi 2]
 Done: CEO asked for a C3 preview. Real captures from `apps/web` (`ad5/capture_c3.mjs`: card feed with the Tadbir filter, booking dialog meeting-place field + hint), cropped so no price is in any file; `ad5/c3.tpl.html` (kit), `ad5/audio_c3.py` (original synthesis, ducking), `ad5/mux.sh` (static gain + limiter). C3-V2 changed to «Hamroh: profilida xizmatlari ko‘rinadi.» (the card shows services, not languages). Two MP4s sent to the owner's app (no voice / DRAFT MMS voice); not committed.
 Not done: C1 (waits for Flow uploads + voicelab VO); RU cut of C3.
 QC (both files): 1080×1920, 30 fps, H.264 + AAC 48 kHz stereo, 13.3 s; −14.1/−14.2 LUFS, true peak −1.9/−1.8 dBTP, sample peak 0.80, no silences ≥0.4 s; blackdetect (pix_th 0.02) 0 segments (the 0.9 s ink-ground line at 10.3 s is intentional); stills checked by eye (captions clear of the content, chips enlarged ×1.55 for phones). audio-ears' "clipped samples" count is an artefact of its mono downmix (two identical channels summed → 1.13); the stereo file peaks at 0.80. Not checked: speech transcript (no Whisper model here), real phones.
 Env notes: capture needs `pip install -e apps/api aiosqlite`, `redis-server` on :6379, `npm ci && npx vite build` in apps/web.
 Commit: branch `feat/ad-video-5`.
 
-## S86 — Ad video 5, Stage 2 (part 1): scripts, full Flow pack, capture list, kit, DRAFT VO (2026-11-19) [cloud worker, Videochi 2]
+## S87 — Ad video 5, Stage 2 (part 1): scripts, full Flow pack, capture list, kit, DRAFT VO (2026-11-19) [cloud worker, Videochi 2]
 Done: CEO approved C1 «Keyinroq» ro‘yxati + C3 «Yondo nima?». `scripts/05-keyinroq.md` (32 s storyboard, VO, captions, capture list, motion/sound specs, adaptations, QC list) and `scripts/06-yondo-nima.md` (12 s, motion + app only); list items mapped to the app's real categories (Tadbir, Sayr, Kino, Kofe); interests are not shown (not shipped). `flow-pack-c1-keyinroq.md` + `.html` (8 reference images, 4 video shots, per-shot negatives and checks; phone copy as a private artifact). `kit/` (logo, end card with 18+ and a CTA placeholder, captions, stamp, tick, shake; build + render scripts). `server_video.py`: `AD5_SERVICES=1` adds event/cinema services to the seed. `ad-policy-ask.md` (questions for Meta/TikTok/Google, truthful self-description). `marketing/social/caption.md`: «faqat jamoat joylarida» softened to a recommendation (marked, owner to confirm).
 Not done: app captures, final render and QC wait for the owner's Flow uploads (CEO: stop here). C3 can be rendered without them.
 Next: owner generates R01–R08 and s02–s05 with the pack; owner confirms captions ON, the caption.md line, CTA text; then Stage 2b (capture, edit, mix, QC, RU cut).
@@ -48,6 +49,13 @@ Blockers: DRAFT VO only: edge-tts BLOCKED (proxy has no WebSocket); MMS (CPU, ro
 Evidence: kit demo stills rendered (list hook, stamps, caption, end card) and checked by eye; flow pack HTML at 390 px: no horizontal scroll, 12 copy buttons; `py_compile server_video.py` PASS; ruff on new Python PASS. DRAFT VO lengths: C1 V1–V7 1.80/4.46/0.86/4.82/3.38/3.42/2.74 s; C3 2.66/3.82/3.10 s + V7.
 Commit: branch `feat/ad-video-5` (PR to `main`; contains #56 until it merges).
 
+## S86 — Gifts phase A: vendor shops, approval, one test order per vendor (2026-11-19) [cloud worker, backend]
+Done: `vendor_shops` (mandatory profile + optional logo; migration 0028); admin decision/suspend, audited + notified, approval needs a verified ID and grants the Vendor role (no self-assignment: `vendor_requires_approval`); catalogue only from approved shops; admin product reject with a reason; test checkout splits per vendor, vendor order list ("Mijoz", no customer identity) and status moves (cancel with a reason, stock restored), customer cancel before preparing; `/vendor/earnings` stays 503; DEMO vendor + 3 neutral DEMO gifts; push texts. Docs: `docs/gifts.md`.
+Not done: phase B (web), phase C (mobile).
+Next: phase B on `feat/gifts-web`.
+Blockers: OPEN (owner, before real orders): how a shop contacts the recipient (in-app chat or a masked phone); real payments, payouts, delivery fee for gifts.
+Evidence: SQLite 572 passed + 12 skipped, PostgreSQL 583 passed (`alembic check` clean, 0028 down/up + backfill checked by the verifier), demo 12, ruff + `export_openapi --check` PASS, web tsc + vitest 183. Verifier APPROVE (8 non-blocking notes; 1-3 fixed: an old Vendor role can be kept, erasure clears the customer's delivery notes, logo upload checks the account).
+Commit: branch `feat/gifts-vendors` (PR to `main`).
 ## S85 — Ad video 5, Stage 1: research, 10 concepts, sample Google Flow pack (2026-11-19) [cloud worker, Videochi 2]
 Done: `marketing/ad-video/research-2026-11.md` (assessment of reels 1–3, the Higgsfield ad, caption.md and the intro; Timeleft, Bumble BFF, Showaround, Withlocals, RentAFriend, 222/Pie/Meetup with links, verified vs interpretation; Meta/TikTok/Google ad-policy check; tool check), `concepts-2026-11.md` (10 concepts, ranked; mix 50/30/20 motion/AI/app; reusable kit; owner questions), `flow-pack-sample-reja.md` + `.html` (sample pack for the top concept, made by `flowpack_html.py`; phone copy also published as a private artifact).
 Not done: Stage 2 (script, full pack, render, QC) waits for the CEO's concept approval. No rendering, no paid generation.

@@ -10,6 +10,7 @@ from yondo_api.models.user import UserRole, UserRoleType
 from yondo_api.payments.models import Payment, PaymentStatus
 from yondo_api.payments.provider import PaymentEvent
 
+from .gift_helpers import approved_shop
 from .test_bookings import booking_payload, setup_bookable_companion
 from .test_payments import FakePaymentProvider, accepted_booking
 
@@ -220,6 +221,7 @@ async def test_gifts_vendor_catalog_moderation_cart_and_disabled_checkout(prepar
     e, client = prepared, prepared['client']
     async with e['app'].state.db_session_factory() as session:
         session.add(UserRole(user_id=UUID(e['other_id']), role=UserRoleType.VENDOR))
+        session.add(approved_shop(UUID(e['other_id'])))  # product decisions §4
         await session.commit()
     create = await client.post(
         '/api/v1/gifts/vendor/products',

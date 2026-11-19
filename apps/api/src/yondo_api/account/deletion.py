@@ -14,7 +14,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.account.legal import DELETION_DUE_AFTER_DAYS
@@ -32,7 +32,9 @@ from yondo_api.companions.models import (
     CompanionService,
 )
 from yondo_api.discovery.models import CompanionFavorite, CompanionLike
-from yondo_api.gifts.models import GiftCartItem
+from yondo_api.gifts.models import GiftCartItem, GiftProduct
+from yondo_api.gifts.orders_models import GiftTestOrder
+from yondo_api.gifts.shop_models import VendorShop
 from yondo_api.models.auth import AuthSession, OtpChallenge, OtpIssue, PasswordLoginGuard
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
@@ -187,6 +189,24 @@ async def erase_account(
     user.password_hash = None
     user.password_changed_at = None
     user.phone_number = f'deleted-{uid.hex[:24]}'
+    # The customer's own delivery notes on gift orders are personal data (shops can read them).
+    await session.execute(
+        update(GiftTestOrder).where(GiftTestOrder.customer_id == uid).values(delivery_note=None)
+    )
+    # A shop is business data other records point to: it is de-identified, closed and its
+    # products are hidden (the logo object is deleted).
+    shop = await session.scalar(select(VendorShop).where(VendorShop.user_id == uid))
+    if shop is not None:
+        if shop.logo_key and storage is not None:
+            try:
+                await storage.delete(shop.logo_key)
+            except Exception:  # noqa: BLE001 - erasure continues; the key is dropped below
+                pass
+        shop.name, shop.description, shop.city, shop.delivery_area = 'deleted', '', '', ''
+        shop.logo_key, shop.review_note, shop.status = None, None, 'suspended'
+        await session.execute(
+            update(GiftProduct).where(GiftProduct.vendor_id == uid).values(published=False)
+        )
     user.age = None
     user.date_of_birth = None
     user.age_restricted_at = None

@@ -14,13 +14,15 @@ class UserNotification(TimestampMixin, Base):
             "kind IN ('booking_requested','booking_accepted','booking_declined',"
             "'booking_cancelled','payment_confirmed','chat_message',"
             "'review_reminder','gift_order_created','gift_test_paid','gift_preparing',"
-            "'gift_out_for_delivery','gift_delivered','gift_cancelled')",
+            "'gift_out_for_delivery','gift_delivered','gift_cancelled',"
+            "'vendor_approved','vendor_rejected','vendor_suspended','gift_product_rejected')",
             name='ck_user_notification_kind',
         ),
         UniqueConstraint('recipient_id', 'source_key', name='uq_notice_recipient_source'),
         CheckConstraint(
-            '(booking_id IS NOT NULL AND gift_order_id IS NULL) OR '
-            '(booking_id IS NULL AND gift_order_id IS NOT NULL)',
+            '(booking_id IS NOT NULL AND gift_order_id IS NULL AND vendor_shop_id IS NULL) OR '
+            '(booking_id IS NULL AND gift_order_id IS NOT NULL AND vendor_shop_id IS NULL) OR '
+            '(booking_id IS NULL AND gift_order_id IS NULL AND vendor_shop_id IS NOT NULL)',
             name='ck_notification_single_resource',
         ),
         Index('ix_user_notifications_recipient_created', 'recipient_id', 'created_at'),
@@ -33,6 +35,10 @@ class UserNotification(TimestampMixin, Base):
     )
     gift_order_id: Mapped[UUID | None] = mapped_column(
         ForeignKey('gift_test_orders.id', ondelete='RESTRICT'), nullable=True
+    )
+    # Shop decisions (approved / rejected / suspended) and product rejections.
+    vendor_shop_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('vendor_shops.id', ondelete='RESTRICT'), nullable=True
     )
     kind: Mapped[str] = mapped_column(String(40))
     source_key: Mapped[str] = mapped_column(String(160))

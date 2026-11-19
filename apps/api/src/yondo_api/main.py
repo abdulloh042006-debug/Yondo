@@ -46,6 +46,7 @@ from yondo_api.db.session import create_database_engine, create_session_factory
 from yondo_api.discovery.router import router as discovery_router
 from yondo_api.gifts.click_test import router as click_test_router
 from yondo_api.gifts.router import router as gifts_router
+from yondo_api.gifts.shops import router as gift_shops_router
 from yondo_api.gifts.test_orders import router as gift_test_orders_router
 from yondo_api.gifts.vendor import router as vendor_router
 from yondo_api.integration.router import router as integration_router
@@ -205,6 +206,7 @@ def create_application(
         manual_payments_admin_router,
         chat_router,
         gifts_router,
+        gift_shops_router,
         gift_test_orders_router,
         click_test_router,
         vendor_router,

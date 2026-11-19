@@ -30,7 +30,7 @@ Optional environment (see infra/deploy/README.md):
 
 import asyncio
 import contextvars
-from datetime import date
+from datetime import UTC, date, datetime
 import os
 import secrets
 import sys
@@ -85,10 +85,11 @@ CUSTOMER = '+998901110003'
 MADINA = '+998901110011'
 JASUR = '+998901110012'
 SEVARA = '+998901110013'
+VENDOR = '+998901110014'
 PENDING_USER = '+998901110004'
 OTHER_ADMIN_TARGET = '+998901110005'
 # The fake DEMO accounts: they have no Telegram, so they always keep the on-screen code.
-DEMO_PHONES = frozenset({WELL_KNOWN_ADMIN, CUSTOMER, MADINA, JASUR, SEVARA, PENDING_USER, OTHER_ADMIN_TARGET})
+DEMO_PHONES = frozenset({WELL_KNOWN_ADMIN, CUSTOMER, MADINA, JASUR, SEVARA, VENDOR, PENDING_USER, OTHER_ADMIN_TARGET})
 # Set while the harness signs a user in by itself (seed, admin refresh, maintenance): those logins read the code
 # from the response, whatever the number.
 _HARNESS_LOGIN = contextvars.ContextVar('demo_harness_login', default=False)
@@ -169,6 +170,38 @@ async def set_user(app, user_id, roles, status=AccountStatus.ACTIVE, city='Toshk
         await session.commit()
 
 
+DEMO_GIFTS = (  # neutral DEMO gifts (CEO, 2026-11-19): nothing romantic
+    ('flowers', 'DEMO Bahor guldastasi', 'DEMO: yetti lola, qo‘l bilan o‘ralgan.', 15000000),
+    ('custom', 'DEMO Kitob: O‘zbek ertaklari', 'DEMO: rasmli ertaklar to‘plami.', 9000000),
+    ('gift_box', 'DEMO Choy to‘plami', 'DEMO: ikki piyola, choynak va ko‘k choy.', 25000000),
+)
+
+
+async def seed_vendor(app, client, admin):
+    """One approved DEMO vendor with DEMO products. Its ID check is a clearly fake DEMO record with no image
+    (CEO, 2026-11-19): approval needs a verified identity, and nobody's real document is involved."""
+    from yondo_api.verification.models import IdentityVerification
+
+    headers, uid = await login(client, VENDOR)
+    await set_user(app, uid, [UserRoleType.CUSTOMER], age=35)
+    shop = (await client.put('/api/v1/gifts/vendor/shop', headers=headers, json={
+        'name': 'DEMO Sovg‘a do‘koni', 'description': 'DEMO do‘kon: gullar, kitoblar va choy to‘plamlari.',
+        'city': 'Toshkent', 'delivery_area': 'DEMO: Toshkent shahri ichida'})).json()
+    async with app.state.db_session_factory() as session:
+        session.add(IdentityVerification(
+            user_id=UUID(uid), status='verified', document_type='id_card',
+            submitted_at=datetime.now(UTC), reviewed_at=datetime.now(UTC),
+            review_note='DEMO: soxta yozuv, hujjat rasmi yo‘q'))
+        await session.commit()
+    await client.post(f'/api/v1/admin/vendors/{shop["id"]}/decision', headers=admin,
+                      json={'decision': 'approve', 'note': 'DEMO: do‘kon tekshirildi'})
+    for category, name, description, price in DEMO_GIFTS:
+        product = (await client.post('/api/v1/gifts/vendor/products', headers=headers, json={
+            'category': category, 'name': name, 'description': description,
+            'price_minor': price, 'currency': 'UZS', 'stock': 20})).json()
+        await client.post(f'/api/v1/gifts/admin/products/{product["id"]}/publish', headers=admin)
+
+
 async def seed(app):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url='http://seed') as client:
@@ -208,6 +241,7 @@ async def seed(app):
         _, _, madina_profile = await companion(MADINA, 'DEMO Madina', 'DEMO profil: shahar bo‘ylab sayr va kofe suhbati.', 15000000, True)
         await companion(JASUR, 'DEMO Jasur', 'DEMO profil: kitoblar va kino haqida suhbat.', 9000000, True, city='Samarqand')
         await companion(SEVARA, 'DEMO Sevara', 'DEMO profil: tasdiq kutilmoqda.', 12000000, False)
+        await seed_vendor(app, client, admin)
 
         # A booking + a safety report so the admin safety queue has a real record to review.
         services = (await client.get(f'/api/v1/discovery/companions/{madina_profile}')).json()['services']

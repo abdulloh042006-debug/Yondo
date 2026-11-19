@@ -31,6 +31,11 @@ _EVENTS = {
 }
 _GIFT = ('sovg‘a buyurtmasi yangilandi', 'sovğa buyurtmasi yangilandi',
          'заказ подарка обновлён', 'gift order updated')
+# Shop decisions and product rejections (gift vendors, 2026-11-19): no reason on the lock screen.
+_SHOP = ('do‘kon holati yangilandi', 'dökon holati yangilandi',
+         'статус магазина обновлён', 'shop status updated')
+_SHOP_KINDS = frozenset({'vendor_approved', 'vendor_rejected', 'vendor_suspended',
+                         'gift_product_rejected'})
 _PREFIX = ('Yangi bildirishnoma', 'Yangi bildirişnoma', 'Новое уведомление', 'New notification')
 _INDEX = {'uz-Latn-1995': 0, 'uz-Latn-2026': 1, 'ru': 2, 'en': 3}
 
@@ -45,6 +50,9 @@ def resolve_locale(ui_locale: str | None, today: date | None = None) -> str:
 def push_text(kind: str, ui_locale: str | None) -> tuple[str, str]:
     """Return (title, body) for the lock screen."""
     index = _INDEX[resolve_locale(ui_locale)]
-    event = _EVENTS.get(kind, _GIFT if kind.startswith('gift_') else None)
+    if kind in _SHOP_KINDS:
+        event = _SHOP
+    else:
+        event = _EVENTS.get(kind, _GIFT if kind.startswith('gift_') else None)
     body = f'{_PREFIX[index]}: {event[index]}' if event else _PREFIX[index]
     return 'Yondo', body

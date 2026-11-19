@@ -8,6 +8,8 @@ from yondo_api.gifts.models import GiftCartItem, GiftProduct
 from yondo_api.gifts.orders_models import GiftTestOrder, GiftTestOrderItem
 from yondo_api.models.user import UserRole, UserRoleType
 
+from .gift_helpers import approved_shop
+
 PRODUCT = {
     'category': 'flowers',
     'name': 'Tulip bouquet',
@@ -22,6 +24,7 @@ async def vendor_product(e, **overrides):
     async with e['app'].state.db_session_factory() as session:
         if await session.get(UserRole, (UUID(e['other_id']), UserRoleType.VENDOR)) is None:
             session.add(UserRole(user_id=UUID(e['other_id']), role=UserRoleType.VENDOR))
+            session.add(approved_shop(UUID(e['other_id'])))  # product decisions §4
             await session.commit()
     created = await e['client'].post(
         '/api/v1/gifts/vendor/products', headers=e['other'], json=PRODUCT | overrides
@@ -97,6 +100,7 @@ async def test_vendor_deletes_only_own_never_ordered_products(prepared):
         assert denied.json()['code'] == 'role_required'
     async with e['app'].state.db_session_factory() as session:
         session.add(UserRole(user_id=UUID(e['owner_id']), role=UserRoleType.VENDOR))
+        session.add(approved_shop(UUID(e['owner_id'])))  # product decisions §4
         await session.commit()
     foreign = await client.delete(f'/api/v1/vendor/products/{product_id}', headers=e['owner'])
     assert foreign.status_code == 404
