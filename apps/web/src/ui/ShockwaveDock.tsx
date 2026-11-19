@@ -69,13 +69,14 @@ export function ShockwaveDock({ items, label }: { items: DockItem[]; label: stri
     }
     const keep = (a: Animation) => running.current.push(a);
     p.style.width = `${from.w}px`;
-    keep(p.animate([
+    const pillAnim = p.animate([
       { transform: `translateX(${from.x}px) scale(1, 1)`, opacity: 1, offset: 0 },
       { transform: `translateX(${from.x}px) scale(0.22, 0.15)`, opacity: 0, offset: 0.23 },
       { transform: `translateX(${to.x}px) scale(0.22, 0.15)`, opacity: 0, offset: 0.62 },
       { transform: `translateX(${to.x}px) scale(1.06, 1.04)`, opacity: 1, offset: 0.86, easing: 'cubic-bezier(.34,1.56,.64,1)' },
       { transform: `translateX(${to.x}px) scale(1, 1)`, opacity: 1, offset: 1 },
-    ], { duration: T, fill: 'forwards' }));
+    ], { duration: T, fill: 'forwards' });
+    keep(pillAnim);
     if (orb.current) keep(orb.current.animate([
       { transform: `translateX(${from.cx}px) scale(.3)`, opacity: 0, offset: 0 },
       { transform: `translateX(${from.cx}px) scale(1)`, opacity: 1, offset: 0.23 },
@@ -112,8 +113,16 @@ export function ShockwaveDock({ items, label }: { items: DockItem[]; label: stri
       { transform: 'translateY(-1px) scale(1.04)', offset: 0.85 },
       { transform: 'translateY(0) scale(1)' },
     ], { duration: 460, delay: ARRIVE, easing: 'ease-out' }));
-    const settle = window.setTimeout(place, T + 20);
-    return () => window.clearTimeout(settle);
+    // Write the final state inline, then drop the filling pill animation so later inline writes (resize) apply.
+    const settle = window.setTimeout(() => {
+      place();
+      pillAnim.cancel();
+    }, T + 20);
+    return () => {
+      window.clearTimeout(settle);
+      running.current.forEach((a) => a.cancel());
+      running.current = [];
+    };
   }, [activeIndex, reduce, items.length]);
 
   useLayoutEffect(() => {
@@ -121,6 +130,7 @@ export function ShockwaveDock({ items, label }: { items: DockItem[]; label: stri
     const onResize = () => {
       const a = activeIndex >= 0 ? links.current[activeIndex] : null;
       if (a && pill.current) {
+        pill.current.getAnimations?.().forEach((x) => x.cancel());
         pill.current.style.width = `${a.offsetWidth}px`;
         pill.current.style.transform = `translateX(${a.offsetLeft}px)`;
       }

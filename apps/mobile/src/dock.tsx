@@ -135,6 +135,8 @@ export function ShockwaveDock<Id extends string>({
         })}
       {tabs.map((tab) => {
         const on = tab.id === active;
+        // The label switches to onPrimary when the pill has landed, so it is never paper-on-paper mid-flight.
+        const lit = on && !f;
         return (
           <Pressable
             key={tab.id}
@@ -150,10 +152,10 @@ export function ShockwaveDock<Id extends string>({
             style={({ pressed }) => [styles.item, pressed && !reduced && { transform: [{ scale: 0.92 }] }]}
           >
             <Animated.View style={on ? { transform: [{ translateY: bounceY }, { scale: bounceS }] } : undefined}>
-              <Icon d={tab.icon} color={on ? palette.onPrimary : palette.muted} />
+              <Icon d={tab.icon} color={lit ? palette.onPrimary : on ? palette.fg : palette.muted} />
             </Animated.View>
             {tab.dot && <View testID="unread-dot" aria-hidden style={styles.dot} />}
-            <Text numberOfLines={1} style={{ color: on ? palette.onPrimary : palette.muted, fontSize: 12, fontFamily: on ? FONT.bold : FONT.medium }}>
+            <Text numberOfLines={1} style={{ color: lit ? palette.onPrimary : on ? palette.fg : palette.muted, fontSize: 12, fontFamily: on ? FONT.bold : FONT.medium }}>
               {tab.label}
             </Text>
           </Pressable>
