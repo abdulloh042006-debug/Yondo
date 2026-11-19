@@ -1160,17 +1160,6 @@ table.data td {
     stroke-dashoffset: 0;
   }
 }
-.img-in {
-  opacity: 0;
-  transform: scale(1.04);
-  transition:
-    opacity 0.7s var(--ease),
-    transform 1s var(--ease);
-}
-.img-in.loaded {
-  opacity: 1;
-  transform: none;
-}
 .chip-wrap {
   position: relative;
   isolation: isolate;
@@ -1812,8 +1801,15 @@ input.switch:focus-visible {
 .safe-img[data-status='loaded'] .safe-img-photo {
   opacity: 1;
 }
+/* inside .media the photo also keeps the card hover zoom; one rule so neither transition overrides the other */
+.media .safe-img-photo {
+  transition:
+    opacity 0.35s var(--ease),
+    transform 0.8s var(--ease);
+}
 @media (prefers-reduced-motion: reduce) {
-  .safe-img-photo {
+  .safe-img-photo,
+  .media .safe-img-photo {
     transition: none;
   }
 }
