@@ -1785,3 +1785,35 @@ input.switch:focus-visible {
   gap: 10px;
   flex-wrap: wrap;
 }
+
+/* ---------- SafeImage (owner, 2026-11-19): the Yondo logo while a photo loads and when it fails ---------- */
+.safe-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.safe-img-logo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--c-fg) 6%, var(--c-bg));
+  color: color-mix(in oklab, var(--c-fg) 70%, var(--c-bg));
+}
+.safe-img-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+.safe-img[data-status='loaded'] .safe-img-photo {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .safe-img-photo {
+    transition: none;
+  }
+}

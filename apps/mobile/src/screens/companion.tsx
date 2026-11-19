@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, Text, View, type DimensionValue } from 'react-native';
+import { Pressable, Text, View, type DimensionValue } from 'react-native';
 
 import { api, type Schemas } from '../api';
 import { useReducedMotion } from '../brand';
 import { HeartButton } from '../favorites';
 import { CardStats } from '../likes';
 import { formatMoney, initial, t } from '../shared';
+import { SafeImage } from '../safeImage';
 import { FONT, useTheme } from '../theme';
 import { Tag } from '../ui';
 
@@ -26,7 +27,8 @@ const cached = (id: string): string | null => {
 export function CompanionImage({ card, size }: { card: Card; size?: number }) {
   const { palette } = useTheme();
   const photo = card.photos[0];
-  const [url, setUrl] = useState<string | null>(photo ? cached(photo.id) : null);
+  // undefined = the signed URL is being fetched, null = it could not be obtained (SafeImage shows the logo).
+  const [url, setUrl] = useState<string | null | undefined>(photo ? (cached(photo.id) ?? undefined) : undefined);
   useEffect(() => {
     if (!photo || cached(photo.id)) return;
     let live = true;
@@ -36,7 +38,9 @@ export function CompanionImage({ card, size }: { card: Card; size?: number }) {
         urlCache.set(photo.id, { url: r.url, at: Date.now() });
         if (live) setUrl(r.url);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (live) setUrl(null);
+      });
     return () => {
       live = false;
     };
@@ -45,8 +49,8 @@ export function CompanionImage({ card, size }: { card: Card; size?: number }) {
   const box = size
     ? { width: w, height: size, borderRadius: 16, backgroundColor: palette.chip, borderColor: palette.glassLine, borderWidth: 1 }
     : { width: w, aspectRatio: 4 / 5, borderRadius: 18, backgroundColor: palette.chip };
-  if (url) {
-    return <Image source={{ uri: url }} style={box} alt={photo?.caption || t('card.photoAlt', { name: card.display_name })} />;
+  if (photo) {
+    return <SafeImage src={url} style={box} alt={photo.caption || t('card.photoAlt', { name: card.display_name })} />;
   }
   return (
     <View style={[box, { alignItems: 'center', justifyContent: 'center' }]} aria-hidden>

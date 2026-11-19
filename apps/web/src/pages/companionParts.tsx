@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { SafeImage } from '../ui/SafeImage';
 import { t } from '../i18n';
 import { formatMoney, initial } from '../lib/format';
 import { toggledLike } from '../lib/photos';
@@ -17,7 +18,8 @@ const NO_IDS: Set<string> = new Set();
 
 /** Fetches the short-lived signed URL for a public photo; falls back to a gradient + initial. */
 export function CompanionImage({ profileId, photo, name, rounded }: { profileId: string; photo?: Photo; name: string; rounded?: boolean }) {
-  const [url, setUrl] = useState<string | null>(photo ? (urlCache.get(photo.id) ?? null) : null);
+  // undefined = the signed URL is being fetched, null = it could not be obtained (SafeImage then shows the logo).
+  const [url, setUrl] = useState<string | null | undefined>(photo ? urlCache.get(photo.id) : undefined);
   useEffect(() => {
     if (!photo || urlCache.has(photo.id)) return;
     let live = true;
@@ -28,7 +30,7 @@ export function CompanionImage({ profileId, photo, name, rounded }: { profileId:
         if (live) setUrl(r.url);
       })
       .catch(() => {
-        /* storage unavailable: keep the placeholder */
+        if (live) setUrl(null); // storage unavailable: the logo tile stays
       });
     return () => {
       live = false;
@@ -36,7 +38,11 @@ export function CompanionImage({ profileId, photo, name, rounded }: { profileId:
   }, [photo, profileId]);
   return (
     <div className="media" style={rounded ? { borderRadius: 'var(--r-md)' } : undefined}>
-      {url ? <img className="img-in" onLoad={(e) => e.currentTarget.classList.add('loaded')} src={url} alt={photo?.caption || t('card.photoAlt', { name })} loading="lazy" width={photo?.width} height={photo?.height} /> : <span className="initial" aria-hidden="true">{initial(name)}</span>}
+      {photo ? (
+        <SafeImage src={url} alt={photo.caption || t('card.photoAlt', { name })} loading="lazy" width={photo.width} height={photo.height} />
+      ) : (
+        <span className="initial" aria-hidden="true">{initial(name)}</span>
+      )}
     </div>
   );
 }
