@@ -105,3 +105,10 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
 Research `research-2026-11.md`, concepts `concepts-2026-11.md`, sample Google Flow pack `flow-pack-sample-reja.md`
 (HTML copy for the phone: `python3 flowpack_html.py flow-pack-sample-reja.md flow-pack-sample-reja.html "Yondo Flow namuna"`).
 The owner generates AI shots in Google Flow and uploads them with the pack's file names; agents never generate or pay.
+
+## Ad video 5 (2026-11-19, Stage 2: CEO approved C1 + C3)
+- Scripts: `scripts/05-keyinroq.md` (hero, 32 s) and `scripts/06-yondo-nima.md` (explainer, 12 s), with storyboard, VO, captions,
+  the real-app capture list (`AD5_SERVICES=1 … server_video.py` adds the Tadbir/Kino categories to the seed), motion and sound specs.
+- Full Google Flow pack: `flow-pack-c1-keyinroq.md` (+ `.html`, built with `flowpack_html.py … "Yondo Flow paketi"`).
+- Shared kit: `kit/` (see its README). Platform questions draft: `ad-policy-ask.md`.
+- Captions are ON for these ads (CEO directive 2026-11-19, owner confirmation pending).
