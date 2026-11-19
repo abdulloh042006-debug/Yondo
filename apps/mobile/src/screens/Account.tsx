@@ -98,7 +98,16 @@ function AccountView({ user }: { user: User }) {
       {editing ? (
         <Card style={{ gap: 12 }}>
           <H2>{t('account.personal')}</H2>
-          <Field label={t('account.age')} inputMode="numeric" keyboardType="number-pad" value={age} onChangeText={setAge} error={ageError} />
+          <Field
+            label={t('account.age')}
+            inputMode="numeric"
+            keyboardType="number-pad"
+            value={age}
+            onChangeText={setAge}
+            editable={!user.date_of_birth}
+            hint={user.date_of_birth ? t('age.fromDob') : undefined}
+            error={ageError}
+          />
           <Field label={t('account.gender')} value={gender} maxLength={64} onChangeText={setGender} />
           <Field label={t('common.city')} value={city} maxLength={128} onChangeText={setCity} />
           {err && <ErrorText text={err} />}

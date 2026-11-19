@@ -109,6 +109,10 @@ class Settings(BaseSettings):
     # When true, accounts without username + password get 403 password_setup_required outside
     # /auth and /legal. Off until the web/mobile setup screens ship (the demo must keep working).
     auth_require_password_setup: bool = False
+    # 18+ (owner, 2026-11-19): when true, registration requires a date of birth and an account
+    # without one may only use /auth/ and /legal/ until it gives one (PUT /auth/date-of-birth).
+    # A date that is given is always checked (under 18 is refused). On in the demo via Render env.
+    auth_require_date_of_birth: bool = False
     # Social sign-in (docs/login-telegram-google.md). Each provider is OFF until its values are set
     # in the host's environment; the API then answers 503 provider_not_configured and the web hides
     # the button. Telegram Login = OpenID Connect at oauth.telegram.org; the Client ID (= the bot's

@@ -22,7 +22,7 @@ import { DiscoverScreen } from './src/screens/Discover';
 import { FavoritesScreen } from './src/screens/Favorites';
 import { HelpScreen } from './src/screens/Help';
 import { ConsentCheck, LoginScreen } from './src/screens/Login';
-import { PasswordSetupScreen } from './src/screens/Password';
+import { AgeRestrictedScreen, DobStepScreen, PasswordSetupScreen } from './src/screens/Password';
 import { NotificationsScreen } from './src/screens/Notifications';
 import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
@@ -109,6 +109,10 @@ function Shell() {
   else screen = <DiscoverScreen />;
   // Owner, 2026-11-15: after a code sign-in an account without a username/password sets both first (Help stays open).
   if (user?.password_setup_required && r.name !== 'help') screen = <PasswordSetupScreen user={user} />;
+  // 18+ (owner, 2026-11-19), as on the web: a restricted account sees why (Help stays open); an older account
+  // without a date of birth gives it once.
+  else if (user?.age_restricted && r.name !== 'help') screen = <AgeRestrictedScreen onHelp={() => nav.push({ name: 'help' })} />;
+  else if (user && !user.date_of_birth && r.name !== 'help') screen = <DobStepScreen />;
   // The web dock (apps/web/src/ui/Layout.tsx): same items, order, icons and labels.
   const unreadCount = useUnreadNotifications();
   const tabs: { id: Tab; label: string; icon: string; dot?: boolean }[] = user

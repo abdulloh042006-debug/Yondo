@@ -4,9 +4,10 @@ import { ApiError, api, errorText, type Schemas } from '../api';
 import { useAuth, type User } from '../auth';
 import { AUTOFILL } from '../autofill';
 import { setLoginIntent } from '../loginIntent';
-import { normalizeUsername, passwordProblem, t, usernameValid, type Key } from '../shared';
+import { dobProblem, normalizeUsername, passwordProblem, t, usernameValid, type Key } from '../shared';
 import { Button, Card, ErrorText, Field, H1, H2, P, Row, Screen } from '../ui';
 import { ConsentCheck } from './Login';
+import { DeleteAccount } from './Settings';
 
 const CHECK_DELAY_MS = 400;
 type CheckState = 'checking' | 'available' | 'taken' | 'reserved' | 'invalid' | 'unknown';
@@ -31,8 +32,10 @@ export function PasswordSetupScreen({ user }: { user: User }) {
   const [password2, setPassword2] = useState('');
   const [show, setShow] = useState(false);
   const [remote, setRemote] = useState<{ name: string; state: CheckState } | null>(null);
-  const [errs, setErrs] = useState<{ username?: string; password?: string; repeat?: string; form?: string }>({});
+  const [errs, setErrs] = useState<{ username?: string; password?: string; repeat?: string; dob?: string; form?: string }>({});
   const [busy, setBusy] = useState(false);
+  const askDob = !user.date_of_birth; // 18+ (owner, 2026-11-19)
+  const [dob, setDob] = useState('');
   const name = normalizeUsername(username);
   const needsRemote = !fixed && !!name && usernameValid(name);
 
@@ -59,11 +62,13 @@ export function PasswordSetupScreen({ user }: { user: User }) {
     const problem = passwordProblem(password, user.phone_number);
     if (problem) next.password = t(problem);
     else if (password !== password2) next.repeat = t('pw.mismatch');
+    // Under 18 still goes to the server, which refuses it and keeps a 30-day cooldown for the number.
+    if (askDob && dobProblem(dob) === 'age.invalid') next.dob = t('age.invalid');
     setErrs(next);
     if (Object.keys(next).length) return;
     setBusy(true);
     try {
-      await api.post('/auth/registration', { username: fixed ?? name, password });
+      await api.post('/auth/registration', { username: fixed ?? name, password, ...(askDob ? { date_of_birth: dob } : {}) });
       await reload();
     } catch (e) {
       const code = e instanceof ApiError ? e.code : '';
@@ -73,6 +78,12 @@ export function PasswordSetupScreen({ user }: { user: User }) {
         return;
       }
       if (code === 'registration_complete') return void reload();
+      if (code === 'age_restricted') {
+        setLoginIntent({ mode: 'password', notice: t('age.restrictedNew') });
+        await logout(); // the account was erased by the server
+        return;
+      }
+      if (code === 'date_of_birth_required' || code === 'invalid_date_of_birth') return void setErrs({ dob: errorText(e) });
       if (['invalid_username', 'username_unavailable', 'username_already_set'].includes(code)) setErrs({ username: errorText(e) });
       else if (code === 'weak_password') setErrs({ password: errorText(e) });
       else setErrs({ form: errorText(e) });
@@ -115,12 +126,80 @@ export function PasswordSetupScreen({ user }: { user: User }) {
           error={errs.repeat}
         />
         <ConsentCheck checked={show} onChange={setShow} label={t('login.pw.show')} />
+        {askDob && <DobField value={dob} onChange={setDob} error={errs.dob} />}
         {errs.form && <ErrorText text={errs.form} />}
         <Row>
           <Button label={t('setup.submit')} busy={busy} onPress={() => void submit()} />
           <Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />
         </Row>
       </Card>
+    </Screen>
+  );
+}
+
+/** 18+: YYYY-MM-DD typed with the number keyboard (no extra date-picker dependency). */
+function DobField({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: string }) {
+  return (
+    <Field
+      label={t('age.dob')}
+      hint={`${t('age.dobHint')} (YYYY-MM-DD)`}
+      value={value}
+      onChangeText={onChange}
+      placeholder="1995-05-15"
+      keyboardType="numbers-and-punctuation"
+      autoComplete="birthdate-full"
+      maxLength={10}
+      error={error}
+    />
+  );
+}
+
+/** Accounts from before the age limit give their date of birth once (PUT /auth/date-of-birth). */
+export function DobStepScreen() {
+  const { reload, logout } = useAuth();
+  const [dob, setDob] = useState('');
+  const [err, setErr] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (dobProblem(dob) === 'age.invalid') return setErr(t('age.invalid'));
+    setBusy(true);
+    setErr(undefined);
+    try {
+      await api.put('/auth/date-of-birth', { date_of_birth: dob });
+    } catch (e) {
+      if (!(e instanceof ApiError && e.code === 'age_restricted')) setErr(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+    await reload();
+  };
+  return (
+    <Screen>
+      <H1>{t('age.stepTitle')}</H1>
+      <P muted>{t('age.stepLead')}</P>
+      <Card style={{ gap: 12 }}>
+        <DobField value={dob} onChange={setDob} error={err} />
+        <Row>
+          <Button label={t('setup.submit')} busy={busy} onPress={() => void submit()} />
+          <Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />
+        </Row>
+      </Card>
+    </Screen>
+  );
+}
+
+/** Declared under 18: locked until an admin checks the ID; Help (support) and deletion stay open. */
+export function AgeRestrictedScreen({ onHelp }: { onHelp: () => void }) {
+  const { logout } = useAuth();
+  return (
+    <Screen>
+      <H1>{t('age.restrictedTitle')}</H1>
+      <P>{t('age.restrictedBody')}</P>
+      <Row>
+        <Button label={t('age.contactSupport')} onPress={onHelp} />
+        <Button kind="ghost" label={t('account.logout')} onPress={() => void logout()} />
+      </Row>
+      <DeleteAccount before={null} />
     </Screen>
   );
 }

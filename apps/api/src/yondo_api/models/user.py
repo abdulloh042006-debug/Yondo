@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 
 from sqlalchemy import (
     CheckConstraint,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -55,6 +56,11 @@ class User(TimestampMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     phone_number: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
     age: Mapped[int | None] = mapped_column()
+    # Private; 18+ is enforced on it (auth/age.py). Only the age derived from it is ever shown.
+    date_of_birth: Mapped[date | None] = mapped_column(Date)
+    # Set when an existing account declared an age under 18 (no date stored): the account stays
+    # locked until an admin clears it after an ID check (owner/CEO, 2026-11-19).
+    age_restricted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     gender: Mapped[str | None] = mapped_column(String(64))
     city: Mapped[str | None] = mapped_column(String(128))
     # Interface language chosen by the user (NULL = not chosen; clients use their own default).

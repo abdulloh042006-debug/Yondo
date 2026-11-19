@@ -6,9 +6,10 @@ import { t } from '../i18n';
 
 const get = vi.hoisted(() => vi.fn());
 const post = vi.hoisted(() => vi.fn());
+const put = vi.hoisted(() => vi.fn());
 vi.mock('../api/client', async (orig) => {
   const real = await orig<typeof import('../api/client')>();
-  return { ...real, api: { ...real.api, get, post } };
+  return { ...real, api: { ...real.api, get, post, put } };
 });
 const auth = vi.hoisted(() => ({ reload: vi.fn(), logout: vi.fn(), user: null as unknown }));
 vi.mock('./AuthContext', () => ({ useAuth: () => auth }));
@@ -32,6 +33,7 @@ const fill = (name: string, pw: string, pw2 = pw) => {
   fireEvent.change(screen.getByLabelText(t('setup.username')), { target: { value: name } });
   fireEvent.change(screen.getByLabelText(t('pw.new')), { target: { value: pw } });
   fireEvent.change(screen.getByLabelText(t('pw.repeat')), { target: { value: pw2 } });
+  fireEvent.change(screen.getByLabelText(t('age.dob')), { target: { value: '1995-05-15' } });
 };
 const save = () => act(async () => fireEvent.click(screen.getByRole('button', { name: t('setup.submit') })));
 
@@ -65,7 +67,7 @@ describe('password setup after a code sign-in (owner, 2026-11-15)', () => {
     expect(screen.getByLabelText(t('setup.username'))).toHaveAttribute('autocomplete', 'username');
     expect(screen.getByLabelText(t('pw.new'))).toHaveAttribute('autocomplete', 'new-password');
     await save();
-    expect(post).toHaveBeenCalledWith('/auth/registration', { username: 'aziz.k', password: 'long enough pw' });
+    expect(post).toHaveBeenCalledWith('/auth/registration', { username: 'aziz.k', password: 'long enough pw', date_of_birth: '1995-05-15' });
     expect(auth.reload).toHaveBeenCalled();
   });
 
@@ -89,5 +91,51 @@ describe('password setup after a code sign-in (owner, 2026-11-15)', () => {
     expect(auth.logout).toHaveBeenCalled();
     expect(await screen.findByText(/login:/)).toHaveTextContent('"mode":"code"');
     expect(screen.getByText(/login:/)).toHaveTextContent(t('setup.reauth'));
+  });
+});
+
+
+describe('18+ (owner, 2026-11-19)', () => {
+  beforeEach(() => {
+    put.mockReset();
+    auth.reload.mockReset();
+    auth.logout.mockReset();
+  });
+
+  it('a new sign-up under 18 is refused: signed out, back to Kirish with a notice', async () => {
+    auth.user = user;
+    get.mockResolvedValue({ username: 'aziz.k', available: true });
+    post.mockRejectedValue(new ApiError(403, 'age_restricted'));
+    mount();
+    fill('aziz.k', 'long enough pw');
+    await save();
+    expect(auth.logout).toHaveBeenCalled();
+    expect(await screen.findByText(/login:/)).toHaveTextContent(t('age.restrictedNew'));
+  });
+
+  it('an older account without a date of birth gives it once', async () => {
+    auth.user = { ...user, username: 'aziz.k', has_password: true, password_setup_required: false, date_of_birth: null };
+    put.mockResolvedValue({});
+    mount();
+    expect(screen.queryByText('the page')).toBeNull();
+    fireEvent.change(screen.getByLabelText(t('age.dob')), { target: { value: '1990-01-31' } });
+    await save();
+    expect(put).toHaveBeenCalledWith('/auth/date-of-birth', { date_of_birth: '1990-01-31' });
+    expect(auth.reload).toHaveBeenCalled();
+  });
+
+  it('a restricted account sees why, with support and account deletion; the app stays closed', async () => {
+    auth.user = { ...user, username: 'aziz.k', has_password: true, password_setup_required: false, date_of_birth: null, age_restricted: true };
+    get.mockResolvedValue(null);
+    mount();
+    expect(screen.getByRole('heading', { name: t('age.restrictedTitle') })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: t('age.contactSupport') })).toHaveAttribute('href', '/help');
+    expect(screen.queryByText('the page')).toBeNull();
+  });
+
+  it('Help stays open for a restricted account (support form, SOS)', () => {
+    auth.user = { ...user, password_setup_required: false, age_restricted: true };
+    mount('/help');
+    expect(screen.getByText('the page')).toBeInTheDocument();
   });
 });

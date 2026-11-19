@@ -64,6 +64,8 @@ async function finishSetup(page, phone) {
   await page.getByLabel('Login', { exact: true }).fill(e2eUsername(phone));
   await page.getByLabel('Yangi parol').fill(e2ePassword(phone));
   await page.getByLabel('Parolni takrorlang').fill(e2ePassword(phone));
+  // 18+ (owner, 2026-11-19): asked only when the account has no date yet (seeded DEMO accounts have one).
+  if (await page.getByLabel('Tuğilgan sana').count()) await page.getByLabel('Tuğilgan sana').fill('1995-05-15');
   await page.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
   await page.getByRole('heading', { name: 'Login va parol yarating' }).waitFor({ state: 'detached' });
 }
@@ -365,6 +367,7 @@ try {
       await a.getByText('Parol telefon raqamingiz bölmasin.').waitFor();
       await a.getByLabel('Yangi parol').fill(pw1);
       await a.getByLabel('Parolni takrorlang').fill(pw1);
+      if (await a.getByLabel('Tuğilgan sana').count()) await a.getByLabel('Tuğilgan sana').fill('1995-05-15'); // 18+
       await a.waitForTimeout(400);
       await axeScan(a, 'password setup');
       await a.getByRole('button', { name: 'Saqlaş va davom etiş' }).click();
@@ -863,7 +866,7 @@ try {
     await page.goto(`${WEB}/terms`);
     await page.getByRole('heading', { name: 'Yondo — Foydalanish shartlari', level: 1, exact: true }).waitFor();
     assert((await page.locator('.legal-doc h2').count()) >= 5, 'sections must render as headings (CRLF sources once collapsed into the title)');
-    await page.getByText(/Versiya: 2026-10-23-draft/).waitFor();
+    await page.getByText(/Versiya: 2026-11-19-draft/).waitFor();
     await page.getByText(/Loyiha: hujjat hali kuçga kirmagan/).waitFor();
     await page.locator('.site-foot').getByRole('link', { name: 'Maxfiylik siyosati' }).click();
     await page.getByRole('heading', { name: 'Yondo — Maxfiylik siyosati', level: 1 }).waitFor();

@@ -1,7 +1,7 @@
 # Yondo — Maxfiylik siyosati
 
 **Holati:** loyiha, hali kuchga kirmagan  
-**Oxirgi yangilanish:** 2026-yil 23-oktabr  
+**Oxirgi yangilanish:** 2026-yil 19-noyabr  
 **Ma’lumotlar uchun mas’ul operator:** hali ko‘rsatilmagan  
 **Aloqa:** ilova ichidagi murojaat shakli («Yordam va xavfsizlik» → «Qo‘llab-quvvatlash»)
 
@@ -93,7 +93,9 @@ Rozilikni qaytarib olish avvalgi qayta ishlashni avtomatik ravishda noqonuniy qi
 
 ## 9. Voyaga yetmagan foydalanuvchilar
 
-Voyaga yetmaganlarning ma’lumotlarini qayta ishlashda qonunchilikdagi yoshga oid talablar va zarur bo‘lsa qonuniy vakil roziligi qoidalariga rioya qilinadi.
+Yondo faqat 18 yosh va undan katta shaxslar uchun. Ro‘yxatdan o‘tishda tug‘ilgan sana so‘raladi; u boshqa foydalanuvchilarga ko‘rsatilmaydi (faqat yosh, ilgari ko‘rsatilgan joylarda). Tug‘ilgan sana foydalanuvchining o‘z bayonotidir; hamrohlar uchun yosh shaxsni tasdiqlovchi hujjat orqali tekshiriladi.
+
+18 yoshga to‘lmagan shaxs ro‘yxatdan o‘tmoqchi bo‘lsa, hisob ochilmaydi va uning ma’lumotlari saqlanmaydi. Faqat telefon raqamining qayta tiklab bo‘lmaydigan (tuzlangan) xeshi 30 kun saqlanadi, shu muddatda boshqa sana bilan qayta urinishning oldini olish uchun; muddat tugagach u o‘chiriladi. Mavjud hisob 18 yoshdan kichik sanani ko‘rsatsa, sana saqlanmaydi, hisob esa administrator hujjatni tekshirguncha cheklanadi; foydalanuvchi bu vaqtda qo‘llab-quvvatlashga yozishi yoki hisobini o‘chirishi mumkin.
 
 ## 10. Uchinchi tomon xizmatlari va xalqaro uzatish
 

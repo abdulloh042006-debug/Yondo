@@ -15,7 +15,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const URL = process.env.MOBILE_URL ?? 'http://127.0.0.1:8765';
-const VERSIONS = { terms: '2026-10-23-draft', privacy: '2026-10-23-draft' };
+const VERSIONS = { terms: '2026-11-19-draft', privacy: '2026-11-19-draft' };
 
 let failed = 0;
 const results = [];
@@ -47,7 +47,7 @@ async function signIn(phone, username) {
   const pair = await call('POST', '/auth/otp/verify', { phone_number: phone, code: otp.development_otp });
   for (const [document, version] of Object.entries(VERSIONS)) await call('POST', '/account/consents', { document, version }, pair.access_token);
   const me = await call('GET', '/auth/me', undefined, pair.access_token);
-  if (me.password_setup_required) await call('POST', '/auth/registration', { username, password: `push smoke ${phone.slice(-4)}` }, pair.access_token);
+  if (me.password_setup_required) await call('POST', '/auth/registration', { username, password: `push smoke ${phone.slice(-4)}`, date_of_birth: '1995-05-15' }, pair.access_token);
   return pair;
 }
 

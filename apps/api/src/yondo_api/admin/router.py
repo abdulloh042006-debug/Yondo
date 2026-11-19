@@ -200,6 +200,39 @@ async def set_account_status(
     return user
 
 
+class AgeRestrictionClear(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    # What the admin checked, e.g. "ID card seen: born 1998"; stored only in the audit record.
+    reason: str = Field(min_length=3, max_length=500)
+
+
+@router.post('/users/{user_id}/age-restriction/clear', response_model=AdminUserRead)
+async def clear_age_restriction(
+    user_id: UUID, payload: AgeRestrictionClear, admin: Admin, session: Session
+):
+    """After an ID check: the account declared an age under 18 by mistake (18+, 2026-11-19).
+    The user then enters the date of birth again; who cleared it and when is audited."""
+    if user_id == admin.id:
+        raise ApplicationError('admin_self_change_forbidden', 'Cannot change own status', 403)
+    user = await session.scalar(select(User).where(User.id == user_id).with_for_update())
+    if user is None:
+        raise ApplicationError('user_not_found', 'User not found', 404)
+    if user.age_restricted_at is None:
+        raise ApplicationError('age_restriction_not_set', 'The account is not age-restricted', 409)
+    user.age_restricted_at = None
+    session.add(
+        AdminAuditEvent(
+            admin_id=admin.id,
+            target_id=user.id,
+            action='age_restriction_cleared',
+            reason=payload.reason.strip(),
+        )
+    )
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
 _IP_HEADERS = (
     'x-forwarded-for',
     'x-real-ip',

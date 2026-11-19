@@ -103,7 +103,15 @@ function AccountView({ user }: { user: User }) {
           <form className="glass pad stack" onSubmit={save} noValidate>
             <h2>{t('account.personal')}</h2>
             <div className="bento">
-              <Field label={t('account.age')} inputMode="numeric" value={age} onChange={(e) => setAge(e.target.value)} error={ageError} />
+              <Field
+                label={t('account.age')}
+                inputMode="numeric"
+                value={age}
+                readOnly={!!user.date_of_birth}
+                hint={user.date_of_birth ? t('age.fromDob') : undefined}
+                onChange={(e) => setAge(e.target.value)}
+                error={ageError}
+              />
               <Field label={t('account.gender')} value={gender} maxLength={64} onChange={(e) => setGender(e.target.value)} error={err?.fields.gender} />
               <Field label={t('common.city')} value={city} maxLength={128} onChange={(e) => setCity(e.target.value)} error={err?.fields.city} />
             </div>
