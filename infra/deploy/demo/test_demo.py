@@ -270,3 +270,13 @@ async def test_harness_sign_ins_never_use_up_the_public_code_budget(tmp_path, mo
                 await demo_app.login(client, demo_app.MADINA)
             sixth = await client.post('/api/v1/auth/otp/request', json={'phone_number': demo_app.MADINA})
             assert sixth.json()['code'] == 'otp_hourly_limit'
+
+
+@loop
+async def test_demo_seeds_an_approved_vendor_with_neutral_demo_gifts(demo):
+    """Gifts phase A (CEO, 2026-11-19): one approved DEMO shop, DEMO products, nothing romantic."""
+    async with AsyncClient(transport=ASGITransport(app=demo), base_url='http://demo') as client:
+        products = (await client.get('/api/v1/gifts/products')).json()
+    assert len(products) == 3
+    assert all(p['name'].startswith('DEMO ') for p in products)
+    assert {p['category'] for p in products} == {'flowers', 'custom', 'gift_box'}

@@ -5,6 +5,7 @@ import pytest
 
 from yondo_api.models.user import UserRole, UserRoleType
 
+from .gift_helpers import approved_shop
 from .test_bookings import booking_payload, setup_bookable_companion
 from .test_payments import accepted_booking
 
@@ -12,6 +13,7 @@ from .test_payments import accepted_booking
 async def offer_product(e, *, currency='UZS', stock=5):
     async with e['app'].state.db_session_factory() as session:
         session.add(UserRole(user_id=UUID(e['other_id']), role=UserRoleType.VENDOR))
+        session.add(approved_shop(UUID(e['other_id'])))  # product decisions §4
         await session.commit()
     product = await e['client'].post(
         '/api/v1/gifts/vendor/products',
@@ -110,7 +112,8 @@ async def test_vendor_ownership_price_reapproval_and_stock(prepared):
     assert summary.status_code == 200
     assert summary.json()['products'] == 1
     assert summary.json()['earnings_available'] is False
-    assert (await client.get('/api/v1/vendor/orders', headers=e['other'])).status_code == 503
+    # Vendor orders exist since 2026-11-19 (one order per vendor); earnings stay undefined (503).
+    assert (await client.get('/api/v1/vendor/orders', headers=e['other'])).json() == []
     assert (await client.get('/api/v1/vendor/earnings', headers=e['other'])).status_code == 503
     assert (await client.patch(url, headers=e['other'], json={'stock': None})).status_code == 422
     assert (
@@ -236,6 +239,7 @@ async def test_vendor_cannot_edit_another_vendors_listing(prepared):
     pid = await offer_product(e)
     async with e['app'].state.db_session_factory() as session:
         session.add(UserRole(user_id=UUID(e['owner_id']), role=UserRoleType.VENDOR))
+        session.add(approved_shop(UUID(e['owner_id'])))  # product decisions §4
         await session.commit()
     url = f'/api/v1/vendor/products/{pid}'
     wrong = await client.patch(url, headers=e['owner'], json={'price_minor': 1})

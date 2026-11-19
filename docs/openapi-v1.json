@@ -534,6 +534,105 @@
         "title": "AdminReportRead",
         "type": "object"
       },
+      "AdminShopRead": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "delivery_area": {
+            "title": "Delivery Area",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "identity_verified": {
+            "title": "Identity Verified",
+            "type": "boolean"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "city",
+          "delivery_area",
+          "status",
+          "review_note",
+          "logo_url",
+          "identity_verified",
+          "user_id",
+          "created_at",
+          "reviewed_at"
+        ],
+        "title": "AdminShopRead",
+        "type": "object"
+      },
       "AdminSummary": {
         "properties": {
           "bookings": {
@@ -1789,6 +1888,25 @@
         ],
         "title": "ContentStatus",
         "type": "string"
+      },
+      "CustomerCancel": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "CustomerCancel",
+        "type": "object"
       },
       "DateOfBirth": {
         "additionalProperties": false,
@@ -3235,6 +3353,17 @@
             "title": "Published",
             "type": "boolean"
           },
+          "rejection_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejection Note"
+          },
           "stock": {
             "maximum": 2147483647.0,
             "minimum": 0.0,
@@ -3259,6 +3388,22 @@
           "published"
         ],
         "title": "ProductRead",
+        "type": "object"
+      },
+      "ProductRejection": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "ProductRejection",
         "type": "object"
       },
       "ProductWrite": {
@@ -3830,6 +3975,158 @@
           "unit_minutes"
         ],
         "title": "ServiceWrite",
+        "type": "object"
+      },
+      "ShopDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "note"
+        ],
+        "title": "ShopDecision",
+        "type": "object"
+      },
+      "ShopRead": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "delivery_area": {
+            "title": "Delivery Area",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "identity_verified": {
+            "title": "Identity Verified",
+            "type": "boolean"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "city",
+          "delivery_area",
+          "status",
+          "review_note",
+          "logo_url",
+          "identity_verified"
+        ],
+        "title": "ShopRead",
+        "type": "object"
+      },
+      "ShopSuspension": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ShopSuspension",
+        "type": "object"
+      },
+      "ShopWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "city": {
+            "maxLength": 128,
+            "minLength": 2,
+            "title": "City",
+            "type": "string"
+          },
+          "delivery_area": {
+            "maxLength": 500,
+            "minLength": 2,
+            "title": "Delivery Area",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "city",
+          "delivery_area"
+        ],
+        "title": "ShopWrite",
         "type": "object"
       },
       "SimulateWrite": {
@@ -4742,6 +5039,165 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VendorOrderItem": {
+        "properties": {
+          "line_total_minor": {
+            "title": "Line Total Minor",
+            "type": "integer"
+          },
+          "name_snapshot": {
+            "title": "Name Snapshot",
+            "type": "string"
+          },
+          "product_id": {
+            "format": "uuid",
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "unit_price_minor": {
+            "title": "Unit Price Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "product_id",
+          "name_snapshot",
+          "quantity",
+          "unit_price_minor",
+          "line_total_minor"
+        ],
+        "title": "VendorOrderItem",
+        "type": "object"
+      },
+      "VendorOrderRead": {
+        "description": "What a shop sees (CEO, 2026-11-19): the items, the delivery method and the customer's own\ndelivery note; never the customer's phone, user id or name (\"Mijoz\" + a short number).",
+        "properties": {
+          "cancel_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "customer_label": {
+            "const": "Mijoz",
+            "default": "Mijoz",
+            "title": "Customer Label",
+            "type": "string"
+          },
+          "delivery_method": {
+            "title": "Delivery Method",
+            "type": "string"
+          },
+          "delivery_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Note"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_test_order": {
+            "default": true,
+            "title": "Is Test Order",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VendorOrderItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "real_money_moved": {
+            "default": false,
+            "title": "Real Money Moved",
+            "type": "boolean"
+          },
+          "short_code": {
+            "title": "Short Code",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GiftTestStatus"
+          },
+          "subtotal_minor": {
+            "title": "Subtotal Minor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "short_code",
+          "status",
+          "subtotal_minor",
+          "currency",
+          "delivery_method",
+          "delivery_note",
+          "cancel_reason",
+          "created_at",
+          "items"
+        ],
+        "title": "VendorOrderRead",
+        "type": "object"
+      },
+      "VendorStatusWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "preparing",
+              "out_for_delivery",
+              "delivered",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "VendorStatusWrite",
         "type": "object"
       },
       "VerificationDecision": {
@@ -6255,6 +6711,200 @@
         "summary": "Set Account Status",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/vendors": {
+      "get": {
+        "operationId": "admin_shops_api_v1_admin_vendors_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "suspended"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminShopRead"
+                  },
+                  "title": "Response Admin Shops Api V1 Admin Vendors Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Shops",
+        "tags": [
+          "gift vendors"
+        ]
+      }
+    },
+    "/api/v1/admin/vendors/{shop_id}/decision": {
+      "post": {
+        "description": "Approve (also reinstates a suspended shop) or reject, with a note. Approval needs the\nidentity verification to be verified and grants the Vendor role.",
+        "operationId": "decide_shop_api_v1_admin_vendors__shop_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shop_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Shop Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminShopRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decide Shop",
+        "tags": [
+          "gift vendors"
+        ]
+      }
+    },
+    "/api/v1/admin/vendors/{shop_id}/suspend": {
+      "post": {
+        "description": "Hide the shop's products and stop new orders; existing orders can still be completed.",
+        "operationId": "suspend_shop_api_v1_admin_vendors__shop_id__suspend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shop_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Shop Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopSuspension"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminShopRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suspend Shop",
+        "tags": [
+          "gift vendors"
         ]
       }
     },
@@ -10748,6 +11398,65 @@
         ]
       }
     },
+    "/api/v1/gifts/admin/products/{product_id}/reject": {
+      "post": {
+        "description": "Hide a product with a reason the vendor sees; audited, and the vendor is notified.",
+        "operationId": "reject_product_api_v1_gifts_admin_products__product_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRejection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reject Product",
+        "tags": [
+          "gifts"
+        ]
+      }
+    },
     "/api/v1/gifts/admin/products/{product_id}/unpublish": {
       "post": {
         "operationId": "unpublish_product_api_v1_gifts_admin_products__product_id__unpublish_post",
@@ -11253,7 +11962,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TestOrderRead"
+                  "items": {
+                    "$ref": "#/components/schemas/TestOrderRead"
+                  },
+                  "title": "Response Create Test Order Api V1 Gifts Test Orders Post",
+                  "type": "array"
                 }
               }
             },
@@ -11324,6 +12037,65 @@
           }
         ],
         "summary": "My Test Order",
+        "tags": [
+          "manual gift test orders"
+        ]
+      }
+    },
+    "/api/v1/gifts/test-orders/{order_id}/cancel": {
+      "post": {
+        "description": "The customer may cancel only before the shop starts preparing (CEO, 2026-11-19).\nTest orders move no money: there is nothing to refund.",
+        "operationId": "cancel_my_test_order_api_v1_gifts_test_orders__order_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerCancel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestOrderRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel My Test Order",
         "tags": [
           "manual gift test orders"
         ]
@@ -11400,6 +12172,104 @@
         "summary": "Create Product",
         "tags": [
           "gifts"
+        ]
+      }
+    },
+    "/api/v1/gifts/vendor/shop": {
+      "get": {
+        "operationId": "my_shop_api_v1_gifts_vendor_shop_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Shop",
+        "tags": [
+          "gift vendors"
+        ]
+      },
+      "put": {
+        "description": "Apply (first save) or edit the shop profile. A rejected application goes back to review;\nan approved shop stays approved (an admin can suspend it); a suspended one stays suspended.",
+        "operationId": "save_shop_api_v1_gifts_vendor_shop_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Shop",
+        "tags": [
+          "gift vendors"
+        ]
+      }
+    },
+    "/api/v1/gifts/vendor/shop/logo": {
+      "post": {
+        "description": "Raw JPEG/PNG/WebP bytes, re-encoded to JPEG without EXIF (the photo pipeline).",
+        "operationId": "upload_logo_api_v1_gifts_vendor_shop_logo_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Logo",
+        "tags": [
+          "gift vendors"
         ]
       }
     },
@@ -13349,15 +14219,46 @@
     },
     "/api/v1/vendor/orders": {
       "get": {
+        "description": "The shop's own orders, newest first (a suspended shop can still finish them).",
         "operationId": "orders_api_v1_vendor_orders_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
-          "503": {
+          "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VendorOrderRead"
+                  },
+                  "title": "Response Orders Api V1 Vendor Orders Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -13366,6 +14267,64 @@
           }
         ],
         "summary": "Orders",
+        "tags": [
+          "vendor"
+        ]
+      }
+    },
+    "/api/v1/vendor/orders/{order_id}/status": {
+      "post": {
+        "operationId": "vendor_update_status_api_v1_vendor_orders__order_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorStatusWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorOrderRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Vendor Update Status",
         "tags": [
           "vendor"
         ]

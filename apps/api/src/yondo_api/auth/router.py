@@ -30,6 +30,7 @@ from yondo_api.auth.service import (
     verify_otp,
 )
 from yondo_api.config import Settings
+from yondo_api.gifts.shops import vendor_role_allowed
 from yondo_api.models.user import UserRole, UserRoleType
 
 router = APIRouter(prefix='/auth', tags=['authentication'])
@@ -143,6 +144,18 @@ async def select_roles(
         raise ApplicationError('invalid_role', 'The admin role cannot be self-assigned', 403)
     if len(set(payload.roles)) != len(payload.roles):
         raise ApplicationError('duplicate_role', 'Roles must be unique', 422)
+    # The Vendor role is given only by an approved shop application (product decisions §4).
+    # A Vendor role the user already holds may be kept (clients resend every role they have);
+    # only adding it needs an approved shop.
+    had_vendor = await session.get(UserRole, (principal.user.id, UserRoleType.VENDOR))
+    if (
+        UserRoleType.VENDOR in payload.roles
+        and had_vendor is None
+        and not await vendor_role_allowed(session, principal.user.id)
+    ):
+        raise ApplicationError(
+            'vendor_requires_approval', 'Apply for a shop; an admin approves vendors', 403
+        )
     await session.execute(
         delete(UserRole).where(
             UserRole.user_id == principal.user.id,

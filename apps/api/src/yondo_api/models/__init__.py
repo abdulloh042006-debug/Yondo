@@ -9,6 +9,7 @@ from yondo_api.companions import models as companion_models
 from yondo_api.discovery import models as discovery_models
 from yondo_api.gifts import models as gifts_models
 from yondo_api.gifts import orders_models as gift_order_models
+from yondo_api.gifts import shop_models as gift_shop_models
 from yondo_api.meetings import models as meetings_models
 from yondo_api.models.auth import AuthSession, OtpChallenge
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
@@ -26,6 +27,7 @@ __all__ = [
     'telegram_models',
     'social_models',
     'gifts_models',
+    'gift_shop_models',
     'gift_order_models',
     'beta_models',
     'notifications_models',
