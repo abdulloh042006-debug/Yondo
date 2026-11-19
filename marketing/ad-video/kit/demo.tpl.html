@@ -1,0 +1,36 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>Yondo kit demo</title>
+<style>
+@font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-latin-700-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-800-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-latin-ext-700-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
+@font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-ext-800-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
+@font-face{font-family:"Space Grotesk";font-weight:700;src:url({{FONTS}}/space-grotesk/files/space-grotesk-latin-700-normal.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#F5F2EC}svg{display:block}
+</style></head><body><svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"></svg>
+<script>
+const WORDMARK = `{{WORDMARK_INLINE}}`;
+{{KIT_JS}}
+// Demo of the kit pieces used by ad 5: the «Keyinroq» list hook (0-3 s) and the end card (3-5.5 s).
+const ITEMS = ['Yangi ko‘rgazmaga borish', 'Eski shahar bo‘ylab sayr', 'Yangi filmni ko‘rish', 'Yangi kafeni sinab ko‘rish'];
+const HITS = [.75, 1.25, 1.75, 2.25];
+const CAPS = [[.3, 2.95, 'Bu ro‘yxat hammada bor.']];
+window.TOTAL = 5.5;
+window.render = (t) => {
+  const sv = document.getElementById('sv');
+  if (t >= 3) { sv.innerHTML = K.endCard(t, 3); return; }
+  const [dx, dy] = K.shake(t, HITS);
+  let g = `<rect width="1080" height="1920" fill="${K.PAPER}"/><g transform="translate(${dx} ${dy})">`;
+  const months = ['Sentabr', 'Oktabr', 'Noyabr'], mi = t < .9 ? 0 : t < 1.9 ? 1 : 2;
+  g += `<text x="960" y="250" font-family="Space Grotesk" font-weight="700" font-size="40" fill="${K.INK}" text-anchor="end">${months[mi]}</text>`;
+  g += `<text x="120" y="420" font-family="Manrope" font-weight="800" font-size="88" fill="${K.INK}" opacity="${K.eo(K.P(t, 0, .3))}">Shu oy:</text>`;
+  ITEMS.forEach((s, i) => {
+    const k = K.eo(K.P(t, .1 + i * .08, .5 + i * .08)), y = 600 + i * 180;
+    g += `<g opacity="${k}" transform="translate(${(1 - k) * 40} 0)"><rect x="120" y="${y - 44}" width="44" height="44" rx="8" fill="none" stroke="${K.INK}" stroke-width="5"/>`
+      + `<text x="200" y="${y}" font-family="Manrope" font-weight="700" font-size="56" fill="${K.INK}">${K.esc(s)}</text></g>`;
+    g += K.stamp(t, HITS[i], 800, y - 70, 'KEYINROQ', -8 + i * 3);
+  });
+  g += '</g>' + K.caption(t, CAPS);
+  sv.innerHTML = g;
+};
+window.ready = document.fonts.ready.then(() => { window.render(0); return true; });
+</script></body></html>

@@ -103,6 +103,11 @@ async def seed(app):
             )).json()
             await client.post(f'{base}/me/services', headers=headers, json={'service_code': 'coffee', 'price_minor': price, 'currency': 'UZS', 'unit_minutes': 60, 'description': 'Kafe yoki parkda suhbat'})
             await client.post(f'{base}/me/services', headers=headers, json={'service_code': 'walking', 'price_minor': price // 2, 'currency': 'UZS', 'unit_minutes': 30, 'description': ''})
+            # Ad 5/6 (2026-11-19): AD5_SERVICES=1 adds the categories the ads show (Tadbir for Madina, Kino for Jasur).
+            extra = {'Madina': ('event', 'Ko‘rgazma va tadbirlarga birga borish'), 'Jasur': ('cinema', 'Kino va muhokama')}
+            if os.environ.get('AD5_SERVICES') == '1' and name in extra:
+                code, desc = extra[name]
+                await client.post(f'{base}/me/services', headers=headers, json={'service_code': code, 'price_minor': price, 'currency': 'UZS', 'unit_minutes': 60, 'description': desc})
             # illustrated profile pictures (PHOTOS_DIR/<name>-N.jpg), uploaded through the real photo endpoint
             pdir = os.environ.get('PHOTOS_DIR')
             if pdir:
