@@ -33,6 +33,7 @@ from yondo_api.companions.models import (
 )
 from yondo_api.discovery.models import CompanionFavorite, CompanionLike
 from yondo_api.gifts.models import GiftCartItem, GiftProduct
+from yondo_api.gifts.orders_models import GiftTestOrder
 from yondo_api.gifts.shop_models import VendorShop
 from yondo_api.models.auth import AuthSession, OtpChallenge, OtpIssue, PasswordLoginGuard
 from yondo_api.models.user import AccountStatus, User, UserRole
@@ -188,6 +189,10 @@ async def erase_account(
     user.password_hash = None
     user.password_changed_at = None
     user.phone_number = f'deleted-{uid.hex[:24]}'
+    # The customer's own delivery notes on gift orders are personal data (shops can read them).
+    await session.execute(
+        update(GiftTestOrder).where(GiftTestOrder.customer_id == uid).values(delivery_note=None)
+    )
     # A shop is business data other records point to: it is de-identified, closed and its
     # products are hidden (the logo object is deleted).
     shop = await session.scalar(select(VendorShop).where(VendorShop.user_id == uid))

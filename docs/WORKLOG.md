@@ -38,7 +38,7 @@ Done: `vendor_shops` (mandatory profile + optional logo; migration 0028); admin 
 Not done: phase B (web), phase C (mobile).
 Next: phase B on `feat/gifts-web`.
 Blockers: OPEN (owner, before real orders): how a shop contacts the recipient (in-app chat or a masked phone); real payments, payouts, delivery fee for gifts.
-Evidence: see the PR.
+Evidence: SQLite 572 passed + 12 skipped, PostgreSQL 583 passed (`alembic check` clean, 0028 down/up + backfill checked by the verifier), demo 12, ruff + `export_openapi --check` PASS, web tsc + vitest 183. Verifier APPROVE (8 non-blocking notes; 1-3 fixed: an old Vendor role can be kept, erasure clears the customer's delivery notes, logo upload checks the account).
 Commit: branch `feat/gifts-vendors` (PR to `main`).
 ## S84 — Photos: the Yondo logo while loading and when a photo fails (2026-11-19) [cloud worker, web + mobile]
 Done (owner: "if a picture does not open or does not load fully, show the default Yondo logo"):

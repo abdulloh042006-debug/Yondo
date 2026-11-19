@@ -202,6 +202,8 @@ async def save_shop(payload: ShopWrite, request: Request, principal: Principal, 
 @router.post('/gifts/vendor/shop/logo', response_model=ShopRead)
 async def upload_logo(request: Request, principal: Principal, session: Session):
     """Raw JPEG/PNG/WebP bytes, re-encoded to JPEG without EXIF (the photo pipeline)."""
+    if principal.user.account_status != AccountStatus.ACTIVE:
+        raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
     shop = await _my_shop(session, principal.user.id, lock=True)
     if shop is None:
         raise ApplicationError('vendor_shop_not_found', 'No shop application yet', 404)

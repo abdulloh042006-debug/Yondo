@@ -320,3 +320,29 @@ async def test_account_deletion_closes_and_de_identifies_the_shop(env):
         shop = await session.scalar(select(VendorShop))
         assert shop.status == 'suspended' and shop.name == 'deleted' and shop.city == ''
         assert (await session.get(GiftProduct, UUID(pid))).published is False
+
+
+@pytest.mark.asyncio
+async def test_a_vendor_role_held_before_the_rule_can_be_kept_but_not_newly_added(env):
+    """Verifier, 2026-11-19: clients resend every role; an old self-assigned Vendor role must not
+    block other role changes, while adding it still needs an approved shop."""
+    e, client = env, env['client']
+    async with e['app'].state.db_session_factory() as session:
+        session.add(UserRole(user_id=UUID(e['other_id']), role=UserRoleType.VENDOR))
+        await session.commit()
+    kept = await client.put(
+        '/api/v1/auth/roles', headers=e['other'], json={'roles': ['customer', 'vendor']}
+    )
+    assert kept.status_code == 200, kept.text
+    # Still no selling without an approved shop.
+    assert (
+        await client.post('/api/v1/gifts/vendor/products', headers=e['other'], json=PRODUCT)
+    ).json()['code'] == 'vendor_shop_not_approved'
+    dropped = await client.put(
+        '/api/v1/auth/roles', headers=e['other'], json={'roles': ['customer']}
+    )
+    assert dropped.status_code == 200
+    again = await client.put(
+        '/api/v1/auth/roles', headers=e['other'], json={'roles': ['customer', 'vendor']}
+    )
+    assert again.json()['code'] == 'vendor_requires_approval'
