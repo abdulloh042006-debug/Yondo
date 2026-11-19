@@ -96,9 +96,40 @@ one old-town area circled with a dark marker, a few blank paper notes and two pu
 window, neutral natural colour grade, 50mm lens look, shallow depth of field. No readable text, no logos, no photos of people.
 ```
 
+## 3a-qadam (ixtiyoriy). Qahramon varaqasi: bir xil ko‘rinish uchun
+Har bir qahramonni «model» kabi saqlash uchun. Asosiy portret (R01–R04) majburiy; quyidagilar **ixtiyoriy**, lekin videolarda
+yuz va kiyim bir xil chiqishiga yordam beradi. Har birini o‘sha qahramonning portretini **referens (Ingredient)** qilib yarating.
+Keyin har bir qahramonni Flow'da **Ingredient** sifatida saqlang: `Dilnoza`, `Kamola`, `Javlon`, `Rustam aka`
+(portret + b + c rasmlari birga).
+
+| Fayl | Qahramon | Referens |
+| --- | --- | --- |
+| `R01b_dilnoza_full.png` / `R01c_dilnoza_34.png` | Dilnoza | R01 |
+| `R02b_kamola_full.png` / `R02c_kamola_34.png` | Kamola | R02 |
+| `R03b_javlon_full.png` / `R03c_javlon_34.png` | Javlon | R03 |
+| `R04b_rustam_aka_full.png` / `R04c_rustam_aka_34.png` | Rustam aka | R04 |
+
+**b — to‘liq bo‘y** (ismni almashtirib, har biriga bir xil prompt):
+```
+Photorealistic full-body photo, 9:16, of the same person as in the reference image: identical face, hair, age and the exact same
+outfit and shoes. Standing naturally, relaxed posture, arms at the sides, facing the camera, on a plain light-grey studio
+background with soft even light. Neutral natural colour grade, 50mm lens look. Clearly adult. No text, no logos, no props,
+no change of clothes, no jewellery added.
+```
+**c — uch chorak burilish** (three-quarter view):
+```
+Photorealistic waist-up photo, 9:16, of the same person as in the reference image: identical face, hair, age and outfit.
+Body and face turned about 45 degrees to the left, looking slightly off camera with a calm friendly expression, on a plain
+light-grey studio background with soft even light. Neutral natural colour grade, 50mm lens look. Clearly adult.
+No text, no logos, no change of clothes.
+```
+Tekshiring: yuz R0x bilan bir xil; kiyim, sharf/ko‘zoynak/kepka o‘zgarmagan; qo‘l-oyoq buzilmagan; fon toza.
+Videolarda (4-qadam) R0x o‘rniga shu qahramonning saqlangan **Ingredient**ini qo‘shing; b/c bo‘lmasa, faqat R0x yetarli.
+Yuklasangiz, b va c rasmlarini ham jadvaldagi nom bilan shu chatga yuklang: ular qo‘shimcha referens bo‘ladi.
+
 ## 4-qadam. Videolar
 Rejim: **Ingredients to Video** (sizdagi nomi boshqacha bo‘lishi mumkin: «referens rasmlardan video»). Ko‘rsatilgan rasmlarni
-qo‘shing, keyin promptni qo‘ying. Har bir promptning oxiriga o‘sha kadrning **Negative** qismini qo‘shing.
+qo‘shing (3a-qadamni qilgan bo‘lsangiz: qahramonning saqlangan Ingredient'ini), keyin promptni qo‘ying. Har bir promptning oxiriga o‘sha kadrning **Negative** qismini qo‘shing.
 
 ### 9. s02_poster_pass.mp4 — ingredientlar: R01 + R07
 ```
