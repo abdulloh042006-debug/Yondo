@@ -18,7 +18,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
-00j. **Social login (S77, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
+00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -36,14 +36,26 @@ Not done: Render mode (needs the live check, docs/client-ip.md); 18+ age limit =
 Notes: a code killed by 3 wrong attempts can be replaced at once (no cooldown), still capped at 5/h and 10/day per phone. The demo harness's own sign-ins (seed, admin, top-up) are outside the per-phone limits (`auth_otp_limits_enabled=False` on its internal app); old `otp_issues` rows are pruned by `python -m yondo_api.jobs`.
 Next: after deploy, an admin opens `/api/v1/admin/diagnostics/client-ip` on the demo (with and without a forged header) and sets `YONDO_CLIENT_IP_MODE` in Render. Until then all demo visitors share one IP bucket; the shared DEMO accounts also share the per-phone code limits (5/h).
 Evidence: see the PR.
-Commit: branch `feat/auth-hardening` (based on `feat/social-login`, PR to `main`).
-## S77 — Sign in with Telegram (OIDC) and Google: backend + web (2026-11-18) [cloud worker, auth full-stack]
+Commit: branch `feat/auth-hardening` (PR #52 to `main`).
+## S78 — Sign in with Telegram (OIDC) and Google: backend + web (2026-11-18) [cloud worker, auth full-stack]
 Done: migration 0025 (`external_identities`, `social_login_challenges`); `auth/oidc.py` (JWKS cache, RS256/ES256, iss/aud/exp); `auth/social.py`: Telegram via the official JS library (server nonce, ID token verified, nonce required + single-use), Telegram code flow + PKCE (kept for mobile), Google GIS ID token, phone-anchored sign-up (`/auth/social/complete` with a phone code), link/unlink in Settings, per-IP rate limit, 503 `provider_not_configured`. Registration step accepts social sessions. Web: round Telegram (`tg-auth-button`, icon) + Google (icon, circle) buttons on Login, Linked accounts in Settings, `/auth/callback/telegram`, uz/ru/en keys. Docs: `docs/login-telegram-google.md` (owner checklist), product-decisions §3, CLAUDE.md §7.
 Not done: phase 2 (mobile, branch `feat/social-login-mobile`); live check with real accounts (keys not set).
 Next: owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID` + `YONDO_GOOGLE_CLIENT_IDS` in Render and BotFather Allowed URLs; the Google consent screen stays in Testing (owner as test user), "Publish app" later.
 Blockers: BLOCKED until keys: live sign-in, whether Telegram echoes `nonce`.
 Evidence: see the PR (pytest PostgreSQL, ruff, export_openapi --check, web typecheck/lint/vitest/build, e2e).
 Commit: branch `feat/social-login` (PR to `main`).
+## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
+Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
+- web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
+- Account deletion (web `pages/DeleteAccount.tsx`, mobile `screens/Settings.tsx`) uses it: consequences in a red danger zone, early release does nothing, Space/Enter hold, screen-reader two-step path, aria-live / AccessibilityInfo announcements. The "I understand" box and the dialog are gone.
+- i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
+- Mobile smoke "Cards: Save…" (CEO: fails on main) is flaky (~1 run in 3 here): the deck sometimes opens straight on "You have seen every card". Root cause NOT found yet; to be fixed with the Kashf/CardDeck redesign PR.
+- **Fixed on main's CSS:** the #44 merge left `@media (prefers-reduced-motion)` (sound switch) unclosed, so every rule after it (likes, card feed, photo manager, push switch) applied only to reduced-motion users; the block is closed now (`styles.css` parses again: checked with postcss).
+- Guard: `apps/web/src/styles.test.ts` parses styles.css strictly with postcss (Vite's own dependency) and fails on any syntax error or an @media swallowing another @media/theme block; it fails on main's file (1367:1 Unclosed block).
+- Web e2e `axeScan` waits for finite entrance animations / mid-way inline opacity before scanning (the rausch/stone `.btn.sm` contrast 4.49/4.43 failures were measured mid-fade: #fefafb text).
+- Mobile hold: `accessibilityActions` activate → two-step; completion announced.
+Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
+Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
 ## S76 — CI: flaky push test and the PostgreSQL job hang (2026-11-18) [cloud worker]
 Done: (1) VAPID key race: `load_vapid_keys` re-reads in a fresh session and retries (an insert lost to another worker or rolled back by another session on a shared connection no longer leaves `row = None`); exceptions returned by `gather` in delivery are logged. Repro on main: the flaky test passed 6/12. (2) PostgreSQL job hang reproduced locally (PG 16, exact CI commands, about 1 in 3 runs): a push task scheduled from `after_commit` during two concurrent webhook requests was finished, but its done callback had not removed it from the dispatcher's set, so `drain()` (`while tasks: gather`) spun for ever at app shutdown. `drain()` now drops finished tasks itself and shutdown waits at most 10 s. Why the callback did not run is not proven. (3) CI: `timeout-minutes` on the api/postgres/web/mobile jobs, pytest `faulthandler_timeout=120`. New deterministic tests: lost insert, concurrent first use, drain on a finished task.
 Next: none.
