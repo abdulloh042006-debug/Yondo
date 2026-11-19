@@ -143,8 +143,8 @@ async def complete_registration(
     if user.password_hash is not None and user.username is not None:
         raise ApplicationError('registration_complete', 'The account is already set up', 409)
     window = timedelta(seconds=settings.auth_registration_window_seconds)
-    age = _now() - _as_utc(principal.session.created_at)
-    if principal.session.via not in _SETUP_VIA or age > window:
+    session_age = _now() - _as_utc(principal.session.created_at)
+    if principal.session.via not in _SETUP_VIA or session_age > window:
         raise ApplicationError(
             'reauth_required', 'Sign in with a code again, then set the password', 403
         )

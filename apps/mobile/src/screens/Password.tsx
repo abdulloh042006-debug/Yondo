@@ -79,8 +79,14 @@ export function PasswordSetupScreen({ user }: { user: User }) {
       }
       if (code === 'registration_complete') return void reload();
       if (code === 'age_restricted') {
+        // A new sign-up under 18 was erased by the server; an older account is kept but restricted.
+        const kept = await api.get('/auth/me').then(
+          () => true,
+          () => false,
+        );
+        if (kept) return void reload();
         setLoginIntent({ mode: 'password', notice: t('age.restrictedNew') });
-        await logout(); // the account was erased by the server
+        await logout();
         return;
       }
       if (code === 'date_of_birth_required' || code === 'invalid_date_of_birth') return void setErrs({ dob: errorText(e) });

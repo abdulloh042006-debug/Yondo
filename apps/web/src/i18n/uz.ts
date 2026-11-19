@@ -1056,7 +1056,7 @@ export const uz = {
   'age.stepTitle': 'Tuğilgan sanangizni kiriting',
   'age.stepLead': 'Yondo faqat 18 yoş va undan kattalar uçun. Bu bir marta söraladi.',
   'age.restrictedTitle': 'Yondo 18 yoşdan kattalar uçun',
-  'age.restrictedBody': 'Siz 18 yoşdan kiçik sanani kiritdingiz, şuning uçun hisob cheklangan. Agar sana xato kiritilgan bölsa, qöllab-quvvatlaşga yozing: administrator hujjatingizni tekşiradi. Hisobni öçirib yuboriş ham mumkin.',
+  'age.restrictedBody': 'Siz 18 yoşdan kiçik sanani kiritdingiz, şuning uçun hisob çeklangan. Agar sana xato kiritilgan bölsa, qöllab-quvvatlaşga yozing: administrator hujjatingizni tekşiradi. Hisobni öçirib yuboriş ham mumkin.',
   'age.contactSupport': 'Qöllab-quvvatlaşga yoziş',
   'age.restrictedNew': 'Yondo faqat 18 yoş va undan kattalar uçun. Hisob oçilmadi.',
   'age.invalid': 'Haqiqiy tuğilgan sanani kiriting.',

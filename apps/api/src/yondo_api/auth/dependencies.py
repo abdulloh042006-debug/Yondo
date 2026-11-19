@@ -71,6 +71,10 @@ async def get_authenticated_user(
             raise ApplicationError(
                 'age_restricted', 'Yondo is only for people aged 18 and over', 403
             )
+        if not path.startswith(_SETUP_ALLOWED):
+            # Support and account deletion: never behind the password or date-of-birth steps
+            # (a restricted account has no date of birth by design).
+            return AuthenticatedUser(user=user, session=auth_session)
     if settings.auth_require_password_setup and (
         user.password_hash is None or user.username is None
     ):

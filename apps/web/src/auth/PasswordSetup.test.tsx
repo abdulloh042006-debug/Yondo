@@ -104,13 +104,27 @@ describe('18+ (owner, 2026-11-19)', () => {
 
   it('a new sign-up under 18 is refused: signed out, back to Kirish with a notice', async () => {
     auth.user = user;
-    get.mockResolvedValue({ username: 'aziz.k', available: true });
+    get.mockImplementation(async (path: string) => {
+      if (path === '/auth/me') throw new ApiError(401, 'invalid_access_token'); // erased by the server
+      return { username: 'aziz.k', available: true };
+    });
     post.mockRejectedValue(new ApiError(403, 'age_restricted'));
     mount();
     fill('aziz.k', 'long enough pw');
     await save();
     expect(auth.logout).toHaveBeenCalled();
     expect(await screen.findByText(/login:/)).toHaveTextContent(t('age.restrictedNew'));
+  });
+
+  it('an older account restricted at registration is kept: no sign-out, the app reloads into the restricted screen', async () => {
+    auth.user = user;
+    get.mockImplementation(async (path: string) => (path === '/auth/me' ? { ...user, age_restricted: true } : { username: 'aziz.k', available: true }));
+    post.mockRejectedValue(new ApiError(403, 'age_restricted'));
+    mount();
+    fill('aziz.k', 'long enough pw');
+    await save();
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(auth.reload).toHaveBeenCalled();
   });
 
   it('an older account without a date of birth gives it once', async () => {

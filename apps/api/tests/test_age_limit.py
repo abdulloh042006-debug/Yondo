@@ -172,12 +172,11 @@ async def test_existing_account_flag_retry_support_and_admin_clear():
         # ...but support and self-deletion stay reachable.
         support = await client.post(
             '/api/v1/support/requests', headers=headers,
-            json={'topic': 'account', 'message': 'I typed the wrong year of birth.'},
+            json={'category': 'account', 'message': 'I typed the wrong year of birth.'},
         )
-        assert support.json().get('code') != 'age_restricted', support.text
-        assert (await client.get('/api/v1/account/deletion', headers=headers)).json().get(
-            'code'
-        ) != 'age_restricted'
+        assert support.status_code == 201, support.text
+        deletion = await client.get('/api/v1/account/deletion', headers=headers)
+        assert deletion.status_code == 200, deletion.text
         # An admin checks the ID and clears the flag; the action is audited.
         admin_headers = bearer(await code_login(client, '+998901230099'))
         async with app.state.db_session_factory() as session:
@@ -217,3 +216,32 @@ async def test_without_the_gate_registration_still_checks_a_given_date():
         headers = bearer(await code_login(client, '+998901230006'))
         refused = await register(client, headers, years_ago(15), username='yosh.bola')
         assert refused.json()['code'] == 'age_restricted'
+
+
+@pytest.mark.asyncio
+async def test_old_account_without_password_restricted_at_registration_is_kept_and_refused_again():
+    """Verifier, 2026-11-19: a second registration try by a restricted account must answer
+    age_restricted (it was a 500), and support stays reachable before any password exists."""
+    async with client_for() as (client, app):
+        phone = '+998901230007'
+        headers = bearer(await code_login(client, phone))
+        async with app.state.db_session_factory() as session:
+            await session.execute(
+                update(User)
+                .where(User.phone_number == phone)
+                .values(created_at=datetime.now(UTC) - timedelta(days=10))
+            )
+            await session.commit()
+        first = await register(client, headers, years_ago(16))
+        assert first.status_code == 403 and first.json()['code'] == 'age_restricted'
+        async with app.state.db_session_factory() as session:
+            kept = await session.scalar(select(User).where(User.phone_number == phone))
+            assert kept is not None and kept.age_restricted_at is not None
+            assert kept.date_of_birth is None and kept.password_hash is None
+        again = await register(client, headers, years_ago(30))
+        assert again.status_code == 403 and again.json()['code'] == 'age_restricted'
+        support = await client.post(
+            '/api/v1/support/requests', headers=headers,
+            json={'category': 'account', 'message': 'Wrong year of birth, please check my ID.'},
+        )
+        assert support.status_code == 201, support.text

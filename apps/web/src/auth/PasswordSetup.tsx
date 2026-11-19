@@ -181,7 +181,12 @@ function PasswordSetup() {
       }
       if (apiErr.code === 'registration_complete') return void reload();
       if (apiErr.code === 'age_restricted') {
-        // A new sign-up under 18: the server erased it, so nothing is left to sign out of on the server.
+        // A new sign-up under 18 was erased by the server; an older account is kept but restricted.
+        const kept = await api.get('/auth/me').then(
+          () => true,
+          () => false,
+        );
+        if (kept) return void reload();
         await logout();
         navigate('/login', { replace: true, state: { notice: t('age.restrictedNew') } });
         return;
