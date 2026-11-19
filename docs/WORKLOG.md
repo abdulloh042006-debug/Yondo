@@ -36,7 +36,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 Done: `users.date_of_birth` + `age_restricted_at`, `age_blocks` (migration 0027); registration takes a date of birth (required with `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true`), under 18 = `age_restricted`: a new sign-up is erased and only a salted phone hash with a 30-day cooldown is kept (every new-account path checks it); older accounts give the date once (`PUT /auth/date-of-birth`), under 18 = locked (`age_restricted_at`, no date stored, no retry; support + deletion stay open) until an admin clears it (`POST /admin/users/{id}/age-restriction/clear`, audited). DOB private, the age follows it; ID approval needs `adult_confirmed`. Terms + Privacy 18+ clause (versions 2026-11-19-draft). Web + mobile: date field, one-time step, restricted screen; uz/ru/en. Docs: `docs/age-limit.md`, CLAUDE.md §7.
 Not done: customers are not ID-checked (the date is a declaration; documented); mobile social login (phase 2).
 Next: owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render and enters his own date once; everyone re-accepts Terms/Privacy.
-Evidence: see the PR.
+Evidence: SQLite 563 passed + 12 skipped, PostgreSQL 575 passed (`alembic check` clean, 0027 down/up), demo 11 passed, ruff + `export_openapi --check` PASS; web tsc/lint PASS, vitest 178/178, e2e 76/76; mobile tsc + `expo export` PASS. Verifier: REJECT (restricted accounts could not reach support/deletion with the gates on; a 500 on a repeated registration) → fixed with tests → APPROVE.
 Commit: branch `feat/age-limit` (PR to `main`).
 ## S80 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
 Done:
