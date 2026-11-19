@@ -1047,5 +1047,8 @@ export const uz = {
   'err.identity_not_linked': 'Bu hisob boğlanmagan.',
   'err.signup_token_invalid': 'Röyxatdan ötiş vaqti tugadi. Qaytadan boşlang.',
   'err.invalid_redirect_uri': 'Kiriş manzili notöğri sozlangan.',
+  'err.otp_attempts_exceeded': 'Kod 3 marta notöğri kiritildi va endi işlamaydi. Yangi kod sörang.',
+  'err.otp_hourly_limit': 'Bu raqamga bir soatda 5 tadan köp kod yuborilmaydi. Keyinroq urinib köring.',
+  'err.otp_daily_limit': 'Bu raqamga bir kunda 10 tadan köp kod yuborilmaydi. Ertaga urinib köring.',
 };
 export type Key = keyof typeof uz;

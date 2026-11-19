@@ -119,32 +119,34 @@ async def test_expired_otp_is_rejected(auth_client, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_three_failed_attempts_lock_for_60_seconds(auth_client, monkeypatch):
+async def test_three_wrong_codes_kill_the_code(auth_client, monkeypatch):
+    """Owner, 2026-11-19: after 3 wrong attempts the code is dead; a new code is needed."""
     client, _ = auth_client
     issued = await request_code(client)
     correct_code = issued.json()['development_otp']
     wrong_code = wrong_code_for(correct_code)
+    codes = []
     for _ in range(3):
         response = await client.post(
             '/api/v1/auth/otp/verify',
             json={'phone_number': '901234567', 'code': wrong_code},
         )
-        assert response.status_code == 401
+        codes.append((response.status_code, response.json()['code']))
+    assert codes == [(401, 'invalid_otp'), (401, 'invalid_otp'), (429, 'otp_attempts_exceeded')]
 
-    blocked = await client.post(
+    dead = await client.post(
         '/api/v1/auth/otp/verify',
         json={'phone_number': '901234567', 'code': correct_code},
     )
-    assert blocked.status_code == 429
-    assert blocked.json()['code'] == 'otp_temporarily_blocked'
+    assert dead.status_code == 401 and dead.json()['code'] == 'invalid_otp'
 
-    blocked_at = service._now()
-    monkeypatch.setattr(service, '_now', lambda: blocked_at + timedelta(seconds=60))
-    unblocked = await client.post(
-        '/api/v1/auth/otp/verify',
-        json={'phone_number': '901234567', 'code': correct_code},
+    later = service._now()
+    monkeypatch.setattr(service, '_now', lambda: later + timedelta(seconds=61))
+    fresh = (await request_code(client)).json()['development_otp']
+    ok = await client.post(
+        '/api/v1/auth/otp/verify', json={'phone_number': '901234567', 'code': fresh}
     )
-    assert unblocked.status_code == 200
+    assert ok.status_code == 200
 
 
 @pytest.mark.asyncio

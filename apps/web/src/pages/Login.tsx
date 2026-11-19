@@ -311,7 +311,7 @@ export function Login() {
         return;
       }
       setError(apiErr);
-      if (apiErr.code === 'otp_expired') {
+      if (apiErr.code === 'otp_expired' || apiErr.code === 'otp_attempts_exceeded') {
         setCode('');
         setStep((cur) => (cur.kind === 'code' ? { ...cur, resendIn: 0, focusKey: cur.focusKey + 1 } : cur));
       }

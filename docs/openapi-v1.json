@@ -1387,6 +1387,51 @@
         "title": "ChatUnreadItem",
         "type": "object"
       },
+      "ClientIpDiagnostics": {
+        "properties": {
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Headers",
+            "type": "object"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "peer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer"
+          },
+          "resolved": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved"
+          }
+        },
+        "required": [
+          "peer",
+          "resolved",
+          "mode",
+          "headers"
+        ],
+        "title": "ClientIpDiagnostics",
+        "type": "object"
+      },
       "CompanionCard": {
         "properties": {
           "age": {
@@ -5170,6 +5215,33 @@
           }
         ],
         "summary": "Bookings",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/diagnostics/client-ip": {
+      "get": {
+        "description": "Admin only: what the proxy in front of the API sends, to choose YONDO_CLIENT_IP_MODE\n(docs/client-ip.md). Shows the caller's own request only.",
+        "operationId": "client_ip_diagnostics_api_v1_admin_diagnostics_client_ip_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientIpDiagnostics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Client Ip Diagnostics",
         "tags": [
           "admin"
         ]

@@ -17,7 +17,9 @@ mkdirSync('e2e/shots', { recursive: true });
 const children = [];
 function start(cmd, args, readyText) {
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    // The whole run signs in from 127.0.0.1: switch off the per-IP code limit (tested in the API suite).
+    const env = { ...process.env, YONDO_AUTH_OTP_IP_RATE_LIMIT_PER_MINUTE: '0' };
+    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env });
     children.push(p);
     let buf = '';
     const onData = (d) => {

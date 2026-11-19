@@ -1048,4 +1048,7 @@ export const en: Record<Key, string> = {
   'err.identity_not_linked': 'This account is not linked.',
   'err.signup_token_invalid': 'The sign-up step expired. Please start again.',
   'err.invalid_redirect_uri': 'The sign-in return address is not set up correctly.',
+  'err.otp_attempts_exceeded': 'The code was entered wrongly 3 times and no longer works. Request a new code.',
+  'err.otp_hourly_limit': 'No more than 5 codes per hour can be sent to this number. Please try again later.',
+  'err.otp_daily_limit': 'No more than 10 codes per day can be sent to this number. Please try again tomorrow.',
 };

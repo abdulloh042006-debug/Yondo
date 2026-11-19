@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import re
 from functools import lru_cache
 from typing import Literal
@@ -63,6 +64,22 @@ class Settings(BaseSettings):
     # (counted from its sign-in) must sign in again.
     auth_session_max_age_seconds: int = Field(default=15_552_000, gt=0)  # 180 days
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Per phone: at most this many codes per hour / per day (owner, 2026-11-19: 5 and 10).
+    auth_otp_max_per_hour: int = Field(default=5, ge=1)
+    auth_otp_max_per_day: int = Field(default=10, ge=1)
+    # False only for the demo harness's own in-process app (seed, admin refresh, top-up): its
+    # sign-ins neither count against nor are blocked by the per-phone limits.
+    auth_otp_limits_enabled: bool = True
+    # Per client IP: code requests per minute (/auth/otp/request, /auth/telegram/link/start).
+    auth_otp_ip_rate_limit_per_minute: int = Field(default=10, ge=0)
+    # How the client IP for per-IP limits is found (docs/client-ip.md). "peer" trusts no header.
+    client_ip_mode: Literal['peer', 'header', 'xff'] = 'peer'
+    client_ip_header: str = ''
+    client_ip_xff_hops: int = Field(default=1, ge=1, le=5)
+    # Only a TCP peer inside these networks may set the client IP through a header.
+    trusted_proxy_cidrs: str = (
+        '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,::1/128,fc00::/7'
+    )
     # Telegram Gateway (https://core.telegram.org/gateway): delivers login codes to the user's
     # Telegram account. Unset token = not configured. Never log or echo the token.
     telegram_gateway_token: SecretStr | None = None
@@ -255,6 +272,15 @@ class Settings(BaseSettings):
         if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{3,31}', value):
             raise ValueError('YONDO_TELEGRAM_BOT_USERNAME must be a Telegram bot username')
         return value
+
+    @model_validator(mode='after')
+    def validate_client_ip(self) -> Settings:
+        if self.client_ip_mode == 'header' and not self.client_ip_header.strip():
+            raise ValueError('YONDO_CLIENT_IP_MODE=header needs YONDO_CLIENT_IP_HEADER')
+        for part in self.trusted_proxy_cidrs.split(','):
+            if part.strip():
+                ipaddress.ip_network(part.strip(), strict=False)  # ValueError on a typo
+        return self
 
     @model_validator(mode='after')
     def validate_otp_provider(self) -> Settings:
