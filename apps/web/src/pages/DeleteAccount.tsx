@@ -4,19 +4,18 @@ import { api, ApiError, type Schemas } from '../api/client';
 import { t } from '../i18n';
 import { formatInstant } from '../lib/format';
 import { useResource } from '../lib/useResource';
-import { Dialog, ErrorState, Loading, useToast } from '../ui/feedback';
+import { ErrorState, Loading, useToast } from '../ui/feedback';
+import { HoldToConfirm } from '../ui/HoldToConfirm';
 
 type State = Schemas['DeletionState'];
 
 /** In-app account deletion (owner decision 2026-10-23): personal data erased within 30 days, cancellable meanwhile. */
-/** `before` = the sign-out button, so both account actions sit side by side and look the same. */
+/** `before` = the sign-out button. Owner, 2026-11-18: the 1.5 s Hold-to-Confirm button replaces the blurred
+ *  confirmation dialog of 2026-11-15; the consequences are shown next to it in the danger zone. */
 export function DeleteAccount({ before }: { before?: ReactNode }) {
   const res = useResource((signal) => api.get<State>('/account/deletion', { signal }), []);
   const toast = useToast();
-  const [open, setOpen] = useState(false);
-  const [understood, setUnderstood] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string>();
   const location = useLocation();
   const ref = useRef<HTMLDivElement>(null);
   const loaded = res.data !== undefined;
@@ -25,18 +24,10 @@ export function DeleteAccount({ before }: { before?: ReactNode }) {
     if (loaded && location.hash === '#delete') ref.current?.scrollIntoView({ block: 'start' });
   }, [loaded, location.hash]);
 
+  // Errors are shown by HoldToConfirm under the button (message chosen by the API error code).
   const request = async () => {
-    setBusy(true);
-    setErr(undefined);
-    try {
-      res.setData(await api.post<State>('/account/deletion', { confirm: true }));
-      toast.push('ok', t('account.delete.requested'));
-      setOpen(false);
-    } catch (error) {
-      setErr(error instanceof ApiError ? error.message : t('common.actionFailed'));
-    } finally {
-      setBusy(false);
-    }
+    res.setData(await api.post<State>('/account/deletion', { confirm: true }));
+    toast.push('ok', t('account.delete.requested'));
   };
   const cancel = async () => {
     setBusy(true);
@@ -52,8 +43,6 @@ export function DeleteAccount({ before }: { before?: ReactNode }) {
   };
 
   const days = res.data?.window_days ?? 30;
-  /* Owner, 2026-11-15: "Hisobni o'chirish" looks exactly like "Chiqish" (no red block); the question and the
-     explanation live in a confirmation dialog over a blurred backdrop (Dialog: aria-modal, focus trap, Esc). */
   return (
     <div ref={ref} id="delete" className="stack" style={{ scrollMarginTop: 96 }}>
       {res.loading && !res.data ? (
@@ -73,27 +62,16 @@ export function DeleteAccount({ before }: { before?: ReactNode }) {
           <p className="muted">{t('account.delete.pendingNote')}</p>
         </>
       ) : (
-        <div className="row">
-          {before}
-          <button className="btn ghost" onClick={() => { setUnderstood(false); setErr(undefined); setOpen(true); }}>{t('account.delete.title')}</button>
-        </div>
+        <>
+          {before && <div className="row">{before}</div>}
+          <HoldToConfirm label={t('account.delete.title')} yesLabel={t('account.delete.yes')} doneLabel={t('account.delete.requested')} onConfirm={request}>
+            <h3>{t('account.delete.title')}</h3>
+            <p>{t('account.delete.body', { days })}</p>
+            <p className="muted">{t('account.delete.pendingNote')}</p>
+            <p className="hint">{t('account.delete.openBookings')} <Link to="/privacy">{t('legal.privacy')}</Link></p>
+          </HoldToConfirm>
+        </>
       )}
-      <Dialog open={open} title={t('account.delete.ask')} onClose={() => !busy && setOpen(false)}>
-        <div className="stack">
-          <p>{t('account.delete.body', { days })}</p>
-          <p className="muted">{t('account.delete.pendingNote')}</p>
-          <p className="hint">{t('account.delete.openBookings')} <Link to="/privacy">{t('legal.privacy')}</Link></p>
-          <label className="consent">
-            <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
-            <span>{t('account.delete.confirmCheck')}</span>
-          </label>
-          {err && <p className="err" role="alert">{err}</p>}
-          <div className="row">
-            <button className="btn" disabled={!understood || busy} onClick={() => void request()}>{busy && <span className="spinner" aria-hidden="true" />}{t('account.delete.yes')}</button>
-            <button className="btn ghost" disabled={busy} onClick={() => setOpen(false)}>{t('account.delete.no')}</button>
-          </div>
-        </div>
-      </Dialog>
     </div>
   );
 }

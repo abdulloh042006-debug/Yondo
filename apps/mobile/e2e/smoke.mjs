@@ -352,22 +352,28 @@ await step('profile = only the person (data + Edit); Settings holds app and acco
   await axe('help');
   await button('← Back').click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
-  // Owner, 2026-11-15: "Delete account" looks like "Sign out"; the question opens in a blurred, modal dialog.
+  // Owner, 2026-11-18: deletion is a 1.5 s hold-to-confirm button (no dialog); an early release does nothing and a
+  // non-hold activation (screen reader) opens an explicit two-step confirmation.
   const del = page.getByRole('button', { name: 'Delete account', exact: true });
-  const out = page.getByRole('button', { name: 'Sign out', exact: true });
-  const look = (l) => l.evaluate((el) => { const c = getComputedStyle(el); return [c.backgroundColor, c.borderColor, c.borderRadius, c.minHeight].join(' '); });
-  assert((await look(del)) === (await look(out)), `same look: ${await look(del)} vs ${await look(out)}`);
-  await del.click();
-  const dlg = page.getByRole('dialog', { name: 'Delete your account?' });
-  await dlg.waitFor();
-  assert((await dlg.getAttribute('aria-modal')) === 'true', 'aria-modal');
-  assert(await page.getByRole('button', { name: 'Yes, delete' }).isDisabled(), 'confirm waits for the "I understand" box');
-  await axe('delete dialog');
-  await page.keyboard.press('Escape');
-  await dlg.waitFor({ state: 'detached' });
-  await del.click();
+  await del.scrollIntoViewIfNeeded();
+  const box = await del.boundingBox();
+  let posted = 0;
+  const onReq = (r) => r.method() === 'POST' && r.url().endsWith('/account/deletion') && posted++;
+  page.on('request', onReq);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.getByText('Confirming…').first().waitFor();
+  await page.waitForTimeout(600);
+  await page.mouse.up();
+  await page.waitForTimeout(1500);
+  assert(posted === 0, 'an early release sends nothing');
+  await del.evaluate((el) => el.click()); // activation without a hold, like a screen-reader double-tap
+  await button('Yes, delete').waitFor();
+  await axe('delete two-step');
   await button('No').click();
-  await dlg.waitFor({ state: 'detached' });
+  await page.waitForTimeout(300);
+  assert(posted === 0, '"No" sends nothing');
+  page.off('request', onReq);
   const web = process.env.WEB_URL;
   if (web) {
     for (const [name, path] of [[/^Terms of use/, '/terms'], [/^Privacy policy/, '/privacy']]) {

@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -10,6 +9,7 @@ vi.mock('../api/client', async (orig) => {
   return { ...real, api: { ...real.api, get, post } };
 });
 import { ToastProvider } from '../ui/feedback';
+import { HOLD_MS } from '../ui/HoldToConfirm';
 import { DeleteAccount } from './DeleteAccount';
 
 const view = () =>
@@ -21,32 +21,34 @@ const view = () =>
     </MemoryRouter>,
   );
 
-describe('account deletion (owner, 2026-11-15)', () => {
-  it('the delete button looks like sign out; the question opens in a modal dialog with Ha / Yöq', async () => {
+describe('account deletion (owner, 2026-11-18: hold-to-confirm replaces the dialog)', () => {
+  it('no dialog: sign-out stays plain, deletion is a red hold button with the consequences next to it', async () => {
     get.mockResolvedValue({ pending: false, window_days: 30, due_at: null });
     view();
-    const trigger = await screen.findByRole('button', { name: 'Hisobni öçiriş' });
-    expect(trigger.className).toBe(screen.getByRole('button', { name: 'Çiqiş' }).className);
-    await userEvent.click(trigger);
-    const dialog = screen.getByRole('dialog', { name: 'Hisobni öçirmoqçimisiz?' });
-    expect(dialog).toHaveAttribute('aria-modal', 'true');
-    const yes = screen.getByRole('button', { name: 'Ha, öçiriş' });
-    expect(yes).toBeDisabled(); // the "I understand" box comes first
-    await userEvent.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(trigger).toHaveFocus();
+    const hold = await screen.findByRole('button', { name: 'Hisobni öçiriş' });
+    expect(hold).toHaveClass('hold');
+    expect(screen.getByRole('button', { name: 'Çiqiş' })).not.toHaveClass('hold');
+    expect(hold.closest('.danger-zone')).toHaveTextContent('30 kun');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('confirming sends {confirm: true}; "Yöq" sends nothing', async () => {
+  it('a 1.5 s hold sends {confirm: true}; an early release sends nothing', async () => {
     get.mockResolvedValue({ pending: false, window_days: 30, due_at: null });
     post.mockResolvedValue({ pending: true, window_days: 30, due_at: '2026-12-15T00:00:00Z' });
     view();
-    await userEvent.click(await screen.findByRole('button', { name: 'Hisobni öçiriş' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Yöq' }));
-    expect(post).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Hisobni öçiriş' }));
-    await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: 'Ha, öçiriş' }));
+    const hold = await screen.findByRole('button', { name: 'Hisobni öçiriş' });
+    vi.useFakeTimers();
+    try {
+      fireEvent.pointerDown(hold);
+      act(() => vi.advanceTimersByTime(800));
+      fireEvent.pointerUp(hold);
+      expect(post).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(100));
+      fireEvent.pointerDown(hold);
+      await act(async () => vi.advanceTimersByTime(HOLD_MS));
+    } finally {
+      vi.useRealTimers();
+    }
     expect(post).toHaveBeenCalledWith('/account/deletion', { confirm: true });
     await screen.findByRole('button', { name: 'Sörovni bekor qiliş' }); // pending state unchanged
   });

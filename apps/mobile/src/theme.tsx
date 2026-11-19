@@ -38,6 +38,10 @@ export interface Palette {
   /** Active tab / chip pill: carrot at low opacity (glow, never text). */
   pill: string;
   glowOpacity: number;
+  /** Red: ONLY for destructive actions (owner, 2026-11-18): the danger zone and the hold-to-confirm button. */
+  danger: string;
+  onDanger: string;
+  dangerSoft: string;
 }
 
 /** Fonts of the web's Yondo themes (styles.css): Space Grotesk for headings, Manrope for text (both SIL OFL). */
@@ -66,6 +70,9 @@ export const PALETTES: Record<ThemeId, Palette> = {
     bar: 'rgba(245,242,236,0.9)',
     pill: 'rgba(232,80,26,0.16)',
     glowOpacity: 0.2,
+    danger: '#B42318',
+    onDanger: PAPER,
+    dangerSoft: 'rgba(180,35,24,0.08)',
   },
   'yondo-tun': {
     id: 'yondo-tun',
@@ -84,6 +91,9 @@ export const PALETTES: Record<ThemeId, Palette> = {
     bar: 'rgba(17,17,17,0.88)',
     pill: 'rgba(232,80,26,0.22)',
     glowOpacity: 0.22,
+    danger: '#FF6B5B',
+    onDanger: INK,
+    dangerSoft: 'rgba(255,107,91,0.10)',
   },
 };
 
