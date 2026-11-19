@@ -7,7 +7,7 @@ import { ICONS, Icon } from '../brand';
 import { useNav } from '../nav';
 import { REPORT_CATEGORY, REPORT_STATUS, SUPPORT_STATUS, t, type Key } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen, Tag } from '../ui';
+import { Banner, Button, Card, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen, Tag, AppBar } from '../ui';
 import { useResource } from '../useResource';
 import { SosButton } from './Sos';
 
@@ -30,12 +30,7 @@ export function HelpScreen() {
   const { user } = useAuth();
   return (
     <Screen>
-      {nav.canGoBack && (
-        <Row>
-          <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
-        </Row>
-      )}
-      <H1>{t('help.title')}</H1>
+      <AppBar title={t('help.title')} onBack={nav.canGoBack ? nav.back : undefined} />
       <P muted>{t('help.lead')}</P>
 
       <EmergencyCard>

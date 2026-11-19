@@ -1,3 +1,4 @@
+import { AppBar } from '../ui/AppBar';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
@@ -43,11 +44,11 @@ export function BookingDetail() {
 
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 820, margin: '0 auto', width: '100%' }}>
-      <Link to="/bookings" className="hint">{t('bd.back')}</Link>
+      <AppBar back="/bookings" title={t('bd.title')} />
       <Reveal>
         <section className="glass pad stack" aria-labelledby="bd-h">
           <div className="spread">
-            <h1 id="bd-h" style={{ margin: 0 }}>{serviceLabel(b.service_code)}</h1>
+            <h2 id="bd-h" style={{ margin: 0 }}>{serviceLabel(b.service_code)}</h2>
             <StatusTag map={BOOKING_STATUS} value={b.status} />
           </div>
           <dl className="kv">

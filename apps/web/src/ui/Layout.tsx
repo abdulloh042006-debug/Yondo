@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { ConsentGate } from './Consent';
 import { PasswordSetupGate } from '../auth/PasswordSetup';
 import { PageTransition } from './motion';
+import { ShockwaveDock } from './ShockwaveDock';
 import { useUnreadNotifications } from '../lib/useUnreadNotifications';
 
 const Icon = ({ d }: { d: string }) => (
@@ -122,22 +123,10 @@ export function Layout() {
           </footer>
         </main>
       </div>
-      <nav className="glass-bar dock" aria-label={t('nav.mobile')}>
-        {items.map((i) => (
-          <NavLink key={i.to} to={i.to} end={i.end}>
-            {({ isActive }) => (
-              <>
-                {isActive && <Pill />}
-                <motion.span whileTap={{ scale: 0.8, y: -2 }} transition={{ type: 'spring', stiffness: 500, damping: 18 }} style={{ display: 'grid' }}>
-                  <Icon d={i.icon} />
-                </motion.span>
-                {i.label}
-                {'dot' in i && i.dot && <UnreadDot />}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      <ShockwaveDock
+        label={t('nav.mobile')}
+        items={items.map((i) => ({ to: i.to, label: i.label, end: i.end, icon: <Icon d={i.icon} />, extra: 'dot' in i && i.dot ? <UnreadDot /> : null }))}
+      />
     </>
   );
 }

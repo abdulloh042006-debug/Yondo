@@ -9,7 +9,7 @@ import { useNav } from '../nav';
 import { LANGS, UZ_ALPHABETS, formatInstant, getLang, getUzAlphabet, roleLabel, setLang, setUzAlphabet, t, useLang } from '../shared';
 import { playNotifySound, setSoundEnabled, soundEnabled, loadSoundPref } from '../notifySound';
 import { FONT, useTheme, type ThemeChoice } from '../theme';
-import { Banner, Button, Card, Chip, ChipGroup, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, Chip, ChipGroup, ErrorText, H1, H2, Loading, MenuRow, P, Row, Screen, AppBar } from '../ui';
 import { useResource } from '../useResource';
 import { HoldToConfirm } from '../hold';
 import { openWeb } from './Account';
@@ -36,12 +36,7 @@ export function SettingsScreen() {
   const n = unread.data?.unread_count ?? 0;
   return (
     <Screen>
-      {nav.canGoBack && (
-        <Row>
-          <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
-        </Row>
-      )}
-      <H1>{t('settings.title')}</H1>
+      <AppBar title={t('settings.title')} onBack={nav.canGoBack ? nav.back : undefined} />
       <Card>
         <H2>{t('settings.language')}</H2>
         <ChipGroup label={t('settings.language')}>

@@ -10,10 +10,11 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { api, errorText, tokens, type Schemas } from './src/api';
 import { AuthProvider, acceptLegal, useAuth } from './src/auth';
-import { Aurora, BrandMark, ICONS, Icon, useReducedMotion } from './src/brand';
+import { Aurora, BrandMark, ICONS } from './src/brand';
 import { FavoritesProvider, useFavorites } from './src/favorites';
 import { restoreLocale } from './src/locale';
 import { NavProvider, useNav, type Tab } from './src/nav';
+import { ShockwaveDock } from './src/dock';
 import { PushOffer, usePushRouting } from './src/pushUi';
 import { AccountScreen } from './src/screens/Account';
 import { BookingDetailScreen } from './src/screens/BookingDetail';
@@ -27,7 +28,7 @@ import { NotificationsScreen } from './src/screens/Notifications';
 import { ProfileScreen } from './src/screens/Profile';
 import { SettingsScreen } from './src/screens/Settings';
 import { t, useLang, type LegalDoc } from './src/shared';
-import { CARROT, FONT, ThemeProvider, useTheme } from './src/theme';
+import { FONT, ThemeProvider, useTheme } from './src/theme';
 import { Button, ErrorText, H1, Loading, P, Row, Screen, TOUCH } from './src/ui';
 import { useResource } from './src/useResource';
 import { useUnreadNotifications } from './src/useUnreadNotifications';
@@ -136,32 +137,7 @@ function Shell() {
       </View>
       <Toast bottom={DOCK_H + insets.bottom + 18} />
       {signedIn && <PushOffer />}
-      <View
-        role="tablist"
-        aria-label={t('nav.mobile')}
-        style={{
-          position: 'absolute',
-          left: 12,
-          right: 12,
-          bottom: insets.bottom + 10,
-          height: DOCK_H,
-          flexDirection: 'row',
-          padding: 6,
-          borderRadius: 999,
-          backgroundColor: palette.bar,
-          borderWidth: 1,
-          borderColor: palette.glassLine,
-          shadowColor: '#000000',
-          shadowOpacity: 0.18,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: 10 },
-          elevation: 8,
-        }}
-      >
-        {tabs.map((tab) => (
-          <DockItem key={tab.id} label={tab.label} icon={tab.icon} dot={tab.dot} on={nav.tab === tab.id} onPress={() => nav.switchTab(tab.id)} />
-        ))}
-      </View>
+      <ShockwaveDock tabs={tabs} active={nav.tab} onSelect={(id) => nav.switchTab(id)} bottom={insets.bottom + 10} height={DOCK_H} />
     </View>
   );
 }
@@ -177,31 +153,6 @@ function Toast({ bottom }: { bottom: number }) {
         <Text style={{ color: palette.onPrimary, fontFamily: FONT.medium, fontSize: 15 }}>{fav.notice}</Text>
       </View>
     </View>
-  );
-}
-
-function DockItem({ label, icon, on, dot, onPress }: { label: string; icon: string; on: boolean; dot?: boolean; onPress: () => void }) {
-  const { palette } = useTheme();
-  const reduced = useReducedMotion();
-  return (
-    <Pressable
-      role="tab"
-      aria-selected={on}
-      aria-label={label}
-      accessibilityHint={dot ? t('nav.unread') : undefined}
-      onPress={onPress}
-      style={({ pressed }) => [
-        { flex: 1, minHeight: TOUCH, borderRadius: 999, alignItems: 'center', justifyContent: 'center', gap: 2 },
-        on && { backgroundColor: palette.pill },
-        pressed && !reduced && { transform: [{ scale: 0.92 }] },
-      ]}
-    >
-      <Icon d={icon} color={on ? palette.fg : palette.muted} />
-      {dot && <View testID="unread-dot" aria-hidden style={{ position: 'absolute', top: 6, right: '30%', width: 9, height: 9, borderRadius: 5, backgroundColor: CARROT }} />}
-      <Text numberOfLines={1} style={{ color: on ? palette.fg : palette.muted, fontSize: 12, fontFamily: on ? FONT.bold : FONT.medium }}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 

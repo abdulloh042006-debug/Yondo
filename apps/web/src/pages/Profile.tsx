@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { AppBar } from '../ui/AppBar';
 import { formatMoney } from '../lib/format';
 import { serviceLabel } from '../lib/labels';
 import { useResource } from '../lib/useResource';
@@ -35,7 +36,7 @@ export function Profile() {
 
   return (
     <div className="stack" style={{ gap: 22 }}>
-      <Link to="/" className="chip" style={{ width: 'fit-content', textDecoration: 'none' }}>{t('profile.back')}</Link>
+      <AppBar back="/" />
       <div className="profile-grid">
         <Reveal>
           <div className="stack">

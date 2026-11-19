@@ -19,7 +19,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
-00k. **18+ (S81, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
+00k. **18+ (S83, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
 00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
@@ -32,12 +32,28 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S81 — 18+ age limit (2026-11-19) [cloud worker, auth full-stack]
+## S83 — 18+ age limit (2026-11-19) [cloud worker, auth full-stack]
 Done: `users.date_of_birth` + `age_restricted_at`, `age_blocks` (migration 0027); registration takes a date of birth (required with `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true`), under 18 = `age_restricted`: a new sign-up is erased and only a salted phone hash with a 30-day cooldown is kept (every new-account path checks it); older accounts give the date once (`PUT /auth/date-of-birth`), under 18 = locked (`age_restricted_at`, no date stored, no retry; support + deletion stay open) until an admin clears it (`POST /admin/users/{id}/age-restriction/clear`, audited). DOB private, the age follows it; ID approval needs `adult_confirmed`. Terms + Privacy 18+ clause (versions 2026-11-19-draft). Web + mobile: date field, one-time step, restricted screen; uz/ru/en. Docs: `docs/age-limit.md`, CLAUDE.md §7.
 Not done: customers are not ID-checked (the date is a declaration; documented); mobile social login (phase 2).
 Next: owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render and enters his own date once; everyone re-accepts Terms/Privacy.
 Evidence: SQLite 563 passed + 12 skipped, PostgreSQL 575 passed (`alembic check` clean, 0027 down/up), demo 11 passed, ruff + `export_openapi --check` PASS; web tsc/lint PASS, vitest 178/178, e2e 76/76; mobile tsc + `expo export` PASS. Verifier: REJECT (restricted accounts could not reach support/deletion with the gates on; a 500 on a repeated registration) → fixed with tests → APPROVE.
 Commit: branch `feat/age-limit` (PR to `main`).
+## S82 — Redesign phase 2, PR 2: Shockwave dock + compact App Bar (2026-11-19) [cloud worker, web + mobile]
+Done (spec `docs/design/redesign-2026-11.md` §3.2/§4.1; stacked on #49 for the tokens):
+- **Dock** web `ui/ShockwaveDock.tsx` (Web Animations API), mobile `src/dock.tsx` (Animated, native driver): pill = --c-primary (ink by day, paper at night) with on-primary label; on a tab change the pill shrinks into a carrot orb, flies, expands with a spring; on arrival a ripple, 8 particles, a small 3D tilt and an icon bounce. Route changes on tap. Reduced motion: the pill jumps, nothing travels.
+- **App Bar** web `ui/AppBar.tsx`, mobile `AppBar`/`IconAction` in `src/ui.tsx`: 44 px back + one h1 title + icon actions. Replaces "← Orqaga"/"← Bronlar" on Bron tafsilotlari, Hamroh profili, Sozlamalar, Yordam, Bildirishnomalar (and Kirish on mobile). Booking service name is now h2 under the "Bron tafsilotlari" h1.
+- **Names:** `account.title` "Hisobim" → "Profil" (ru "Профиль", en "Profile"), as the tab; gear on Profil opens Sozlamalar. New key `nav.back` (uz/ru/en).
+- Tests: `ShockwaveDock.test.tsx` (dock + AppBar); web e2e and mobile smoke/walkthrough labels updated.
+Not done: screens' content redesign (Kashf chips, Bron details, Settings split, aura switcher). Redesign paused after this PR (CEO: security, 18+ and the pilot first).
+Evidence: web tsc/lint, vitest 162/162, build, e2e 74/74; mobile tsc, smoke 18/19 (only the known "Cards" flake, also on main). Screens: `docs/design/redesign-2026-11/phase2-pr2/`.
+Commit: branch `feat/redesign-dock-appbar`, PR to `main` (after #49).
+## S81 — "Cards" deck: the smoke flake explained and fixed (2026-11-19) [cloud worker]
+Done (CEO: the deck "opens on You have seen every card" ~1 run in 3):
+- Root cause (instrumented run): **not an app bug.** The deck opened on card 1 every time; it reached the end screen because the test pressed Next twice on a 2-card deck. The seed shows two companions (Madina, Jasur); the favourites step saves one. Under "Recommended" both tie on every stat, so the API breaks the tie by profile id: a random UUID per seed, so either may come first. When the already-saved card came second, the old step's unconditional first Next left no unsaved card.
+- `apps/mobile/e2e/smoke.mjs` Cards step: asserts the deck opens on "1 of N"; saves the first unsaved card (skipping with Next) and checks Next once more when cards remain after it, so Next is covered in both orders.
+- No app or API change: the profile-id tie-break is the intended stable order (pagination stays consistent within a database).
+Evidence: mobile smoke 3 runs in a row on fresh DBs (orders logged), see the PR.
+Commit: branch `fix/cards-deck-empty`, PR to `main`.
 ## S80 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
 Done:
 - Captured the current screens at 360 px from a local build of `main` (b8cccd4, with #45): web (real API + DEMO seed, both themes) and mobile (`expo export --platform web`); listed each screen's problems.

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth, type User } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { AppBar } from '../ui/AppBar';
 import { AlphabetPicker, LanguagePicker } from '../i18n/LanguagePicker';
 import { Reveal } from '../ui/motion';
 import { roleLabel } from '../lib/labels';
@@ -103,7 +104,7 @@ export function Settings() {
   const unread = useResource((signal) => (user ? api.get<{ unread_count: number }>('/notifications/unread-count', { signal }) : Promise.resolve(null)), [user?.id]);
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
-      <h1>{t('settings.title')}</h1>
+      <AppBar back="/account" title={t('settings.title')} />
       <Reveal>
         <section className="glass pad stack" aria-labelledby="lang-h">
           <h2 id="lang-h">{t('settings.language')}</h2>
