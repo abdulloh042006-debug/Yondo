@@ -201,12 +201,13 @@ class IpRateLimiter:
 
     def __init__(self, per_minute: int) -> None:
         self.per_minute = per_minute
+        self.clock = time.time  # tests replace it
         self._counts: dict[tuple[str, str, int], int] = defaultdict(int)
 
     def check(self, bucket: str, ip: str | None) -> None:
         if self.per_minute <= 0:
             return
-        minute = int(time.time() // 60)
+        minute = int(self.clock() // 60)
         if len(self._counts) > 50_000:  # drop old windows
             for key in [k for k in self._counts if k[2] < minute]:
                 del self._counts[key]

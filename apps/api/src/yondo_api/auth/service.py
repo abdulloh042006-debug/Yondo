@@ -73,7 +73,8 @@ async def issue_otp(
     challenge = await session.get(OtpChallenge, phone_number, with_for_update=True)
     if challenge is not None and now < _as_utc(challenge.issued_at) + OTP_RESEND_COOLDOWN:
         raise ApplicationError('otp_resend_cooldown', 'Wait before requesting another code', 429)
-    await _check_phone_limits(session, phone_number, settings, now)
+    if settings.auth_otp_limits_enabled:
+        await _check_phone_limits(session, phone_number, settings, now)
 
     code = f'{secrets.randbelow(1_000_000):06d}'
     # Deliver first: if the provider raises, nothing is written, so no resend cooldown starts
@@ -95,7 +96,8 @@ async def issue_otp(
         challenge.expires_at = now + OTP_LIFETIME
         challenge.failed_attempts = 0
         challenge.blocked_until = None
-    session.add(OtpIssue(phone_number=phone_number, issued_at=now))
+    if settings.auth_otp_limits_enabled:
+        session.add(OtpIssue(phone_number=phone_number, issued_at=now))
     await session.commit()
     return IssuedOtp(delivery.development_code, delivery.channel)
 
@@ -120,6 +122,15 @@ async def _check_phone_limits(
         raise ApplicationError('otp_daily_limit', 'Too many codes for this number today', 429)
     if sum(1 for t in times if _as_utc(t) >= now - OTP_HOUR) >= settings.auth_otp_max_per_hour:
         raise ApplicationError('otp_hourly_limit', 'Too many codes for this number this hour', 429)
+
+
+async def prune_otp_issues(session: AsyncSession, now: datetime | None = None) -> int:
+    """Delete code-issue rows older than a day (they no longer count). Run by the hourly job."""
+    result = await session.execute(
+        delete(OtpIssue).where(OtpIssue.issued_at < (now or _now()) - OTP_DAY)
+    )
+    await session.commit()
+    return result.rowcount or 0
 
 
 async def consume_otp(

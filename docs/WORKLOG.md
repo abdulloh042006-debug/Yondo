@@ -30,9 +30,10 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S78 — Auth hardening: OTP limits and proxy trust (2026-11-19) [cloud worker, auth]
+## S79 — Auth hardening: OTP limits and proxy trust (2026-11-19) [cloud worker, auth]
 Done: a code dies after 3 wrong attempts (`otp_attempts_exceeded`, a new code is needed); per phone at most 5 codes per hour and 10 per day (`otp_hourly_limit`, `otp_daily_limit`; new table `otp_issues`, migration 0026); per-IP limit on `/auth/otp/request` and `/auth/telegram/link/start` (10/min, `rate_limited`). Client IP for every per-IP limit comes from `ClientIpMiddleware` (`YONDO_CLIENT_IP_MODE` peer/xff/header, headers only from `YONDO_TRUSTED_PROXY_CIDRS`); uvicorn proxy headers off (Dockerfile no longer trusts `*`); DigitalOcean compose = `xff`; admin `GET /admin/diagnostics/client-ip` to confirm Render live. Docs: `docs/client-ip.md`. Web: uz/ru/en messages; a dead code offers a resend.
 Not done: Render mode (needs the live check, docs/client-ip.md); 18+ age limit = next PR (`feat/age-limit`); mobile social login.
+Notes: a code killed by 3 wrong attempts can be replaced at once (no cooldown), still capped at 5/h and 10/day per phone. The demo harness's own sign-ins (seed, admin, top-up) are outside the per-phone limits (`auth_otp_limits_enabled=False` on its internal app); old `otp_issues` rows are pruned by `python -m yondo_api.jobs`.
 Next: after deploy, an admin opens `/api/v1/admin/diagnostics/client-ip` on the demo (with and without a forged header) and sets `YONDO_CLIENT_IP_MODE` in Render. Until then all demo visitors share one IP bucket; the shared DEMO accounts also share the per-phone code limits (5/h).
 Evidence: see the PR.
 Commit: branch `feat/auth-hardening` (based on `feat/social-login`, PR to `main`).

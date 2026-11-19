@@ -21,7 +21,11 @@ class OtpChallenge(TimestampMixin, Base):
 
 
 class OtpIssue(Base):
-    """One row per code sent: the per-phone hourly and daily limits count these (kept 1 day)."""
+    """One row per code sent: the per-phone hourly and daily limits count these.
+
+    Rows older than a day are pruned by the hourly job (`python -m yondo_api.jobs`) and on the
+    phone's next request.
+    """
 
     __tablename__ = 'otp_issues'
     __table_args__ = (Index('ix_otp_issues_phone_issued', 'phone_number', 'issued_at'),)

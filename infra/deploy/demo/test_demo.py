@@ -17,6 +17,7 @@ from demo_persist import (
 from httpx import ASGITransport, AsyncClient
 from yondo_api.auth.providers import DevelopmentOtpProvider
 from yondo_api.db.base import Base
+from yondo_api.models.auth import OtpIssue
 from yondo_api.models.user import User, UserRole, UserRoleType
 
 loop = pytest.mark.asyncio(loop_scope='module')
@@ -245,3 +246,27 @@ async def test_password_gate_on_the_harness_still_seeds_and_tops_up_while_visito
         async with harness.state.db_session_factory() as session:
             with_password = await session.scalars(select(User.phone_number).where(User.password_hash.is_not(None)))
             assert list(with_password) == ['+998909990011']
+
+
+@loop
+async def test_harness_sign_ins_never_use_up_the_public_code_budget(tmp_path, monkeypatch):
+    """Verifier, 2026-11-19: the harness signs the admin and the DEMO companions in at every start; on a sleeping
+    free instance that is many starts a day. Those sign-ins must not count against the public per-phone limits."""
+    monkeypatch.setenv('YONDO_AUTH_OTP_MAX_PER_HOUR', '5')
+    monkeypatch.setenv('YONDO_AUTH_OTP_MAX_PER_DAY', '10')
+    url = f'sqlite+aiosqlite:///{tmp_path / "budget.db"}'
+    storage = demo_app.MemoryStorage(0)
+    public = demo_app.build_app(url, 0, None, storage=storage)
+    harness = demo_app.build_app(url, 0, None, internal=True, storage=storage)
+    async with public.router.lifespan_context(public), harness.router.lifespan_context(harness):
+        await _tables(public)
+        async with AsyncClient(transport=ASGITransport(app=harness), base_url='http://test') as client:
+            for _ in range(12):
+                await demo_app.login(client, demo_app.MADINA)
+        async with public.state.db_session_factory() as session:
+            assert await session.scalar(select(func.count()).select_from(OtpIssue)) == 0
+        async with AsyncClient(transport=ASGITransport(app=public), base_url='http://test') as client:
+            for _ in range(5):
+                await demo_app.login(client, demo_app.MADINA)
+            sixth = await client.post('/api/v1/auth/otp/request', json={'phone_number': demo_app.MADINA})
+            assert sixth.json()['code'] == 'otp_hourly_limit'

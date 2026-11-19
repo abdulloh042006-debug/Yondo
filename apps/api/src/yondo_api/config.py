@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     # Per phone: at most this many codes per hour / per day (owner, 2026-11-19: 5 and 10).
     auth_otp_max_per_hour: int = Field(default=5, ge=1)
     auth_otp_max_per_day: int = Field(default=10, ge=1)
+    # False only for the demo harness's own in-process app (seed, admin refresh, top-up): its
+    # sign-ins neither count against nor are blocked by the per-phone limits.
+    auth_otp_limits_enabled: bool = True
     # Per client IP: code requests per minute (/auth/otp/request, /auth/telegram/link/start).
     auth_otp_ip_rate_limit_per_minute: int = Field(default=10, ge=0)
     # How the client IP for per-IP limits is found (docs/client-ip.md). "peer" trusts no header.

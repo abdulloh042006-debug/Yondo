@@ -78,7 +78,8 @@ async def test_ten_codes_per_day_per_phone(monkeypatch):
 @pytest.mark.asyncio
 async def test_code_requests_are_limited_per_ip(monkeypatch):
     Clock(monkeypatch)
-    async with make_client(auth_otp_ip_rate_limit_per_minute=2) as (client, _app):
+    async with make_client(auth_otp_ip_rate_limit_per_minute=2) as (client, app):
+        app.state.otp_ip_limiter.clock = lambda: 1_800_000_000.0  # one fixed minute
         codes = []
         for n in range(3):
             response = await client.post(OTP, json={'phone_number': f'90111001{n}'})
