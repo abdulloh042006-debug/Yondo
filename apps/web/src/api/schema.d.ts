@@ -112,6 +112,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/diagnostics/client-ip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Client Ip Diagnostics
+         * @description Admin only: what the proxy in front of the API sends, to choose YONDO_CLIENT_IP_MODE
+         *     (docs/client-ip.md). Shows the caller's own request only.
+         */
+        get: operations["client_ip_diagnostics_api_v1_admin_diagnostics_client_ip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/gifts/test-orders": {
         parameters: {
             query?: never;
@@ -3510,6 +3531,19 @@ export interface components {
             /** Unread Count */
             unread_count: number;
         };
+        /** ClientIpDiagnostics */
+        ClientIpDiagnostics: {
+            /** Headers */
+            headers: {
+                [key: string]: string;
+            };
+            /** Mode */
+            mode: string;
+            /** Peer */
+            peer: string | null;
+            /** Resolved */
+            resolved: string | null;
+        };
         /** CompanionCard */
         CompanionCard: {
             /** Age */
@@ -5052,6 +5086,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    client_ip_diagnostics_api_v1_admin_diagnostics_client_ip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientIpDiagnostics"];
                 };
             };
         };

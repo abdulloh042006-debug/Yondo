@@ -30,6 +30,12 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S78 — Auth hardening: OTP limits and proxy trust (2026-11-19) [cloud worker, auth]
+Done: a code dies after 3 wrong attempts (`otp_attempts_exceeded`, a new code is needed); per phone at most 5 codes per hour and 10 per day (`otp_hourly_limit`, `otp_daily_limit`; new table `otp_issues`, migration 0026); per-IP limit on `/auth/otp/request` and `/auth/telegram/link/start` (10/min, `rate_limited`). Client IP for every per-IP limit comes from `ClientIpMiddleware` (`YONDO_CLIENT_IP_MODE` peer/xff/header, headers only from `YONDO_TRUSTED_PROXY_CIDRS`); uvicorn proxy headers off (Dockerfile no longer trusts `*`); DigitalOcean compose = `xff`; admin `GET /admin/diagnostics/client-ip` to confirm Render live. Docs: `docs/client-ip.md`. Web: uz/ru/en messages; a dead code offers a resend.
+Not done: Render mode (needs the live check, docs/client-ip.md); 18+ age limit = next PR (`feat/age-limit`); mobile social login.
+Next: after deploy, an admin opens `/api/v1/admin/diagnostics/client-ip` on the demo (with and without a forged header) and sets `YONDO_CLIENT_IP_MODE` in Render. Until then all demo visitors share one IP bucket; the shared DEMO accounts also share the per-phone code limits (5/h).
+Evidence: see the PR.
+Commit: branch `feat/auth-hardening` (based on `feat/social-login`, PR to `main`).
 ## S77 — Sign in with Telegram (OIDC) and Google: backend + web (2026-11-18) [cloud worker, auth full-stack]
 Done: migration 0025 (`external_identities`, `social_login_challenges`); `auth/oidc.py` (JWKS cache, RS256/ES256, iss/aud/exp); `auth/social.py`: Telegram via the official JS library (server nonce, ID token verified, nonce required + single-use), Telegram code flow + PKCE (kept for mobile), Google GIS ID token, phone-anchored sign-up (`/auth/social/complete` with a phone code), link/unlink in Settings, per-IP rate limit, 503 `provider_not_configured`. Registration step accepts social sessions. Web: round Telegram (`tg-auth-button`, icon) + Google (icon, circle) buttons on Login, Linked accounts in Settings, `/auth/callback/telegram`, uz/ru/en keys. Docs: `docs/login-telegram-google.md` (owner checklist), product-decisions §3, CLAUDE.md §7.
 Not done: phase 2 (mobile, branch `feat/social-login-mobile`); live check with real accounts (keys not set).

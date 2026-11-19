@@ -30,6 +30,8 @@ services:
       YONDO_DATABASE_URL: postgresql+psycopg://yondo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/yondo
       YONDO_REDIS_URL: redis://redis:6379/0
       YONDO_AUTH_OTP_PEPPER: ${YONDO_AUTH_OTP_PEPPER:?set YONDO_AUTH_OTP_PEPPER in .env (32+ characters)}
+      # Caddy (the only proxy) overwrites X-Forwarded-For with the real client: trust its last entry.
+      YONDO_CLIENT_IP_MODE: xff
     depends_on:
       postgres:
         condition: service_healthy

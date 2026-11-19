@@ -549,7 +549,7 @@ async def test_concurrent_first_requests_for_one_phone_send_exactly_one_code():
     app = create_application(make_settings(database_url=url), otp_provider=provider)
     async with app.router.lifespan_context(app):
         async with app.state.db_engine.begin() as connection:
-            await connection.execute(text('TRUNCATE otp_challenges'))
+            await connection.execute(text('TRUNCATE otp_challenges, otp_issues'))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url='http://test'
         ) as client:

@@ -146,7 +146,8 @@ async def client_for(**extra):
             else:
                 await connection.execute(
                     text(
-                        'TRUNCATE users, otp_challenges, password_login_guards, telegram_links, '
+                        'TRUNCATE users, otp_challenges, otp_issues, password_login_guards, '
+                        'telegram_links, '
                         'external_identities, social_login_challenges CASCADE'
                     )
                 )

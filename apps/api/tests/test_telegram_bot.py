@@ -80,7 +80,7 @@ async def bot_client(settings=None):
             else:  # opt-in PostgreSQL test database, already migrated
                 await connection.execute(
                     text(
-                        'TRUNCATE users, otp_challenges, telegram_links, '
+                        'TRUNCATE users, otp_challenges, otp_issues, telegram_links, '
                         'telegram_link_challenges CASCADE'
                     )
                 )

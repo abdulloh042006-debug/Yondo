@@ -27,6 +27,17 @@ async def _tables(app):
         await connection.run_sync(Base.metadata.create_all)
 
 
+@pytest.fixture(scope='module', autouse=True)
+def _no_code_limits():
+    """These tests sign the seeded accounts in many times from one address within a minute; the
+    per-IP and per-phone code limits are tested in the API suite (tests/test_auth_hardening.py)."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv('YONDO_AUTH_OTP_IP_RATE_LIMIT_PER_MINUTE', '0')
+        patch.setenv('YONDO_AUTH_OTP_MAX_PER_HOUR', '1000')
+        patch.setenv('YONDO_AUTH_OTP_MAX_PER_DAY', '1000')
+        yield
+
+
 @pytest_asyncio.fixture(scope='module', loop_scope='module')
 async def demo(tmp_path_factory):
     """The full demo (seeded, DEMO payments on) on a throw-away SQLite file."""
