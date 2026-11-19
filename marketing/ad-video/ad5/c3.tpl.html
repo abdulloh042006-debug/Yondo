@@ -1,0 +1,112 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>Yondo nima? (C3)</title>
+<style>
+@font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-latin-700-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-800-normal.woff2)}
+@font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-latin-ext-700-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
+@font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-ext-800-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
+@font-face{font-family:"Space Grotesk";font-weight:700;src:url({{FONTS}}/space-grotesk/files/space-grotesk-latin-700-normal.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#F5F2EC}svg{display:block}
+</style></head><body><svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+<script>
+// Ad 6 «Yondo nima?» (C3), 13.0 s. Screens = real apps/web captures, cropped so no price is in any file (ad5/capture_c3.mjs).
+const WORDMARK = `{{WORDMARK_INLINE}}`;
+{{KIT_JS}}
+const { INK, PAPER, CAR, P, eo, eio, back, lerp, cl, esc } = K;
+const SHOT = { card: '{{SHOTS}}/card-crop.png', place: '{{SHOTS}}/place-crop.png' };
+const CARD = { w: 895, h: 1280, tagsY: 1182, tagsH: 68 };
+const PLACE = { w: 847, h: 356 };
+const CAPS = [
+  [0.15, 1.40, 'Yondo nima?'],
+  [1.45, 4.15, 'Faoliyat: kofe, sayr,\nkino, tadbir.'],
+  [4.25, 7.95, 'Hamroh: profilida\nxizmatlari ko‘rinadi.'],
+  [8.05, 10.30, 'Uchrashuv: ochiq,\njamoat joyida.'],
+];
+window.TOTAL = 13.3;  // 13.0 with a normal-pace narrator; the DRAFT voice's last line ends at ~13.1 s
+
+// line-art icons (ink, 64-unit box)
+const ICON = {
+  cup: `<path d="M14 26h30v14a15 15 0 0 1-30 0z"/><path d="M44 30h4a7 7 0 0 1 0 14h-5"/><path d="M22 10q-4 6 0 10M31 8q-4 6 0 10" stroke="${CAR}"/>`,
+  walk: `<circle cx="34" cy="10" r="5"/><path d="M33 17l-6 18 9 9-3 14M27 35l-9 21M31 22l10 8 8-2M31 22l-11 6-4 9"/>`,
+  film: `<rect x="10" y="12" width="44" height="40" rx="4"/><path d="M10 22h44M10 42h44M18 12v10M28 12v10M38 12v10M46 12v10M18 42v10M28 42v10M38 42v10M46 42v10"/><path d="M28 27l9 5-9 5z" fill="${CAR}" stroke="${CAR}"/>`,
+  ticket: `<path d="M8 20h48v8a5 5 0 0 0 0 10v8H8v-8a5 5 0 0 0 0-10z"/><path d="M24 20v26" stroke-dasharray="3 5"/><circle cx="40" cy="33" r="5" stroke="${CAR}"/>`,
+};
+const icon = (k, x, y, s, op) => `<g transform="translate(${x - 32 * s} ${y - 32 * s}) scale(${s})" opacity="${op}" fill="none" stroke="${INK}" stroke-width="${3.4}" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</g>`;
+
+function title(word, n, t, t0) {
+  const k = eo(P(t, t0, t0 + .35));
+  return `<text x="90" y="${300 - 30 * (1 - k)}" font-family="Manrope" font-weight="800" font-size="120" fill="${INK}" opacity="${k}">${esc(word)}</text>`
+    + `<text x="990" y="300" font-family="Space Grotesk" font-weight="700" font-size="44" fill="${INK}" text-anchor="end" opacity="${k}">${n}/3</text>`
+    + `<path d="M90 345 H${90 + 220 * k}" stroke="${CAR}" stroke-width="10" stroke-linecap="round"/>`;
+}
+
+function S1(t) { // 0-1.4 YONDO slams in, splits into three cards
+  const k = back(P(t, 0, .35), 1.4), split = eio(P(t, 1.0, 1.4));
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>`;
+  const s = lerp(1.3, 1, cl(k));
+  g += `<text x="540" y="1010" font-family="Manrope" font-weight="800" font-size="${220 * s}" fill="${INK}" text-anchor="middle" opacity="${cl(P(t, 0, .12)) * (1 - split)}">YONDO</text>`;
+  ['Faoliyat', 'Hamroh', 'Uchrashuv'].forEach((w, i) => {
+    const x = 540 + (i - 1) * 330 * split, y = 960;
+    g += `<g opacity="${split}"><rect x="${x - 150}" y="${y - 240}" width="300" height="480" rx="28" fill="${i === 1 ? INK : PAPER}" stroke="${INK}" stroke-width="5"/>`
+      + `<text x="${x}" y="${y + 14}" font-family="Manrope" font-weight="800" font-size="46" fill="${i === 1 ? PAPER : INK}" text-anchor="middle">${w}</text></g>`;
+  });
+  return g;
+}
+function S2(t) { // 1.4-4.2 activities = the app's real category names
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Faoliyat', 1, t, 1.4);
+  [['cup', 'Kofe'], ['walk', 'Sayr'], ['film', 'Kino'], ['ticket', 'Tadbir']].forEach(([ic, name], i) => {
+    const t0 = 1.9 + i * .5, k = P(t, t0, t0 + .3), x = 300 + (i % 2) * 480, y = 640 + Math.floor(i / 2) * 420;
+    const s = 3.6 * back(k, 1.8);
+    g += `<circle cx="${x}" cy="${y}" r="${150 * eo(k)}" fill="${CAR}" opacity=".10"/>` + icon(ic, x, y, s, cl(k * 2));
+    g += `<text x="${x}" y="${y + 200}" font-family="Manrope" font-weight="800" font-size="62" fill="${INK}" text-anchor="middle" opacity="${eo(P(t, t0 + .1, t0 + .4))}">${name}</text>`;
+  });
+  return g;
+}
+function S3(t) { // 4.2-8.0 real card from the app's card feed
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Hamroh', 2, t, 4.2);
+  const k = eo(P(t, 4.3, 4.9)), sc = .56, w = CARD.w * sc, h = CARD.h * sc, x = 540 - w / 2, y = 400 + 220 * (1 - k);
+  g += `<g opacity="${k}"><rect x="${x + 10}" y="${y + 24}" width="${w}" height="${h}" rx="36" fill="${INK}" opacity=".16" filter="url(#bl)"/>`
+    + `<clipPath id="cc"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="36"/></clipPath>`
+    + `<image href="${SHOT.card}" x="${x}" y="${y}" width="${w}" height="${h}" clip-path="url(#cc)" preserveAspectRatio="none"/></g>`;
+  // the category chips lift out of the card: an enlarged copy of the same capture's chip row (source x 20-640)
+  const f = cl(back(P(t, 5.6, 6.0), 1.4)), sx0 = 20, sw = 620, sy0 = CARD.tagsY - 22, sh = CARD.tagsH + 44, z = 1.55;
+  const lw = sw * z, lh = sh * z, lx = 540 - lw / 2, ly0 = y + CARD.tagsY * sc - 22, ly = lerp(ly0, 1134, eio(cl(P(t, 5.6, 6.0))));
+  if (t >= 5.6) {
+    g += `<g opacity="${cl(P(t, 5.6, 5.75))}" transform="translate(540 ${ly + lh / 2}) scale(${lerp(sc / z, 1, f)}) translate(-540 ${-(ly + lh / 2)})">`
+      + `<rect x="${lx + 6}" y="${ly + 18}" width="${lw}" height="${lh}" rx="${lh / 2}" fill="${INK}" opacity=".18" filter="url(#bl)"/>`
+      + `<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${lh / 2}" fill="${PAPER}"/>`
+      + `<clipPath id="sc"><rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${lh / 2}"/></clipPath><g clip-path="url(#sc)"><svg x="${lx}" y="${ly}" width="${lw}" height="${lh}" viewBox="${sx0} ${sy0} ${sw} ${sh}" preserveAspectRatio="none"><image href="${SHOT.card}" x="0" y="0" width="${CARD.w}" height="${CARD.h}"/></svg></g>`
+      + `<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${lh / 2}" fill="none" stroke="${CAR}" stroke-width="8"/></g>`;
+  }
+  return g;
+}
+function S4(t) { // 8.0-10.3 the booking form's meeting-place field + the app's own hint, over a public square
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Uchrashuv', 3, t, 8.0);
+  const d = eo(P(t, 8.1, 9.0));
+  // line-art square: bench, lamp, cafe awning (draw-on)
+  g += `<g fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".9">`
+    + `<path pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - d}" d="M120 1210 H960 M200 1210 V1080 M200 1080 H420 L440 1140 H180 Z M260 1140 V1210 M380 1140 V1210"/>`
+    + `<path pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - d}" d="M560 1210 V1150 H760 V1210 M560 1150 V1130 H760 M600 1130 V1100 M720 1130 V1100 M860 1210 V960 M840 960 H880"/>`
+    + `<path pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - d}" d="M600 1000 H900 L880 1050 H620 Z" stroke="${CAR}"/></g>`
+    + `<circle cx="860" cy="950" r="${16 * d}" fill="${CAR}" opacity=".9"/>`;
+  const k = back(P(t, 8.4, 8.9), 1.3), sc = 1.18, w = PLACE.w * sc, h = PLACE.h * sc, x = 540 - w / 2, y = 470 + 120 * (1 - cl(k));
+  g += `<g opacity="${cl(P(t, 8.4, 8.6))}" transform="translate(540 ${y + h / 2}) scale(${lerp(.9, 1, cl(k))}) translate(-540 ${-(y + h / 2)})">`
+    + `<rect x="${x + 8}" y="${y + 20}" width="${w}" height="${h}" rx="30" fill="${INK}" opacity=".16" filter="url(#bl)"/>`
+    + `<clipPath id="pc"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="30"/></clipPath>`
+    + `<image href="${SHOT.place}" x="${x}" y="${y}" width="${w}" height="${h}" clip-path="url(#pc)" preserveAspectRatio="none"/></g>`;
+  return g;
+}
+function S5(t) { // 10.3-13.0 one line on screen (not spoken), then the end card
+  if (t >= 11.2) return K.endCard(t, 11.2);
+  const k = eo(P(t, 10.3, 10.6)), out = P(t, 10.95, 11.2);
+  return `<rect width="1080" height="1920" fill="${INK}"/>`
+    + `<text x="540" y="900" font-family="Manrope" font-weight="800" font-size="66" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">Tanishuv ilovasi emas —</text>`
+    + `<text x="540" y="990" font-family="Manrope" font-weight="800" font-size="66" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">faoliyat uchun hamroh.</text>`;
+}
+const DEFS = `<defs><filter id="bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="22"/></filter></defs>`;
+window.render = (t) => {
+  const f = t < 1.4 ? S1 : t < 4.2 ? S2 : t < 8.0 ? S3 : t < 10.3 ? S4 : S5;
+  document.getElementById('sv').innerHTML = DEFS + f(t) + (t < 11.2 ? K.caption(t, CAPS) : '');
+};
+const pre = Object.values(SHOT).map((s) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = s; }));
+window.ready = Promise.all([document.fonts.ready, ...pre]).then(() => { window.render(0); return true; });
+</script></body></html>

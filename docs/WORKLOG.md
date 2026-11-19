@@ -33,6 +33,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S87 — Ad 6 «Yondo nima?» (C3) preview render + QC (2026-11-19) [cloud worker, Videochi 2]
+Done: CEO asked for a C3 preview. Real captures from `apps/web` (`ad5/capture_c3.mjs`: card feed with the Tadbir filter, booking dialog meeting-place field + hint), cropped so no price is in any file; `ad5/c3.tpl.html` (kit), `ad5/audio_c3.py` (original synthesis, ducking), `ad5/mux.sh` (static gain + limiter). C3-V2 changed to «Hamroh: profilida xizmatlari ko‘rinadi.» (the card shows services, not languages). Two MP4s sent to the owner's app (no voice / DRAFT MMS voice); not committed.
+Not done: C1 (waits for Flow uploads + voicelab VO); RU cut of C3.
+QC (both files): 1080×1920, 30 fps, H.264 + AAC 48 kHz stereo, 13.3 s; −14.1/−14.2 LUFS, true peak −1.9/−1.8 dBTP, sample peak 0.80, no silences ≥0.4 s; blackdetect (pix_th 0.02) 0 segments (the 0.9 s ink-ground line at 10.3 s is intentional); stills checked by eye (captions clear of the content, chips enlarged ×1.55 for phones). audio-ears' "clipped samples" count is an artefact of its mono downmix (two identical channels summed → 1.13); the stereo file peaks at 0.80. Not checked: speech transcript (no Whisper model here), real phones.
+Env notes: capture needs `pip install -e apps/api aiosqlite`, `redis-server` on :6379, `npm ci && npx vite build` in apps/web.
+Commit: branch `feat/ad-video-5`.
+
 ## S86 — Ad video 5, Stage 2 (part 1): scripts, full Flow pack, capture list, kit, DRAFT VO (2026-11-19) [cloud worker, Videochi 2]
 Done: CEO approved C1 «Keyinroq» ro‘yxati + C3 «Yondo nima?». `scripts/05-keyinroq.md` (32 s storyboard, VO, captions, capture list, motion/sound specs, adaptations, QC list) and `scripts/06-yondo-nima.md` (12 s, motion + app only); list items mapped to the app's real categories (Tadbir, Sayr, Kino, Kofe); interests are not shown (not shipped). `flow-pack-c1-keyinroq.md` + `.html` (8 reference images, 4 video shots, per-shot negatives and checks; phone copy as a private artifact). `kit/` (logo, end card with 18+ and a CTA placeholder, captions, stamp, tick, shake; build + render scripts). `server_video.py`: `AD5_SERVICES=1` adds event/cinema services to the seed. `ad-policy-ask.md` (questions for Meta/TikTok/Google, truthful self-description). `marketing/social/caption.md`: «faqat jamoat joylarida» softened to a recommendation (marked, owner to confirm).
 Not done: app captures, final render and QC wait for the owner's Flow uploads (CEO: stop here). C3 can be rendered without them.
