@@ -19,9 +19,10 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
-00l. **Gifts (S85, 2026-11-19):** owner decides how a shop contacts the recipient for real deliveries (in-app chat or masked phone) before real gift orders (`docs/gifts.md`).
+00l. **Gifts (S86, 2026-11-19):** owner decides how a shop contacts the recipient for real deliveries (in-app chat or masked phone) before real gift orders (`docs/gifts.md`).
 00k. **18+ (S83, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
 00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
+00l. **Ad video 5 (S85, 2026-11-19):** Stage 1 done (`marketing/ad-video/concepts-2026-11.md`); CEO approves a concept, owner answers its 6 questions, then Stage 2 on `feat/ad-video-5`.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -33,13 +34,21 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S85 — Gifts phase A: vendor shops, approval, one test order per vendor (2026-11-19) [cloud worker, backend]
+## S86 — Gifts phase A: vendor shops, approval, one test order per vendor (2026-11-19) [cloud worker, backend]
 Done: `vendor_shops` (mandatory profile + optional logo; migration 0028); admin decision/suspend, audited + notified, approval needs a verified ID and grants the Vendor role (no self-assignment: `vendor_requires_approval`); catalogue only from approved shops; admin product reject with a reason; test checkout splits per vendor, vendor order list ("Mijoz", no customer identity) and status moves (cancel with a reason, stock restored), customer cancel before preparing; `/vendor/earnings` stays 503; DEMO vendor + 3 neutral DEMO gifts; push texts. Docs: `docs/gifts.md`.
 Not done: phase B (web), phase C (mobile).
 Next: phase B on `feat/gifts-web`.
 Blockers: OPEN (owner, before real orders): how a shop contacts the recipient (in-app chat or a masked phone); real payments, payouts, delivery fee for gifts.
 Evidence: SQLite 572 passed + 12 skipped, PostgreSQL 583 passed (`alembic check` clean, 0028 down/up + backfill checked by the verifier), demo 12, ruff + `export_openapi --check` PASS, web tsc + vitest 183. Verifier APPROVE (8 non-blocking notes; 1-3 fixed: an old Vendor role can be kept, erasure clears the customer's delivery notes, logo upload checks the account).
 Commit: branch `feat/gifts-vendors` (PR to `main`).
+## S85 — Ad video 5, Stage 1: research, 10 concepts, sample Google Flow pack (2026-11-19) [cloud worker, Videochi 2]
+Done: `marketing/ad-video/research-2026-11.md` (assessment of reels 1–3, the Higgsfield ad, caption.md and the intro; Timeleft, Bumble BFF, Showaround, Withlocals, RentAFriend, 222/Pie/Meetup with links, verified vs interpretation; Meta/TikTok/Google ad-policy check; tool check), `concepts-2026-11.md` (10 concepts, ranked; mix 50/30/20 motion/AI/app; reusable kit; owner questions), `flow-pack-sample-reja.md` + `.html` (sample pack for the top concept, made by `flowpack_html.py`; phone copy also published as a private artifact).
+Not done: Stage 2 (script, full pack, render, QC) waits for the CEO's concept approval. No rendering, no paid generation.
+Next: CEO picks a concept; owner answers the open questions in `concepts-2026-11.md` (paid ads or organic, Flow plan, VO).
+Blockers: none. Risk flagged: TikTok and Google ad policies prohibit "compensated companionship" (research §4); captions ON now overrides the 2026-10-23 "no subtitles" (CEO directive).
+Evidence: HTML at 390 px: no horizontal scroll, 12 copy buttons (Playwright); `ruff check flowpack_html.py` PASS. The MP4s of reels 1–3 were not watched (not committed): the assessment is of their breakdowns.
+Commit: branch `feat/ad-video-5-research` (PR to `main`).
+
 ## S84 — Photos: the Yondo logo while loading and when a photo fails (2026-11-19) [cloud worker, web + mobile]
 Done (owner: "if a picture does not open or does not load fully, show the default Yondo logo"):
 - One component per platform: web `ui/SafeImage.tsx` (+ `LogoMark`), mobile `src/safeImage.tsx` (uses `BrandMark`). The official symbol sits centred on a calm tile (paper by day, ink at night) while the photo loads, and stays for good on error: 404, network, decode, a 15 s timeout, or a signed URL that could not be obtained. No broken-image icon, no alt text spill; alt stays on the photo; the tile keeps the box size (no layout shift); the photo fades in (no fade under reduced motion).
