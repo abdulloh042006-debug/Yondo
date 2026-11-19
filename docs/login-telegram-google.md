@@ -93,12 +93,15 @@ The legacy widget (HMAC of the bot token) is archived and **not** built. Never u
    - `https://yondo-demo.onrender.com/settings`
    - `https://yondo-demo.onrender.com/auth/callback/telegram` (code flow)
 
-   The bot token that was shown in chat on 2026-11-18 is being revoked. After a revoke, check whether the Login Widget Client Secret changed, and paste the new one only into Render.
+   The owner chose not to rotate the bot token for now (CLAUDE.md §7, 2026-11-18). If it is ever revoked, check whether the Login Widget Client Secret changed too, and paste the new one only into Render.
 2. **Google Cloud console** (the same project as the Firebase project "Yondo"; stay on Spark, **never** Blaze):
-   1. OAuth consent screen: app name Yondo, support e-mail, the scopes `openid`, `email`, `profile` (basic scopes, no Google verification).
-   2. While it is in **Testing**, only the listed test users can sign in. Press **Publish app** ("In production") so everyone can.
-   3. Credentials → the Web OAuth client: Authorized JavaScript origins = `https://yondo-demo.onrender.com` (done). No redirect URI is needed, so the placeholder `/api/auth/google/callback` can be deleted.
-   4. Paste the client ID into `YONDO_GOOGLE_CLIENT_IDS`.
+   1. OAuth consent screen: app name Yondo, support e-mail, only the scopes `openid`, `email`, `profile`, and no logo, so no brand verification is needed.
+   2. **For now (CEO, 2026-11-18): stay in Testing**, with the owner's own Google account as a test user. In Testing, only listed test users can sign in.
+   3. **Later step, before real users:** press **Publish app** ("In production") so everyone can sign in.
+   4. Credentials → the Web OAuth client:
+      - Authorized JavaScript origins = `https://yondo-demo.onrender.com` (done).
+      - The registered redirect URI `https://yondo-demo.onrender.com/api/v1/auth/google/callback` can stay. The GIS ID-token button does not use it. If a redirect flow is ever needed, it must be exactly this path.
+   5. Paste the client ID into `YONDO_GOOGLE_CLIENT_IDS`.
 3. Redeploy, then open `/login`: the round Telegram and Google buttons appear.
 
 **BLOCKED until the keys are set:**
