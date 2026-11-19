@@ -188,6 +188,8 @@ async def erase_account(
     user.password_changed_at = None
     user.phone_number = f'deleted-{uid.hex[:24]}'
     user.age = None
+    user.date_of_birth = None
+    user.age_restricted_at = None
     user.gender = None
     user.city = None
     user.ui_locale = None

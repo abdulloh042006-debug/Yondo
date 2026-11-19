@@ -30,6 +30,7 @@ Optional environment (see infra/deploy/README.md):
 
 import asyncio
 import contextvars
+from datetime import date
 import os
 import secrets
 import sys
@@ -151,12 +152,16 @@ async def login(client, phone):
     return headers, me['id']
 
 
-async def set_user(app, user_id, roles, status=AccountStatus.ACTIVE, city='Toshkent', age=27):
+async def set_user(app, user_id, roles, status=AccountStatus.ACTIVE, city='Toshkent', age=27, demo_dob=True):
     async with app.state.db_session_factory() as session:
         user = await session.get(User, UUID(user_id))
         user.account_status = status
         user.city = city
         user.age = age
+        # 18+ (owner, 2026-11-19): the DEMO accounts (and the well-known test admin) get a fixed adult date of birth
+        # (this age in 2026). The owner's own admin number (YONDO_DEMO_ADMIN_PHONE) gets none: he enters the real one.
+        if demo_dob and user.date_of_birth is None:
+            user.date_of_birth = date(2026 - age, 1, 15)
         existing = set(await session.scalars(select(UserRole.role).where(UserRole.user_id == user.id)))
         for role in roles:
             if role not in existing:
@@ -168,7 +173,7 @@ async def seed(app):
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url='http://seed') as client:
         admin, admin_id = await login(client, ADMIN)
-        await set_user(app, admin_id, [UserRoleType.ADMIN], age=40)
+        await set_user(app, admin_id, [UserRoleType.ADMIN], age=40, demo_dob=not ADMIN_ENV)
         customer, customer_id = await login(client, CUSTOMER)
         await set_user(app, customer_id, [UserRoleType.CUSTOMER])
         _, pending_id = await login(client, PENDING_USER)

@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from yondo_api.account.deletion import pending_deletion_exists
 from yondo_api.api.errors import ApplicationError
+from yondo_api.auth.age import current_age
 from yondo_api.auth.dependencies import _bearer, get_authenticated_user
 from yondo_api.bookings.models import Booking, BookingStatus
 from yondo_api.companions import service as companion_service
@@ -146,7 +147,7 @@ async def _card(session, profile: CompanionProfile, user: User, stats: dict) -> 
         id=profile.id,
         display_name=profile.display_name,
         bio=profile.bio,
-        age=user.age,
+        age=current_age(user.date_of_birth, user.age),
         gender=user.gender,
         city=user.city,
         languages=profile.languages,

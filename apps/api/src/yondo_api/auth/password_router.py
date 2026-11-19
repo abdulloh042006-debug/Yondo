@@ -1,6 +1,6 @@
 """Username + password sign-in, registration step, change and reset (docs/login-password.md)."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
@@ -9,8 +9,10 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from yondo_api.account.deletion import erase_account
 from yondo_api.api.errors import ApplicationError
-from yondo_api.auth import passwords
+from yondo_api.auth import age, passwords
+from yondo_api.auth.age import current_age, ensure_phone_not_blocked
 from yondo_api.auth.dependencies import AuthenticatedUser, get_authenticated_user, get_db_session
 from yondo_api.auth.phone import normalize_uzbekistan_phone
 from yondo_api.auth.schemas import OtpValue, TokenResponse, UserResponse
@@ -36,6 +38,13 @@ class Registration(BaseModel):
     model_config = ConfigDict(extra='forbid')
     username: str = Field(min_length=1, max_length=64)
     password: PasswordValue
+    # Required while the account has none (18+, owner 2026-11-19).
+    date_of_birth: date | None = None
+
+
+class DateOfBirth(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    date_of_birth: date
 
 
 class PasswordChange(BaseModel):
@@ -93,7 +102,10 @@ async def user_response(session: AsyncSession, user: User) -> UserResponse:
         username=user.username,
         has_password=user.password_hash is not None,
         password_setup_required=user.password_hash is None or user.username is None,
-        age=user.age,
+        date_of_birth=user.date_of_birth,
+        date_of_birth_required=user.date_of_birth is None,
+        age_restricted=user.age_restricted_at is not None,
+        age=current_age(user.date_of_birth, user.age),
         gender=user.gender,
         city=user.city,
         ui_locale=user.ui_locale,
@@ -131,10 +143,21 @@ async def complete_registration(
     if user.password_hash is not None and user.username is not None:
         raise ApplicationError('registration_complete', 'The account is already set up', 409)
     window = timedelta(seconds=settings.auth_registration_window_seconds)
-    age = _now() - _as_utc(principal.session.created_at)
-    if principal.session.via not in _SETUP_VIA or age > window:
+    session_age = _now() - _as_utc(principal.session.created_at)
+    if principal.session.via not in _SETUP_VIA or session_age > window:
         raise ApplicationError(
             'reauth_required', 'Sign in with a code again, then set the password', 403
+        )
+    if user.age_restricted_at is not None:
+        raise age.age_restricted()
+    if user.date_of_birth is None and (
+        payload.date_of_birth is not None or settings.auth_require_date_of_birth
+    ):
+        # A brand-new sign-up (made in this registration window) under 18 is erased; an older
+        # account that never set a password keeps its data and simply stays behind the gate.
+        new_account = _now() - _as_utc(user.created_at) <= window
+        await _set_date_of_birth(
+            request, session, user, payload.date_of_birth, new_account=new_account
         )
     name = passwords.normalize_username(payload.username)
     if user.username is not None and user.username != name:
@@ -156,6 +179,50 @@ async def complete_registration(
         raise ApplicationError(
             'username_unavailable', 'This username is not available', 409
         ) from exc
+    await session.refresh(user)
+    return await user_response(session, user)
+
+
+async def _set_date_of_birth(
+    request: Request, session: AsyncSession, user: User, dob: date | None, *, new_account: bool
+) -> None:
+    """Store a declared date of birth (18+, owner/CEO 2026-11-19).
+
+    Under 18, nothing is stored:
+    - a new sign-up is erased at once (no account remains); only a salted hash of the phone is
+      kept with a 30-day cooldown, so an instant retry with another date is refused;
+    - an existing account is flagged ``age_restricted_at`` and stays locked until an admin clears
+      it after an ID check (it can still delete itself or write to support).
+    """
+    if dob is None:
+        raise ApplicationError('date_of_birth_required', 'Enter your date of birth', 422)
+    try:
+        years = age.checked_age(dob)
+    except ApplicationError as exc:
+        if exc.code == 'age_restricted':
+            if new_account:
+                await age.block_phone(session, _settings(request), user.phone_number)
+                await erase_account(session, user, request.app.state.object_storage, _now())
+            else:
+                user.age_restricted_at = _now()
+            await session.commit()
+        raise
+    user.date_of_birth = dob
+    user.age = years
+
+
+@router.put('/date-of-birth', response_model=UserResponse)
+async def set_date_of_birth(
+    payload: DateOfBirth, request: Request, principal: Principal, session: Session
+) -> UserResponse:
+    """One-time step for accounts made before 2026-11-19 (18+). It cannot be changed later."""
+    user = await session.get(User, principal.user.id, with_for_update=True, populate_existing=True)
+    if user.age_restricted_at is not None:  # no retry with another date; an admin checks the ID
+        raise age.age_restricted()
+    if user.date_of_birth is not None:
+        raise ApplicationError('date_of_birth_already_set', 'The date of birth is already set', 409)
+    await _set_date_of_birth(request, session, user, payload.date_of_birth, new_account=False)
+    await session.commit()
     await session.refresh(user)
     return await user_response(session, user)
 
@@ -255,6 +322,7 @@ async def reset_password(
     now = _now()
     user = await consume_otp(session, phone_number, payload.code, settings, now)
     if user is None:  # a code proves the phone: same as a code sign-in, the account is created
+        await ensure_phone_not_blocked(session, settings, phone_number)  # 18+ cooldown
         user = User(phone_number=phone_number, account_status=AccountStatus.VERIFICATION_PENDING)
         session.add(user)
         await session.flush()

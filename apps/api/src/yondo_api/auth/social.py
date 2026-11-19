@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.api.errors import ApplicationError
+from yondo_api.auth.age import ensure_phone_not_blocked
 from yondo_api.auth.dependencies import AuthenticatedUser, get_authenticated_user, get_db_session
 from yondo_api.auth.oidc import JwksCache, provider_unreachable, verify_id_token
 from yondo_api.auth.phone import normalize_uzbekistan_phone
@@ -539,6 +540,7 @@ async def _telegram_finish(
     elif phone is not None:
         user = await session.scalar(select(User).where(User.phone_number == phone))
         if user is None:
+            await ensure_phone_not_blocked(session, settings, phone)  # 18+ cooldown
             user = User(phone_number=phone, account_status=AccountStatus.VERIFICATION_PENDING)
             session.add(user)
             await session.flush()
@@ -720,6 +722,7 @@ async def complete_signup(
     phone = normalize_uzbekistan_phone(payload.phone_number)
     user = await consume_otp(session, phone, payload.code, settings, now)
     if user is None:
+        await ensure_phone_not_blocked(session, settings, phone)  # 18+ cooldown
         user = User(phone_number=phone, account_status=AccountStatus.VERIFICATION_PENDING)
         session.add(user)
         await session.flush()

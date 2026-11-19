@@ -46,10 +46,18 @@ async def test_verification_feeds_the_companion_activation_gate(prepared):
     assert (await client.get(ADMIN, headers=env['customer'])).status_code == 403
     queue = await client.get(ADMIN, headers=env['admin'])
     assert queue.json()[0]['document_url'].startswith('https://storage.test/private/')
-    decided = await client.post(
+    unconfirmed = await client.post(
         f'{ADMIN}/{item["id"]}/decision',
         headers=env['admin'],
         json={'decision': 'approve', 'note': 'Document and selfie match'},
+    )
+    # Admin checklist (owner, 2026-11-19): approving needs "18+ confirmed from the ID".
+    assert unconfirmed.status_code == 422
+    assert unconfirmed.json()['code'] == 'adult_confirmation_required'
+    decided = await client.post(
+        f'{ADMIN}/{item["id"]}/decision',
+        headers=env['admin'],
+        json={'decision': 'approve', 'note': 'Document and selfie match', 'adult_confirmed': True},
     )
     assert decided.status_code == 200, decided.text
     assert decided.json()['status'] == 'verified'
@@ -224,7 +232,7 @@ async def decide(client, env, item, decision='approve'):
     return await client.post(
         f'{ADMIN}/{item["id"]}/decision',
         headers=env['admin'],
-        json={'decision': decision, 'note': 'checked'},
+        json={'decision': decision, 'note': 'checked', 'adult_confirmed': decision == 'approve'},
     )
 
 

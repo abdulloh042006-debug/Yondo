@@ -35,6 +35,16 @@ class OtpIssue(Base):
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class AgeBlock(Base):
+    """A new sign-up under 18 leaves no account, only this: a salted hash of the phone number and
+    the end of a 30-day cooldown, so an instant retry with another date is refused."""
+
+    __tablename__ = 'age_blocks'
+
+    phone_hash: Mapped[bytes] = mapped_column(LargeBinary(32), primary_key=True)
+    blocked_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class AuthSession(TimestampMixin, Base):
     __tablename__ = 'auth_sessions'
 

@@ -62,6 +62,8 @@ class AdminVerificationRead(VerificationRead):
 class VerificationDecision(BaseModel):
     model_config = ConfigDict(extra='forbid')
     decision: Literal['approve', 'reject']
+    # Admin checklist (owner, 2026-11-19): "18+ confirmed from the ID". Required to approve.
+    adult_confirmed: bool = False
     note: str = Field(
         min_length=1,
         max_length=2000,
@@ -311,6 +313,10 @@ async def decide(
     if item.status != VerificationStatus.PENDING:
         raise ApplicationError('verification_not_pending', 'Verification is not pending', 409)
     approved = payload.decision == 'approve'
+    if approved and not payload.adult_confirmed:
+        raise ApplicationError(
+            'adult_confirmation_required', 'Confirm from the ID that the person is 18 or over', 422
+        )
     item.status = VerificationStatus.VERIFIED if approved else VerificationStatus.REJECTED
     item.reviewed_at = datetime.now(UTC)
     item.reviewed_by = admin.id

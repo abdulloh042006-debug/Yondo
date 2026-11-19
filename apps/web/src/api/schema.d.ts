@@ -377,6 +377,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}/age-restriction/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear Age Restriction
+         * @description After an ID check: the account declared an age under 18 by mistake (18+, 2026-11-19).
+         *     The user then enters the date of birth again; who cleared it and when is audited.
+         */
+        post: operations["clear_age_restriction_api_v1_admin_users__user_id__age_restriction_clear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{user_id}/status": {
         parameters: {
             query?: never;
@@ -422,6 +443,26 @@ export interface paths {
         put?: never;
         /** Decide */
         post: operations["decide_api_v1_admin_verifications__verification_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/date-of-birth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Date Of Birth
+         * @description One-time step for accounts made before 2026-11-19 (18+). It cannot be changed later.
+         */
+        put: operations["set_date_of_birth_api_v1_auth_date_of_birth_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3263,6 +3304,11 @@ export interface components {
              */
             user_id: string;
         };
+        /** AgeRestrictionClear */
+        AgeRestrictionClear: {
+            /** Reason */
+            reason: string;
+        };
         /** AndroidPushConfig */
         AndroidPushConfig: {
             /** Enabled */
@@ -3674,6 +3720,14 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending" | "approved" | "rejected";
+        /** DateOfBirth */
+        DateOfBirth: {
+            /**
+             * Date Of Birth
+             * Format: date
+             */
+            date_of_birth: string;
+        };
         /** DeletionRequestWrite */
         DeletionRequestWrite: {
             /**
@@ -4333,6 +4387,8 @@ export interface components {
         };
         /** Registration */
         Registration: {
+            /** Date Of Birth */
+            date_of_birth?: string | null;
             /**
              * Password
              * Format: password
@@ -4738,6 +4794,11 @@ export interface components {
         UserResponse: {
             /** Age */
             age: number | null;
+            /**
+             * Age Restricted
+             * @default false
+             */
+            age_restricted: boolean;
             /** City */
             city: string | null;
             /**
@@ -4745,6 +4806,13 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /**
+             * Date Of Birth Required
+             * @default true
+             */
+            date_of_birth_required: boolean;
             /** Gender */
             gender: string | null;
             /**
@@ -4800,6 +4868,11 @@ export interface components {
         };
         /** VerificationDecision */
         VerificationDecision: {
+            /**
+             * Adult Confirmed
+             * @default false
+             */
+            adult_confirmed: boolean;
             /**
              * Decision
              * @enum {string}
@@ -5546,6 +5619,41 @@ export interface operations {
             };
         };
     };
+    clear_age_restriction_api_v1_admin_users__user_id__age_restriction_clear_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgeRestrictionClear"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_account_status_api_v1_admin_users__user_id__status_post: {
         parameters: {
             query?: never;
@@ -5635,6 +5743,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminVerificationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_date_of_birth_api_v1_auth_date_of_birth_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DateOfBirth"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */

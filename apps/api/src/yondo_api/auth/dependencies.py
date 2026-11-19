@@ -31,6 +31,7 @@ class AuthenticatedUser:
 
 # Paths an account without username + password may still use when the setup gate is on.
 _SETUP_ALLOWED = ('/auth/', '/legal/')
+_RESTRICTED_ALLOWED = ('/auth/', '/legal/', '/account/deletion', '/support/requests')
 
 
 async def get_authenticated_user(
@@ -62,6 +63,18 @@ async def get_authenticated_user(
     }:
         raise ApplicationError('account_unavailable', 'The account is unavailable', 403)
     settings = request.app.state.settings
+    if user.age_restricted_at is not None:
+        # Declared under 18 (owner/CEO, 2026-11-19): locked until an admin checks the ID. The
+        # account can still sign out, read the documents, delete itself and write to support.
+        path = request.url.path.removeprefix(settings.api_v1_prefix)
+        if not path.startswith(_RESTRICTED_ALLOWED):
+            raise ApplicationError(
+                'age_restricted', 'Yondo is only for people aged 18 and over', 403
+            )
+        if not path.startswith(_SETUP_ALLOWED):
+            # Support and account deletion: never behind the password or date-of-birth steps
+            # (a restricted account has no date of birth by design).
+            return AuthenticatedUser(user=user, session=auth_session)
     if settings.auth_require_password_setup and (
         user.password_hash is None or user.username is None
     ):
@@ -69,5 +82,11 @@ async def get_authenticated_user(
         if not path.startswith(_SETUP_ALLOWED):
             raise ApplicationError(
                 'password_setup_required', 'Set a username and password first', 403
+            )
+    if settings.auth_require_date_of_birth and user.date_of_birth is None:
+        path = request.url.path.removeprefix(settings.api_v1_prefix)
+        if not path.startswith(_SETUP_ALLOWED):
+            raise ApplicationError(
+                'date_of_birth_required', 'Enter your date of birth first', 403
             )
     return AuthenticatedUser(user=user, session=auth_session)

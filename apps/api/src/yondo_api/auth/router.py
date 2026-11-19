@@ -123,7 +123,10 @@ async def update_profile(
     principal: PrincipalDependency,
     session: SessionDependency,
 ) -> UserResponse:
-    for field in payload.model_fields_set:
+    fields = set(payload.model_fields_set)
+    if principal.user.date_of_birth is not None:
+        fields.discard('age')  # the age follows the date of birth (18+), it is not edited
+    for field in fields:
         setattr(principal.user, field, getattr(payload, field))
     await session.commit()
     await session.refresh(principal.user)
