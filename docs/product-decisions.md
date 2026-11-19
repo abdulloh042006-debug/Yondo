@@ -32,6 +32,8 @@
 
 Google and Telegram are separate login providers. Sending OTP codes through Telegram is a separate mechanism.
 
+**Built (2026-11-18, `docs/login-telegram-google.md`):** Telegram Login = the new OIDC flow (official JS library on the web, round icon button; phone + direct-message consent), Google = Google Identity Services ID token (round icon button). Accounts stay phone-anchored: a verified Telegram phone counts as phone proof; a new Google identity always proves a phone by code first; never linked by e-mail. Apple later.
+
 **OTP:**
 - In the demo stage, phone verification codes are sent by a **Telegram bot**. This is a different mechanism from Telegram Login.
 - No SMS OTP now, and no paid SMS service. The architecture keeps a provider slot so an SMS provider can be added later (`OtpDeliveryProvider`).

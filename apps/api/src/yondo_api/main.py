@@ -12,6 +12,7 @@ from yondo_api.account.admin import router as account_admin_router
 from yondo_api.account.router import legal_router
 from yondo_api.account.router import router as account_router
 from yondo_api.admin.router import router as admin_router
+from yondo_api.api.client_ip import ClientIpMiddleware
 from yondo_api.api.errors import install_exception_handlers
 from yondo_api.api.health import DatabaseHealthCheck, RedisHealthCheck, public_router
 from yondo_api.api.middleware import RequestContextMiddleware
@@ -26,6 +27,8 @@ from yondo_api.auth.providers import (
     UnconfiguredOtpProvider,
 )
 from yondo_api.auth.router import router as auth_router
+from yondo_api.auth.social import SocialLogin
+from yondo_api.auth.social import router as social_router
 from yondo_api.auth.telegram_bot import TelegramBotOtpProvider
 from yondo_api.auth.telegram_gateway import TelegramGatewayOtpProvider
 from yondo_api.auth.telegram_link import attach_chat_lookup
@@ -171,13 +174,24 @@ def create_application(
     app.state.password_ip_limiter = IpRateLimiter(
         app_settings.auth_password_ip_rate_limit_per_minute
     )
+    app.state.otp_ip_limiter = IpRateLimiter(app_settings.auth_otp_ip_rate_limit_per_minute)
+    app.state.social_login = SocialLogin(app_settings)
     app.add_middleware(RequestContextMiddleware)
+    # Added last = outermost: the client IP is settled before any handler or limiter sees it.
+    app.add_middleware(
+        ClientIpMiddleware,
+        mode=app_settings.client_ip_mode,
+        header=app_settings.client_ip_header,
+        hops=app_settings.client_ip_xff_hops,
+        trusted_proxies=app_settings.trusted_proxy_cidrs,
+    )
     install_exception_handlers(app)
     app.include_router(public_router)
     app.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
     app.include_router(auth_router, prefix=app_settings.api_v1_prefix)
     app.include_router(telegram_link_router, prefix=app_settings.api_v1_prefix)
     app.include_router(password_router, prefix=app_settings.api_v1_prefix)
+    app.include_router(social_router, prefix=app_settings.api_v1_prefix)
     for companion_routes in (
         companion_router,
         companion_resources_router,

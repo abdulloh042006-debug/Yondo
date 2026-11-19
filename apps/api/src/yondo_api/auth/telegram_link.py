@@ -144,6 +144,9 @@ async def link_config(request: Request) -> LinkConfig:
 @router.post('/start', response_model=LinkStarted, status_code=201)
 async def start_link(payload: LinkStart, request: Request, session: Session) -> LinkStarted:
     settings, _ = _bot(request)
+    request.app.state.otp_ip_limiter.check(
+        'otp', request.client.host if request.client else None
+    )
     await request.app.state.otp_rate_limit_hook.check()
     phone_number = normalize_uzbekistan_phone(payload.phone_number)
     now = _now()

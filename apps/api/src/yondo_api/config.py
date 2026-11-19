@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import re
 from functools import lru_cache
 from typing import Literal
@@ -63,6 +64,22 @@ class Settings(BaseSettings):
     # (counted from its sign-in) must sign in again.
     auth_session_max_age_seconds: int = Field(default=15_552_000, gt=0)  # 180 days
     auth_otp_provider_rate_limit_per_minute: int = Field(default=0, ge=0)
+    # Per phone: at most this many codes per hour / per day (owner, 2026-11-19: 5 and 10).
+    auth_otp_max_per_hour: int = Field(default=5, ge=1)
+    auth_otp_max_per_day: int = Field(default=10, ge=1)
+    # False only for the demo harness's own in-process app (seed, admin refresh, top-up): its
+    # sign-ins neither count against nor are blocked by the per-phone limits.
+    auth_otp_limits_enabled: bool = True
+    # Per client IP: code requests per minute (/auth/otp/request, /auth/telegram/link/start).
+    auth_otp_ip_rate_limit_per_minute: int = Field(default=10, ge=0)
+    # How the client IP for per-IP limits is found (docs/client-ip.md). "peer" trusts no header.
+    client_ip_mode: Literal['peer', 'header', 'xff'] = 'peer'
+    client_ip_header: str = ''
+    client_ip_xff_hops: int = Field(default=1, ge=1, le=5)
+    # Only a TCP peer inside these networks may set the client IP through a header.
+    trusted_proxy_cidrs: str = (
+        '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8,::1/128,fc00::/7'
+    )
     # Telegram Gateway (https://core.telegram.org/gateway): delivers login codes to the user's
     # Telegram account. Unset token = not configured. Never log or echo the token.
     telegram_gateway_token: SecretStr | None = None
@@ -92,6 +109,19 @@ class Settings(BaseSettings):
     # When true, accounts without username + password get 403 password_setup_required outside
     # /auth and /legal. Off until the web/mobile setup screens ship (the demo must keep working).
     auth_require_password_setup: bool = False
+    # Social sign-in (docs/login-telegram-google.md). Each provider is OFF until its values are set
+    # in the host's environment; the API then answers 503 provider_not_configured and the web hides
+    # the button. Telegram Login = OpenID Connect at oauth.telegram.org; the Client ID (= the bot's
+    # numeric ID, public) from @BotFather -> Login Widget is enough for the web (official JS
+    # library). The Client Secret + redirect URIs are only for the code flow (mobile, system
+    # browser). Redirect URIs: comma-separated; empty = <public_web_url>/auth/callback/telegram.
+    telegram_login_client_id: str = ''
+    telegram_login_client_secret: SecretStr | None = None
+    telegram_login_redirect_uris: str = ''
+    # Google Identity Services: comma-separated OAuth client IDs (web, Android) accepted as "aud".
+    google_client_ids: str = ''
+    social_login_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
+    social_login_lifetime_seconds: int = Field(default=600, ge=60, le=3600)
     # Push notifications (docs/push-notifications.md). Android = FCM HTTP v1 with a Google
     # service-account JSON (a secret: set it only in the host's env). Empty = Android push off.
     fcm_service_account_json: SecretStr | None = None
@@ -201,12 +231,37 @@ class Settings(BaseSettings):
     def empty_push_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
         return value if value is not None and value.get_secret_value().strip() else None
 
-    @field_validator('telegram_bot_token', 'bot_shared_secret')
+    @field_validator('telegram_bot_token', 'bot_shared_secret', 'telegram_login_client_secret')
     @classmethod
     def empty_telegram_bot_secret_is_unset(cls, value: SecretStr | None) -> SecretStr | None:
         if value is not None and not value.get_secret_value().strip():
             return None
         return value
+
+    @property
+    def telegram_login_redirect_uri_list(self) -> list[str]:
+        uris = [u.strip() for u in self.telegram_login_redirect_uris.split(',') if u.strip()]
+        if not uris and self.public_web_url:
+            uris = [f"{self.public_web_url.rstrip('/')}/auth/callback/telegram"]
+        return uris
+
+    @property
+    def telegram_login_enabled(self) -> bool:
+        """The official JS library flow (ID token straight to the browser) needs only the ID."""
+        return bool(self.telegram_login_client_id.strip())
+
+    @property
+    def telegram_code_flow_enabled(self) -> bool:
+        """Authorization-code + PKCE flow (system browser, mobile): also the secret + redirects."""
+        return bool(
+            self.telegram_login_enabled
+            and self.telegram_login_client_secret is not None
+            and self.telegram_login_redirect_uri_list
+        )
+
+    @property
+    def google_client_id_list(self) -> list[str]:
+        return [c.strip() for c in self.google_client_ids.split(',') if c.strip()]
 
     @field_validator('telegram_bot_username')
     @classmethod
@@ -217,6 +272,15 @@ class Settings(BaseSettings):
         if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{3,31}', value):
             raise ValueError('YONDO_TELEGRAM_BOT_USERNAME must be a Telegram bot username')
         return value
+
+    @model_validator(mode='after')
+    def validate_client_ip(self) -> Settings:
+        if self.client_ip_mode == 'header' and not self.client_ip_header.strip():
+            raise ValueError('YONDO_CLIENT_IP_MODE=header needs YONDO_CLIENT_IP_HEADER')
+        for part in self.trusted_proxy_cidrs.split(','):
+            if part.strip():
+                ipaddress.ip_network(part.strip(), strict=False)  # ValueError on a typo
+        return self
 
     @model_validator(mode='after')
     def validate_otp_provider(self) -> Settings:

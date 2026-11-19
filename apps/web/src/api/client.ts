@@ -69,6 +69,9 @@ export const tokens = {
   },
 };
 
+/** 401 codes about the request's own credentials (a wrong password, a rejected provider token), not the session. */
+const REQUEST_401 = new Set(['invalid_credentials', 'social_token_invalid', 'social_code_invalid']);
+
 let refreshing: Promise<boolean> | null = null;
 async function refresh(): Promise<boolean> {
   const token = read(REFRESH);
@@ -138,7 +141,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
   let res = await send();
   // A 401 about the request itself (a wrong current password: invalid_credentials) is not about the session:
   // it must neither refresh nor sign the user out. Branch on the code, never the message.
-  const sessionProblem = res.status === 401 && (await res.clone().json().catch(() => null))?.code !== 'invalid_credentials';
+  const sessionProblem = res.status === 401 && !REQUEST_401.has((await res.clone().json().catch(() => null))?.code);
   if (sessionProblem && !opts.anonymous && read(REFRESH)) {
     if (await refresh()) res = await send();
     if (res.status === 401) {
@@ -159,6 +162,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
   }
   return payload as T;
 }
+
 
 export const api = {
   get: <T>(path: string, opts?: RequestOptions) => request<T>('GET', path, opts),
