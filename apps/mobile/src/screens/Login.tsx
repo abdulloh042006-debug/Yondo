@@ -8,7 +8,7 @@ import { AUTOFILL } from '../autofill';
 import { useNav, type Route } from '../nav';
 import { dedupePhonePrefix, passwordProblem, t } from '../shared';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card, Field, H1, LangSwitch, MenuRow, P, Row, Screen } from '../ui';
+import { Banner, Button, Card, Field, H1, LangSwitch, MenuRow, P, Row, Screen, AppBar } from '../ui';
 
 const PHONE = /^\+998\d{9}$/;
 export type LoginMode = 'password' | 'code' | 'reset';
@@ -109,11 +109,7 @@ export function LoginScreen({ then, mode: initialMode, notice: initialNotice }: 
   const wait = step ? Math.max(0, Math.ceil((step.resendAt - now) / 1000)) : 0;
   return (
     <Screen>
-      {nav.canGoBack && (
-        <Row>
-          <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
-        </Row>
-      )}
+      {nav.canGoBack && <AppBar onBack={nav.back} />}
       <LangSwitch />
       <H1>{mode === 'reset' ? t('login.reset.title') : t('login.title')}</H1>
       <P muted>{t(mode === 'password' ? 'login.pw.lead' : mode === 'reset' ? 'login.reset.lead' : 'login.pw.codeLead')}</P>

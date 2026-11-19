@@ -1,3 +1,4 @@
+import { AppBar } from '../ui/AppBar';
 import { Link } from 'react-router-dom';
 import { api, type Schemas } from '../api/client';
 import { hasKey, t } from '../i18n';
@@ -29,10 +30,11 @@ export function Notifications() {
   };
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
-      <div className="spread">
-        <h1 style={{ margin: 0 }}>{t('nav.notifications')}</h1>
-        {unread > 0 && <button className="btn ghost sm" onClick={() => void readAll()}>{t('notif.readAll')}</button>}
-      </div>
+      <AppBar
+        back="/account"
+        title={t('nav.notifications')}
+        actions={unread > 0 && <button className="btn ghost sm" onClick={() => void readAll()}>{t('notif.readAll')}</button>}
+      />
       {res.loading && !res.data ? (
         <Loading />
       ) : res.error ? (

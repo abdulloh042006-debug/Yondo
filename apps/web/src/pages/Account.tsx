@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth, type User } from '../auth/AuthContext';
 import { t } from '../i18n';
+import { AppBar, GEAR } from '../ui/AppBar';
 import { prettyPhone } from '../lib/format';
 import { roleLabel } from '../lib/labels';
 import { useToast } from '../ui/feedback';
@@ -73,7 +74,16 @@ function AccountView({ user }: { user: User }) {
      everything about the app and the account lives in Sozlamalar, which opens from here. */
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
-      <h1>{t('account.title')}</h1>
+      <AppBar
+        title={t('account.title')}
+        actions={
+          <Link to="/settings" className="icon-btn" aria-label={t('settings.title')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d={GEAR} />
+            </svg>
+          </Link>
+        }
+      />
       <Reveal>
         <div className="glass pad stack">
           <div className="profile-head">

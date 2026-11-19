@@ -1629,6 +1629,127 @@ input.switch:focus-visible {
   }
 }
 
+/* ---------- Quantum Shockwave dock (redesign §4.1): pill = --c-primary (ink by day, paper at night),
+   orb / ripple / particles = carrot (graphic only). Only transform and opacity animate. ---------- */
+.dock.shockwave {
+  overflow: visible;
+}
+.dock.shockwave a {
+  z-index: 2;
+  transition: color 0.18s 0.3s;
+}
+.dock.shockwave a[aria-current='page'] {
+  color: var(--c-on-primary);
+}
+.dock-icon {
+  display: grid;
+  will-change: transform;
+}
+.dock-pill {
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  border-radius: 999px;
+  background: var(--c-primary);
+  opacity: 0;
+  will-change: transform;
+}
+.dock-orb,
+.dock-particle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  border-radius: 50%;
+  background: #e8501a;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.dock-orb {
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  box-shadow: 0 0 14px 4px rgba(232, 80, 26, 0.55);
+}
+.dock-particle {
+  z-index: 3;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  box-shadow: 0 0 6px rgba(232, 80, 26, 0.8);
+}
+.dock-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dock-ripple {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  border: 2px solid #e8501a;
+  background: radial-gradient(closest-side, rgba(232, 80, 26, 0.18), transparent);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock.shockwave a {
+    transition: none;
+  }
+}
+
+/* ---------- compact App Bar (redesign §3.2) ---------- */
+.appbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin: -4px 0 4px -8px;
+}
+.appbar-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 0 4px;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.appbar-actions {
+  display: flex;
+  gap: 2px;
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-fg);
+  cursor: pointer;
+  text-decoration: none;
+}
+.icon-btn:hover {
+  background: color-mix(in oklab, var(--c-fg) 7%, transparent);
+}
+.icon-btn:focus-visible {
+  outline: 2px solid var(--c-fg);
+  outline-offset: 2px;
+}
+
 /* Social sign-in (Telegram Login, Google): ink/paper buttons; provider marks keep their own colours. */
 .social-or {
   display: flex;

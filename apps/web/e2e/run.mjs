@@ -320,7 +320,7 @@ try {
   await step('customer OTP login → redirected back, session persists across reload', async () => {
     await otpLogin(cp, '+998901110003');
     await cp.goto(`${WEB}/account`);
-    await cp.getByText('Hisobim').first().waitFor();
+    await cp.getByRole('heading', { name: 'Profil', level: 1 }).waitFor();
     await cp.reload();
     await cp.getByText('+998 90 111 00 03').waitFor();
   });

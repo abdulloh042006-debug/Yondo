@@ -5,7 +5,7 @@ import { ApiError, api, errorText, idempotencyKey, type Schemas } from '../api';
 import { useAuth } from '../auth';
 import { useNav } from '../nav';
 import { BOOKING_STATUS, REPORT_CATEGORY, formatInstant, formatMoney, roleLabel, serviceLabel, t, type Key } from '../shared';
-import { Banner, Button, Card, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen, Sheet, Tag, useConfirm } from '../ui';
+import { Banner, Button, Card, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen, Sheet, Tag, useConfirm, AppBar } from '../ui';
 import { useResource } from '../useResource';
 import { ATTENTION, type Booking } from './Bookings';
 import { SosButton } from './Sos';
@@ -62,10 +62,7 @@ export function BookingDetailScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <Row>
-        <Button kind="ghost" small label={t('bd.back')} onPress={nav.back} />
-      </Row>
-      <H1>{t('bd.title')}</H1>
+      <AppBar title={t('bd.title')} onBack={nav.back} />
       <Row>
         <Tag text={BOOKING_STATUS[b.status]?.label ?? b.status} attention={ATTENTION.has(b.status)} />
         {isBlocked && <Tag text={t('block.blockedTag')} attention />}

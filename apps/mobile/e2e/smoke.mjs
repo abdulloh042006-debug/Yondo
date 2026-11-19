@@ -119,7 +119,7 @@ await step('signed out: the dock is Discover · Sign in (as on the web); Setting
   assert((await page.getByLabel('Username or phone number').getAttribute('autocomplete')) === 'username', 'username autocomplete');
   await page.getByRole('button', { name: /^Settings/ }).click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
-  await button('← Back').click();
+  await button('Back').click();
   await page.getByLabel('Username or phone number').waitFor();
   await axe('sign in');
   await tab('Discover');
@@ -336,7 +336,7 @@ await step('Cards: Save adds to favourites, Next skips; no dislike or match', as
 
 await step('profile = only the person (data + Edit); Settings holds app and account; every row works', async () => {
   await tab('Profile');
-  await page.getByRole('heading', { name: 'My account' }).waitFor();
+  await page.getByRole('heading', { name: 'Profile', level: 1 }).waitFor();
   assert(!(await page.getByText(/Member since/).count()), 'the registration date is no longer shown');
   assert(!(await page.getByRole('button', { name: /^Bookings\./ }).count()), 'Bookings is a tab, not repeated in Profile');
   await axe('profile');
@@ -350,12 +350,12 @@ await step('profile = only the person (data + Edit); Settings holds app and acco
   await page.getByRole('button', { name: /^Notifications\./ }).click();
   await page.getByRole('heading', { name: 'Notifications' }).waitFor();
   await axe('notifications');
-  await button('← Back').click();
+  await button('Back').click();
   // Help & safety: native screen (112, SOS, reports via booking, trusted contacts, FAQ, support)
   await page.getByRole('button', { name: /^Help and safety\./ }).click();
   await page.getByRole('heading', { name: 'Help and safety' }).waitFor();
   await axe('help');
-  await button('← Back').click();
+  await button('Back').click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
   // Owner, 2026-11-18: deletion is a 1.5 s hold-to-confirm button (no dialog); an early release does nothing and a
   // non-hold activation (screen reader) opens an explicit two-step confirmation.
@@ -405,7 +405,7 @@ await step('help: trusted contact add/remove and a support request go to the API
   await button('Send request').click();
   await page.getByText('DEMO smoke-test support request').waitFor();
   assert(posts.length === 2, `POSTs: ${posts.join(', ')}`);
-  await button('← Back').click();
+  await button('Back').click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
 });
 

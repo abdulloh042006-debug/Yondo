@@ -332,7 +332,43 @@ export function LangSwitch() {
   );
 }
 
+const BACK = 'M15 5l-7 7 7 7';
+export const GEAR =
+  'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z';
+
+/** A 44 px icon button for the App Bar; the label is its accessible name. */
+export function IconAction({ label, icon, onPress }: { label: string; icon: string; onPress: () => void }) {
+  const { palette } = useTheme();
+  return (
+    <Pressable role="button" aria-label={label} onPress={onPress} hitSlop={4} style={({ pressed }) => [styles.iconBtn, pressed && { backgroundColor: palette.chip }]}>
+      <Icon d={icon} color={palette.fg} />
+    </Pressable>
+  );
+}
+
+/**
+ * Compact App Bar (docs/design/redesign-2026-11.md §3.2): back button, the screen title as its heading, up to two
+ * icon actions. Replaces the "← Orqaga" / "← Bronlar" buttons. The mobile twin of apps/web/src/ui/AppBar.tsx.
+ */
+export function AppBar({ title, onBack, actions }: { title?: string; onBack?: () => void; actions?: ReactNode }) {
+  const { palette } = useTheme();
+  return (
+    <View style={styles.appbar}>
+      {onBack && <IconAction label={t('nav.back')} icon={BACK} onPress={onBack} />}
+      {title ? (
+        <Text role="heading" aria-level={1} numberOfLines={1} style={[styles.appbarTitle, { color: palette.fg }]}>{title}</Text>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
+      {actions && <View style={{ flexDirection: 'row' }}>{actions}</View>}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  appbar: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, marginLeft: -8, marginTop: -6 },
+  appbarTitle: { flex: 1, fontFamily: FONT.display, fontSize: 22, marginLeft: 4 },
+  iconBtn: { width: TOUCH, height: TOUCH, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   screen: { padding: 16, paddingBottom: 32 },
   screenInner: { gap: 14 },
   h1: { fontSize: 30, lineHeight: 34, fontFamily: FONT.display, letterSpacing: -0.3 },

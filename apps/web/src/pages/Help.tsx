@@ -1,3 +1,4 @@
+import { AppBar } from '../ui/AppBar';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
@@ -27,7 +28,7 @@ export function Help() {
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 760, margin: '0 auto', width: '100%' }}>
       <div className="stack" style={{ gap: 6 }}>
-        <h1>{t('help.title')}</h1>
+        <AppBar back="/" title={t('help.title')} />
         <p className="muted">{t('help.lead')}</p>
       </div>
 

@@ -8,7 +8,7 @@ import { formatMoney, serviceLabel, t } from '../shared';
 import { HeartButton } from '../favorites';
 import { CardStats, LikeButton } from '../likes';
 import { FONT, useTheme } from '../theme';
-import { Banner, Button, Card as Box, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen } from '../ui';
+import { Banner, Button, Card as Box, Chip, ChipGroup, ErrorText, Field, H1, H2, Loading, P, Row, Screen, AppBar } from '../ui';
 import { useResource } from '../useResource';
 import { CompanionImage, VerifiedTag, type Card } from './companion';
 
@@ -52,9 +52,7 @@ export function ProfileScreen({ id }: { id: string }) {
 
   return (
     <Screen>
-      <Row>
-        <Button kind="ghost" small label={t('profile.back')} onPress={nav.back} />
-      </Row>
+      <AppBar onBack={nav.back} />
       <View>
         <CompanionImage card={c} />
         <View style={{ position: 'absolute', top: 12, right: 12 }}>
