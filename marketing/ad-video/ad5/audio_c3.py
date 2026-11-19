@@ -13,7 +13,7 @@ import numpy as np
 LANG = os.environ.get('REEL_LANG', 'uz')
 # scene boundaries, same as ad5/c3.tpl.html: cues are authored on the UZ clock and mapped onto the RU one
 B_UZ = [0, 1.4, 4.2, 8.0, 10.3, 11.2, 13.3]
-B = {'uz': B_UZ, 'ru': [0, 1.4, 5.0, 8.2, 11.05, 11.95, 14.3]}[LANG]
+B = {'uz': B_UZ, 'ru': [0, 1.4, 5.0, 8.5, 11.35, 12.25, 14.6]}[LANG]
 
 
 def at(t_uz):
@@ -93,7 +93,7 @@ chime(at(12.1), .22)
 voice = np.zeros(N)
 if len(sys.argv) > 2:
     pre, tempo = ('ru-', ['-af', 'atempo=1.1']) if LANG == 'ru' else ('', [])
-    cues = {'uz': (1.45, 4.25, 8.05, 10.4), 'ru': (1.45, 5.05, 8.25, 12.0)}[LANG]
+    cues = {'uz': (1.45, 4.25, 8.05, 10.4), 'ru': (1.45, 5.05, 8.55, 12.3)}[LANG]
     for name, t_v in zip(('c3-02', 'c3-03', 'c3-04', 'v07'), cues):
         raw = subprocess.run(['ffmpeg', '-loglevel', 'error', '-i', f'{sys.argv[2]}/{pre}{name}.mp3', *tempo, '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
                              capture_output=True, check=True).stdout

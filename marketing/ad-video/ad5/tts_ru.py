@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, VitsModel
 
-LINES = [('ru-c3-02', 'Занятие: кофе, прогулка, кино, мероприятие.'), ('ru-c3-03', 'Компаньон: в профиле видно, что он предлагает.'),
+LINES = [('ru-c3-02', 'Занятие: кофе, прогулка, кино, мероприятие.'), ('ru-c3-03', 'Компаньон: в профиле видно, чем заняться вместе.'),
          ('ru-c3-04', 'Встреча: открыто, в общественном месте.'), ('ru-v07', 'Йондо. Всегда рядом.')]
 model, tok = VitsModel.from_pretrained('facebook/mms-tts-rus'), AutoTokenizer.from_pretrained('facebook/mms-tts-rus')
 for name, text in LINES:

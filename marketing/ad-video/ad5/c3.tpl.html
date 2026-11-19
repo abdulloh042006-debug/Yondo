@@ -22,16 +22,16 @@ const TX = {
     cards: ['Faoliyat', 'Hamroh', 'Uchrashuv'], cats: ['Kofe', 'Sayr', 'Kino', 'Tadbir'],
     line: ['Tanishuv ilovasi emas —', 'faoliyat uchun hamroh.'], tagline: 'Yondo — doim yoningda.' },
   // RU category names = apps/web/src/i18n/ru.ts service.*; tagline = the brand's RU slogan
-  ru: { caps: ['Что такое Yondo?', 'Занятие: кофе, прогулка,\nкино, мероприятие.', 'Компаньон: в профиле\nвидно, что он предлагает.', 'Встреча: открыто,\nв общественном месте.'],
+  ru: { caps: ['Что такое Yondo?', 'Занятие: кофе, прогулка,\nкино, мероприятие.', 'Компаньон: в профиле\nвидно, чем заняться вместе.', 'Встреча: открыто,\nв общественном месте.'],
     cards: ['Занятие', 'Компаньон', 'Встреча'], cats: ['Кофе', 'Прогулка', 'Кино', 'Мероприятие'],
     line: ['Не приложение для знакомств —', 'компаньон для занятий.'], tagline: 'Yondo. Всегда рядом.' },
 }[LANG];
 const CAPS = [[0.15, 1.40, TX.caps[0]], [1.45, 4.15, TX.caps[1]], [4.25, 7.95, TX.caps[2]], [8.05, 10.30, TX.caps[3]]];
 // Scene clock: the page is authored on the UZ timeline; the RU voice is longer, so RU time is mapped piecewise-linearly onto it.
 const B_UZ = [0, 1.4, 4.2, 8.0, 10.3, 11.2, 13.3];
-const B = { uz: B_UZ, ru: [0, 1.4, 5.0, 8.2, 11.05, 11.95, 14.3] }[LANG];
+const B = { uz: B_UZ, ru: [0, 1.4, 5.0, 8.5, 11.35, 12.25, 14.6] }[LANG];
 const toUz = (t) => { for (let i = 1; i < B.length; i++) if (t <= B[i] || i === B.length - 1) return B_UZ[i - 1] + (t - B[i - 1]) * (B_UZ[i] - B_UZ[i - 1]) / (B[i] - B[i - 1]); };
-window.TOTAL = B[B.length - 1];  // UZ 13.3 s, RU 14.3 s
+window.TOTAL = B[B.length - 1];  // UZ 13.3 s, RU 14.6 s
 
 // line-art icons (ink, 64-unit box)
 const ICON = {
