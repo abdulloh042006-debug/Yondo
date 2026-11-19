@@ -38,7 +38,7 @@ Sources: `kit/` (shared pieces) + `ad5/` (this ad, Stage 2b). AI shots: the owne
 | 11 | 27.50–29.50 | `m03_list_ticks` (motion) | Paper ground, the same list; stamps fall away (rotate + drop), carrot ticks draw on each line (0.25 s apart). | 27.60 «Rejangiz bor. Hamroh — Yondoda.» | V6 at 27.60 | 4 rising chimes |
 | 12 | 29.50–32.00 | `m04_end_card` (motion, kit) | Animated logo (kit, from the app's opening animation), «Yondo — doim yoningda.», small «18+», and the **CTA placeholder** (owner decides: «Tez kunda» or a link). | (end card text) | V7 at 29.70 | bass hit 29.50, sustain to the end |
 
-VO timing above is for the **DRAFT** voice (see below); the owner's voicelab.uz take becomes the clock and scenes stretch ±0.3 s to fit it.
+VO timing above is the synthesized voice's. **Owner, 2026-11-19: this voice is accepted; no voicelab.uz recordings will come** (CLAUDE.md §7).
 
 ## VO script (narrator A: woman, 30–40, calm, warm)
 | # | UZ (1995 Latin) | RU | DRAFT length |

@@ -20,6 +20,8 @@ says what Yondo is not; everything else shows what it is.
 With the DRAFT voice the speech ends at ~13.1 s, so the DRAFT cut is **13.0 s**; a voicelab.uz narrator reading at a normal pace fits
 12.0 s. "Tanishuv ilovasi emas" is on screen only (not spoken): saying denials out loud makes them stick (research §2, RentAFriend).
 
+**Voice:** the owner accepted the synthesized voice on 2026-11-19 (no voicelab.uz take); `c3_preview_draft_voice.mp4` is the voiced cut.
+
 ## VO script (narrator A)
 | # | UZ | RU |
 | --- | --- | --- |
