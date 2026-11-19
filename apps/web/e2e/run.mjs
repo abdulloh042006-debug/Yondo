@@ -451,6 +451,9 @@ try {
     }, [path, init]);
   const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
   await step('Profil photos (owner, 2026-11-14): upload PNG, privacy note, main photo, delete — on the real API', async () => {
+    // The harness's in-memory storage hands out URLs it does not serve; the browser gets the real PNG here, so the
+    // photos actually load (SafeImage replaces a photo that fails with the logo, see the next step).
+    await cp.route('**/__test_storage/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG }));
     await cp.goto(`${WEB}/account`);
     await cp.getByRole('heading', { name: /Rasmlarim/ }).waitFor();
     assert(/bron sörovi yuborgan hamrohlar/.test(await cp.locator('main').innerText()), 'customer privacy note expected');
@@ -476,6 +479,27 @@ try {
       return cp.getByRole('alert').filter({ hasText: 'Faqat JPEG, PNG yoki WebP' }).count();
     })();
     assert(gif === 1, 'a GIF is refused before it is sent');
+  });
+  await step('a photo that does not load shows the Yondo logo, never a broken image (owner, 2026-11-19)', async () => {
+    await cp.unroute('**/__test_storage/**');
+    const blockImages = (r) => (r.request().resourceType() === 'image' ? r.abort() : r.continue());
+    await cp.route('**/*', blockImages);
+    try {
+      await cp.goto(`${WEB}/account`);
+      await cp.getByRole('heading', { name: /Rasmlarim/ }).waitFor();
+      await cp.locator('[data-testid=image-fallback]').first().waitFor();
+      await cp.waitForTimeout(500);
+      assert((await cp.getByAltText('Mening rasmim, 1').count()) === 0, 'the failed <img> (and its alt text) must be gone');
+      assert((await cp.locator('.safe-img[data-status=error]').count()) >= 1, 'the tile is marked as failed');
+    } finally {
+      await cp.unroute('**/*', blockImages);
+    }
+    // and with the picture reachable again, the photo itself shows (status "loaded")
+    await cp.route('**/__test_storage/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG }));
+    await cp.reload();
+    await cp.getByAltText('Mening rasmim, 1').waitFor();
+    await cp.locator('.safe-img[data-status=loaded]').first().waitFor();
+    await cp.unroute('**/__test_storage/**');
   });
   let madinaId = '';
   await step('Yoqdi: like/unlike with an optimistic count, separate from favourites (real API)', async () => {

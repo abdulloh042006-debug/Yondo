@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { moveId, photoProblem, PHOTO_LIMIT, PHOTO_TYPES } from '../lib/photos';
 import { useResource } from '../lib/useResource';
 import { ConfirmDialog, useToast } from './feedback';
+import { SafeImage } from './SafeImage';
 
 type Photo = Schemas['UserPhotoResponse'];
 
@@ -176,7 +177,7 @@ function OwnUserPhoto({ id, alt }: { id: string; alt: string }) {
   const res = useResource((signal) => api.get<Schemas['PhotoDownload']>(`/user-photos/me/${id}/download`, { signal }), [id]);
   return (
     <div className="media">
-      {res.data ? <img src={res.data.url} alt={alt} loading="lazy" /> : <span className="hint">{res.error ? res.error.message : '…'}</span>}
+      <SafeImage src={res.data?.url ?? (res.error ? null : undefined)} alt={alt} loading="lazy" />
     </div>
   );
 }

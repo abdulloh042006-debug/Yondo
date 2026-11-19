@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useRef, useState, type FormEvent } from 'react';
 import { api, ApiError, type Schemas } from '../api/client';
+import { SafeImage } from '../ui/SafeImage';
 import { t, type Key } from '../i18n';
 import { formatInstant, formatMoney, toMinor } from '../lib/format';
 import { APPLICATION_STATUS, BLOCKERS, CONTENT_STATUS, IDENTITY_STATUS, ACCOUNT_STATUS, SERVICE_LABELS, serviceLabel } from '../lib/labels';
@@ -444,7 +445,7 @@ function OwnPhoto({ id }: { id: string }) {
   const res = useResource((signal) => api.get<Schemas['PhotoDownload']>(`/companions/me/photos/${id}/download`, { signal }), [id]);
   return (
     <div className="media" style={{ borderRadius: 'var(--r-sm)', aspectRatio: '3 / 4' }}>
-      {res.data ? <img src={res.data.url} alt={t('studio.photo.uploadedAlt')} loading="lazy" /> : <span className="hint">{res.error ? t('studio.photo.missing') : '…'}</span>}
+      <SafeImage src={res.data?.url ?? (res.error ? null : undefined)} alt={t('studio.photo.uploadedAlt')} loading="lazy" />
     </div>
   );
 }
