@@ -1,0 +1,93 @@
+<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="claude:viewport-fit-sides" content="cover"><title>Yondo Flow namuna</title><style>
+:root{--ink:#111111;--paper:#F5F2EC;--carrot:#E8501A;--line:color-mix(in srgb,var(--ink) 16%,var(--paper));--bg:var(--paper);--fg:var(--ink);--card:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:var(--ink);--fg:var(--paper);--card:#1c1c1c;--line:color-mix(in srgb,var(--paper) 18%,var(--ink));color-scheme:dark}}
+:root[data-theme="dark"]{--bg:var(--ink);--fg:var(--paper);--card:#1c1c1c;--line:color-mix(in srgb,var(--paper) 18%,var(--ink));color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding-block:20px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}h1{font-size:1.5rem;line-height:1.25;border-bottom:4px solid var(--carrot);padding-bottom:10px}
+h2{font-size:1.2rem;margin-top:2.2em}h3{font-size:1.05rem;margin-top:1.8em;padding:8px 12px;background:var(--card);border-left:4px solid var(--carrot);border-radius:6px}
+.tw{overflow-x:auto;margin:12px 0}table{border-collapse:collapse;font-size:.88rem;min-width:100%}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--card)}pre{position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:44px 12px 12px;white-space:pre-wrap;word-break:break-word;font-size:.85rem}
+button.cp{position:absolute;top:8px;right:8px;font:600 .85rem system-ui;padding:6px 12px;border-radius:999px;border:0;background:var(--fg);color:var(--bg);cursor:pointer}
+code{font-size:.9em}li{margin:4px 0}.chk{list-style:none;padding-left:4px}
+</style></head><body><main><h1>Google Flow prompt pack — NAMUNA (C1 «Keyinroq» ro‘yxati)</h1>
+<p><strong>Bu Stage 1 namunasi.</strong> CEO konseptni tasdiqlamaguncha hech narsa generatsiya qilmang. To‘liq paket Stage 2 da beriladi. Format: 9:16, 1080×1920, 30 fps, ≈ 32 s. Til: o‘zbekcha (1995 lotin), keyin RU.</p>
+<h2>0. Qanday ishlatiladi (qadam-baqadam)</h2>
+<ol><li><strong>Avval rasmlar (R01–R07), keyin videolar (s02–s05).</strong> Har bir video o‘z referens rasmlaridan foydalanadi: shu tufayli qahramonlar va joylar har kadrda bir xil chiqadi.</li><li>Flow'da yangi loyiha oching: nomi <code>yondo-ad5-reja</code>. Sozlamalarda <strong>Aspect ratio = 9:16</strong> (portret). Agar sizning tarifingizda 9:16 bo‘lmasa, 16:9 da qiling va menga ayting: markazdan kesamiz (sifat biroz tushadi).</li><li>Promptni <strong>so‘zma-so‘z</strong> nusxalang (inglizcha qismi). Qavs ichidagi o‘zbekcha izohlar promptga kirmaydi.</li><li>Har bir natijani shu nom bilan saqlang va <strong>shu chatga</strong> yuklang: masalan <code>R01_dilnoza.png</code>, <code>s04_museum_hall.mp4</code>.</li><li>Videolarda Flow ovoz ham yaratishi mumkin: uni o‘chiring yoki e'tibor bermang, ovozni o‘zimiz qo‘yamiz.</li><li>Kredit: har generatsiyadan oldin Flow ko‘rsatgan narxni ko‘ring. Qoralama uchun tezroq/arzonroq modelni (Fast) tanlang, yaxshi chiqqan kadrni keyin sifatli rejimda qaytaring. Men hech narsa sotib olmayman va generatsiya qilmayman.</li><li>Ilova ekranlari (a01–a04) <strong>Flow'da qilinmaydi</strong>: ular haqiqiy <code>apps/web</code> dan yozib olinadi. Motion qismlari (m01–m03) ham men tomonda.</li></ol>
+<h2>1. Kadrlar ro‘yxati (kadrlar)</h2>
+<div class="tw"><table><thead><tr><th>#</th><th>Vaqt</th><th>Davomiylik</th><th>Fayl</th><th>Kim qiladi</th><th>Nima</th></tr></thead><tbody><tr><td>1</td><td>0.0–3.0</td><td>3.0 s</td><td><code>m01_list_hook</code></td><td>motion (men)</td><td>Ro‘yxat, 4 ta «KEYINROQ» muhri, oylar aylanadi</td></tr><tr><td>2</td><td>3.0–7.0</td><td>4.0 s (5–6 s yarating)</td><td><code>s02_poster_pass.mp4</code></td><td><strong>Flow (siz)</strong></td><td>Dilnoza ko‘rgazma afishasi yonida sekinlaydi, o‘tib ketadi</td></tr><tr><td>3</td><td>7.0–10.0</td><td>3.0 s (4–5 s yarating)</td><td><code>s03_chess_shelf.mp4</code></td><td><strong>Flow (siz)</strong></td><td>Javdondagi shaxmat, qo‘l otni olib, qaytarib qo‘yadi</td></tr><tr><td>4</td><td>10.0–11.5</td><td>1.5 s</td><td><code>m02_kim_bilan</code></td><td>motion</td><td>Katta so‘z «Kim bilan?»</td></tr><tr><td>5</td><td>11.5–13.3</td><td>1.8 s</td><td><code>a01_list_interest</code></td><td>ilova yozuvi</td><td>Hamrohlar ro‘yxati</td></tr><tr><td>6</td><td>13.3–15.1</td><td>1.8 s</td><td><code>a02_profile_interests</code></td><td>ilova yozuvi</td><td>Profil: Qiziqishlar</td></tr><tr><td>7</td><td>15.1–16.9</td><td>1.8 s</td><td><code>a03_booking_form</code></td><td>ilova yozuvi</td><td>Bron so‘rovi formasi (narx kadrga kirmaydi)</td></tr><tr><td>8</td><td>16.9–18.5</td><td>1.6 s</td><td><code>a04_request_sent</code></td><td>ilova yozuvi</td><td>«Bron so‘rovi yuborildi»</td></tr><tr><td>9</td><td>18.5–23.5</td><td>5.0 s (6 s yarating)</td><td><code>s04_museum_hall.mp4</code></td><td><strong>Flow (siz)</strong></td><td>Dilnoza va hamroh Kamola ko‘rgazmada</td></tr><tr><td>10</td><td>23.5–27.5</td><td>4.0 s (6 s yarating)</td><td><code>s05_park_chess.mp4</code></td><td><strong>Flow (siz)</strong></td><td>Javlon va Rustam aka bog‘da shaxmat, qo‘l berib ko‘rishadi</td></tr><tr><td>11</td><td>27.5–29.5</td><td>2.0 s</td><td><code>m03_list_ticks</code></td><td>motion</td><td>Ro‘yxatdagi bandlarga belgi (✓) qo‘yiladi</td></tr><tr><td>12</td><td>29.5–32.0</td><td>2.5 s</td><td><code>m04_end_card</code></td><td>motion</td><td>Logo, «Yondo — doim yoningda.», «18+ · Tez kunda»</td></tr></tbody></table></div>
+<p>Subtitrlar (yoqilgan): 0.3 «Bu ro‘yxat hammada bor.» · 3.2 «Yangi ko‘rgazma — keyinroq.» · 7.2 «Shaxmat — keyinroq.» · 11.5 «Yondoda qiziqishingiz bo‘yicha hamroh toping.» · 13.3 «Profilda — qiziqishlari va xizmatlari.» · 15.1 «Vaqt va joyni tanlab, so‘rov yuboring.» · 16.9 «Hamroh so‘rovni tasdiqlaydi.» · 18.5 «Ko‘rgazma — bugun.» · 23.5 «Shaxmat — shanba kuni.» · 27.5 «Rejangiz bor. Hamroh — Yondoda.»</p>
+<h2>2. Qahramonlar va joylar (hammasi to‘qima, hammasi kattalar)</h2>
+<div class="tw"><table><thead><tr><th>Ref</th><th>Kim / nima</th><th>Qaysi kadrlarda</th></tr></thead><tbody><tr><td>R01</td><td>Dilnoza — mijoz, ayol, ~28 yosh</td><td>s02, s04</td></tr><tr><td>R02</td><td>Kamola — hamroh, ayol, ~35 yosh</td><td>s04</td></tr><tr><td>R03</td><td>Javlon — mijoz, erkak, ~27 yosh</td><td>s03 (faqat qo‘l va yeng), s05</td></tr><tr><td>R04</td><td>Rustam aka — hamroh, erkak, ~58 yosh</td><td>s05</td></tr><tr><td>R05</td><td>Ko‘rgazma zali (haqiqiy muzey emas)</td><td>s04</td></tr><tr><td>R06</td><td>Bog‘dagi tosh shaxmat stoli</td><td>s05</td></tr><tr><td>R07</td><td>Ko‘cha, bekat yonidagi bo‘sh afisha ramkasi</td><td>s02</td></tr></tbody></table></div>
+<p><strong>Nega juftliklar shunday:</strong> ayol + ayol, erkak + katta yoshli erkak. Bu «uchrashuv/sevgi» deb o‘qilishini oldini oladi, «tanishuv emas» deb aytishga hojat qolmaydi.</p>
+<h2>3. Referens rasm promptlari (avval shular)</h2>
+<p>Har bir rasm uchun: <strong>Image</strong> rejimi, 9:16, 2–4 variant yarating, eng yaxshisini saqlang.</p>
+<h3>R01_dilnoza.png</h3>
+<pre><code>Photorealistic portrait, 9:16, waist-up. A fictional Central Asian woman, about 28 years old, clearly adult, friendly calm face,
+dark hair tied in a low ponytail, no makeup look. Wearing a cream knit sweater, dark straight trousers, a rust-orange scarf,
+a plain canvas tote bag with no print. Standing on a city sidewalk, soft overcast daylight, neutral natural colour grade,
+35mm lens look, shallow depth of field. Plain background, no text, no logos, no brand names, no jewellery that looks expensive.</code></pre>
+<p>(Tekshiring: yuz aniq, kattalar yoshida, sharf to‘q sabzi (rust-orange) rangda.)</p>
+<h3>R02_kamola.png</h3>
+<pre><code>Photorealistic portrait, 9:16, waist-up. A fictional Central Asian woman, about 35 years old, clearly adult, warm confident
+expression, short dark bob haircut, thin black-framed glasses. Wearing a charcoal blazer over a plain white t-shirt, black
+trousers. Bright indoor gallery light, neutral natural colour grade, 50mm lens look. Plain light wall behind her.
+No text, no logos, no badges, no name tags.</code></pre>
+<h3>R03_javlon.png</h3>
+<pre><code>Photorealistic portrait, 9:16, waist-up. A fictional Central Asian man, about 27 years old, clearly adult, short dark hair,
+short neat beard, relaxed friendly face. Wearing a navy overshirt over a plain white t-shirt, dark jeans. Soft afternoon
+window light, neutral natural colour grade, 50mm lens look. Plain background. No text, no logos.</code></pre>
+<h3>R04_rustam_aka.png</h3>
+<pre><code>Photorealistic portrait, 9:16, waist-up. A fictional Central Asian man, about 58 years old, short grey beard, kind smiling eyes,
+grey flat cap, beige shirt with a brown knit vest. Dappled daylight under trees, neutral natural colour grade, 50mm lens look.
+No text, no logos.</code></pre>
+<h3>R05_gallery.png</h3>
+<pre><code>Photorealistic interior, 9:16. A bright modern art gallery hall with white walls and a light stone floor. One very large abstract
+painting in deep blue and white geometric patterns inspired by Central Asian ceramics hangs on the main wall. Even soft
+museum lighting, no people, neutral natural colour grade, 24mm lens look. No text, no signs, no labels, no logos.</code></pre>
+<h3>R06_park_chess.png</h3>
+<pre><code>Photorealistic exterior, 9:16. A grey stone table with an inlaid chessboard and two stone stools in a public city park under
+large plane trees, wooden chess pieces set up on the board. Dappled midday sunlight, a paved path behind, a few distant blurred
+passers-by. Neutral natural colour grade, 35mm lens look. No text, no signs, no logos.</code></pre>
+<h3>R07_street_poster.png</h3>
+<pre><code>Photorealistic street scene, 9:16. A quiet city sidewalk with low trees and a bus stop. Next to the bus stop, a tall poster frame
+showing an abstract artwork in deep blue and white geometric patterns, with no text on it. Overcast soft morning light,
+neutral natural colour grade, 35mm lens look. No people. No readable text anywhere, no logos, no shop names.</code></pre>
+<h2>4. Video promptlari</h2>
+<p>Rejim: <strong>Ingredients to Video</strong> (yoki sizning Flow'dagi shu turdagi rejim): ko‘rsatilgan referens rasmlarni qo‘shing, keyin prompt. Davomiyligi: Flow beradigan uzunlik (odatda 8 s gacha); jadvaldagi kerakli qismni o‘zim kesaman. Barcha videolar uchun umumiy salbiy qism (prompt oxiriga qo‘shing):</p>
+<pre><code>Negative: no text, no subtitles, no logos, no brand names, no readable signs, no romance, no hugging, no kissing, no holding
+hands, no flirting looks, no candles, no sunset couple shots, no alcohol, no minors or children, no real celebrities,
+no distorted hands, no extra fingers, no morphing faces, no fast camera shake. No dialogue, no music.</code></pre>
+<h3>s02_poster_pass.mp4 — referenslar: R01 + R07</h3>
+<pre><code>9:16 vertical video, 6 seconds. The woman from the reference image walks along the city sidewalk from left to right at a relaxed
+pace. As she passes the poster frame with the blue abstract artwork, she slows down, looks at it for one second with a small
+interested smile, glances at her phone, then keeps walking out of frame. Camera: slow lateral tracking shot at eye level,
+moving with her, 35mm lens, shallow depth of field. Light: soft overcast morning. Mood: ordinary weekday, light and curious,
+not sad. Neutral natural colour grade.</code></pre>
+<p>(Negative qismini qo‘shing.) <strong>Qabul qilishdan oldin tekshiring:</strong> yuzi R01 ga o‘xshaydimi; sharf sabzi rangdami; afishada <strong>hech qanday yozuv yo‘q</strong>; qadam tabiiy (sirpanmaydi); oyoqlar/qo‘llar buzilmagan; kamida 4 s toza bo‘lak bor; kayfiyat g‘amgin emas.</p>
+<h3>s03_chess_shelf.mp4 — referens: R03 (yeng va qo‘l uchun)</h3>
+<pre><code>9:16 vertical video, 5 seconds. Close-up of a wooden chess set resting on a bookshelf, a thin layer of dust on the board.
+A man&#x27;s hand in a navy overshirt sleeve enters the frame, picks up the white knight, holds it for a moment, then puts it back
+in place and the hand leaves. Camera: static, macro-style close-up, 50mm lens, very shallow depth of field. Light: warm
+afternoon side light from a window, dust visible in the light. Mood: quiet, a plan waiting. Neutral natural colour grade.</code></pre>
+<p><strong>Tekshiring:</strong> 5 ta barmoq, qo‘l tabiiy; ot figurasi shaklini o‘zgartirmaydi; yeng to‘q ko‘k; javonda kitob nomlari o‘qilmaydi.</p>
+<h3>s04_museum_hall.mp4 — referenslar: R01 + R02 + R05</h3>
+<pre><code>9:16 vertical video, 6 seconds. In the bright gallery hall from the reference, the woman with the rust-orange scarf (first
+reference) and the woman with glasses and a charcoal blazer (second reference) stand side by side about one metre apart in front
+of the large blue abstract painting. The woman with glasses points to a detail of the painting and explains it with an open hand
+gesture; the woman with the scarf laughs and nods, both looking mostly at the painting. Camera: slow push-in from a medium-wide
+shot to a medium shot, smooth gimbal, 35mm lens. Light: even bright museum light. Mood: curious, friendly, relaxed.
+Neutral natural colour grade.</code></pre>
+<p><strong>Tekshiring:</strong> ikkalasining yuzi o‘z referensiga mos; orada ~1 metr masofa saqlangan, tegish yo‘q; rasm ustida yozuv/imzo yo‘q; ko‘zlar asosan rasmga qaragan (bir-biriga uzoq tikilish yo‘q); qo‘l ishoralari tabiiy.</p>
+<h3>s05_park_chess.mp4 — referenslar: R03 + R04 + R06</h3>
+<pre><code>9:16 vertical video, 6 seconds. At the stone chess table in the park from the reference, the young man in the navy overshirt
+(first reference) and the older man with the grey beard and flat cap (second reference) sit opposite each other. The older man
+makes a move, the young man laughs and shakes his head, then they reach across the board and shake hands warmly. Camera: slow
+30-degree arc around the table at seated eye level, 35mm lens. Light: dappled midday sun under plane trees. Mood: friendly
+competition, respect. Neutral natural colour grade.</code></pre>
+<p><strong>Tekshiring:</strong> qo‘l berib ko‘rishish aniq va tabiiy (barmoqlar qo‘shilib ketmagan); shaxmat figuralari taxtadan «uchib» ketmaydi; ikkala yuz referensga mos; fonda bolalar ko‘rinmaydi.</p>
+<h2>5. Har bir natijani qabul qilish ro‘yxati (umumiy)</h2>
+<ul class=chk><li>☐ 9:16, kamida 1080 px kenglik (yoki 16:9 bo‘lsa, menga aytildi)</li><li>☐ hamma odam aniq katta yoshli; voyaga yetmaganlar yo‘q</li><li>☐ hech qanday yozuv, logo, brend, o‘qiladigan belgi yo‘q</li><li>☐ romantika yo‘q: quchoqlash, qo‘l ushlash, uzoq tikilish, sham, quyosh botishidagi juftlik yo‘q</li><li>☐ qo‘l-oyoqlar, yuzlar buzilmagan; tasvir miltillamaydi</li><li>☐ yuz va kiyim referensga mos (R01–R04)</li><li>☐ kayfiyat do‘stona, g‘amgin emas</li><li>☐ fayl nomi jadvaldagidek; shu chatga yuklandi</li></ul>
+<p>Agar biror band bajarilmasa: o‘sha kadrni qayta yarating (kredit sarfini ko‘rib), keyingi kadrga o‘tmang.</p></main><script>document.querySelectorAll('pre').forEach(p=>{const b=document.createElement('button');b.className='cp';b.textContent='Nusxa olish';
+b.onclick=async()=>{const t=p.querySelector('code').innerText;try{await navigator.clipboard.writeText(t);b.textContent='Nusxalandi ✓'}catch(e){
+const r=document.createRange();r.selectNodeContents(p.querySelector('code'));const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Belgilandi'}
+setTimeout(()=>b.textContent='Nusxa olish',1600)};p.prepend(b)});</script></body></html>

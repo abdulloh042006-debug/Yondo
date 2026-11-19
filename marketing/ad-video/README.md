@@ -100,3 +100,8 @@ Screens from `apps/web` (`capture.mjs`, day `yondo` + night `yondo-tun` for the 
 - Posting text: `marketing/social/caption.md` (one universal caption + hashtags, UZ and RU).
 - Real people's photos are never used as profile pictures in the videos without their written consent (and never minors): the illustrated
   portraits in `photos/` stay.
+
+## Ad video 5 (2026-11-19, Stage 1)
+Research `research-2026-11.md`, concepts `concepts-2026-11.md`, sample Google Flow pack `flow-pack-sample-reja.md`
+(HTML copy for the phone: `python3 flowpack_html.py flow-pack-sample-reja.md flow-pack-sample-reja.html "Yondo Flow namuna"`).
+The owner generates AI shots in Google Flow and uploads them with the pack's file names; agents never generate or pay.
