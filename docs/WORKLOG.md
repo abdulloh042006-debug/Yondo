@@ -19,6 +19,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
+00l. **Gifts (S85, 2026-11-19):** owner decides how a shop contacts the recipient for real deliveries (in-app chat or masked phone) before real gift orders (`docs/gifts.md`).
 00k. **18+ (S83, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
 00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
@@ -32,6 +33,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S85 — Gifts phase A: vendor shops, approval, one test order per vendor (2026-11-19) [cloud worker, backend]
+Done: `vendor_shops` (mandatory profile + optional logo; migration 0028); admin decision/suspend, audited + notified, approval needs a verified ID and grants the Vendor role (no self-assignment: `vendor_requires_approval`); catalogue only from approved shops; admin product reject with a reason; test checkout splits per vendor, vendor order list ("Mijoz", no customer identity) and status moves (cancel with a reason, stock restored), customer cancel before preparing; `/vendor/earnings` stays 503; DEMO vendor + 3 neutral DEMO gifts; push texts. Docs: `docs/gifts.md`.
+Not done: phase B (web), phase C (mobile).
+Next: phase B on `feat/gifts-web`.
+Blockers: OPEN (owner, before real orders): how a shop contacts the recipient (in-app chat or a masked phone); real payments, payouts, delivery fee for gifts.
+Evidence: see the PR.
+Commit: branch `feat/gifts-vendors` (PR to `main`).
 ## S84 — Photos: the Yondo logo while loading and when a photo fails (2026-11-19) [cloud worker, web + mobile]
 Done (owner: "if a picture does not open or does not load fully, show the default Yondo logo"):
 - One component per platform: web `ui/SafeImage.tsx` (+ `LogoMark`), mobile `src/safeImage.tsx` (uses `BrandMark`). The official symbol sits centred on a calm tile (paper by day, ink at night) while the photo loads, and stays for good on error: 404, network, decode, a 15 s timeout, or a signed URL that could not be obtained. No broken-image icon, no alt text spill; alt stays on the photo; the tile keeps the box size (no layout shift); the photo fades in (no fade under reduced motion).
