@@ -1,7 +1,7 @@
 from yondo_api.account import models as account_models
 from yondo_api.admin import models as admin_models
 from yondo_api.assistant import models as assistant_models
-from yondo_api.auth import telegram_models
+from yondo_api.auth import social_models, telegram_models
 from yondo_api.beta import models as beta_models
 from yondo_api.bookings import models as booking_models
 from yondo_api.chat import models as chat_models
@@ -24,6 +24,7 @@ __all__ = [
     'account_models',
     'assistant_models',
     'telegram_models',
+    'social_models',
     'gifts_models',
     'gift_order_models',
     'beta_models',

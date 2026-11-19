@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 
@@ -198,3 +198,32 @@ async def set_account_status(
     await session.commit()
     await session.refresh(user)
     return user
+
+
+_IP_HEADERS = (
+    'x-forwarded-for',
+    'x-real-ip',
+    'true-client-ip',
+    'cf-connecting-ip',
+    'forwarded',
+    'x-envoy-external-address',
+)
+
+
+class ClientIpDiagnostics(BaseModel):
+    peer: str | None
+    resolved: str | None
+    mode: str
+    headers: dict[str, str]
+
+
+@router.get('/diagnostics/client-ip', response_model=ClientIpDiagnostics)
+async def client_ip_diagnostics(request: Request, _admin: Admin) -> ClientIpDiagnostics:
+    """Admin only: what the proxy in front of the API sends, to choose YONDO_CLIENT_IP_MODE
+    (docs/client-ip.md). Shows the caller's own request only."""
+    return ClientIpDiagnostics(
+        peer=getattr(request.state, 'peer_ip', None),
+        resolved=request.client.host if request.client else None,
+        mode=request.app.state.settings.client_ip_mode,
+        headers={k: request.headers[k] for k in _IP_HEADERS if k in request.headers},
+    )

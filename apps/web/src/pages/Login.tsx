@@ -3,6 +3,9 @@ import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, type Schemas } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { clearPendingSignup, completeSignup, pendingSignup } from '../auth/social';
+import { SocialSignIn } from '../auth/SocialSignIn';
+import { acceptLegal } from '../legal/consent';
 import { t } from '../i18n';
 import { LanguageSwitch } from '../i18n/LanguageSwitch';
 import { passwordProblem } from '../lib/credentials';
@@ -65,7 +68,7 @@ function codeStepFor(phone: string, prev: CodeStep | null, bot: boolean): CodeSt
 }
 
 export function Login() {
-  const { requestCode, verify, passwordLogin, resetPassword, state } = useAuth();
+  const { requestCode, verify, passwordLogin, resetPassword, reload, state } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const nav = location.state as LoginState;
@@ -184,6 +187,7 @@ export function Login() {
   };
 
   const switchMode = (next: LoginMode) => {
+    clearPendingSignup(); // leaving the phone step abandons a pending Telegram/Google sign-up
     setMode(next);
     setError(undefined);
     setPwErr(undefined);
@@ -293,7 +297,12 @@ export function Login() {
     setBusy(true);
     try {
       if (mode === 'reset') await resetPassword(step.phone, code, password);
-      else await verify(step.phone, code, { acceptLegal: agree });
+      else if (pendingSignup()) {
+        // Phone proof for a Telegram/Google sign-up: the phone's account gets that identity linked.
+        await completeSignup(step.phone, code);
+        if (agree) await acceptLegal().catch(() => undefined);
+        await reload();
+      } else await verify(step.phone, code, { acceptLegal: agree });
       navigate(from, { replace: true });
     } catch (err) {
       const apiErr = err instanceof ApiError ? err : new ApiError(0, 'network_error');
@@ -302,7 +311,7 @@ export function Login() {
         return;
       }
       setError(apiErr);
-      if (apiErr.code === 'otp_expired') {
+      if (apiErr.code === 'otp_expired' || apiErr.code === 'otp_attempts_exceeded') {
         setCode('');
         setStep((cur) => (cur.kind === 'code' ? { ...cur, resendIn: 0, focusKey: cur.focusKey + 1 } : cur));
       }
@@ -540,6 +549,20 @@ export function Login() {
           </form>
         )}
       </motion.div>
+      {mode !== 'reset' && step.kind === 'phone' && !pendingSignup() && (
+        <SocialSignIn
+          onSignedIn={async () => {
+            await reload();
+            navigate(from, { replace: true });
+          }}
+          onPhoneRequired={() => {
+            setMode('code');
+            setStep({ kind: 'phone' });
+            setError(undefined);
+            setNotice(t('social.phoneRequired'));
+          }}
+        />
+      )}
       {mode !== 'password' && (
         <button type="button" className="btn ghost" onClick={() => switchMode('password')}>
           {t('login.pw.usePassword')}

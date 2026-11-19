@@ -102,7 +102,7 @@ async def env():
             # Explicit opt-in test database only; migrated schema must already exist.
             async with engine.begin() as connection:
                 await connection.execute(text('TRUNCATE users CASCADE'))
-                await connection.execute(text('TRUNCATE otp_challenges'))
+                await connection.execute(text('TRUNCATE otp_challenges, otp_issues'))
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app),
             base_url='http://test',

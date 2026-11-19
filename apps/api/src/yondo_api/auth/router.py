@@ -59,6 +59,9 @@ async def request_otp(
     limiter: OtpRateLimitHook = request.app.state.otp_rate_limit_hook
     provider: OtpDeliveryProvider = request.app.state.otp_provider
     settings: Settings = request.app.state.settings
+    request.app.state.otp_ip_limiter.check(
+        'otp', request.client.host if request.client else None
+    )
     await limiter.check()
     issued = await issue_otp(session, payload.phone_number, settings, provider)
     development_otp = (

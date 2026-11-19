@@ -43,7 +43,9 @@ async def client_for(**extra):
                 await connection.run_sync(User.metadata.create_all)
             else:
                 await connection.execute(
-                    text('TRUNCATE users, otp_challenges, password_login_guards CASCADE')
+                    text(
+                        'TRUNCATE users, otp_challenges, otp_issues, password_login_guards CASCADE'
+                    )
                 )
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url='http://test'

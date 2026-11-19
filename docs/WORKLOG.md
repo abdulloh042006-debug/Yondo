@@ -8,7 +8,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 - The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
-000. **UI redesign (owner, 2026-11-18): phase 1 done** (S74): spec `docs/design/redesign-2026-11.md`, prototype `design-prototype/redesign/index.html`, brief `docs/tasks/2026-11-18-ui-redesign-brief.md` (owner answers override it). **Next: phase 2** = implement §8 of the spec in `apps/web` + `apps/mobile` after merging `origin/main` (with #44); verifier APPROVE, tests, 360 px screenshots, APK link per PR.
+000. **UI redesign (owner, 2026-11-18): phase 1 done** (S80): spec `docs/design/redesign-2026-11.md`, prototype `design-prototype/redesign/index.html`, brief `docs/tasks/2026-11-18-ui-redesign-brief.md` (owner answers override it). **Next: phase 2** = implement §8 of the spec in `apps/web` + `apps/mobile` after merging `origin/main` (with #44); verifier APPROVE, tests, 360 px screenshots, APK link per PR.
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
 00g. **Branches (S55, 2026-11-11):** the owner deletes the merged branches listed in S55 on GitHub (the session cannot). Port `codex/scheduled-meeting-reminders` and `ccr-15294129-n60ucy` in small PRs.
@@ -19,6 +19,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
+00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -30,7 +31,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S74 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
+## S80 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
 Done:
 - Captured the current screens at 360 px from a local build of `main` (b8cccd4, with #45): web (real API + DEMO seed, both themes) and mobile (`expo export --platform web`); listed each screen's problems.
 - `docs/design/redesign-2026-11.md`: screen-by-screen plan, navigation (App Bar, names, gear), the 4 component specs with reduced-motion variants (Shockwave dock, Aura role switcher, magnetic chips, 1.5 s hold-to-confirm with a two-step screen-reader path), design system mapped onto the existing tokens of `yondo`/`yondo-tun` (+ one red `--c-danger` for destructive only), layout rules, phase 2 task list mapped to files.
@@ -38,6 +39,37 @@ Done:
 Not done: phase 2 (app code); device / screen-reader / low-end Android checks.
 Evidence: prototype checks 23/23 PASS (Playwright, 360 px; 0 network requests, 0 page errors).
 Commit: branch `design/ui-redesign-2026-11`, docs + prototype PR to `main`.
+## S79 — Auth hardening: OTP limits and proxy trust (2026-11-19) [cloud worker, auth]
+Done: a code dies after 3 wrong attempts (`otp_attempts_exceeded`, a new code is needed); per phone at most 5 codes per hour and 10 per day (`otp_hourly_limit`, `otp_daily_limit`; new table `otp_issues`, migration 0026); per-IP limit on `/auth/otp/request` and `/auth/telegram/link/start` (10/min, `rate_limited`). Client IP for every per-IP limit comes from `ClientIpMiddleware` (`YONDO_CLIENT_IP_MODE` peer/xff/header, headers only from `YONDO_TRUSTED_PROXY_CIDRS`); uvicorn proxy headers off (Dockerfile no longer trusts `*`); DigitalOcean compose = `xff`; admin `GET /admin/diagnostics/client-ip` to confirm Render live. Docs: `docs/client-ip.md`. Web: uz/ru/en messages; a dead code offers a resend.
+Not done: Render mode (needs the live check, docs/client-ip.md); 18+ age limit = next PR (`feat/age-limit`); mobile social login.
+Notes: a code killed by 3 wrong attempts can be replaced at once (no cooldown), still capped at 5/h and 10/day per phone. The demo harness's own sign-ins (seed, admin, top-up) are outside the per-phone limits (`auth_otp_limits_enabled=False` on its internal app); old `otp_issues` rows are pruned by `python -m yondo_api.jobs`.
+Next: after deploy, an admin opens `/api/v1/admin/diagnostics/client-ip` on the demo (with and without a forged header) and sets `YONDO_CLIENT_IP_MODE` in Render. Until then all demo visitors share one IP bucket; the shared DEMO accounts also share the per-phone code limits (5/h).
+Evidence: see the PR.
+Commit: branch `feat/auth-hardening` (PR #52 to `main`).
+## S78 — Sign in with Telegram (OIDC) and Google: backend + web (2026-11-18) [cloud worker, auth full-stack]
+Done: migration 0025 (`external_identities`, `social_login_challenges`); `auth/oidc.py` (JWKS cache, RS256/ES256, iss/aud/exp); `auth/social.py`: Telegram via the official JS library (server nonce, ID token verified, nonce required + single-use), Telegram code flow + PKCE (kept for mobile), Google GIS ID token, phone-anchored sign-up (`/auth/social/complete` with a phone code), link/unlink in Settings, per-IP rate limit, 503 `provider_not_configured`. Registration step accepts social sessions. Web: round Telegram (`tg-auth-button`, icon) + Google (icon, circle) buttons on Login, Linked accounts in Settings, `/auth/callback/telegram`, uz/ru/en keys. Docs: `docs/login-telegram-google.md` (owner checklist), product-decisions §3, CLAUDE.md §7.
+Not done: phase 2 (mobile, branch `feat/social-login-mobile`); live check with real accounts (keys not set).
+Next: owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID` + `YONDO_GOOGLE_CLIENT_IDS` in Render and BotFather Allowed URLs; the Google consent screen stays in Testing (owner as test user), "Publish app" later.
+Blockers: BLOCKED until keys: live sign-in, whether Telegram echoes `nonce`.
+Evidence: see the PR (pytest PostgreSQL, ruff, export_openapi --check, web typecheck/lint/vitest/build, e2e).
+Commit: branch `feat/social-login` (PR to `main`).
+## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
+Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
+- web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
+- Account deletion (web `pages/DeleteAccount.tsx`, mobile `screens/Settings.tsx`) uses it: consequences in a red danger zone, early release does nothing, Space/Enter hold, screen-reader two-step path, aria-live / AccessibilityInfo announcements. The "I understand" box and the dialog are gone.
+- i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
+- Mobile smoke "Cards: Save…" (CEO: fails on main) is flaky (~1 run in 3 here): the deck sometimes opens straight on "You have seen every card". Root cause NOT found yet; to be fixed with the Kashf/CardDeck redesign PR.
+- **Fixed on main's CSS:** the #44 merge left `@media (prefers-reduced-motion)` (sound switch) unclosed, so every rule after it (likes, card feed, photo manager, push switch) applied only to reduced-motion users; the block is closed now (`styles.css` parses again: checked with postcss).
+- Guard: `apps/web/src/styles.test.ts` parses styles.css strictly with postcss (Vite's own dependency) and fails on any syntax error or an @media swallowing another @media/theme block; it fails on main's file (1367:1 Unclosed block).
+- Web e2e `axeScan` waits for finite entrance animations / mid-way inline opacity before scanning (the rausch/stone `.btn.sm` contrast 4.49/4.43 failures were measured mid-fade: #fefafb text).
+- Mobile hold: `accessibilityActions` activate → two-step; completion announced.
+Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
+Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
+## S76 — CI: flaky push test and the PostgreSQL job hang (2026-11-18) [cloud worker]
+Done: (1) VAPID key race: `load_vapid_keys` re-reads in a fresh session and retries (an insert lost to another worker or rolled back by another session on a shared connection no longer leaves `row = None`); exceptions returned by `gather` in delivery are logged. Repro on main: the flaky test passed 6/12. (2) PostgreSQL job hang reproduced locally (PG 16, exact CI commands, about 1 in 3 runs): a push task scheduled from `after_commit` during two concurrent webhook requests was finished, but its done callback had not removed it from the dispatcher's set, so `drain()` (`while tasks: gather`) spun for ever at app shutdown. `drain()` now drops finished tasks itself and shutdown waits at most 10 s. Why the callback did not run is not proven. (3) CI: `timeout-minutes` on the api/postgres/web/mobile jobs, pytest `faulthandler_timeout=120`. New deterministic tests: lost insert, concurrent first use, drain on a finished task.
+Next: none.
+Evidence: formerly flaky test 20/20 SQLite, 20/20 PostgreSQL (main: 6/12 SQLite); PG CI job's exact test list 20/20 (before: hung about 1 in 3); full SQLite 516 passed + 12 skipped, full PostgreSQL 528 passed; ruff PASS; verifier APPROVE.
+Commit: branch `fix/ci-flaky-push` (PR to `main`).
 ## S73 — Push notifications: web (VAPID) + Android (FCM), with a permission request (2026-11-18) [cloud worker, backend + web + mobile]
 Done (owner: "Push notifications don't work? Add them, with the permission request"):
 - **API:** `push_devices` + `push_vapid_keys` (migration 0024, additive); `GET /push/config` (public), `PUT /push/devices`, `DELETE /push/devices/{id}`. An after-commit hook pushes every new in-app notification in the background (5 s timeouts, errors logged and swallowed, rollback = nothing sent). Lock-screen text has no personal data, in the user's `ui_locale`. Web Push (VAPID ES256 + RFC 8291, `cryptography` only, RFC test vector PASS); VAPID keys from env or generated once into the DB. FCM HTTP v1 via a service-account JSON from env. Invalid tokens disabled (404/410/UNREGISTERED). Endpoint allowlist (SSRF guard). Account deletion removes devices.

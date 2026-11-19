@@ -278,7 +278,10 @@ def build_app(db_url: str, port: int, demo_pay: DemoPaymentProvider | None, *, i
     work (seed, admin refresh, availability top-up) goes through a second app on the same database with that gate
     off. It is never served: the gate stays exactly as configured for every visitor.
     """
-    gate = {'auth_require_password_setup': False} if internal else {}
+    # The harness's own app seeds and tops up many accounts at once, and signs the admin in at every start: its
+    # sign-ins neither count against nor are blocked by the per-IP and per-phone code limits of the public app.
+    gate = ({'auth_require_password_setup': False, 'auth_otp_ip_rate_limit_per_minute': 0,
+             'auth_otp_limits_enabled': False} if internal else {})
     settings = Settings(environment='test', database_url=db_url,
                         **({'platform_fee_bps': 0} if demo_pay else {}),  # labelled DEMO fee, the real policy is the owner's
                         **gate)
@@ -339,7 +342,7 @@ async def main(port: int, db_file: str):
             await restrict_admins(harness, ADMIN if ADMIN_ENV else None)
             maintenance = asyncio.create_task(maintenance_loop(harness, login, (MADINA, JASUR)))
         print('SEED_DONE', flush=True)
-        server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=port, lifespan='off', log_level='warning'))
+        server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=port, lifespan='off', log_level='warning', proxy_headers=False))
         try:
             await server.serve()
         finally:

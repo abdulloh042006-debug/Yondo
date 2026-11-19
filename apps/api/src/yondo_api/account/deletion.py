@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.account.legal import DELETION_DUE_AFTER_DAYS
 from yondo_api.account.models import AccountDeletionRequest, SupportRequest
+from yondo_api.auth.social_models import ExternalIdentity, SocialLoginChallenge
 from yondo_api.auth.telegram_models import TelegramLink, TelegramLinkChallenge
 from yondo_api.beta.models import BetaEnrollment
 from yondo_api.bookings.models import Booking, BookingStatus
@@ -32,7 +33,7 @@ from yondo_api.companions.models import (
 )
 from yondo_api.discovery.models import CompanionFavorite, CompanionLike
 from yondo_api.gifts.models import GiftCartItem
-from yondo_api.models.auth import AuthSession, OtpChallenge, PasswordLoginGuard
+from yondo_api.models.auth import AuthSession, OtpChallenge, OtpIssue, PasswordLoginGuard
 from yondo_api.models.user import AccountStatus, User, UserRole
 from yondo_api.notifications.models import UserNotification
 from yondo_api.push.models import PushDevice
@@ -174,6 +175,9 @@ async def erase_account(
     await session.execute(
         delete(OtpChallenge).where(OtpChallenge.phone_number == user.phone_number)
     )
+    await session.execute(delete(OtpIssue).where(OtpIssue.phone_number == user.phone_number))
+    for model in (ExternalIdentity, SocialLoginChallenge):  # provider ids are personal data
+        await session.execute(delete(model).where(model.user_id == uid))
     for model in (TelegramLink, TelegramLinkChallenge):  # Telegram ids are personal data
         await session.execute(delete(model).where(model.phone_number == user.phone_number))
     await session.execute(
