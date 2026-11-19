@@ -8,6 +8,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 - The owner has **no money right now**: Oracle sign-up stalled at the card step, DigitalOcean unfunded, no Telegram balance for other users' numbers.
 
 ## Next steps (priority order)
+000. **UI redesign (owner, 2026-11-18): phase 1 done** (S80): spec `docs/design/redesign-2026-11.md`, prototype `design-prototype/redesign/index.html`, brief `docs/tasks/2026-11-18-ui-redesign-brief.md` (owner answers override it). **Next: phase 2** = implement §8 of the spec in `apps/web` + `apps/mobile` after merging `origin/main` (with #44); verifier APPROVE, tests, 360 px screenshots, APK link per PR.
 000a. **S40 (2026-11-05): `main` now = this line.** A separate cloud session had built a second implementation from the old Phase 6 `main` and merged it as PR #8; at the owner's decision it was reverted and `design/prototype` merged into `main` (PR "Restore the owner-reviewed line"). Only the parts this line lacks are ported from the reverted PR #8, one small PR each, respecting CLAUDE.md §4: (1) ~~S3/MinIO photo adapter~~ done (S41, `YONDO_STORAGE_BACKEND=s3`), (2) ID + selfie verification, (3) gifts/vendor backend gaps (keep booking+gift checkout 503, no invented fees), (4) Expo mobile app on the brand tokens. The reverted code stays readable at commit `e6fb008`. `ccr-15294129-n60ucy` (S39 WIP) is still outside `main`, pending its verifier.
 00. ~~Set `YONDO_DEMO_ADMIN_PHONE` in Render~~ done 2026-10-29 (S38). **Owner:** sign in at the demo with that number (the code shows on screen) and open `/admin` to confirm.
 00g. **Branches (S55, 2026-11-11):** the owner deletes the merged branches listed in S55 on GitHub (the session cannot). Port `codex/scheduled-meeting-reminders` and `ccr-15294129-n60ucy` in small PRs.
@@ -18,7 +19,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
-00k. **18+ (S80, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
+00k. **18+ (S81, 2026-11-19):** owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render (`docs/age-limit.md`).
 00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
@@ -31,12 +32,20 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
-## S80 — 18+ age limit (2026-11-19) [cloud worker, auth full-stack]
+## S81 — 18+ age limit (2026-11-19) [cloud worker, auth full-stack]
 Done: `users.date_of_birth` + `age_restricted_at`, `age_blocks` (migration 0027); registration takes a date of birth (required with `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true`), under 18 = `age_restricted`: a new sign-up is erased and only a salted phone hash with a 30-day cooldown is kept (every new-account path checks it); older accounts give the date once (`PUT /auth/date-of-birth`), under 18 = locked (`age_restricted_at`, no date stored, no retry; support + deletion stay open) until an admin clears it (`POST /admin/users/{id}/age-restriction/clear`, audited). DOB private, the age follows it; ID approval needs `adult_confirmed`. Terms + Privacy 18+ clause (versions 2026-11-19-draft). Web + mobile: date field, one-time step, restricted screen; uz/ru/en. Docs: `docs/age-limit.md`, CLAUDE.md §7.
 Not done: customers are not ID-checked (the date is a declaration; documented); mobile social login (phase 2).
 Next: owner sets `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true` in Render and enters his own date once; everyone re-accepts Terms/Privacy.
 Evidence: see the PR.
-Commit: branch `feat/age-limit` (on `feat/auth-hardening`, PR to `main`).
+Commit: branch `feat/age-limit` (PR to `main`).
+## S80 — UI redesign phase 1: spec + prototype (2026-11-18) [cloud worker, designer]
+Done:
+- Captured the current screens at 360 px from a local build of `main` (b8cccd4, with #45): web (real API + DEMO seed, both themes) and mobile (`expo export --platform web`); listed each screen's problems.
+- `docs/design/redesign-2026-11.md`: screen-by-screen plan, navigation (App Bar, names, gear), the 4 component specs with reduced-motion variants (Shockwave dock, Aura role switcher, magnetic chips, 1.5 s hold-to-confirm with a two-step screen-reader path), design system mapped onto the existing tokens of `yondo`/`yondo-tun` (+ one red `--c-danger` for destructive only), layout rules, phase 2 task list mapped to files.
+- `design-prototype/redesign/index.html`: one self-contained file (fonts inlined by `build.mjs`), all redesigned screens, both themes, the 4 components working. Frames in `docs/design/redesign-2026-11/`.
+Not done: phase 2 (app code); device / screen-reader / low-end Android checks.
+Evidence: prototype checks 23/23 PASS (Playwright, 360 px; 0 network requests, 0 page errors).
+Commit: branch `design/ui-redesign-2026-11`, docs + prototype PR to `main`.
 ## S79 — Auth hardening: OTP limits and proxy trust (2026-11-19) [cloud worker, auth]
 Done: a code dies after 3 wrong attempts (`otp_attempts_exceeded`, a new code is needed); per phone at most 5 codes per hour and 10 per day (`otp_hourly_limit`, `otp_daily_limit`; new table `otp_issues`, migration 0026); per-IP limit on `/auth/otp/request` and `/auth/telegram/link/start` (10/min, `rate_limited`). Client IP for every per-IP limit comes from `ClientIpMiddleware` (`YONDO_CLIENT_IP_MODE` peer/xff/header, headers only from `YONDO_TRUSTED_PROXY_CIDRS`); uvicorn proxy headers off (Dockerfile no longer trusts `*`); DigitalOcean compose = `xff`; admin `GET /admin/diagnostics/client-ip` to confirm Render live. Docs: `docs/client-ip.md`. Web: uz/ru/en messages; a dead code offers a resend.
 Not done: Render mode (needs the live check, docs/client-ip.md); 18+ age limit = next PR (`feat/age-limit`); mobile social login.
