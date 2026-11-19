@@ -594,12 +594,12 @@ try {
     });
     assert(status === 403, `got ${status}`);
   });
-  await step('account profile validates age and saves via server', async () => {
+  await step('account profile: the age follows the date of birth (18+, read-only) and the profile saves via server', async () => {
     await cp.goto(`${WEB}/account`);
     await cp.getByRole('button', { name: 'Tahrirlaş' }).click(); // Profil shows the data; the form opens on "Tahrirlash"
-    await cp.getByLabel('Yoş').fill('12');
-    await cp.getByText('Yoş 18 dan 120 gaça bölişi kerak.').waitFor();
-    await cp.getByLabel('Yoş').fill('29');
+    // The seeded DEMO customer has a date of birth (2026-11-19): the age is shown, not edited.
+    assert((await cp.getByLabel('Yoş').getAttribute('readonly')) !== null, 'age is read-only once a date of birth exists');
+    await cp.getByText('Yoş tuğilgan sanadan hisoblanadi.').waitFor();
     await cp.getByRole('button', { name: 'Saqlaş' }).click();
     await cp.getByText('Profil saqlandi.').waitFor();
   });
