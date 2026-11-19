@@ -14,6 +14,8 @@ from yondo_api.config import Settings
 from yondo_api.gifts.models import GiftProduct
 from yondo_api.models.user import UserRole, UserRoleType
 
+from .gift_helpers import approved_shop
+
 SECRET = 'local-click-test-only-secret-that-is-never-production'
 SERVICE = 726314
 
@@ -31,6 +33,7 @@ def enable_demo(e):
 async def product_and_cart(e, *, currency='UZS', stock=7, price=120_000, quantity=2):
     async with e['app'].state.db_session_factory() as session:
         session.add(UserRole(user_id=UUID(e['other_id']), role=UserRoleType.VENDOR))
+        session.add(approved_shop(UUID(e['other_id'])))  # product decisions §4
         await session.commit()
     response = await e['client'].post(
         '/api/v1/gifts/vendor/products',
@@ -66,7 +69,9 @@ async def new_test_order(e, *, method='manual_delivery'):
         json={'delivery_method': method, 'delivery_note': note},
     )
     assert response.status_code == 201, response.text
-    return response.json()
+    orders = response.json()  # one order per vendor (2026-11-19); these carts have one vendor
+    assert len(orders) == 1
+    return orders[0]
 
 
 def signed(

@@ -25,6 +25,8 @@ class GiftProduct(TimestampMixin, Base):
     currency: Mapped[str] = mapped_column(String(3))
     stock: Mapped[int] = mapped_column(default=0)
     published: Mapped[bool] = mapped_column(default=False, server_default='false')
+    # Set when an admin rejects the product (shown to the vendor); cleared on publish.
+    rejection_note: Mapped[str | None] = mapped_column(Text)
 
 
 class GiftCartItem(TimestampMixin, Base):

@@ -65,6 +65,11 @@ class GiftTestOrder(TimestampMixin, Base):
     click_trans_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     prepared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     test_paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # One order per vendor (CEO, 2026-11-19): the test checkout splits a mixed cart.
+    vendor_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey('users.id', ondelete='RESTRICT'), nullable=True, index=True
+    )
+    cancel_reason: Mapped[str | None] = mapped_column(Text)
     status_changed_by: Mapped[UUID | None] = mapped_column(
         ForeignKey('users.id', ondelete='RESTRICT'), nullable=True
     )

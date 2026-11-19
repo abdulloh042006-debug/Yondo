@@ -415,6 +415,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin Shops */
+        get: operations["admin_shops_api_v1_admin_vendors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/vendors/{shop_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide Shop
+         * @description Approve (also reinstates a suspended shop) or reject, with a note. Approval needs the
+         *     identity verification to be verified and grants the Vendor role.
+         */
+        post: operations["decide_shop_api_v1_admin_vendors__shop_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/vendors/{shop_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suspend Shop
+         * @description Hide the shop's products and stop new orders; existing orders can still be completed.
+         */
+        post: operations["suspend_shop_api_v1_admin_vendors__shop_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/verifications": {
         parameters: {
             query?: never;
@@ -1862,6 +1920,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gifts/admin/products/{product_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Product
+         * @description Hide a product with a reason the vendor sees; audited, and the vendor is notified.
+         */
+        post: operations["reject_product_api_v1_gifts_admin_products__product_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gifts/admin/products/{product_id}/unpublish": {
         parameters: {
             query?: never;
@@ -2071,6 +2149,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gifts/test-orders/{order_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel My Test Order
+         * @description The customer may cancel only before the shop starts preparing (CEO, 2026-11-19).
+         *     Test orders move no money: there is nothing to refund.
+         */
+        post: operations["cancel_my_test_order_api_v1_gifts_test_orders__order_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gifts/vendor/products": {
         parameters: {
             query?: never;
@@ -2083,6 +2182,48 @@ export interface paths {
         put?: never;
         /** Create Product */
         post: operations["create_product_api_v1_gifts_vendor_products_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gifts/vendor/shop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Shop */
+        get: operations["my_shop_api_v1_gifts_vendor_shop_get"];
+        /**
+         * Save Shop
+         * @description Apply (first save) or edit the shop profile. A rejected application goes back to review;
+         *     an approved shop stays approved (an admin can suspend it); a suspended one stays suspended.
+         */
+        put: operations["save_shop_api_v1_gifts_vendor_shop_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gifts/vendor/shop/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Logo
+         * @description Raw JPEG/PNG/WebP bytes, re-encoded to JPEG without EXIF (the photo pipeline).
+         */
+        post: operations["upload_logo_api_v1_gifts_vendor_shop_logo_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2779,10 +2920,30 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Orders */
+        /**
+         * Orders
+         * @description The shop's own orders, newest first (a suspended shop can still finish them).
+         */
         get: operations["orders_api_v1_vendor_orders_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor/orders/{order_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vendor Update Status */
+        post: operations["vendor_update_status_api_v1_vendor_orders__order_id__status_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3190,6 +3351,45 @@ export interface components {
             reporter_id: string;
             /** Status */
             status: string;
+        };
+        /** AdminShopRead */
+        AdminShopRead: {
+            /** City */
+            city: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Delivery Area */
+            delivery_area: string;
+            /** Description */
+            description: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Identity Verified */
+            identity_verified: boolean;
+            /** Logo Url */
+            logo_url: string | null;
+            /** Name */
+            name: string;
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
         };
         /** AdminSummary */
         AdminSummary: {
@@ -3720,6 +3920,11 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending" | "approved" | "rejected";
+        /** CustomerCancel */
+        CustomerCancel: {
+            /** Reason */
+            reason?: string | null;
+        };
         /** DateOfBirth */
         DateOfBirth: {
             /**
@@ -4298,6 +4503,8 @@ export interface components {
             price_minor: number;
             /** Published */
             published: boolean;
+            /** Rejection Note */
+            rejection_note?: string | null;
             /** Stock */
             stock: number;
             /**
@@ -4305,6 +4512,11 @@ export interface components {
              * Format: uuid
              */
             vendor_id: string;
+        };
+        /** ProductRejection */
+        ProductRejection: {
+            /** Note */
+            note: string;
         };
         /** ProductWrite */
         ProductWrite: {
@@ -4528,6 +4740,59 @@ export interface components {
             service_code: string;
             /** Unit Minutes */
             unit_minutes: number;
+        };
+        /** ShopDecision */
+        ShopDecision: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approve" | "reject";
+            /** Note */
+            note: string;
+        };
+        /** ShopRead */
+        ShopRead: {
+            /** City */
+            city: string;
+            /** Delivery Area */
+            delivery_area: string;
+            /** Description */
+            description: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Identity Verified */
+            identity_verified: boolean;
+            /** Logo Url */
+            logo_url: string | null;
+            /** Name */
+            name: string;
+            /** Review Note */
+            review_note: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected" | "suspended";
+        };
+        /** ShopSuspension */
+        ShopSuspension: {
+            /** Reason */
+            reason: string;
+        };
+        /** ShopWrite */
+        ShopWrite: {
+            /** City */
+            city: string;
+            /** Delivery Area */
+            delivery_area: string;
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
         };
         /** SimulateWrite */
         SimulateWrite: {
@@ -4865,6 +5130,80 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VendorOrderItem */
+        VendorOrderItem: {
+            /** Line Total Minor */
+            line_total_minor: number;
+            /** Name Snapshot */
+            name_snapshot: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Quantity */
+            quantity: number;
+            /** Unit Price Minor */
+            unit_price_minor: number;
+        };
+        /**
+         * VendorOrderRead
+         * @description What a shop sees (CEO, 2026-11-19): the items, the delivery method and the customer's own
+         *     delivery note; never the customer's phone, user id or name ("Mijoz" + a short number).
+         */
+        VendorOrderRead: {
+            /** Cancel Reason */
+            cancel_reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Customer Label
+             * @default Mijoz
+             * @constant
+             */
+            customer_label: "Mijoz";
+            /** Delivery Method */
+            delivery_method: string;
+            /** Delivery Note */
+            delivery_note: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Is Test Order
+             * @default true
+             */
+            is_test_order: boolean;
+            /** Items */
+            items: components["schemas"]["VendorOrderItem"][];
+            /**
+             * Real Money Moved
+             * @default false
+             */
+            real_money_moved: boolean;
+            /** Short Code */
+            short_code: string;
+            status: components["schemas"]["GiftTestStatus"];
+            /** Subtotal Minor */
+            subtotal_minor: number;
+        };
+        /** VendorStatusWrite */
+        VendorStatusWrite: {
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "preparing" | "out_for_delivery" | "delivered" | "cancelled";
         };
         /** VerificationDecision */
         VerificationDecision: {
@@ -5676,6 +6015,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminUserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_shops_api_v1_admin_vendors_get: {
+        parameters: {
+            query?: {
+                status?: ("pending" | "approved" | "rejected" | "suspended") | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminShopRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_shop_api_v1_admin_vendors__shop_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shop_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminShopRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suspend_shop_api_v1_admin_vendors__shop_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shop_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopSuspension"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminShopRead"];
                 };
             };
             /** @description Validation Error */
@@ -8499,6 +8940,41 @@ export interface operations {
             };
         };
     };
+    reject_product_api_v1_gifts_admin_products__product_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductRejection"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     unpublish_product_api_v1_gifts_admin_products__product_id__unpublish_post: {
         parameters: {
             query?: never;
@@ -8842,7 +9318,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TestOrderRead"];
+                    "application/json": components["schemas"]["TestOrderRead"][];
                 };
             };
             /** @description Validation Error */
@@ -8866,6 +9342,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestOrderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_my_test_order_api_v1_gifts_test_orders__order_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerCancel"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -8936,6 +9447,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_shop_api_v1_gifts_vendor_shop_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopRead"];
+                };
+            };
+        };
+    };
+    save_shop_api_v1_gifts_vendor_shop_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_logo_api_v1_gifts_vendor_shop_logo_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopRead"];
                 };
             };
         };
@@ -10225,7 +10809,9 @@ export interface operations {
     };
     orders_api_v1_vendor_orders_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -10233,12 +10819,56 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            503: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VendorOrderRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vendor_update_status_api_v1_vendor_orders__order_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorStatusWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorOrderRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

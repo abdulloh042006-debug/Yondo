@@ -10,6 +10,13 @@ from yondo_api.admin.models import AdminAuditEvent
 from yondo_api.api.errors import ApplicationError
 from yondo_api.companions.dependencies import Principal, Session
 from yondo_api.gifts.models import GiftCartItem, GiftProduct
+from yondo_api.gifts.shop_models import VendorShop
+from yondo_api.gifts.shops import (
+    require_vendor,
+    shop_approved_clause,
+    shop_notice,
+    vendor_is_active,
+)
 from yondo_api.models.user import AccountStatus, User, UserRole, UserRoleType
 
 router = APIRouter(prefix='/gifts', tags=['gifts'])
@@ -31,6 +38,13 @@ class ProductRead(ProductWrite):
     id: UUID
     vendor_id: UUID
     published: bool
+    # Why an admin rejected it (shown to the vendor); null once published.
+    rejection_note: str | None = None
+
+
+class ProductRejection(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    note: str = Field(min_length=3, max_length=1000)
 
 
 class CartWrite(BaseModel):
@@ -69,6 +83,7 @@ async def list_products(
                     UserRole.role == UserRoleType.VENDOR,
                 )
             ),
+            shop_approved_clause(GiftProduct.vendor_id),
         )
     )
     if category is not None:
@@ -81,16 +96,14 @@ async def product_detail(product_id: UUID, session: Session):
     item = await session.get(GiftProduct, product_id)
     if item is None or not item.published:
         raise ApplicationError('gift_not_found', 'Gift not found', 404)
-    vendor = await session.get(User, item.vendor_id)
-    role = await session.get(UserRole, (item.vendor_id, UserRoleType.VENDOR))
-    if vendor is None or vendor.account_status != AccountStatus.ACTIVE or role is None:
+    if not await vendor_is_active(session, item.vendor_id):  # approved shop
         raise ApplicationError('gift_not_found', 'Gift not found', 404)
     return item
 
 
 @router.post('/vendor/products', response_model=ProductRead, status_code=201)
 async def create_product(payload: ProductWrite, principal: Principal, session: Session):
-    await require_role(principal, session, UserRoleType.VENDOR)
+    await require_vendor(principal, session)  # an approved shop (product decisions §4)
     item = GiftProduct(vendor_id=principal.user.id, published=False, **payload.model_dump())
     session.add(item)
     await session.commit()
@@ -116,9 +129,7 @@ async def add_to_cart(product_id: UUID, payload: CartWrite, principal: Principal
     item = await session.get(GiftProduct, product_id)
     if item is None or not item.published or item.stock < payload.quantity:
         raise ApplicationError('gift_unavailable', 'Gift is unavailable', 409)
-    vendor = await session.get(User, item.vendor_id)
-    role = await session.get(UserRole, (item.vendor_id, UserRoleType.VENDOR))
-    if vendor is None or vendor.account_status != AccountStatus.ACTIVE or role is None:
+    if not await vendor_is_active(session, item.vendor_id):  # approved shop
         raise ApplicationError('gift_unavailable', 'Gift is unavailable', 409)
     existing = await session.scalar(
         select(GiftCartItem).where(
@@ -183,15 +194,11 @@ async def preview_checkout(principal: Principal, session: Session):
     subtotal = 0
     items = []
     for entry, product in rows:
-        vendor = await session.get(User, product.vendor_id)
-        role = await session.get(UserRole, (product.vendor_id, UserRoleType.VENDOR))
         if (
-            role is None
-            or product.currency != currency
+            product.currency != currency
             or not product.published
             or product.stock < entry.quantity
-            or vendor is None
-            or vendor.account_status != AccountStatus.ACTIVE
+            or not await vendor_is_active(session, product.vendor_id)
         ):
             raise ApplicationError('gift_unavailable', 'Cart contains unavailable items', 409)
         line_total = product.price_minor * entry.quantity
@@ -263,13 +270,12 @@ async def publish_product(product_id: UUID, principal: Principal, session: Sessi
     )
     if product is None:
         raise ApplicationError('gift_not_found', 'Gift not found', 404)
-    vendor = await session.get(User, product.vendor_id)
-    role = await session.get(UserRole, (product.vendor_id, UserRoleType.VENDOR))
-    if vendor is None or vendor.account_status != AccountStatus.ACTIVE or role is None:
+    if not await vendor_is_active(session, product.vendor_id):  # approved shop
         raise ApplicationError('gift_vendor_unavailable', 'Vendor is unavailable', 409)
     if product.stock < 1:
         raise ApplicationError('gift_unavailable', 'Product is out of stock', 409)
     product.published = True
+    product.rejection_note = None
     session.add(_product_audit(principal, product, 'gift_product_published'))
     await session.commit()
     await session.refresh(product)
@@ -286,6 +292,37 @@ async def unpublish_product(product_id: UUID, principal: Principal, session: Ses
         raise ApplicationError('gift_not_found', 'Gift not found', 404)
     product.published = False
     session.add(_product_audit(principal, product, 'gift_product_unpublished'))
+    await session.commit()
+    await session.refresh(product)
+    return product
+
+
+@router.post('/admin/products/{product_id}/reject', response_model=ProductRead)
+async def reject_product(
+    product_id: UUID, payload: ProductRejection, principal: Principal, session: Session
+):
+    """Hide a product with a reason the vendor sees; audited, and the vendor is notified."""
+    await require_role(principal, session, UserRoleType.ADMIN)
+    product = await session.scalar(
+        select(GiftProduct).where(GiftProduct.id == product_id).with_for_update()
+    )
+    if product is None:
+        raise ApplicationError('gift_not_found', 'Gift not found', 404)
+    product.published = False
+    product.rejection_note = payload.note.strip()
+    audit = _product_audit(principal, product, 'gift_product_rejected')
+    audit.reason = f'{audit.reason}; {payload.note.strip()}'[:2000]
+    session.add(audit)
+    shop = await session.scalar(select(VendorShop).where(VendorShop.user_id == product.vendor_id))
+    if shop is not None:
+        session.add(
+            shop_notice(
+                shop,
+                'gift_product_rejected',
+                principal.user.id,
+                {'product_id': str(product.id), 'shop_id': str(shop.id)},
+            )
+        )
     await session.commit()
     await session.refresh(product)
     return product

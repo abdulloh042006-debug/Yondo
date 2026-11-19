@@ -40,8 +40,15 @@ async def enqueue_gift_notice(
             )
         ))
         recipients.discard(order.customer_id)
+        if order.vendor_id is not None:  # the shop that fulfils this order (one per vendor)
+            recipients.add(order.vendor_id)
     else:
         recipients = {order.customer_id}
+        # The shop learns that it can start (paid) and when an order is cancelled.
+        if order.vendor_id is not None and kind in ('gift_test_paid', 'gift_cancelled'):
+            recipients.add(order.vendor_id)
+        if actor_id is not None and len(recipients) > 1:
+            recipients.discard(actor_id)  # nobody is told about their own action
 
     for recipient_id in recipients:
         session.add(
