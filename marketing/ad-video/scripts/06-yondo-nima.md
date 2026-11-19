@@ -25,12 +25,20 @@ With the DRAFT voice the speech ends at ~13.1 s, so the DRAFT cut is **13.0 s**;
 ## VO script (narrator A)
 | # | UZ | RU |
 | --- | --- | --- |
-| C3-V1 | Faoliyat: kofe, sayr, kino, tadbir. | Занятие: кофе, прогулка, кино, событие. |
-| C3-V2 | Hamroh: profilida xizmatlari ko‘rinadi. | Компаньон: в профиле видно, что он предлагает. |
+| C3-V1 | Faoliyat: kofe, sayr, kino, tadbir. | Занятие: кофе, прогулка, кино, мероприятие. |
+| C3-V2 | Hamroh: profilida xizmatlari ko‘rinadi. | Компаньон: в профиле видно, чем заняться вместе. |
 | C3-V3 | Uchrashuv: ochiq, jamoat joyida. | Встреча: открыто, в общественном месте. |
 | V7 | Yondo — doim yoningda. | Yondo. Всегда рядом. |
 
 RU category names must match the app's RU locale (`apps/web/src/i18n/ru.ts`, `service.*`) at capture time.
+
+## RU cut (done 2026-11-19)
+- Captures: `APP_LANG=ru` in `ad5/capture_c3.mjs` = the whole run in the app's own ru locale (sign-in included); seed data
+  (Madina, Toshkent, service descriptions) translated from `ru-dict.json`; the RU verified badge («✓ … подтверждена») is removed too.
+- Page: `REEL_LANG=ru kit/build.py ad5/c3.tpl.html` (texts from the RU column; category names = ru.ts `service.*`; on-screen line
+  «Не приложение для знакомств — компаньон для занятий.»; end card «Yondo. Всегда рядом.»). The RU voice is longer, so scenes are
+  stretched piecewise-linearly (boundaries 1.4/5.0/8.5/11.35/12.25/14.6 s): **14.6 s**.
+- Voice: `ad5/tts_ru.py` (Meta MMS Russian, CPU), played 1.1× by `REEL_LANG=ru ad5/audio_c3.py`.
 
 ## App captures (done 2026-11-19, `ad5/capture_c3.mjs`)
 Real `apps/web` build against `server_video.py` (`AD5_SERVICES=1`), 1995 alphabet, theme `yondo`, 390×844 @2.5:

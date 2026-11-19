@@ -4,24 +4,34 @@
 @font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-800-normal.woff2)}
 @font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-latin-ext-700-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
 @font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-latin-ext-800-normal.woff2);unicode-range:U+0100-024F,U+02BC,U+2018-2019}
+@font-face{font-family:Manrope;font-weight:700;src:url({{FONTS}}/manrope/files/manrope-cyrillic-700-normal.woff2);unicode-range:U+0400-04FF}
+@font-face{font-family:Manrope;font-weight:800;src:url({{FONTS}}/manrope/files/manrope-cyrillic-800-normal.woff2);unicode-range:U+0400-04FF}
 @font-face{font-family:"Space Grotesk";font-weight:700;src:url({{FONTS}}/space-grotesk/files/space-grotesk-latin-700-normal.woff2)}
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#F5F2EC}svg{display:block}
-</style></head><body><svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+</style><script src="{{SHOTS}}/crop-meta.js"></script></head><body><svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
 <script>
 // Ad 6 «Yondo nima?» (C3), 13.0 s. Screens = real apps/web captures, cropped so no price is in any file (ad5/capture_c3.mjs).
 const WORDMARK = `{{WORDMARK_INLINE}}`;
 {{KIT_JS}}
 const { INK, PAPER, CAR, P, eo, eio, back, lerp, cl, esc } = K;
 const SHOT = { card: '{{SHOTS}}/card-crop.png', place: '{{SHOTS}}/place-crop.png' };
-const CARD = { w: 895, h: 1280, tagsY: 1182, tagsH: 68 };
-const PLACE = { w: 847, h: 356 };
-const CAPS = [
-  [0.15, 1.40, 'Yondo nima?'],
-  [1.45, 4.15, 'Faoliyat: kofe, sayr,\nkino, tadbir.'],
-  [4.25, 7.95, 'Hamroh: profilida\nxizmatlari ko‘rinadi.'],
-  [8.05, 10.30, 'Uchrashuv: ochiq,\njamoat joyida.'],
-];
-window.TOTAL = 13.3;  // 13.0 with a normal-pace narrator; the DRAFT voice's last line ends at ~13.1 s
+const CARD = window.CROPS.card, PLACE = window.CROPS.place;   // written by ad5/crop_c3.py
+const LANG = '{{LANG}}';
+const TX = {
+  uz: { caps: ['Yondo nima?', 'Faoliyat: kofe, sayr,\nkino, tadbir.', 'Hamroh: profilida\nxizmatlari ko‘rinadi.', 'Uchrashuv: ochiq,\njamoat joyida.'],
+    cards: ['Faoliyat', 'Hamroh', 'Uchrashuv'], cats: ['Kofe', 'Sayr', 'Kino', 'Tadbir'],
+    line: ['Tanishuv ilovasi emas —', 'faoliyat uchun hamroh.'], tagline: 'Yondo — doim yoningda.' },
+  // RU category names = apps/web/src/i18n/ru.ts service.*; tagline = the brand's RU slogan
+  ru: { caps: ['Что такое Yondo?', 'Занятие: кофе, прогулка,\nкино, мероприятие.', 'Компаньон: в профиле\nвидно, чем заняться вместе.', 'Встреча: открыто,\nв общественном месте.'],
+    cards: ['Занятие', 'Компаньон', 'Встреча'], cats: ['Кофе', 'Прогулка', 'Кино', 'Мероприятие'],
+    line: ['Не приложение для знакомств —', 'компаньон для занятий.'], tagline: 'Yondo. Всегда рядом.' },
+}[LANG];
+const CAPS = [[0.15, 1.40, TX.caps[0]], [1.45, 4.15, TX.caps[1]], [4.25, 7.95, TX.caps[2]], [8.05, 10.30, TX.caps[3]]];
+// Scene clock: the page is authored on the UZ timeline; the RU voice is longer, so RU time is mapped piecewise-linearly onto it.
+const B_UZ = [0, 1.4, 4.2, 8.0, 10.3, 11.2, 13.3];
+const B = { uz: B_UZ, ru: [0, 1.4, 5.0, 8.5, 11.35, 12.25, 14.6] }[LANG];
+const toUz = (t) => { for (let i = 1; i < B.length; i++) if (t <= B[i] || i === B.length - 1) return B_UZ[i - 1] + (t - B[i - 1]) * (B_UZ[i] - B_UZ[i - 1]) / (B[i] - B[i - 1]); };
+window.TOTAL = B[B.length - 1];  // UZ 13.3 s, RU 14.6 s
 
 // line-art icons (ink, 64-unit box)
 const ICON = {
@@ -44,7 +54,7 @@ function S1(t) { // 0-1.4 YONDO slams in, splits into three cards
   let g = `<rect width="1080" height="1920" fill="${PAPER}"/>`;
   const s = lerp(1.3, 1, cl(k));
   g += `<text x="540" y="1010" font-family="Manrope" font-weight="800" font-size="${220 * s}" fill="${INK}" text-anchor="middle" opacity="${cl(P(t, 0, .12)) * (1 - split)}">YONDO</text>`;
-  ['Faoliyat', 'Hamroh', 'Uchrashuv'].forEach((w, i) => {
+  TX.cards.forEach((w, i) => {
     const x = 540 + (i - 1) * 330 * split, y = 960;
     g += `<g opacity="${split}"><rect x="${x - 150}" y="${y - 240}" width="300" height="480" rx="28" fill="${i === 1 ? INK : PAPER}" stroke="${INK}" stroke-width="5"/>`
       + `<text x="${x}" y="${y + 14}" font-family="Manrope" font-weight="800" font-size="46" fill="${i === 1 ? PAPER : INK}" text-anchor="middle">${w}</text></g>`;
@@ -52,8 +62,8 @@ function S1(t) { // 0-1.4 YONDO slams in, splits into three cards
   return g;
 }
 function S2(t) { // 1.4-4.2 activities = the app's real category names
-  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Faoliyat', 1, t, 1.4);
-  [['cup', 'Kofe'], ['walk', 'Sayr'], ['film', 'Kino'], ['ticket', 'Tadbir']].forEach(([ic, name], i) => {
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title(TX.cards[0], 1, t, 1.4);
+  ['cup', 'walk', 'film', 'ticket'].map((ic, i) => [ic, TX.cats[i]]).forEach(([ic, name], i) => {
     const t0 = 1.9 + i * .5, k = P(t, t0, t0 + .3), x = 300 + (i % 2) * 480, y = 640 + Math.floor(i / 2) * 420;
     const s = 3.6 * back(k, 1.8);
     g += `<circle cx="${x}" cy="${y}" r="${150 * eo(k)}" fill="${CAR}" opacity=".10"/>` + icon(ic, x, y, s, cl(k * 2));
@@ -62,13 +72,15 @@ function S2(t) { // 1.4-4.2 activities = the app's real category names
   return g;
 }
 function S3(t) { // 4.2-8.0 real card from the app's card feed
-  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Hamroh', 2, t, 4.2);
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title(TX.cards[1], 2, t, 4.2);
   const k = eo(P(t, 4.3, 4.9)), sc = .56, w = CARD.w * sc, h = CARD.h * sc, x = 540 - w / 2, y = 400 + 220 * (1 - k);
   g += `<g opacity="${k}"><rect x="${x + 10}" y="${y + 24}" width="${w}" height="${h}" rx="36" fill="${INK}" opacity=".16" filter="url(#bl)"/>`
     + `<clipPath id="cc"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="36"/></clipPath>`
     + `<image href="${SHOT.card}" x="${x}" y="${y}" width="${w}" height="${h}" clip-path="url(#cc)" preserveAspectRatio="none"/></g>`;
-  // the category chips lift out of the card: an enlarged copy of the same capture's chip row (source x 20-640)
-  const f = cl(back(P(t, 5.6, 6.0), 1.4)), sx0 = 20, sw = 620, sy0 = CARD.tagsY - 22, sh = CARD.tagsH + 44, z = 1.55;
+  // the category chips lift out of the card: an enlarged copy of the same capture's chip row
+  // the source range is the whole chip row (its box is recorded at capture), zoomed to at most 960 px wide
+  const sx0 = Math.max(0, CARD.tagsX - 24), sw = Math.min(CARD.w - sx0, CARD.tagsW + 48), sy0 = CARD.tagsY - 22, sh = CARD.tagsH + 44, z = Math.min(1.55, 960 / sw);
+  const f = cl(back(P(t, 5.6, 6.0), 1.4));
   const lw = sw * z, lh = sh * z, lx = 540 - lw / 2, ly0 = y + CARD.tagsY * sc - 22, ly = lerp(ly0, 1134, eio(cl(P(t, 5.6, 6.0))));
   if (t >= 5.6) {
     g += `<g opacity="${cl(P(t, 5.6, 5.75))}" transform="translate(540 ${ly + lh / 2}) scale(${lerp(sc / z, 1, f)}) translate(-540 ${-(ly + lh / 2)})">`
@@ -80,7 +92,7 @@ function S3(t) { // 4.2-8.0 real card from the app's card feed
   return g;
 }
 function S4(t) { // 8.0-10.3 the booking form's meeting-place field + the app's own hint, over a public square
-  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title('Uchrashuv', 3, t, 8.0);
+  let g = `<rect width="1080" height="1920" fill="${PAPER}"/>` + title(TX.cards[2], 3, t, 8.0);
   const d = eo(P(t, 8.1, 9.0));
   // line-art square: bench, lamp, cafe awning (draw-on)
   g += `<g fill="none" stroke="${INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".9">`
@@ -96,14 +108,15 @@ function S4(t) { // 8.0-10.3 the booking form's meeting-place field + the app's 
   return g;
 }
 function S5(t) { // 10.3-13.0 one line on screen (not spoken), then the end card
-  if (t >= 11.2) return K.endCard(t, 11.2);
+  if (t >= 11.2) return K.endCard(t, 11.2, { tagline: TX.tagline });
   const k = eo(P(t, 10.3, 10.6)), out = P(t, 10.95, 11.2);
   return `<rect width="1080" height="1920" fill="${INK}"/>`
-    + `<text x="540" y="900" font-family="Manrope" font-weight="800" font-size="66" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">Tanishuv ilovasi emas —</text>`
-    + `<text x="540" y="990" font-family="Manrope" font-weight="800" font-size="66" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">faoliyat uchun hamroh.</text>`;
+    + `<text x="540" y="900" font-family="Manrope" font-weight="800" font-size="${LANG === 'ru' ? 56 : 66}" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">${esc(TX.line[0])}</text>`
+    + `<text x="540" y="990" font-family="Manrope" font-weight="800" font-size="${LANG === 'ru' ? 56 : 66}" fill="${PAPER}" text-anchor="middle" opacity="${k * (1 - out)}">${esc(TX.line[1])}</text>`;
 }
 const DEFS = `<defs><filter id="bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="22"/></filter></defs>`;
-window.render = (t) => {
+window.render = (t0) => {
+  const t = toUz(t0);
   const f = t < 1.4 ? S1 : t < 4.2 ? S2 : t < 8.0 ? S3 : t < 10.3 ? S4 : S5;
   document.getElementById('sv').innerHTML = DEFS + f(t) + (t < 11.2 ? K.caption(t, CAPS) : '');
 };

@@ -28,4 +28,8 @@ y0 = round(f['label']['y'] * H) - 28
 y1 = round((f['hint']['y'] + f['hint']['h']) * H) + 24
 x0 = round(f['label']['x'] * W) - 28
 crop('place.png', W - 2 * x0, y1 - y0, x0, y0, 'place-crop.png')
+meta = {'card': {'w': w, 'h': bottom - y, 'tagsY': round(c['tags']['y'] * H) - y, 'tagsH': round(c['tags']['h'] * H),
+                 'tagsX': round(c['tags']['x'] * W) - x, 'tagsW': round(c['tags']['w'] * W)},
+        'place': {'w': W - 2 * x0, 'h': y1 - y0}}
+(d / 'crop-meta.js').write_text('window.CROPS = ' + json.dumps(meta) + ';\n')   # read by ad5/c3.tpl.html
 print('card', w, bottom - y, '| place', W - 2 * x0, y1 - y0, '| tags y in card crop', round(c['tags']['y'] * H) - y)

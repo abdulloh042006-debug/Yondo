@@ -3,7 +3,8 @@
 Usage: python3 kit/build.py <template.html> <out.html>
 Env: FONTS = @fontsource folder (with manrope/ and space-grotesk/), SHOTS = folder of app captures / AI clips (optional),
 CTA = end-card call to action (default "[ CTA ]": a visible placeholder until the owner picks «Tez kunda» or a link).
-Placeholders: {{FONTS}} {{SHOTS}} {{KIT_JS}} {{WORDMARK_INLINE}} {{CTA}} (the template defines `const WORDMARK` from it).
+REEL_LANG = uz (default) or ru.
+Placeholders: {{FONTS}} {{SHOTS}} {{KIT_JS}} {{WORDMARK_INLINE}} {{CTA}} {{LANG}} (the template defines `const WORDMARK` from it).
 """
 import os
 import pathlib
@@ -17,6 +18,7 @@ kit = (here / 'kit.js').read_text(encoding='utf-8')
 assert '`' not in wm
 cta = os.environ.get('CTA', '[ CTA ]')
 html = (html.replace('{{KIT_JS}}', kit).replace('{{CTA}}', cta).replace('{{WORDMARK_INLINE}}', wm)
+        .replace('{{LANG}}', os.environ.get('REEL_LANG', 'uz'))
         .replace('{{FONTS}}', 'file://' + os.environ.get('FONTS', ''))
         .replace('{{SHOTS}}', 'file://' + os.environ.get('SHOTS', '')))
 assert '{{' not in html, 'unfilled placeholder'

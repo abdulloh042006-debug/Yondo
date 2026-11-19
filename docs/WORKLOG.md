@@ -34,6 +34,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S89 — Ad 6 «Yondo nima?» RU cut + optional character sheets in the Flow pack (2026-11-19) [cloud worker, Videochi 2]
+Done: CEO asked for the C3 RU cut. `ad5/capture_c3.mjs` got `APP_LANG=ru` (whole run in the app's ru locale; RU badge removed; seed data via `ru-dict.json`, 2 new seed descriptions added), the chip-row box is now the union of the chips, `ad5/crop_c3.py` writes `crop-meta.js` (no hard-coded sizes), `ad5/c3.tpl.html` + `ad5/audio_c3.py` take `REEL_LANG` (RU texts, piecewise-linear scene stretch to 14.6 s), `ad5/tts_ru.py` (MMS Russian). Two RU MP4s (voice / no voice) sent to the owner's app; not committed. Flow pack: optional step 3a (character sheets R0xb/R0xc as Flow Ingredients, CEO request, commit 78ffd2a).
+CEO follow-up: RU line 2 made pronoun-free («Компаньон: в профиле видно, чем заняться вместе.»), RU timeline 14.6 s; both RU files re-rendered and re-sent.
+QC RU (both files, final): 1080×1920, 30 fps, H.264 + AAC 48 kHz stereo, 14.6 s; −14.1/−14.3 LUFS, true peak −1.9/−1.8 dBTP, no silences ≥0.4 s; blackdetect 0; `untranslated.json` empty; stills checked by eye. UZ re-rendered with the same code: 13.3 s, −14.1 LUFS, −1.9 dBTP. Not checked: transcript, real phones, a native RU read of the copy.
+Next: owner's Flow uploads for C1 (same voice route).
+Commit: branch `feat/ad-video-5`.
+
 ## S88 — Ad 6 «Yondo nima?» (C3) preview render + QC (2026-11-19) [cloud worker, Videochi 2]
 Done: CEO asked for a C3 preview. Real captures from `apps/web` (`ad5/capture_c3.mjs`: card feed with the Tadbir filter, booking dialog meeting-place field + hint), cropped so no price is in any file; `ad5/c3.tpl.html` (kit), `ad5/audio_c3.py` (original synthesis, ducking), `ad5/mux.sh` (static gain + limiter). C3-V2 changed to «Hamroh: profilida xizmatlari ko‘rinadi.» (the card shows services, not languages). Two MP4s sent to the owner's app (no voice / DRAFT MMS voice); not committed.
 Not done: C1 (waits for Flow uploads + voicelab VO); RU cut of C3.
