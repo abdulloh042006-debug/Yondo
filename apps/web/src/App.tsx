@@ -17,6 +17,7 @@ import { Notifications } from './pages/Notifications';
 import { LegalPage } from './legal/LegalPage';
 import { Empty, Loading } from './ui/feedback';
 import { Layout } from './ui/Layout';
+import { SocialCallback } from './auth/SocialCallback';
 
 // Companion studio and the admin console are separate chunks: ordinary visitors never download
 // admin code. (Hiding the code is not security — every admin endpoint is authorized on the server.)
@@ -32,6 +33,7 @@ export function App() {
           <Route index element={<Discovery />} />
           <Route path="c/:id" element={<Profile />} />
           <Route path="login" element={<Login />} />
+          <Route path="auth/callback/telegram" element={<SocialCallback />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
           <Route path="terms" element={<LegalPage doc="terms" />} />

@@ -41,7 +41,7 @@ describe('dictionaries', () => {
     }
   });
   it('ru/en are really translated (not copies of the Uzbek text)', () => {
-    const SAME_OK = new Set<Key>(['nav.admin', 'admin.audit.safety_sos', 'service.shopping', 'role.admin']);
+    const SAME_OK = new Set<Key>(['nav.admin', 'admin.audit.safety_sos', 'service.shopping', 'role.admin', 'social.provider.telegram']);
     const copies = keys.filter((k) => !SAME_OK.has(k) && uz[k].length > 6 && (ru[k] === uz[k] || en[k] === uz[k]));
     expect(copies).toEqual([]);
   });

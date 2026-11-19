@@ -606,6 +606,253 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/social/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete Signup
+         * @description Phone proof for a social identity: a code from POST /auth/otp/request (or the bot).
+         *
+         *     The phone's account (existing or new) gets the identity linked and is signed in.
+         */
+        post: operations["complete_signup_api_v1_auth_social_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Social Config */
+        get: operations["social_config_api_v1_auth_social_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Google Sign In
+         * @description Google ID token (GIS credential). A new Google identity always needs a phone code.
+         */
+        post: operations["google_sign_in_api_v1_auth_social_google_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/google/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Google Link */
+        post: operations["google_link_api_v1_auth_social_google_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Identities */
+        get: operations["list_identities_api_v1_auth_social_identities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/identities/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unlink Identity
+         * @description Only with a password set, so the account always keeps a way in besides the phone code.
+         */
+        delete: operations["unlink_identity_api_v1_auth_social_identities__provider__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Sign In
+         * @description ID token from Telegram.Login.auth (official JS library) with a nonce from /telegram/nonce.
+         */
+        post: operations["telegram_sign_in_api_v1_auth_social_telegram_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Exchange
+         * @description The callback page sends code + state + flow token; the code is exchanged server-side.
+         */
+        post: operations["telegram_exchange_api_v1_auth_social_telegram_exchange_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Telegram Link */
+        post: operations["telegram_link_api_v1_auth_social_telegram_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/link/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Telegram Link Nonce */
+        post: operations["telegram_link_nonce_api_v1_auth_social_telegram_link_nonce_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/link/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Link Start
+         * @description A signed-in user adds Telegram to the account (Settings).
+         */
+        post: operations["telegram_link_start_api_v1_auth_social_telegram_link_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Nonce
+         * @description A single-use nonce for Telegram.Login.auth; the ID token must carry it back.
+         */
+        post: operations["telegram_nonce_api_v1_auth_social_telegram_nonce_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/social/telegram/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Telegram Start
+         * @description Sign in or register: returns the oauth.telegram.org URL to open (code flow + PKCE).
+         */
+        post: operations["telegram_start_api_v1_auth_social_telegram_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/telegram/link/complete": {
         parameters: {
             query?: never;
@@ -3575,6 +3822,11 @@ export interface components {
          * @enum {string}
          */
         GiftTestStatus: "awaiting_test_payment" | "test_paid" | "preparing" | "out_for_delivery" | "delivered" | "cancelled";
+        /** GoogleCredential */
+        GoogleCredential: {
+            /** Credential */
+            credential: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -3662,6 +3914,19 @@ export interface components {
              * @enum {string}
              */
             status: "awaiting_contact" | "linked" | "otp_sent" | "expired" | "failed";
+        };
+        /** LinkedIdentity */
+        LinkedIdentity: {
+            /**
+             * Linked At
+             * Format: date-time
+             */
+            linked_at: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "telegram" | "google";
         };
         /** LivenessResponse */
         LivenessResponse: {
@@ -4179,6 +4444,46 @@ export interface components {
             /** Result */
             result: string;
         };
+        /** SocialComplete */
+        SocialComplete: {
+            /** Code */
+            code: string;
+            /** Phone Number */
+            phone_number: string;
+            /** Signup Token */
+            signup_token: string;
+        };
+        /** SocialConfig */
+        SocialConfig: {
+            /** Google Client Id */
+            google_client_id: string | null;
+            /** Telegram */
+            telegram: boolean;
+            /** Telegram Client Id */
+            telegram_client_id: string | null;
+            /** Telegram Code Flow */
+            telegram_code_flow: boolean;
+        };
+        /** SocialResult */
+        SocialResult: {
+            /** Expires In Seconds */
+            expires_in_seconds?: number | null;
+            /** Password Setup Required */
+            password_setup_required?: boolean | null;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "telegram" | "google";
+            /** Signup Token */
+            signup_token?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "signed_in" | "phone_required" | "linked";
+            tokens?: components["schemas"]["TokenResponse"] | null;
+        };
         /** SupportRead */
         SupportRead: {
             /**
@@ -4227,6 +4532,41 @@ export interface components {
             category: "account" | "booking" | "payment" | "safety" | "technical" | "other";
             /** Message */
             message: string;
+        };
+        /** TelegramExchange */
+        TelegramExchange: {
+            /** Code */
+            code: string;
+            /** Flow Token */
+            flow_token: string;
+            /** State */
+            state: string;
+        };
+        /** TelegramIdToken */
+        TelegramIdToken: {
+            /** Id Token */
+            id_token: string;
+        };
+        /** TelegramNonce */
+        TelegramNonce: {
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Nonce */
+            nonce: string;
+        };
+        /** TelegramStart */
+        TelegramStart: {
+            /** Redirect Uri */
+            redirect_uri?: string | null;
+        };
+        /** TelegramStarted */
+        TelegramStarted: {
+            /** Authorization Url */
+            authorization_url: string;
+            /** Expires In Seconds */
+            expires_in_seconds: number;
+            /** Flow Token */
+            flow_token: string;
         };
         /** TestOrderItemRead */
         TestOrderItemRead: {
@@ -5574,6 +5914,379 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserRoleType"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_signup_api_v1_auth_social_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialComplete"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    social_config_api_v1_auth_social_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialConfig"];
+                };
+            };
+        };
+    };
+    google_sign_in_api_v1_auth_social_google_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleCredential"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    google_link_api_v1_auth_social_google_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleCredential"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_identities_api_v1_auth_social_identities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkedIdentity"][];
+                };
+            };
+        };
+    };
+    unlink_identity_api_v1_auth_social_identities__provider__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: "telegram" | "google";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_sign_in_api_v1_auth_social_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramIdToken"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_exchange_api_v1_auth_social_telegram_exchange_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramExchange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_link_api_v1_auth_social_telegram_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramIdToken"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocialResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_link_nonce_api_v1_auth_social_telegram_link_nonce_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramNonce"];
+                };
+            };
+        };
+    };
+    telegram_link_start_api_v1_auth_social_telegram_link_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramStarted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    telegram_nonce_api_v1_auth_social_telegram_nonce_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramNonce"];
+                };
+            };
+        };
+    };
+    telegram_start_api_v1_auth_social_telegram_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramStarted"];
                 };
             };
             /** @description Validation Error */

@@ -18,6 +18,7 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 00d. **Code gaps for a real beta:** S3/MinIO photo adapter, identity verification, SMS fallback, ~~admin bootstrap command~~ (S46), Docker build check of the production package.
 00e. Owner answers the 11 decisions in `docs/decision-brief-2026-10-28.md`; then ~~intro animation~~ (web done in S60; Expo version open) + onboarding + video.
 00i. **Android push (S73, 2026-11-18):** owner creates the free Firebase project and sets `GOOGLE_SERVICES_JSON` (GitHub secret) + `YONDO_FCM_SERVICE_ACCOUNT_JSON` (Render) per `docs/push-notifications.md`. Web push needs nothing.
+00j. **Social login (S78, 2026-11-18):** owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID`, `YONDO_GOOGLE_CLIENT_IDS` (Render), BotFather Allowed URLs and keeps the Google consent screen in Testing for now (Publish app later) per `docs/login-telegram-google.md`; then a live sign-in check. Mobile = phase 2.
 00h. **Owner decisions (S60, 2026-11-13):** age limit of the service (agents recommend 18+); opening animation symbol (official symbol used; girih-strap Y only if he confirms it).
 0a. ~~Telegram Gateway top-up~~ **not needed now** (owner, 2026-11-06): demo OTP goes through a free Telegram **bot**. The owner creates the bot with @BotFather when the server is ready and puts its token only in the host env. The Gateway stays as a paid option, used only with his permission.
 0. **Owner: read `docs/decision-brief-2026-10-28.md`** (hosting, one app vs modes, screens, 10 decisions, intro/onboarding/video plan, demo wording, go-live gate) and answer its 10 questions; approve or change section 5 before any animation/onboarding/video work starts. Neon persistent DB (owner creates it) and the domain stay owner steps.
@@ -29,6 +30,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S78 — Sign in with Telegram (OIDC) and Google: backend + web (2026-11-18) [cloud worker, auth full-stack]
+Done: migration 0025 (`external_identities`, `social_login_challenges`); `auth/oidc.py` (JWKS cache, RS256/ES256, iss/aud/exp); `auth/social.py`: Telegram via the official JS library (server nonce, ID token verified, nonce required + single-use), Telegram code flow + PKCE (kept for mobile), Google GIS ID token, phone-anchored sign-up (`/auth/social/complete` with a phone code), link/unlink in Settings, per-IP rate limit, 503 `provider_not_configured`. Registration step accepts social sessions. Web: round Telegram (`tg-auth-button`, icon) + Google (icon, circle) buttons on Login, Linked accounts in Settings, `/auth/callback/telegram`, uz/ru/en keys. Docs: `docs/login-telegram-google.md` (owner checklist), product-decisions §3, CLAUDE.md §7.
+Not done: phase 2 (mobile, branch `feat/social-login-mobile`); live check with real accounts (keys not set).
+Next: owner sets `YONDO_TELEGRAM_LOGIN_CLIENT_ID` + `YONDO_GOOGLE_CLIENT_IDS` in Render and BotFather Allowed URLs; the Google consent screen stays in Testing (owner as test user), "Publish app" later.
+Blockers: BLOCKED until keys: live sign-in, whether Telegram echoes `nonce`.
+Evidence: see the PR (pytest PostgreSQL, ruff, export_openapi --check, web typecheck/lint/vitest/build, e2e).
+Commit: branch `feat/social-login` (PR to `main`).
 ## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
 Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
 - web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.

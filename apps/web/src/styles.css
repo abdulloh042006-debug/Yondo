@@ -1628,3 +1628,39 @@ input.switch:focus-visible {
     transition: none;
   }
 }
+
+/* Social sign-in (Telegram Login, Google): ink/paper buttons; provider marks keep their own colours. */
+.social-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.social-or::before,
+.social-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid currentColor;
+  opacity: 0.3;
+}
+.social-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+.social-google {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.social-row {
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
