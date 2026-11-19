@@ -1,6 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
+
+import { SafeImage } from '../safeImage';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { api, errorText, type Schemas } from '../api';
 import { moveId, photoProblem, PHOTO_LIMIT } from '../photoRules';
@@ -156,5 +158,5 @@ function OwnPhoto({ id, alt }: { id: string; alt: string }) {
   const { palette } = useTheme();
   const res = useResource(() => api.get<Schemas['PhotoDownload']>(`/user-photos/me/${id}/download`), [id]);
   const box = { width: '100%' as const, aspectRatio: 3 / 4, borderRadius: 12, backgroundColor: palette.chip };
-  return res.data ? <Image source={{ uri: res.data.url }} style={box} alt={alt} /> : <View style={[box, { alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: palette.muted }}>…</Text></View>;
+  return <SafeImage src={res.data?.url ?? (res.error ? null : undefined)} style={box} alt={alt} />;
 }

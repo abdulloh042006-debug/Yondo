@@ -1160,17 +1160,6 @@ table.data td {
     stroke-dashoffset: 0;
   }
 }
-.img-in {
-  opacity: 0;
-  transform: scale(1.04);
-  transition:
-    opacity 0.7s var(--ease),
-    transform 1s var(--ease);
-}
-.img-in.loaded {
-  opacity: 1;
-  transform: none;
-}
 .chip-wrap {
   position: relative;
   isolation: isolate;
@@ -1784,4 +1773,43 @@ input.switch:focus-visible {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* ---------- SafeImage (owner, 2026-11-19): the Yondo logo while a photo loads and when it fails ---------- */
+.safe-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.safe-img-logo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--c-fg) 6%, var(--c-bg));
+  color: color-mix(in oklab, var(--c-fg) 70%, var(--c-bg));
+}
+.safe-img-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+.safe-img[data-status='loaded'] .safe-img-photo {
+  opacity: 1;
+}
+/* inside .media the photo also keeps the card hover zoom; one rule so neither transition overrides the other */
+.media .safe-img-photo {
+  transition:
+    opacity 0.35s var(--ease),
+    transform 0.8s var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  .safe-img-photo,
+  .media .safe-img-photo {
+    transition: none;
+  }
 }

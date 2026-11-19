@@ -32,6 +32,13 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S84 — Photos: the Yondo logo while loading and when a photo fails (2026-11-19) [cloud worker, web + mobile]
+Done (owner: "if a picture does not open or does not load fully, show the default Yondo logo"):
+- One component per platform: web `ui/SafeImage.tsx` (+ `LogoMark`), mobile `src/safeImage.tsx` (uses `BrandMark`). The official symbol sits centred on a calm tile (paper by day, ink at night) while the photo loads, and stays for good on error: 404, network, decode, a 15 s timeout, or a signed URL that could not be obtained. No broken-image icon, no alt text spill; alt stays on the photo; the tile keeps the box size (no layout shift); the photo fades in (no fade under reduced motion).
+- Used for companion photos (discovery list, card deck, profile + gallery) and own photos (Profil → Rasmlarim, companion studio) on web and mobile. No photo at all = initials, as before. The admin review photo keeps its error text for moderators.
+- Tests: `SafeImage.test.tsx` (loaded / error → logo / timeout and no-URL → logo); web e2e blocks every image request and asserts the logo tile and no `<img>`.
+Evidence: see the PR (web tsc/lint/vitest/build/e2e, styles.css guard; mobile tsc, smoke).
+Commit: branch `feat/image-fallback-logo`, PR to `main`.
 ## S83 — 18+ age limit (2026-11-19) [cloud worker, auth full-stack]
 Done: `users.date_of_birth` + `age_restricted_at`, `age_blocks` (migration 0027); registration takes a date of birth (required with `YONDO_AUTH_REQUIRE_DATE_OF_BIRTH=true`), under 18 = `age_restricted`: a new sign-up is erased and only a salted phone hash with a 30-day cooldown is kept (every new-account path checks it); older accounts give the date once (`PUT /auth/date-of-birth`), under 18 = locked (`age_restricted_at`, no date stored, no retry; support + deletion stay open) until an admin clears it (`POST /admin/users/{id}/age-restriction/clear`, audited). DOB private, the age follows it; ID approval needs `adult_confirmed`. Terms + Privacy 18+ clause (versions 2026-11-19-draft). Web + mobile: date field, one-time step, restricted screen; uz/ru/en. Docs: `docs/age-limit.md`, CLAUDE.md §7.
 Not done: customers are not ID-checked (the date is a declaration; documented); mobile social login (phase 2).
