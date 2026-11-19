@@ -12,6 +12,7 @@ jobs:
   api:
     name: API quality checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # a hang fails fast instead of running for hours
     defaults:
       run:
         working-directory: apps/api
@@ -29,7 +30,8 @@ jobs:
       - name: Check frontend OpenAPI contract
         run: python export_openapi.py --check
       - name: Run tests
-        run: pytest
+        # faulthandler: a test stuck for 120 s dumps every thread's stack, then the job timeout ends it.
+        run: pytest -o faulthandler_timeout=120
       - name: Demo harness tests (DEMO payment, persistent-mode helpers, admin policy)
         run: python -m pytest ../../infra/deploy/demo -c pyproject.toml --rootdir .
       - name: Build package
@@ -39,6 +41,7 @@ jobs:
   postgres:
     name: PostgreSQL migration and concurrency
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # a hang fails fast instead of running for hours
     services:
       postgres:
         image: postgres:16
@@ -74,7 +77,7 @@ jobs:
         run: python -m alembic check
       - name: Exercise concurrency constraints
         run: |
-          python -m pytest -q \
+          python -m pytest -q -o faulthandler_timeout=120 \
             tests/companions/test_constraints.py::test_postgres_exclusion_constraint_enforces_direct_inserts \
             tests/companions/test_constraints.py::test_postgres_concurrent_inserts_cannot_overlap \
             tests/companions/test_manual_gifts_click_test.py::test_postgres_two_buyers_cannot_reserve_the_same_last_stock \
@@ -86,6 +89,7 @@ jobs:
   web:
     name: Web app quality checks
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # a hang fails fast instead of running for hours
     defaults:
       run:
         working-directory: apps/web
@@ -109,6 +113,7 @@ jobs:
   mobile:
     name: Mobile app typecheck and bundle
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # a hang fails fast instead of running for hours
     defaults:
       run:
         working-directory: apps/mobile

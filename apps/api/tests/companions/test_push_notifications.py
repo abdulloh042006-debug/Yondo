@@ -1,4 +1,5 @@
 """Push notifications: device registry, public config, background delivery (providers mocked)."""
+import asyncio
 import json
 from datetime import UTC, datetime
 from uuid import UUID
@@ -8,7 +9,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from yondo_api.account.deletion import erase_account
 from yondo_api.models.user import User
@@ -16,6 +17,7 @@ from yondo_api.push import webpush
 from yondo_api.push.fcm import FcmSender, ServiceAccount
 from yondo_api.push.messages import push_text, resolve_locale
 from yondo_api.push.models import PushDevice, PushVapidKey
+from yondo_api.push.service import load_vapid_keys
 
 from .test_bookings import booking_payload, setup_bookable_companion
 
@@ -221,9 +223,78 @@ async def test_notification_triggers_push_to_web_and_android(prepared):
 
 
 @pytest.mark.asyncio
+async def test_vapid_key_survives_a_lost_insert(prepared):
+    """CI flake (2026-11-18): on a connection shared with other sessions, another session's
+    rollback could discard our insert before its commit; the re-read found nothing and the web
+    send crashed silently. Now the next attempt, in a fresh session, stores the key."""
+    app = prepared['app']
+    factory = app.state.db_session_factory
+    async with factory() as session:
+        await session.execute(delete(PushVapidKey))
+        await session.commit()
+    lost = []
+
+    def losing_factory():
+        session = factory()
+        if not lost:
+            lost.append(True)
+
+            async def commit_that_gets_rolled_back():
+                await session.rollback()
+
+            session.commit = commit_that_gets_rolled_back
+        return session
+
+    keys = await load_vapid_keys(losing_factory, app.state.settings)
+    async with factory() as session:
+        stored = await session.get(PushVapidKey, 1)
+    assert lost and stored is not None and keys.public_key == stored.public_key
+
+
+@pytest.mark.asyncio
+async def test_drain_never_spins_on_a_finished_task(prepared):
+    """CI hang (2026-11-18): a finished task left in the set (its done callback had not removed
+    it) made drain() loop for ever. drain() now drops finished tasks itself and has a deadline."""
+    push = prepared['app'].state.push_dispatcher
+
+    async def nothing():
+        return None
+
+    finished = asyncio.get_running_loop().create_task(nothing())
+    await finished
+    push._tasks.add(finished)  # as if the done callback never ran
+    await asyncio.wait_for(push.drain(), timeout=2)
+    assert not push._tasks
+
+    never = asyncio.get_running_loop().create_task(asyncio.Event().wait())
+    push._tasks.add(never)
+    await asyncio.wait_for(push.drain(timeout=0.05), timeout=2)  # gives up, does not hang
+    never.cancel()
+    push._tasks.discard(never)
+
+
+@pytest.mark.asyncio
+async def test_concurrent_first_use_yields_one_key_pair(prepared):
+    app = prepared['app']
+    factory = app.state.db_session_factory
+    async with factory() as session:
+        await session.execute(delete(PushVapidKey))
+        await session.commit()
+    results = await asyncio.gather(
+        *(load_vapid_keys(factory, app.state.settings) for _ in range(4))
+    )
+    assert len({k.public_key for k in results}) == 1
+    async with factory() as session:
+        assert await session.scalar(select(func.count()).select_from(PushVapidKey)) == 1
+
+
+@pytest.mark.asyncio
 async def test_invalid_tokens_are_pruned_and_failures_never_break_requests(prepared):
     e, client = prepared, prepared['client']
     fake, push = install(e)
+    # The key pair exists before the background send: first-use generation is covered on its own
+    # (test_vapid_key_survives_a_lost_insert), so this test never depends on task timing.
+    await push.vapid()
     _, _, sub = browser_subscription()
     await client.put(f'{ROOT}/devices', headers=e['owner'], json=sub)
     await client.put(
