@@ -5,6 +5,7 @@
 
 3. Delete ID/selfie images of decided verifications older than the retention (proposal, default 0).
 4. Delete ID verification drafts abandoned for 24 h, with their objects.
+5. Prune code-issue rows older than a day (per-phone code limits).
 
 Idempotent and safe to run more often or from several hosts (each step is a single transaction per
 row/batch). Exit code 1 means an account could not be erased because of open bookings.
@@ -14,6 +15,7 @@ import asyncio
 import logging
 
 from yondo_api.account.deletion import process_due_deletions
+from yondo_api.auth.service import prune_otp_issues
 from yondo_api.bookings.expiry import expire_stale_bookings
 from yondo_api.config import get_settings
 from yondo_api.db.session import create_database_engine, create_session_factory
@@ -36,6 +38,8 @@ async def main(storage=None) -> int:
             )
         async with factory() as session:
             drafts_purged = await purge_abandoned_drafts(session, storage)
+        async with factory() as session:
+            otp_pruned = await prune_otp_issues(session)
     finally:
         await engine.dispose()
         if hasattr(storage, 'aclose'):
@@ -47,7 +51,7 @@ async def main(storage=None) -> int:
     print(
         f'bookings_expired={expired} accounts_erased={len(erased)} '
         f'skipped_open_bookings={len(skipped)} id_images_purged={id_purged} '
-        f'id_drafts_purged={drafts_purged}'
+        f'id_drafts_purged={drafts_purged} otp_issues_pruned={otp_pruned}'
     )
     return 1 if skipped else 0
 

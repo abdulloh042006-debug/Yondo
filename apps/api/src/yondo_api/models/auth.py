@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from yondo_api.db.base import Base, TimestampMixin
@@ -18,6 +18,21 @@ class OtpChallenge(TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     failed_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OtpIssue(Base):
+    """One row per code sent: the per-phone hourly and daily limits count these.
+
+    Rows older than a day are pruned by the hourly job (`python -m yondo_api.jobs`) and on the
+    phone's next request.
+    """
+
+    __tablename__ = 'otp_issues'
+    __table_args__ = (Index('ix_otp_issues_phone_issued', 'phone_number', 'issued_at'),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    phone_number: Mapped[str] = mapped_column(String(16), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class AuthSession(TimestampMixin, Base):

@@ -17,7 +17,9 @@ mkdirSync('e2e/shots', { recursive: true });
 const children = [];
 function start(cmd, args, readyText) {
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    // The whole run signs in from 127.0.0.1: switch off the per-IP code limit (tested in the API suite).
+    const env = { ...process.env, YONDO_AUTH_OTP_IP_RATE_LIMIT_PER_MINUTE: '0' };
+    const p = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env });
     children.push(p);
     let buf = '';
     const onData = (d) => {
@@ -225,6 +227,41 @@ try {
     await p.locator('.consent input').check();
     await p.getByRole('button', { name: 'Kod yuboriş' }).click();
   };
+  /* Social sign-in (2026-11-18, docs/login-telegram-google.md). The e2e API has no provider configured, so the
+     buttons must be absent; the configured case stubs the config, Telegram's library and the API answers. */
+  await step('social sign-in: hidden when not configured; round Telegram button when configured; a new identity goes to the phone code step; callback without a flow is refused', async () => {
+    const c = await ctx();
+    const p = await c.newPage();
+    watch(p, 'social');
+    try {
+      await p.goto(`${WEB}/login`);
+      await p.getByRole('heading', { name: 'Yondoʼga kiriş' }).waitFor();
+      const cfg = await p.evaluate(() => fetch('/api/v1/auth/social/config').then((r) => r.json()));
+      assert(cfg.telegram === false && cfg.google_client_id === null, `unconfigured API must say so: ${JSON.stringify(cfg)}`);
+      await p.waitForTimeout(300);
+      assert((await p.locator('.social-signin').count()) === 0, 'no social buttons when nothing is configured');
+      const STUB = "window.Telegram={Login:{auth:function(o,cb){window.__tgOpts=o;cb({id_token:'stub-token'});}}};";
+      await p.route('**/api/v1/auth/social/config', reply(200, { telegram: true, telegram_client_id: '9000000001', telegram_code_flow: false, google_client_id: null }));
+      await p.route('https://oauth.telegram.org/js/**', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: STUB }));
+      await p.route('**/api/v1/auth/social/telegram/nonce', reply(201, { nonce: 'n'.repeat(43), expires_in_seconds: 600 }));
+      await p.route('**/api/v1/auth/social/telegram', reply(200, { status: 'phone_required', provider: 'telegram', signup_token: 't'.repeat(43), expires_in_seconds: 600 }));
+      await p.reload();
+      const btn = p.getByRole('button', { name: 'Telegram orqali kiriş' });
+      await btn.waitFor();
+      assert((await btn.getAttribute('data-style')) === 'icon', 'Telegram round icon style');
+      await axeScan(p, 'login with social buttons').then(() => results.push({ name: 'axe login social', ok: true }), (e) => results.push({ name: 'axe login social', ok: false, error: e.message }));
+      await btn.click();
+      await p.getByText('Hisob telefon raqamiga boğlanadi').waitFor();
+      await p.getByLabel('Telefon raqami').waitFor();
+      const opts = await p.evaluate(() => window.__tgOpts);
+      assert(opts.nonce === 'n'.repeat(43) && opts.request_access.join(' ') === 'phone write', `library options: ${JSON.stringify(opts)}`);
+      await p.goto(`${WEB}/auth/callback/telegram?code=x&state=yyyyyyyyyyyyyyyyyyyy`);
+      await p.getByRole('alert').filter({ hasText: 'Kiriş vaqti tugadi' }).waitFor();
+    } finally {
+      await c.close();
+    }
+  });
+
   await step('login (Telegram channel): instructions instead of an on-screen code, digits only, no SMS promise', async () => {
     await page.route(OTP_REQUEST, reply(200, { message: 'sent', expires_in_seconds: 300, resend_after_seconds: 60, delivery_channel: 'telegram' }));
     try {

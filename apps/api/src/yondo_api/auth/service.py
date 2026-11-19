@@ -7,20 +7,22 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from yondo_api.api.errors import ApplicationError
 from yondo_api.auth.phone import normalize_uzbekistan_phone
 from yondo_api.auth.providers import OtpChannel, OtpDeliveryProvider
 from yondo_api.config import Settings
-from yondo_api.models.auth import AuthSession, OtpChallenge
+from yondo_api.models.auth import AuthSession, OtpChallenge, OtpIssue
 from yondo_api.models.user import AccountStatus, User
 
 OTP_LIFETIME = timedelta(minutes=5)
 OTP_RESEND_COOLDOWN = timedelta(seconds=60)
+# A code dies after this many wrong attempts; the user requests a new one.
 OTP_MAX_ATTEMPTS = 3
-OTP_LOCKOUT = timedelta(seconds=60)
+OTP_HOUR = timedelta(hours=1)
+OTP_DAY = timedelta(days=1)
 
 
 def _now() -> datetime:
@@ -71,6 +73,8 @@ async def issue_otp(
     challenge = await session.get(OtpChallenge, phone_number, with_for_update=True)
     if challenge is not None and now < _as_utc(challenge.issued_at) + OTP_RESEND_COOLDOWN:
         raise ApplicationError('otp_resend_cooldown', 'Wait before requesting another code', 429)
+    if settings.auth_otp_limits_enabled:
+        await _check_phone_limits(session, phone_number, settings, now)
 
     code = f'{secrets.randbelow(1_000_000):06d}'
     # Deliver first: if the provider raises, nothing is written, so no resend cooldown starts
@@ -92,8 +96,41 @@ async def issue_otp(
         challenge.expires_at = now + OTP_LIFETIME
         challenge.failed_attempts = 0
         challenge.blocked_until = None
+    if settings.auth_otp_limits_enabled:
+        session.add(OtpIssue(phone_number=phone_number, issued_at=now))
     await session.commit()
     return IssuedOtp(delivery.development_code, delivery.channel)
+
+
+async def _check_phone_limits(
+    session: AsyncSession, phone_number: str, settings: Settings, now: datetime
+) -> None:
+    """At most N codes per phone per hour and per day (product: 5 and 10)."""
+    await session.execute(
+        delete(OtpIssue).where(
+            OtpIssue.phone_number == phone_number, OtpIssue.issued_at < now - OTP_DAY
+        )
+    )
+    times = list(
+        await session.scalars(
+            select(OtpIssue.issued_at).where(
+                OtpIssue.phone_number == phone_number, OtpIssue.issued_at >= now - OTP_DAY
+            )
+        )
+    )
+    if len(times) >= settings.auth_otp_max_per_day:
+        raise ApplicationError('otp_daily_limit', 'Too many codes for this number today', 429)
+    if sum(1 for t in times if _as_utc(t) >= now - OTP_HOUR) >= settings.auth_otp_max_per_hour:
+        raise ApplicationError('otp_hourly_limit', 'Too many codes for this number this hour', 429)
+
+
+async def prune_otp_issues(session: AsyncSession, now: datetime | None = None) -> int:
+    """Delete code-issue rows older than a day (they no longer count). Run by the hourly job."""
+    result = await session.execute(
+        delete(OtpIssue).where(OtpIssue.issued_at < (now or _now()) - OTP_DAY)
+    )
+    await session.commit()
+    return result.rowcount or 0
 
 
 async def consume_otp(
@@ -107,13 +144,6 @@ async def consume_otp(
     if challenge is None:
         raise ApplicationError('invalid_otp', 'The verification code is invalid or expired', 401)
 
-    blocked_until = _as_utc(challenge.blocked_until) if challenge.blocked_until else None
-    if blocked_until is not None and now < blocked_until:
-        raise ApplicationError('otp_temporarily_blocked', 'Too many attempts; try again later', 429)
-    if blocked_until is not None:
-        challenge.failed_attempts = 0
-        challenge.blocked_until = None
-
     if now >= _as_utc(challenge.expires_at):
         await session.delete(challenge)
         await session.commit()
@@ -121,8 +151,12 @@ async def consume_otp(
 
     if not hmac.compare_digest(challenge.code_hash, _otp_hash(settings, phone_number, code)):
         challenge.failed_attempts += 1
-        if challenge.failed_attempts >= OTP_MAX_ATTEMPTS:
-            challenge.blocked_until = now + OTP_LOCKOUT
+        if challenge.failed_attempts >= OTP_MAX_ATTEMPTS:  # the code dies: a new one is needed
+            await session.delete(challenge)
+            await session.commit()
+            raise ApplicationError(
+                'otp_attempts_exceeded', 'Too many wrong codes; request a new code', 429
+            )
         await session.commit()
         raise ApplicationError('invalid_otp', 'The verification code is invalid', 401)
 

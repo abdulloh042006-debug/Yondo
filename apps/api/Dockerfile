@@ -18,5 +18,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
 
-# Only the reverse proxy (Caddy, same Docker network) can reach this port, so trusting its forwarded headers is safe.
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn yondo_api.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"]
+# uvicorn's own proxy-header handling is off: the app's ClientIpMiddleware decides which header to
+# trust (YONDO_CLIENT_IP_MODE, docs/client-ip.md); a forged X-Forwarded-For never sets the client IP.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn yondo_api.main:app --host 0.0.0.0 --port 8000 --no-proxy-headers"]

@@ -12,6 +12,7 @@ import { playNotifySound, setSoundEnabled, soundEnabled } from '../lib/notifySou
 import { useToast } from '../ui/feedback';
 import { ThemePicker } from '../ui/theme';
 import { PushToggle } from '../ui/PushToggle';
+import { LinkedAccounts } from '../auth/LinkedAccounts';
 import { ChangePassword } from './ChangePassword';
 import { DeleteAccount } from './DeleteAccount';
 
@@ -54,6 +55,7 @@ function AccountGroup({ user }: { user: User }) {
       </div>
       {user.roles.includes('companion') && <Link className="btn" to="/studio" style={{ width: 'fit-content' }}>{t('account.studio')}</Link>}
       <ChangePassword user={user} />
+      <LinkedAccounts />
       <DeleteAccount before={<button className="btn ghost" onClick={() => void logout()}>{t('account.logout')}</button>} />
     </>
   );
