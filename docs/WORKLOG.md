@@ -29,6 +29,18 @@ Newest entry first. Template at the bottom. Labels: PASS / FAIL / BLOCKED / NOT 
 6. Housekeeping: decide on `ruff format` (50 files drift, not CI-enforced); keep screenshots/reports regenerated only when UI changes.
 
 ## Session log
+## S77 — Redesign phase 2, PR 1: Hold-to-Confirm for account deletion (2026-11-18) [cloud worker, web + mobile]
+Done (owner 2026-11-18: the 1.5 s hold replaces the blurred dialog; red only for destructive actions):
+- web `ui/HoldToConfirm.tsx` + styles (`--c-danger` and the other new tokens of the redesign spec §5.2); mobile `src/hold.tsx` (native-driver fill) + `danger*` palette entries.
+- Account deletion (web `pages/DeleteAccount.tsx`, mobile `screens/Settings.tsx`) uses it: consequences in a red danger zone, early release does nothing, Space/Enter hold, screen-reader two-step path, aria-live / AccessibilityInfo announcements. The "I understand" box and the dialog are gone.
+- i18n `hold.*` (uz/ru/en). Tests: `HoldToConfirm.test.tsx` (5), `DeleteAccount.test.tsx` rewritten; web e2e and mobile smoke deletion steps rewritten.
+- Mobile smoke "Cards: Save…" (CEO: fails on main) is flaky (~1 run in 3 here): the deck sometimes opens straight on "You have seen every card". Root cause NOT found yet; to be fixed with the Kashf/CardDeck redesign PR.
+- **Fixed on main's CSS:** the #44 merge left `@media (prefers-reduced-motion)` (sound switch) unclosed, so every rule after it (likes, card feed, photo manager, push switch) applied only to reduced-motion users; the block is closed now (`styles.css` parses again: checked with postcss).
+- Guard: `apps/web/src/styles.test.ts` parses styles.css strictly with postcss (Vite's own dependency) and fails on any syntax error or an @media swallowing another @media/theme block; it fails on main's file (1367:1 Unclosed block).
+- Web e2e `axeScan` waits for finite entrance animations / mid-way inline opacity before scanning (the rausch/stone `.btn.sm` contrast 4.49/4.43 failures were measured mid-fade: #fefafb text).
+- Mobile hold: `accessibilityActions` activate → two-step; completion announced.
+Not done: cancel/block holds (PR with the booking-detail redesign), dock, App Bar, screens.
+Commit: branch `feat/redesign-hold-confirm`, PR to `main`.
 ## S76 — CI: flaky push test and the PostgreSQL job hang (2026-11-18) [cloud worker]
 Done: (1) VAPID key race: `load_vapid_keys` re-reads in a fresh session and retries (an insert lost to another worker or rolled back by another session on a shared connection no longer leaves `row = None`); exceptions returned by `gather` in delivery are logged. Repro on main: the flaky test passed 6/12. (2) PostgreSQL job hang reproduced locally (PG 16, exact CI commands, about 1 in 3 runs): a push task scheduled from `after_commit` during two concurrent webhook requests was finished, but its done callback had not removed it from the dispatcher's set, so `drain()` (`while tasks: gather`) spun for ever at app shutdown. `drain()` now drops finished tasks itself and shutdown waits at most 10 s. Why the callback did not run is not proven. (3) CI: `timeout-minutes` on the api/postgres/web/mobile jobs, pytest `faulthandler_timeout=120`. New deterministic tests: lost insert, concurrent first use, drain on a finished task.
 Next: none.
