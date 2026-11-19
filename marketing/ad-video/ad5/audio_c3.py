@@ -1,15 +1,28 @@
 """Sound for ad 6 «Yondo nima?» (C3): original synthesis (pad + light kick + SFX), optional voice with ducking.
 
-Usage: python3 ad5/audio_c3.py <out.wav> [voice_dir]
-voice_dir holds c3-02.mp3, c3-03.mp3, c3-04.mp3, v07.mp3 (the DRAFT MMS voice or the owner's voicelab.uz take with the same
-names). Without voice_dir the mix is music + SFX only. Output: 48 kHz stereo WAV, not normalised (mux does loudnorm).
+Usage: [REEL_LANG=ru] python3 ad5/audio_c3.py <out.wav> [voice_dir]
+voice_dir holds c3-02.mp3, c3-03.mp3, c3-04.mp3, v07.mp3 (RU: ru-c3-02.mp3 … ru-v07.mp3, played 1.1x faster): the synthesized
+MMS voice the owner accepted on 2026-11-19. Without voice_dir: music + SFX only. Output: 48 kHz stereo WAV (ad5/mux.sh sets loudness).
 """
+import os
 import subprocess
 import sys
 
 import numpy as np
 
-SR, DUR = 48000, 13.3
+LANG = os.environ.get('REEL_LANG', 'uz')
+# scene boundaries, same as ad5/c3.tpl.html: cues are authored on the UZ clock and mapped onto the RU one
+B_UZ = [0, 1.4, 4.2, 8.0, 10.3, 11.2, 13.3]
+B = {'uz': B_UZ, 'ru': [0, 1.4, 5.0, 8.2, 11.05, 11.95, 14.3]}[LANG]
+
+
+def at(t_uz):
+    for i in range(1, len(B)):
+        if t_uz <= B_UZ[i] or i == len(B) - 1:
+            return B[i - 1] + (t_uz - B_UZ[i - 1]) * (B[i] - B[i - 1]) / (B_UZ[i] - B_UZ[i - 1])
+
+
+SR, DUR = 48000, B[-1]
 N = int(SR * DUR)
 rng = np.random.default_rng(7)          # fixed seed: the same file every run
 t_all = np.arange(N) / SR
@@ -23,8 +36,8 @@ def env(n, a, r):
     return e
 
 
-def add(buf, sig, at, gain=1.0):
-    i = max(0, int(at * SR))
+def add(buf, sig, at_s, gain=1.0):
+    i = max(0, int(at_s * SR))
     if i >= N:
         return
     j = min(N, i + len(sig))
@@ -53,7 +66,7 @@ for i, c in enumerate(chords * 2):
     add(music, tone([f * 2 for f in c], 2.6, a=.4, r=.8, kind='warm'), 1.4 + i * 2.4, .22)
 # light kick on the beat from 1.4 s, stopping under the end card's quiet logo build
 beat = 60 / 100
-for b in np.arange(1.4, 11.2, beat):
+for b in np.arange(1.4, at(11.2), beat):
     tk = np.arange(int(.18 * SR)) / SR
     add(music, np.sin(2 * np.pi * (55 + 90 * np.exp(-tk * 30)) * tk) * np.exp(-tk * 18), b, .5)
 # SFX
@@ -69,21 +82,23 @@ def chime(at, g=.3):
     add(sfx, tone([1318.5, 1760.0, 2637.0], 1.4, a=.003, r=1.3), at, g)
 hit(0.0, .6)
 for w in (1.0, 4.2, 8.0, 10.3):
-    whoosh(w)
-for i, at in enumerate((1.9, 2.4, 2.9, 3.4)):
-    pop(at, 660 * 2 ** (i / 6))
-pop(5.6, 990, .3)
-chime(10.3)
-hit(11.2, .8)
-chime(12.1, .22)
+    whoosh(at(w))
+for i, t_pop in enumerate((1.9, 2.4, 2.9, 3.4)):
+    pop(at(t_pop), 660 * 2 ** (i / 6))
+pop(at(5.6), 990, .3)
+chime(at(10.3))
+hit(at(11.2), .8)
+chime(at(12.1), .22)
 
 voice = np.zeros(N)
 if len(sys.argv) > 2:
-    for name, at in (('c3-02', 1.45), ('c3-03', 4.25), ('c3-04', 8.05), ('v07', 10.4)):
-        raw = subprocess.run(['ffmpeg', '-loglevel', 'error', '-i', f'{sys.argv[2]}/{name}.mp3', '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
+    pre, tempo = ('ru-', ['-af', 'atempo=1.1']) if LANG == 'ru' else ('', [])
+    cues = {'uz': (1.45, 4.25, 8.05, 10.4), 'ru': (1.45, 5.05, 8.25, 12.0)}[LANG]
+    for name, t_v in zip(('c3-02', 'c3-03', 'c3-04', 'v07'), cues):
+        raw = subprocess.run(['ffmpeg', '-loglevel', 'error', '-i', f'{sys.argv[2]}/{pre}{name}.mp3', *tempo, '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
                              capture_output=True, check=True).stdout
         v = np.frombuffer(raw, dtype=np.float32).astype(float)
-        add(voice, v / (np.abs(v).max() + 1e-9) * .9, at)
+        add(voice, v / (np.abs(v).max() + 1e-9) * .9, t_v)
 # duck music 8 dB while the voice speaks (smoothed envelope)
 speaking = np.convolve((np.abs(voice) > .02).astype(float), np.ones(int(.25 * SR)) / int(.25 * SR), 'same') > 0
 duck = np.convolve(np.where(speaking, 10 ** (-8 / 20), 1.0), np.ones(int(.12 * SR)) / int(.12 * SR), 'same')
