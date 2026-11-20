@@ -30,7 +30,7 @@ The current repository already contains a **partial historical baseline** in `do
 
 - 12 web day captures: login/password setup, discovery/list/filter/card states, favorites empty, bookings, booking details, account/profile, settings, help and companion profile.
 - 3 web night captures: discovery, booking details and account/profile.
-- 11 mobile day captures: anonymous/discovery, code/password setup, favorites, bookings, profile, settings (including scroll positions) and help (including scroll positions).
+- 12 mobile day captures: anonymous/discovery, code/password setup, favorites, bookings, profile, settings (including scroll positions) and help (including scroll positions).
 - No mobile night captures were present in that folder.
 
 The redesign prototype and its frames are separate evidence:
