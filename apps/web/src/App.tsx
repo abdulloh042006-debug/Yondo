@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { t, useLang } from './i18n';
+import { useDemoKeepAlive } from './lib/useDemoKeepAlive';
 import { RequireAuth } from './auth/guards';
 import { Account } from './pages/Account';
 import { Bookings } from './pages/Bookings';
