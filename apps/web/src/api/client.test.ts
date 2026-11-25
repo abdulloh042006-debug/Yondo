@@ -8,7 +8,10 @@ beforeEach(() => {
   sessionStorage.clear();
   tokens.clear();
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('api client', () => {
   it('turns a structured error into ApiError (code, status, request id, field names)', async () => {
@@ -30,6 +33,30 @@ describe('api client', () => {
     const net = (await api.get('/x').catch((e) => e)) as ApiError;
     expect(net.code).toBe('network_error');
     expect(net.unavailable).toBe(true);
+  });
+
+  it('retries transient cold-start responses for safe GET requests only', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(503, { code: 'service_unavailable' }))
+      .mockResolvedValueOnce(json(502, { code: 'upstream_unavailable' }))
+      .mockResolvedValueOnce(json(200, { ready: true }));
+
+    const pending = api.get('/cold-start');
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await expect(pending).resolves.toEqual({ ready: true });
+    expect(spy).toHaveBeenCalledTimes(3);
+  });
+
+  it('never automatically retries a non-idempotent POST', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(503, { code: 'service_unavailable' }))
+      .mockResolvedValueOnce(json(200, { created: true }));
+
+    await expect(api.post('/bookings', { service_id: 's1' })).rejects.toBeInstanceOf(ApiError);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('sends the bearer token and refreshes once on 401, then retries', async () => {
