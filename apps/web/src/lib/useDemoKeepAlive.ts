@@ -46,7 +46,9 @@ export function useDemoKeepAlive(): void {
         lastProbeAt = Date.now();
         nextDelay = response.ok ? PROBE_INTERVAL_MS : FAILURE_RETRY_MS;
       } catch {
-        if (!current.signal.aborted || !disposed) {
+        // A tab-hidden abort is intentional: do not reset the idle clock, so returning
+        // after 15+ minutes triggers an immediate wake-up probe.
+        if (!disposed && document.visibilityState === 'visible') {
           lastProbeAt = Date.now();
           nextDelay = FAILURE_RETRY_MS;
         }
