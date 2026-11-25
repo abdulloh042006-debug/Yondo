@@ -112,6 +112,33 @@ function toFieldErrors(payload: unknown): Record<string, string> {
   return out;
 }
 
+const READ_RETRY_LIMIT = 8;
+const READ_RETRYABLE_STATUSES = new Set([502, 503, 504]);
+
+function retryDelay(attempt: number): number {
+  // 1, 2, 4, 8, then 12 seconds (capped). Eight retries cover Render's ~1 minute cold start.
+  return Math.min(1000 * 2 ** attempt, 12_000);
+}
+
+function waitBeforeRetry(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('The request was aborted', 'AbortError'));
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    const abort = () => {
+      window.clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+      reject(new DOMException('The request was aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
+}
+
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
   const url = new URL(BASE + path, window.location.origin);
   for (const [k, v] of Object.entries(opts.query ?? {})) {
@@ -135,7 +162,24 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
       throw new ApiError(0, 'network_error');
     }
   };
-  let res = await send();
+  const safeRead = ['GET', 'HEAD'].includes(method.toUpperCase());
+  let res: Response | undefined;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      res = await send();
+    } catch (error) {
+      // Retry only safe reads after transport failures. Never replay writes such as OTP,
+      // booking, payment, chat-send or account mutations.
+      if (!safeRead || !(error instanceof ApiError && error.status === 0) || attempt >= READ_RETRY_LIMIT) {
+        throw error;
+      }
+      await waitBeforeRetry(retryDelay(attempt), opts.signal);
+      continue;
+    }
+    if (!safeRead || !READ_RETRYABLE_STATUSES.has(res.status) || attempt >= READ_RETRY_LIMIT) break;
+    await waitBeforeRetry(retryDelay(attempt), opts.signal);
+  }
+  if (!res) throw new ApiError(0, 'network_error');
   // A 401 about the request itself (a wrong current password: invalid_credentials) is not about the session:
   // it must neither refresh nor sign the user out. Branch on the code, never the message.
   const sessionProblem = res.status === 401 && (await res.clone().json().catch(() => null))?.code !== 'invalid_credentials';
