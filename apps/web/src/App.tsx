@@ -25,6 +25,7 @@ const AdminRoutes = lazy(() => import('./admin/routes'));
 
 export function App() {
   useLang(); // re-render the whole route tree in place when the language changes
+  useDemoKeepAlive(); // keep the demo warm while a visitor actively views the app
   return (
     <Suspense fallback={<div className="shell page"><Loading rows={2} /></div>}>
       <Routes>
